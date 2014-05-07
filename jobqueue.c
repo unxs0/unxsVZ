@@ -60,6 +60,7 @@ void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
 void ActionScripts(unsigned uJob,unsigned uContainer);
 void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
+void AllowAllAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void TestBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
@@ -440,6 +441,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"NewContainer"))
 	{
 		NewContainer(uJob,uContainer);
+	}
+	else if(!strcmp(cJobName,"AllowAllAccess") && uNode)
+	{
+		AllowAllAccess(uJob,cJobData,uDatacenter,uNode);
 	}
 	else if(!strcmp(cJobName,"AllowAccess") && uNode)
 	{
@@ -7486,3 +7491,75 @@ void TestBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,uns
 
 }//void TestBlockAccess()
 
+
+//All port access
+void AllowAllAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
+{
+	char cIPv4[16]={""};
+	char *cp;
+
+	sscanf(cJobData,"cIPv4=%15s;",cIPv4);
+	if((cp=strchr(cIPv4,';')))
+		*cp=0;
+	if(!cIPv4[0])
+	{
+		logfileLine("AllowAllAccess","Could not determine cIPv4");
+		tJobErrorUpdate(uJob,"cIPv4[0]==0");
+		return;
+	}
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	char cTemplate[512]={"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? != 0 ];then"
+			" /sbin/iptables -I FORWARD -s %s -j ACCEPT; fi;"};
+
+	FILE *fp;
+	char cPrivateKey[256]={""};
+	if((fp=fopen("/etc/unxsvz/unxsvz.key","r")))
+	{
+		if(fgets(cPrivateKey,255,fp)!=NULL)
+			cPrivateKey[strlen(cPrivateKey)-1]=0;//cut off /n
+		fclose(fp);
+	}
+
+	if(cPrivateKey[0])
+	{
+		sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
+			//trick to get most specific datacenter node combo
+			" WHERE SHA1(CONCAT(LEFT(cComment,LOCATE('#unxsVZKey=',cComment)),'%1$s'))=SUBSTR(cComment,LOCATE('#unxsVZKey=',cComment)+11)"
+			" AND ((uDatacenter=%2$u AND uNode=%3$u) OR (uDatacenter=%2$u AND uNode=0))"
+			" AND cLabel='cAllowAllAccessTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",cPrivateKey,uDatacenter,uNode);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			logfileLine("AllowAllAccess",mysql_error(&gMysql));
+		else
+		{
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(cTemplate,"%.512s",field[0]);
+				logfileLine("AllowAllAccess","secure template used");
+			}
+			mysql_free_result(res);
+		}
+	}
+
+	//debug only
+	//char cData[128];
+	//sprintf(cData,"uDatacenter=%u uNode=%u",uDatacenter,uNode);
+	//logfileLine("AllowAllAccess",cData);
+
+	sprintf(gcQuery,cTemplate,cIPv4,cIPv4);
+	if(system(gcQuery))
+	{
+		logfileLine("AllowAllAccess","iptables command failed");
+		tJobErrorUpdate(uJob,"iptables command failed");
+		return;
+	}
+
+	logfileLine("AllowAllAccess","iptables command ok");
+	tJobDoneUpdate(uJob);
+	return;
+
+}//void AllowAllAccess()
