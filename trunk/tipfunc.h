@@ -732,7 +732,7 @@ void ExttIPAuxTable(void)
 			printf("&nbsp; <input title='Change datacenter using filter uDatacenterSearch select'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Change Datacenter'>\n");
-			printf("&nbsp; <input title='Create BlockAccess jobs for all firewalls."
+			printf("<p><input title='Create BlockAccess jobs for all firewalls."
 				" Only operates on unavailable CustomerPremise datacenter IPs."
 				" The comment section must start with \"FW NOC entered;\" or one of the unxsSnort allowed comments.'"
 				" type=submit class=lwarnButton"
@@ -740,11 +740,14 @@ void ExttIPAuxTable(void)
 			printf("&nbsp; <input title='Create UndoBlockAccess jobs for all firewalls."
 				" Only operates on unavailable CustomerPremise datacenter IPs."
 				" The comment section must start with one of the unxsSnort allowed comments."
-				" If it starts with \"FW unxsSnort testing;\" or if it is only \"FW NOC entered;\""
-				" (e.g it has not been blocked yet) it can not be unblocked."
+				" If it starts with \"FW unxsSnort testing;\" or with \"FW NOC entered;\""
+				" and it has not been blocked yet it can not be unblocked."
 				" To create a search set use FW%% pattern.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group UndoBlockAccess'>\n");
+			printf("&nbsp; <input title='Show country information in results field.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group CountryInfo'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -1162,6 +1165,39 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group UndoBlockAccess
+
+				//Group CountryInfo
+				else if(!strcmp(gcCommand,"Group CountryInfo"))
+				{
+					MYSQL_RES *res;
+					MYSQL_ROW field;
+					char cIP[16]={""};
+					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
+					if(!cIP[0])
+					{
+						sprintf(cResult,"data error");
+						break;
+					}
+
+					sprintf(gcQuery,"SELECT cCountryCode,cCountryName,uGeoIPCountryCode"
+							" FROM tGeoIPCountryCode"
+							" WHERE uGeoIPCountryCode="
+							"(SELECT uGeoIPCountryCode FROM tGeoIP WHERE uEndIP>=INET_ATON('%s') LIMIT 1)",cIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.31s",mysql_error(&gMysql));
+						break;
+					}
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+					{
+						sprintf(cResult,"%s(%s) %s",field[0],field[2],field[1]);
+						break;
+					}
+					sprintf(cResult,"no country info available");
+					break;
+				}//Group CountryInfo
 
 				else if(1)
 				{
