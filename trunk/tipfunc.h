@@ -734,12 +734,15 @@ void ExttIPAuxTable(void)
 				" name=gcCommand value='Group Change Datacenter'>\n");
 			printf("&nbsp; <input title='Create BlockAccess jobs for all firewalls."
 				" Only operates on unavailable CustomerPremise datacenter IPs."
-				" The comment section must start with NOC blocked or unxsSnort blocked'"
+				" The comment section must start with \"FW NOC entered;\" or one of the unxsSnort allowed comments.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group BlockAccess'>\n");
 			printf("&nbsp; <input title='Create UndoBlockAccess jobs for all firewalls."
 				" Only operates on unavailable CustomerPremise datacenter IPs."
-				" The comment section must start with NOC blocked or unxsSnort blocked'"
+				" The comment section must start with one of the unxsSnort allowed comments."
+				" If it starts with \"FW unxsSnort testing;\" or if it is only \"FW NOC entered;\""
+				" (e.g it has not been blocked yet) it can not be unblocked."
+				" To create a search set use FW%% pattern.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group UndoBlockAccess'>\n");
 			CloseFieldSet();
@@ -771,6 +774,7 @@ void ExttIPAuxTable(void)
 			if((uNumRows=mysql_num_rows(res)))
 			{
 				char cResult[100]={""};
+				char cCommentUpdated[256]={""};
 				char cCtLabel[100]={""};
 
 				printf("<table>");
@@ -787,6 +791,7 @@ void ExttIPAuxTable(void)
 //Reset margin start
 while((field=mysql_fetch_row(res)))
 {
+	cCommentUpdated[0]=0;
 	if(guMode==12002)
 	{
 		register int i;
@@ -894,9 +899,14 @@ while((field=mysql_fetch_row(res)))
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
 					if(mysql_affected_rows(&gMysql)>0)
+					{
 						sprintf(cResult,"make not available done");
+						sprintf(cCommentUpdated,"%.255s",cIPv4Search);
+					}	
 					else
+					{
 						cResult[0]=0;
+					}
 					break;
 				}//Group Make Not Available
 
@@ -992,10 +1002,13 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"must not be available");
 						break;
 					}
-					if(	strncmp(cComment,"unxsSnort blocked",strlen("unxsSnort blocked")) &&
-						strncmp(cComment,"NOC blocked",strlen("NOC blocked"))  )
+					if(
+						strncmp(cComment,"FW unxsSnort blocked;",strlen("FW unxsSnort blocked;")) &&
+						strncmp(cComment,"FW unxsSnort --block-ip;",strlen("FW unxsSnort --block-ip;")) &&
+						strncmp(cComment,"FW unxsSnort testing;",strlen("FW unxsSnort testing;")) &&
+						strncmp(cComment,"FW NOC entered;",strlen("FW NOC entered;"))  )
 					{
-						sprintf(cResult,"cComment not valid");
+						sprintf(cResult,"Not allowed to block");
 						break;
 					}
 
@@ -1046,11 +1059,12 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(gcQuery,"UPDATE tIP"
 								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
-								",cComment='NOC blocked BLOCKED'"
+								",cComment=CONCAT(cComment,' NOC BLOCKED;')"
 								" WHERE uIP=%u",
 									guLoginClient,
 									uCtIP);
 						mysql_query(&gMysql,gcQuery);
+						sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
 					}
 					break;
 				}//Group BlockAccess
@@ -1083,10 +1097,12 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"must not be available");
 						break;
 					}
-					if(	strncmp(cComment,"unxsSnort blocked",strlen("unxsSnort blocked")) &&
-						strncmp(cComment,"NOC blocked",strlen("NOC blocked"))  )
+					if(	
+						strncmp(cComment,"FW unxsSnort blocked;",strlen("FW unxsSnort blocked;")) &&
+						strncmp(cComment,"FW unxsSnort --block-ip;",strlen("FW unxsSnort --block-ip;")) &&
+						!strstr(cComment,"NOC BLOCKED;")  )
 					{
-						sprintf(cResult,"cComment not valid");
+						sprintf(cResult,"Not allowed to unblock");
 						break;
 					}
 
@@ -1137,11 +1153,12 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(gcQuery,"UPDATE tIP"
 								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
-								",cComment='NOC blocked UNBLOCKED'"
+								",cComment=CONCAT(cComment,' NOC UNBLOCKED;')"
 								" WHERE uIP=%u",
 									guLoginClient,
 									uCtIP);
 						mysql_query(&gMysql,gcQuery);
+						sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
 					}
 					break;
 				}//Group UndoBlockAccess
@@ -1162,6 +1179,10 @@ while((field=mysql_fetch_row(res)))
 		printf(" bgcolor=#EFE7CF ");
 	printf(">");
 
+	//Allow instant feedback like cResult
+	if(!cCommentUpdated[0])
+		sprintf(cCommentUpdated,"%.255s",field[8]);
+
 	char cContainerURL[256]={""};
 	if(field[5][0])
 		sprintf(cContainerURL,"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>",field[9],field[5]);
@@ -1179,7 +1200,7 @@ while((field=mysql_fetch_row(res)))
 	"<td>%s</td>\n", //cResult
 		field[0],field[0],field[1],field[2],field[3],field[4],
 				cContainerURL,//5 with 9
-		field[6],field[7],field[8],cResult);
+		field[6],field[7],cCommentUpdated,cResult);
 	printf("</tr>");
 
 }//while()
