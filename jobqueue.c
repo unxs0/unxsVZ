@@ -7358,10 +7358,14 @@ void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
         MYSQL_ROW field;
 
 	//remove any ACCEPT then DROP
-	char cTemplate[512]={	"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
-				" /sbin/iptables -D FORWARD -s %1$s -j ACCEPT > /dev/null 2>&1;"
-				" /sbin/iptables -I FORWARD -s %1$s -j DROP;"
-				" fi;"};
+	char cTemplate[512]={	
+				"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? == 0 ];then"
+					" /sbin/iptables -D FORWARD -s %1$s -j ACCEPT > /dev/null 2>&1;"
+				" fi;"
+				"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
+					" /sbin/iptables -I FORWARD -s %1$s -j DROP;"
+				" fi;"
+					};
 
 	FILE *fp;
 	char cPrivateKey[256]={""};
