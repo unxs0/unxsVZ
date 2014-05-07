@@ -732,6 +732,16 @@ void ExttIPAuxTable(void)
 			printf("&nbsp; <input title='Change datacenter using filter uDatacenterSearch select'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Change Datacenter'>\n");
+			printf("&nbsp; <input title='Create BlockAccess jobs for all firewalls."
+				" Only operates on unavailable CustomerPremise datacenter IPs."
+				" The comment section must start with NOC blocked or unxsSnort blocked'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group BlockAccess'>\n");
+			printf("&nbsp; <input title='Create UndoBlockAccess jobs for all firewalls."
+				" Only operates on unavailable CustomerPremise datacenter IPs."
+				" The comment section must start with NOC blocked or unxsSnort blocked'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group UndoBlockAccess'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -953,6 +963,188 @@ while((field=mysql_fetch_row(res)))
 						cResult[0]=0;
 					break;
 				}//Group Change Datacenter
+
+				//Group BlockAccess
+				else if(!strcmp(gcCommand,"Group BlockAccess"))
+				{
+					MYSQL_RES *res;
+					MYSQL_ROW field;
+					char cIP[16]={""};
+					char cComment[32]={""};
+					unsigned uDatacenter=0;
+					unsigned uAvailable=0;
+					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
+					sprintf(cComment,"%.31s",ForeignKey("tIP","cComment",uCtIP));
+					sscanf(ForeignKey("tIP","uAvailable",uCtIP),"%u",&uAvailable);
+					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
+					if(!cIP[0])
+					{
+						sprintf(cResult,"data error");
+						break;
+					}
+					if(uDatacenter!=41)
+					{
+						sprintf(cResult,"wrong datacenter");
+						break;
+					}
+					if(uAvailable==1)
+					{
+						sprintf(cResult,"must not be available");
+						break;
+					}
+					if(	strncmp(cComment,"unxsSnort blocked",strlen("unxsSnort blocked")) &&
+						strncmp(cComment,"NOC blocked",strlen("NOC blocked"))  )
+					{
+						sprintf(cResult,"cComment not valid");
+						break;
+					}
+
+					//Create a BlockAccess tJob for each active tNode
+					sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
+								" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1"
+								" AND tDatacenter.cLabel!='CustomerPremise'"
+								" AND tNode.uDatacenter=tDatacenter.uDatacenter");
+					//			debug only
+					//			" AND tNode.uDatacenter=tDatacenter.uDatacenter LIMIT 1");
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.31s",mysql_error(&gMysql));
+						break;
+					}
+					res=mysql_store_result(&gMysql);
+					unsigned uCount=0;
+					while((field=mysql_fetch_row(res)))
+					{
+						unsigned uNode=0;
+						unsigned uDatacenter=0;
+						sscanf(field[0],"%u",&uNode);
+						sscanf(field[1],"%u",&uDatacenter);
+						sprintf(gcQuery,"INSERT INTO tJob"
+							" SET uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							",cLabel='BlockAccess NOC blocked'"
+							",cJobName='BlockAccess'"
+							",uDatacenter=%u,uNode=%u"
+							",cJobData='cIPv4=%.15s;'"
+							",uJobDate=UNIX_TIMESTAMP(NOW())"
+							",uJobStatus=1",
+								guCompany,
+								guLoginClient,
+								uDatacenter,
+								uNode,
+								cIP);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							sprintf(cResult,"%.31s",mysql_error(&gMysql));
+							break;
+						}
+						uCount++;
+					}//while node
+					sprintf(cResult,"%u jobs created",uCount);
+					if(uCount)
+					{
+						sprintf(gcQuery,"UPDATE tIP"
+								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								",cComment='NOC blocked BLOCKED'"
+								" WHERE uIP=%u",
+									guLoginClient,
+									uCtIP);
+						mysql_query(&gMysql,gcQuery);
+					}
+					break;
+				}//Group BlockAccess
+
+				//Group UndoBlockAccess
+				else if(!strcmp(gcCommand,"Group UndoBlockAccess"))
+				{
+					MYSQL_RES *res;
+					MYSQL_ROW field;
+					char cIP[16]={""};
+					char cComment[32]={""};
+					unsigned uDatacenter=0;
+					unsigned uAvailable=0;
+					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
+					sprintf(cComment,"%.31s",ForeignKey("tIP","cComment",uCtIP));
+					sscanf(ForeignKey("tIP","uAvailable",uCtIP),"%u",&uAvailable);
+					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
+					if(!cIP[0])
+					{
+						sprintf(cResult,"data error");
+						break;
+					}
+					if(uDatacenter!=41)
+					{
+						sprintf(cResult,"wrong datacenter");
+						break;
+					}
+					if(uAvailable==1)
+					{
+						sprintf(cResult,"must not be available");
+						break;
+					}
+					if(	strncmp(cComment,"unxsSnort blocked",strlen("unxsSnort blocked")) &&
+						strncmp(cComment,"NOC blocked",strlen("NOC blocked"))  )
+					{
+						sprintf(cResult,"cComment not valid");
+						break;
+					}
+
+					//Create an UndoBlockAccess tJob for each active tNode
+					sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
+								" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1"
+								" AND tDatacenter.cLabel!='CustomerPremise'"
+								" AND tNode.uDatacenter=tDatacenter.uDatacenter");
+					//			debug only
+					//			" AND tNode.uDatacenter=tDatacenter.uDatacenter LIMIT 1");
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.31s",mysql_error(&gMysql));
+						break;
+					}
+					res=mysql_store_result(&gMysql);
+					unsigned uCount=0;
+					while((field=mysql_fetch_row(res)))
+					{
+						unsigned uNode=0;
+						unsigned uDatacenter=0;
+						sscanf(field[0],"%u",&uNode);
+						sscanf(field[1],"%u",&uDatacenter);
+						sprintf(gcQuery,"INSERT INTO tJob"
+							" SET uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							",cLabel='UndoBlockAccess NOC unblocked'"
+							",cJobName='UndoBlockAccess'"
+							",uDatacenter=%u,uNode=%u"
+							",cJobData='cIPv4=%.15s;'"
+							",uJobDate=UNIX_TIMESTAMP(NOW())"
+							",uJobStatus=1",
+								guCompany,
+								guLoginClient,
+								uDatacenter,
+								uNode,
+								cIP);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							sprintf(cResult,"%.31s",mysql_error(&gMysql));
+							break;
+						}
+						uCount++;
+					}//while node
+					sprintf(cResult,"%u jobs created",uCount);
+					if(uCount)
+					{
+						sprintf(gcQuery,"UPDATE tIP"
+								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								",cComment='NOC blocked UNBLOCKED'"
+								" WHERE uIP=%u",
+									guLoginClient,
+									uCtIP);
+						mysql_query(&gMysql,gcQuery);
+					}
+					break;
+				}//Group UndoBlockAccess
 
 				else if(1)
 				{
