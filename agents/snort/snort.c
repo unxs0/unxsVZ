@@ -47,8 +47,8 @@ void TextConnectDb(void);
 
 #define gcLocalUser	"unxsvz"
 #define gcLocalPasswd	"wsxedc"
-#define gcLocalDb	"snort"
-void TextLocalConnectDb(void);
+#define gcLocalDb	"unxsvz"
+unsigned TextLocalConnectDb(void);
 
 unsigned guLogLevel=3;
 static FILE *gLfp=NULL;
@@ -71,6 +71,20 @@ void logfileLine(const char *cFunction,const char *cLogline)
 	fflush(gLfp);
 
 }//void logfileLine()
+
+
+#define LOCALDBIP0 "64.71.154.153"
+unsigned TextLocalConnectDb(void)
+{
+	mysql_init(&gMysqlLocal);
+	if(!mysql_real_connect(&gMysqlLocal,LOCALDBIP0,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
+	{
+		logfileLine("TextLocalConnectDb","Could not connect to db\n");
+		return(1);
+	}
+	guMysqlLocal=1;
+	return(0);
+}//void TextLocalConnectDb(void)
 
 
 int main(int iArgc, char *cArgv[])
@@ -223,13 +237,7 @@ void ProcessBarnyard(unsigned uPriority)
 
 	MYSQL_RES *resLocal;
 	MYSQL_ROW fieldLocal;
-        mysql_init(&gMysqlLocal);
-        if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
-        {
-		logfileLine("ProcessBarnyard","Could not connect to local db");
-		return;
-        }
-	guMysqlLocal=1;
+	if(TextLocalConnectDb()) exit(1);
 
 	//Check last 60 seconds event for priorty 1 events.
 	//If any get the IP or IPs to block.
@@ -406,13 +414,9 @@ void CreateGeoIPTable(void)
 		fprintf(stderr,"%s main() fopen logfile error\n",gcProgram);
 		exit(1);
 	}
-		
-        mysql_init(&gMysqlLocal);
-        if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
-        {
-		logfileLine("CreateGeoIPTable","Could not connect to local db");
-		return;
-        }
+	
+
+	if(TextLocalConnectDb()) exit(1);
 
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGeoIPCountryCode ("
 			" uGeoIPCountryCode TINYINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,"
@@ -450,12 +454,7 @@ void CreateBlockedIPTable(void)
 	}
 	logfileLine("CreateBlockedIPTable","start");
 		
-        mysql_init(&gMysqlLocal);
-        if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
-        {
-		logfileLine("CreateBlockedIPTable","Could not connect to local db");
-		return;
-        }
+	if(TextLocalConnectDb()) exit(1);
 
 	sprintf(gcQuery,"DROP TABLE tBlockedIP");
 	mysql_query(&gMysqlLocal,gcQuery);
@@ -562,14 +561,7 @@ unsigned CheckIP(const char *cIP,char *cReport)
 	MYSQL_ROW fieldLocal;
 
 	if(!guMysqlLocal)
-	{
-        	mysql_init(&gMysqlLocal);
-        	if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
-        	{
-			return(1);
-        	}
-		guMysqlLocal=1;
-	}
+		if(TextLocalConnectDb()) return(1);
 
 	sprintf(gcQuery,"SELECT cCountryCode,cCountryName,uGeoIPCountryCode"
 			" FROM tGeoIPCountryCode"
@@ -578,6 +570,8 @@ unsigned CheckIP(const char *cIP,char *cReport)
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
+		logfileLine("CheckIP","SQL error");
+		logfileLine("CheckIP",mysql_error(&gMysqlLocal));
 		return(1);
 	}
         resLocal=mysql_store_result(&gMysqlLocal);
@@ -599,12 +593,7 @@ unsigned ReportIP(const char *cIP)
 	MYSQL_ROW fieldLocal;
 
 	if(!guMysqlLocal)
-	{
-        	mysql_init(&gMysqlLocal);
-        	if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
-			return(1);
-		guMysqlLocal=1;
-	}
+		if(TextLocalConnectDb()) return(1);
 
 	sprintf(gcQuery,"SELECT cCountryCode,cCountryName,uGeoIPCountryCode"
 			" FROM tGeoIPCountryCode"
@@ -669,12 +658,7 @@ unsigned BlockIP(const char *cIP)
 	MYSQL_ROW fieldLocal;
 
 	if(!guMysqlLocal)
-	{
-        	mysql_init(&gMysqlLocal);
-        	if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
-			return(1);
-		guMysqlLocal=1;
-	}
+		if(TextLocalConnectDb()) return(1);
 
 	sprintf(gcQuery,"SELECT cCountryCode,cCountryName,uGeoIPCountryCode"
 			" FROM tGeoIPCountryCode"
@@ -694,14 +678,6 @@ unsigned BlockIP(const char *cIP)
 	//Uses login data from local.h
 	TextConnectDb();
 	guLoginClient=1;//Root user
-
-        mysql_init(&gMysqlLocal);
-        if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
-	{
-		printf("Could not connect to db\n");
-		return(1);
-	}
-	guMysqlLocal=1;
 
 	//Create a BlockAccess tJob for each active tNode
 	sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
@@ -779,13 +755,7 @@ unsigned UnBlockIP(const char *cIP)
 	TextConnectDb();
 	guLoginClient=1;//Root user
 
-        mysql_init(&gMysqlLocal);
-        if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
-	{
-		printf("Could not connect to db\n");
-		return(1);
-	}
-	guMysqlLocal=1;
+	if(TextLocalConnectDb()) return(1);
 
 	//Create a BlockAccess tJob for each active tNode
 	sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
@@ -860,12 +830,7 @@ unsigned DumpBlocked(void)
 	MYSQL_ROW fieldLocal2;
 
 	if(!guMysqlLocal)
-	{
-        	mysql_init(&gMysqlLocal);
-        	if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
-			return(1);
-		guMysqlLocal=1;
-	}
+		if(TextLocalConnectDb()) return(1);
 
 	sprintf(gcQuery,"SELECT INET_NTOA(uBlockedIP),uBlockedIP FROM tBlockedIP");
 	mysql_query(&gMysqlLocal,gcQuery);
@@ -911,12 +876,7 @@ unsigned RemoveBlocked(const char *cIP)
 	DumpBlocked();
 
 	if(!guMysqlLocal)
-	{
-        	mysql_init(&gMysqlLocal);
-        	if(!mysql_real_connect(&gMysqlLocal,NULL,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
-			return(2);
-		guMysqlLocal=1;
-	}
+		if(TextLocalConnectDb()) return(1);
 
 	sprintf(gcQuery,"DELETE FROM tBlockedIP WHERE uBlockedIP=INET_ATON('%s')",cIP);
 	mysql_query(&gMysqlLocal,gcQuery);
