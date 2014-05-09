@@ -242,7 +242,9 @@ void ExttIPCommands(pentry entries[], int x)
 				tIP("<blink>Error:</blink> Denied by permissions settings");
 			}
                 }
-		else if(!strcmp(gcCommand,"Add to Search Set") || !strcmp(gcCommand,"Create Search Set"))
+		else if(!strcmp(gcCommand,"Add to Search Set") || 
+				!strcmp(gcCommand,"Create Search Set") ||
+				!strcmp(gcCommand,"Create Firewall Set") )
                 {
 			if(guPermLevel>=9)
 			{
@@ -251,6 +253,9 @@ void ExttIPCommands(pentry entries[], int x)
 				char cQuerySection[256];
 				unsigned uLink=0;
 				unsigned uGroup=0;
+
+				if(!strcmp(gcCommand,"Create Firewall Set"))
+					sprintf(cCommentSearch,"FW%%");
 
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
 						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0)
@@ -605,7 +610,9 @@ void ExttIPButtons(void)
 				" name=gcCommand value='Add to Search Set'>");
 			printf("<p><input type=submit class=largeButton title='Apply the right panel filter to refine your existing search set"
 				" by removing set elements that match the filter settings.'"
-				" name=gcCommand value='Remove from Search Set'>\n");
+				" name=gcCommand value='Remove from Search Set'>");
+			printf("<input type=submit class=largeButton title='Create special firewall IP search set'"
+				" name=gcCommand value='Create Firewall Set'>");
 			printf("<p><input type=submit class=largeButton title='Reload current search set. Good for checking for any new status updates'"
 				" name=gcCommand value='Reload Search Set'>");
 			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"

@@ -7436,8 +7436,15 @@ void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,uns
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	char cTemplate[512]={"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? == 0 ];then"
-			" /sbin/iptables -D FORWARD -s %s -j DROP; fi;"};
+	//remove DROP but add ACCEPT for accounting
+	char cTemplate[512]={
+			"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? == 0 ];then"
+				"/sbin/iptables -D FORWARD -s %s -j DROP;"
+			" fi;"
+			"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? != 0 ];then"
+				"/sbin/iptables -I FORWARD -s %s -j ACCEPT;"
+			" fi;"
+									};
 
 	FILE *fp;
 	char cPrivateKey[256]={""};
