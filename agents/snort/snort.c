@@ -16,38 +16,36 @@ NOTES
 #include <sys/sysinfo.h>
 
 #define cSNORTLOGFILE "/var/log/unxsSnortLog"
-char gcLockfile[64]={"/tmp/snort.lock"};
+char gcLockfile[64]={"/tmp/unxsSnort.lock"};
 
 MYSQL gMysql;
 MYSQL gMysqlLocal;
 unsigned guMysqlLocal=0;
 char gcQuery[8192]={""};
-unsigned guLoginClient=1;//Root user
 char cHostname[100]={""};
 char gcProgram[32]={""};
 unsigned guNodeOwner=0;
 
 //local protos
 void logfileLine(const char *cFunction,const char *cLogline);
-void ProcessBarnyard(unsigned uPriority);
+void ProcessBarnyard2(unsigned uPriority);
 void CreateGeoIPTable(void);
 void CreateBlockedIPTable(void);
-void ForkPostAddScript(const char *cMsg);
+void ForkPostAddScript(const char *cMsg,const char *cIP);
 void ForkPostDelScript(const char *cMsg);
-unsigned CheckIP(const char *cIP,char *cReport);
-unsigned ReportIP(const char *cIP);
+unsigned CheckIP(const char *cIP,char *cReport,unsigned uIP);
+unsigned ReportIP(const char *cIP, FILE *fp);
 unsigned BlockIP(const char *cIP);
 unsigned DumpBlocked(void);
 unsigned RemoveBlocked(const char *cIP);
 unsigned UnBlockIP(const char *cIP);
-unsigned MarkBlockedVZ(const char *cIP);
-unsigned MarkUnBlockedVZ(const char *cIP);
+unsigned UpdateVZIP(const char *cIP,const char *cComment);
 //external protos
 void TextConnectDb(void);
 
 #define gcLocalUser	"unxsvz"
 #define gcLocalPasswd	"wsxedc"
-#define gcLocalDb	"unxsvz"
+#define gcLocalDb	"snort"
 unsigned TextLocalConnectDb(void);
 
 unsigned guLogLevel=3;
@@ -73,13 +71,13 @@ void logfileLine(const char *cFunction,const char *cLogline)
 }//void logfileLine()
 
 
-#define LOCALDBIP0 "64.71.154.153"
+#define LOCALDBIP0 NULL
 unsigned TextLocalConnectDb(void)
 {
 	mysql_init(&gMysqlLocal);
 	if(!mysql_real_connect(&gMysqlLocal,LOCALDBIP0,gcLocalUser,gcLocalPasswd,gcLocalDb,0,NULL,0))
 	{
-		logfileLine("TextLocalConnectDb","Could not connect to db\n");
+		logfileLine("TextLocalConnectDb","Could not connect to db");
 		return(1);
 	}
 	guMysqlLocal=1;
@@ -128,9 +126,9 @@ int main(int iArgc, char *cArgv[])
 		}
 
 		//uPriority critically important!
-		ProcessBarnyard(1);
-		ProcessBarnyard(2);//requires tGeoIP tables
-		ProcessBarnyard(3);//requires tGeoIP tables
+		ProcessBarnyard2(1);
+		ProcessBarnyard2(2);
+		ProcessBarnyard2(3);
 
 		if(rmdir(gcLockfile))
 		{
@@ -162,7 +160,7 @@ int main(int iArgc, char *cArgv[])
 			}
 			if(!strcmp(cArgv[i],"--report-ip") && iArgc==(i+2))
 			{
-				ReportIP(cArgv[i+1]);
+				ReportIP(cArgv[i+1],stdout);
 				return(0);
 			}
 			if(!strcmp(cArgv[i],"--dump-blocked"))
@@ -199,7 +197,7 @@ int main(int iArgc, char *cArgv[])
 				if(strchr(cArgv[i+1],'.'))
 				{
 					char cReport[256]={""};
-					unsigned uRetVal=CheckIP(cArgv[i+1],cReport);
+					unsigned uRetVal=CheckIP(cArgv[i+1],cReport,0);
 					if(!uRetVal)
 						printf("%s %s\n",cArgv[i+1],cReport);
 					else
@@ -217,194 +215,6 @@ int main(int iArgc, char *cArgv[])
 	//should never reach here
 	return(1);
 }//main()
-
-
-void ProcessBarnyard(unsigned uPriority)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	logfileLine("ProcessBarnyard","start");
-	if(gethostname(cHostname,99)!=0)
-	{
-		logfileLine("ProcessNodeOVZ","gethostname() failed");
-		exit(1);
-	}
-
-	//Uses login data from local.h
-	TextConnectDb();
-	guLoginClient=1;//Root user
-
-	MYSQL_RES *resLocal;
-	MYSQL_ROW fieldLocal;
-	if(TextLocalConnectDb()) exit(1);
-
-	//Check last 60 seconds event for priorty 1 events.
-	//If any get the IP or IPs to block.
-	sprintf(gcQuery,"SELECT DISTINCT INET_NTOA(iphdr.ip_src),iphdr.ip_src FROM event,iphdr,signature"
-			" WHERE event.cid=iphdr.cid"
-			" AND event.signature=signature.sig_id"
-			" AND iphdr.ip_src NOT IN (SELECT uBlockedIP FROM tBlockedIP)"
-			" AND event.timestamp>(NOW()-61)"
-			" AND signature.sig_priority=%u LIMIT 16",uPriority);
-	mysql_query(&gMysqlLocal,gcQuery);
-	if(mysql_errno(&gMysqlLocal))
-	{
-		logfileLine("ProcessBarnyard",mysql_error(&gMysqlLocal));
-		mysql_close(&gMysqlLocal);
-		return;
-	}
-        resLocal=mysql_store_result(&gMysqlLocal);
-	register unsigned uIndex=0;
-	char cIP[16][16]={"","","","","","","","","","","","","","","",""};
-	unsigned uIP[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-	while((fieldLocal=mysql_fetch_row(resLocal)))
-	{
-		if(uIndex>15) break;
-		sprintf(cIP[uIndex],"%.15s",fieldLocal[0]);
-		sscanf(fieldLocal[1],"%u",uIP+uIndex);
-		logfileLine("ProcessBarnyard",cIP[uIndex]);
-		uIndex++;
-	}
-	mysql_free_result(resLocal);
-
-	//Create a BlockAccess tJob for each active tNode
-	sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
-			" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1"
-			" AND tDatacenter.cLabel!='CustomerPremise'"
-			" AND tNode.uDatacenter=tDatacenter.uDatacenter");
-	//		debug only
-	//		" AND tNode.uDatacenter=tDatacenter.uDatacenter LIMIT 1");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessBarnyard",mysql_error(&gMysql));
-		mysql_close(&gMysql);
-		return;
-	}
-        res=mysql_store_result(&gMysql);
-	unsigned uCount=0;
-	unsigned uNode=0;
-	unsigned uDatacenter=0;
-	while((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u",&uNode);
-		sscanf(field[1],"%u",&uDatacenter);
-		register unsigned uIndex2=0;
-		for(uIndex2=0;uIndex2<uIndex;uIndex2++)
-		{
-			unsigned uGeoIPCountryCode=0;
-			sprintf(gcQuery,"SELECT uGeoIPCountryCode FROM tGeoIP WHERE uEndIP>=%u LIMIT 1",uIP[uIndex2]);
-			mysql_query(&gMysqlLocal,gcQuery);
-			if(mysql_errno(&gMysqlLocal))
-			{
-				logfileLine("ProcessBarnyard-s1",mysql_error(&gMysqlLocal));
-				mysql_free_result(res);
-				mysql_close(&gMysqlLocal);
-				mysql_close(&gMysql);
-				return;
-			}
-        		resLocal=mysql_store_result(&gMysqlLocal);
-			if((fieldLocal=mysql_fetch_row(resLocal)))
-			{
-				sscanf(fieldLocal[0],"%u",&uGeoIPCountryCode);
-				//low priority events that are fom US IPs are ignored at this time
-				if(uPriority>1 && uGeoIPCountryCode==33)
-				{
-					//logfileLine("ProcessBarnyard-continue",cIP[uIndex2]);
-					//logfileLine("ProcessBarnyard-continue",fieldLocal[0]);
-					//sprintf(gcQuery,"%u",uIP[uIndex2]);
-					//logfileLine("ProcessBarnyard-continue",gcQuery);
-					cIP[uIndex2][0]=0;//mark as not to be used for email below.
-					continue;
-				}
-			}
-
-			if(uPriority>2)
-				sprintf(gcQuery,"INSERT INTO tJob"
-					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-					",cLabel='TestBlockAccess unxsSnort %u'"
-					",cJobName='TestBlockAccess'"
-					",uDatacenter=%u,uNode=%u"
-					",cJobData='cIPv4=%.15s;\nuGeoIPCountryCode=%u;\nuPriority=%u;'"
-					",uJobDate=UNIX_TIMESTAMP(NOW())"
-					",uJobStatus=1",
-						uIndex2,
-						uDatacenter,
-						uNode,
-						cIP[uIndex2],uGeoIPCountryCode,uPriority);
-			else
-				sprintf(gcQuery,"INSERT INTO tJob"
-					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-					",cLabel='BlockAccess unxsSnort %u'"
-					",cJobName='BlockAccess'"
-					",uDatacenter=%u,uNode=%u"
-					",cJobData='cIPv4=%.15s;\nuGeoIPCountryCode=%u;\nuPriority=%u;'"
-					",uJobDate=UNIX_TIMESTAMP(NOW())"
-					",uJobStatus=1",
-						uIndex2,
-						uDatacenter,
-						uNode,
-						cIP[uIndex2],uGeoIPCountryCode,uPriority);
-			//debug only
-			//printf("%s\n",gcQuery);
-			//continue;
-			//return;
-
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				logfileLine("ProcessBarnyard-s2",mysql_error(&gMysql));
-				mysql_close(&gMysql);
-				return;
-			}
-			uCount++;
-			sprintf(gcQuery,"INSERT INTO tBlockedIP SET uBlockedIP=INET_ATON('%s')",cIP[uIndex2]);
-			mysql_query(&gMysqlLocal,gcQuery);
-			//debug only
-			//if(mysql_errno(&gMysqlLocal))
-			//	logfileLine("ProcessBarnyard",mysql_error(&gMysqlLocal));
-		}//for each IP
-	}//while for each server
-	if(uCount)
-	{
-		sprintf(gcQuery,"Created %u tJob entries",uCount);
-		logfileLine("ProcessBarnyard",gcQuery);
-		char cMsg[1024]={""};
-		unsigned uFirst=1;
-		register unsigned uIndex2;
-		//sprintf(cMsg,"%s %s %s %s %s %s %s %u",cIP[0],cIP[1],cIP[2],cIP[3],cIP[4],cIP[5],cIP[6],uIndex);
-		//logfileLine("ProcessBarnyard-dbg1",cMsg);
-		cMsg[0]=0;
-		if(uPriority>2)
-			sprintf(cMsg,"TESTMODE:");
-		for(uIndex2=0;uIndex2<uIndex;uIndex2++)
-		{
-			if(!cIP[uIndex2][0]) continue;
-			if(!uFirst)
-				strncat(cMsg,",",1);
-			strncat(cMsg,cIP[uIndex2],15);
-
-			char cReport[64]={"-No country match"};
-			if(!CheckIP(cIP[uIndex2],cReport))
-				strncat(cMsg,"-",1);
-			strncat(cMsg,cReport,64);
-
-			//logfileLine("ProcessBarnyard-dbg2",cMsg);
-			uFirst=0;
-		}
-		if(cMsg[strlen(cMsg)-1]==',') cMsg[strlen(cMsg)-1]=0;
-		logfileLine("ProcessBarnyard",cMsg);
-		ForkPostAddScript(cMsg);
-	}
-	//debug only
-	//ForkPostAddScript("testing,123,testing,123");
-	mysql_free_result(res);
-	mysql_close(&gMysql);
-	mysql_close(&gMysqlLocal);
-	logfileLine("ProcessBarnyard","end");
-
-}//void ProcessBarnyard(unsigned uPriority)
 
 
 void CreateGeoIPTable(void)
@@ -484,13 +294,29 @@ void CreateBlockedIPTable(void)
 }//void CreateBlockedIPTable(void)
 
 
-void ForkPostAddScript(const char *cMsg)
+void ForkPostAddScript(const char *cMsg,const char *cIP)
 {
 	pid_t pidChild;
 
 	pidChild=fork();
 	if(pidChild!=0)
 		return;
+
+	char cFile[100]={""};
+	FILE *fp;
+	sprintf(cFile,"/tmp/%.15s.unxsSnort.report",cIP);
+	if((fp=fopen(cFile,"w"))!=NULL)
+	{
+		guMysqlLocal=0;
+		if(ReportIP(cIP,fp))
+			logfileLine("ForkPostAddScript","ReportIP() error");
+		fclose(fp);
+	}
+	else
+	{
+		logfileLine("ForkPostAddScript","could not open file");
+		logfileLine("ForkPostAddScript",cFile);
+	}
 
 	struct stat statInfo;
 	char gcQuery[1024]={""};
@@ -506,7 +332,7 @@ void ForkPostAddScript(const char *cMsg)
 			logfileLine("ForkPostAddScript","script not chmod 500");
 			exit(0);
 		}
-		sprintf(gcQuery,"/usr/sbin/unxsSnortPostAddJob.sh \"%.768s\"",cMsg);
+		sprintf(gcQuery,"/usr/sbin/unxsSnortPostAddJob.sh \"%.768s\" %s",cMsg,cFile);
 		if(!system(gcQuery))
 			logfileLine("ForkPostAddScript","ran ok");
 		else
@@ -516,7 +342,7 @@ void ForkPostAddScript(const char *cMsg)
 
 	exit(0);
 
-}//void ForkPostAddScript(char *cMsg)
+}//void ForkPostAddScript()
 
 
 void ForkPostUndoScript(const char *cMsg)
@@ -554,7 +380,7 @@ void ForkPostUndoScript(const char *cMsg)
 }//void ForkPostUndoScript(char *cMsg)
 
 
-unsigned CheckIP(const char *cIP,char *cReport)
+unsigned CheckIP(const char *cIP,char *cReport,unsigned uIP)
 {
 	unsigned uRetVal=0;
 	MYSQL_RES *resLocal;
@@ -563,10 +389,16 @@ unsigned CheckIP(const char *cIP,char *cReport)
 	if(!guMysqlLocal)
 		if(TextLocalConnectDb()) return(1);
 
-	sprintf(gcQuery,"SELECT cCountryCode,cCountryName,uGeoIPCountryCode"
+	if(!uIP && cIP[0])
+		sprintf(gcQuery,"SELECT cCountryCode,cCountryName,uGeoIPCountryCode"
 			" FROM tGeoIPCountryCode"
 			" WHERE uGeoIPCountryCode="
 			"(SELECT uGeoIPCountryCode FROM tGeoIP WHERE uEndIP>=INET_ATON('%s') LIMIT 1)",cIP);
+	else
+		sprintf(gcQuery,"SELECT cCountryCode,cCountryName,uGeoIPCountryCode"
+			" FROM tGeoIPCountryCode"
+			" WHERE uGeoIPCountryCode="
+			"(SELECT uGeoIPCountryCode FROM tGeoIP WHERE uEndIP>=%u LIMIT 1)",uIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
@@ -586,7 +418,7 @@ unsigned CheckIP(const char *cIP,char *cReport)
 }//unsigned CheckIP()
 
 
-unsigned ReportIP(const char *cIP)
+unsigned ReportIP(const char *cIP, FILE *fp)
 {
 	unsigned uRetVal=0;
 	MYSQL_RES *resLocal;
@@ -595,54 +427,83 @@ unsigned ReportIP(const char *cIP)
 	if(!guMysqlLocal)
 		if(TextLocalConnectDb()) return(1);
 
+	//country info
 	sprintf(gcQuery,"SELECT cCountryCode,cCountryName,uGeoIPCountryCode"
 			" FROM tGeoIPCountryCode"
 			" WHERE uGeoIPCountryCode="
 			"(SELECT uGeoIPCountryCode FROM tGeoIP WHERE uEndIP>=INET_ATON('%s') LIMIT 1)",cIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
+	{
+		logfileLine("ReportIP",mysql_error(&gMysqlLocal));
 		return(1);
+	}
         resLocal=mysql_store_result(&gMysqlLocal);
 	if((fieldLocal=mysql_fetch_row(resLocal)))
-		printf("%s %.2s(%.10s) %.50s\n",cIP,fieldLocal[0],fieldLocal[2],fieldLocal[1]);
-	else
-		return(uRetVal++);	
+		fprintf(fp,"%s %s(%s) %s\n\n",cIP,fieldLocal[0],fieldLocal[2],fieldLocal[1]);
 
 	//list event types
-	printf("\n24 hour type of events\n");
-	sprintf(gcQuery,"SELECT DISTINCT signature.sig_name,signature.sig_priority"
+	fprintf(fp,"48hr: event name, priority, count\n");
+	sprintf(gcQuery,"SELECT signature.sig_name,signature.sig_priority,COUNT(signature.sig_name)"
 			" FROM event,iphdr,signature"
-			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400)"
-			" AND iphdr.ip_src=INET_ATON('%s') ORDER BY event.timestamp DESC",cIP);
+			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400*2)"
+			" AND iphdr.ip_src=INET_ATON('%s') GROUP BY signature.sig_name ORDER BY event.timestamp DESC",cIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
+	{
+		logfileLine("ReportIP",mysql_error(&gMysqlLocal));
 		return(1);
+	}
         resLocal=mysql_store_result(&gMysqlLocal);
 	unsigned uCount=0;
 	while((fieldLocal=mysql_fetch_row(resLocal)))
 	{
 		uCount++;
-		printf("%s\t%s\n",fieldLocal[0],fieldLocal[1]);
+		fprintf(fp,"%s,%s,%s\n",fieldLocal[0],fieldLocal[1],fieldLocal[2]);
 	}
-	printf("uCount=%u\n",uCount);
+	fprintf(fp,"uCount=%u\n",uCount);
 
-	//24 hour report of all events for given IP
-	printf("\n24 hour report of all events\n");
-	sprintf(gcQuery,"SELECT signature.sig_name,event.timestamp"
+	//48 hour report of all events by dst ip 
+	fprintf(fp,"\n48hr: event dst IP, count\n");
+	sprintf(gcQuery,"SELECT INET_NTOA(iphdr.ip_dst),COUNT(iphdr.ip_dst)"
 			" FROM event,iphdr,signature"
-			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400)"
-			" AND iphdr.ip_src=INET_ATON('%s') ORDER BY event.timestamp DESC",cIP);
+			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400*2)"
+			" AND iphdr.ip_src=INET_ATON('%s') GROUP BY iphdr.ip_dst ORDER BY event.timestamp DESC",cIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
+	{
+		logfileLine("ReportIP",mysql_error(&gMysqlLocal));
 		return(1);
+	}
         resLocal=mysql_store_result(&gMysqlLocal);
 	uCount=0;
 	while((fieldLocal=mysql_fetch_row(resLocal)))
 	{
 		uCount++;
-		printf("%s\t%s\n",fieldLocal[0],fieldLocal[1]);
+		fprintf(fp,"%s,%s\n",fieldLocal[0],fieldLocal[1]);
 	}
-	printf("uCount=%u\n",uCount);
+	fprintf(fp,"uCount=%u\n",uCount);
+
+	//48 hour report of all events for given IP
+	fprintf(fp,"\n48hr: timestamp, event, dst IP\n");
+	sprintf(gcQuery,"SELECT event.timestamp,signature.sig_name,INET_NTOA(iphdr.ip_dst)"
+			" FROM event,iphdr,signature"
+			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400*2)"
+			" AND iphdr.ip_src=INET_ATON('%s') ORDER BY event.timestamp DESC",cIP);
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+	{
+		logfileLine("ReportIP",mysql_error(&gMysqlLocal));
+		return(1);
+	}
+        resLocal=mysql_store_result(&gMysqlLocal);
+	uCount=0;
+	while((fieldLocal=mysql_fetch_row(resLocal)))
+	{
+		uCount++;
+		fprintf(fp,"%s,%s,%s\n",fieldLocal[0],fieldLocal[1],fieldLocal[2]);
+	}
+	fprintf(fp,"uCount=%u\n",uCount);
 
 	mysql_free_result(resLocal);
 	return(uRetVal);
@@ -677,7 +538,6 @@ unsigned BlockIP(const char *cIP)
 
 	//Uses login data from local.h
 	TextConnectDb();
-	guLoginClient=1;//Root user
 
 	//Create a BlockAccess tJob for each active tNode
 	sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
@@ -721,8 +581,8 @@ unsigned BlockIP(const char *cIP)
 		uCount++;
 
 		sprintf(gcQuery,"INSERT INTO tBlockedIP SET uBlockedIP=INET_ATON('%s')",cIP);
-		MarkBlockedVZ(cIP);
 		mysql_query(&gMysqlLocal,gcQuery);
+		UpdateVZIP(cIP,"unxsSnort --block-ip;");
 
 	}//while each server
 
@@ -733,7 +593,7 @@ unsigned BlockIP(const char *cIP)
 	}
 	if(uCount && cCountryInfo[0])
 	{
-		ForkPostAddScript(cCountryInfo);
+		ForkPostAddScript(cCountryInfo,cIP);
 	}
 	logfileLine("BlockIP",cCountryInfo);
 
@@ -753,7 +613,6 @@ unsigned UnBlockIP(const char *cIP)
 
 	//Uses login data from local.h
 	TextConnectDb();
-	guLoginClient=1;//Root user
 
 	if(TextLocalConnectDb()) return(1);
 
@@ -800,7 +659,7 @@ unsigned UnBlockIP(const char *cIP)
 
 		sprintf(gcQuery,"DELETE FROM tBlockedIP WHERE uBlockedIP=INET_ATON('%s')",cIP);
 		mysql_query(&gMysqlLocal,gcQuery);
-		MarkUnBlockedVZ(cIP);
+		UpdateVZIP(cIP,"unxsSnort --unblock-ip;");
 
 	}//while each server
 
@@ -893,7 +752,7 @@ unsigned RemoveBlocked(const char *cIP)
 }//unsigned RemoveBlocked(chatr *cIP)
 
 
-unsigned MarkBlockedVZ(const char *cIP)
+unsigned UpdateVZIP(const char *cIP,const char *cComment)
 {
 	//gMysql must be ready
         MYSQL_RES *res;
@@ -902,24 +761,25 @@ unsigned MarkBlockedVZ(const char *cIP)
 	sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
 				" cLabel='%s'"
 				" AND uDatacenter=41"//CustomerPremise magic number fix ASAP
-				" AND cComment='unxsSnort blocked'"
-				" AND uAvailable=0 LIMIT 1",cIP);
+				" AND cComment='FW %s'"
+				" AND uAvailable=0 LIMIT 1",cIP,cComment);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("MarkBlockedVZ1",mysql_error(&gMysql));
+		logfileLine("UpdateVZIP-1",mysql_error(&gMysql));
 		return(1);
 	}
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
 		sprintf(gcQuery,"UPDATE tIP"
-				" SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
-				" WHERE uIP=%s",field[0]);
+				" SET uModBy=2,uModDate=UNIX_TIMESTAMP(NOW()),"
+				"cComment=CONCAT(cComment,' %s')"
+				" WHERE uIP=%s",cComment,field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine("MarkBlockedVZ2",mysql_error(&gMysql));
+			logfileLine("UpdateVZIP-2",mysql_error(&gMysql));
 			mysql_free_result(res);
 			return(1);
 		}
@@ -928,38 +788,189 @@ unsigned MarkBlockedVZ(const char *cIP)
 	{
 		sprintf(gcQuery,"INSERT INTO tIP"
 				" SET cLabel='%s'"
-				",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-				",cComment='unxsSnort blocked'"
+				",uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				",cComment='FW %s'"
 				",uDatacenter=41"//CustomerPremise magic number fix ASAP
-				",uAvailable=0",
-							cIP);
+				",uAvailable=0",cIP,cComment);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine("MarkBlockedVZ3",mysql_error(&gMysql));
+			logfileLine("UpdateVZIP-3",mysql_error(&gMysql));
 			mysql_free_result(res);
 			return(1);
 		}
 	}
 	mysql_free_result(res);
 	return(0);
-}//unsigned MarkBlockedVZ(char *cIP)
+}//unsigned UpdateVZIP()
 
 
-unsigned MarkUnBlockedVZ(const char *cIP)
+void ProcessBarnyard2(unsigned uPriority)
 {
-	//gMysql must be ready
-	sprintf(gcQuery,"DELETE FROM tIP WHERE"
-				" cLabel='%s'"
-				" AND uDatacenter=41"//CustomerPremise magic number fix ASAP
-				" AND cComment='unxsSnort blocked'"
-				" AND uAvailable=0 LIMIT 1",cIP);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
+	logfileLine("ProcessBarnyard2","start");
+	if(gethostname(cHostname,99)!=0)
 	{
-		logfileLine("MarkUnBlockedVZ",mysql_error(&gMysql));
-		return(1);
+		logfileLine("ProcessBarnyard2","gethostname() failed");
+		exit(1);
 	}
 
-	return(0);
-}//unsigned MarkUnBlockedVZ(char *cIP)
+	//Uses login data from local.h
+	//unxsVZ connection
+        MYSQL_RES *res=NULL;
+        MYSQL_ROW field;
+	TextConnectDb();
+
+	//snort connection
+	MYSQL_RES *resLocal=NULL;
+	MYSQL_ROW fieldLocal;
+	if(TextLocalConnectDb()) exit(1);
+
+	//Check last 60 seconds event for priorty 1 events.
+	//If any get the IP or IPs to block.
+	sprintf(gcQuery,"SELECT DISTINCT INET_NTOA(iphdr.ip_src),iphdr.ip_src FROM event,iphdr,signature"
+			" WHERE event.cid=iphdr.cid"
+			" AND event.signature=signature.sig_id"
+			" AND iphdr.ip_src NOT IN (SELECT uBlockedIP FROM tBlockedIP)"
+			" AND event.timestamp>(NOW()-61)"
+			" AND signature.sig_priority=%u LIMIT 17",uPriority);
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+	{
+		logfileLine("ProcessBarnyard2-s0",mysql_error(&gMysqlLocal));
+		goto ProcessBarnyard2_exit0;
+		
+	}
+        resLocal=mysql_store_result(&gMysqlLocal);
+	unsigned uEventCount=0;
+	while((fieldLocal=mysql_fetch_row(resLocal)))
+	{
+		uEventCount++;
+		if(uEventCount>16)
+		{
+			logfileLine("ProcessBarnyard2","Some events ignored: Went over 16");
+			break;
+		}
+
+		unsigned uIP=0;//src ip number
+		char cIP[16]={""};
+		sscanf(fieldLocal[1],"%u",&uIP);
+		sprintf(cIP,"%.15s",fieldLocal[0]);
+
+		//Get country info
+		char cGeoIPCountryInfo[64]={"no country info available"};
+		CheckIP("",cGeoIPCountryInfo,uIP);
+
+
+		//Check to see if we should escalate priority
+		if(uPriority>1 && uIP)
+		{
+			MYSQL_RES *resLocal=NULL;
+			MYSQL_ROW fieldLocal;
+
+			//escalate based on alerts from same IP from more than one target dst IP in last 48 hours.
+			sprintf(gcQuery,"SELECT COUNT(iphdr.ip_dst)"
+			" FROM event,iphdr,signature"
+			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400*2)"
+			" AND iphdr.ip_src=%u GROUP BY iphdr.ip_dst ORDER BY event.timestamp DESC",uIP);
+			mysql_query(&gMysqlLocal,gcQuery);
+			if(mysql_errno(&gMysqlLocal))
+				logfileLine("ProcessBarnyard2-s3",mysql_error(&gMysqlLocal));
+		
+        		resLocal=mysql_store_result(&gMysqlLocal);
+			unsigned uDstIPCount=0;
+			if((fieldLocal=mysql_fetch_row(resLocal)))
+				sscanf(fieldLocal[0],"%u",&uDstIPCount);
+			if(uDstIPCount>1)
+				uPriority=1;
+			if(resLocal!=NULL)
+				mysql_free_result(resLocal);
+		}
+
+		//Create a tJob entry for each active tNode
+		sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
+				" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1"
+				" AND tDatacenter.cLabel!='CustomerPremise'"
+				" AND tNode.uDatacenter=tDatacenter.uDatacenter");
+		//		debug only
+		//		" AND tNode.uDatacenter=tDatacenter.uDatacenter LIMIT 1");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessBarnyard2-s1",mysql_error(&gMysql));
+			goto ProcessBarnyard2_exit1;
+		}
+		res=mysql_store_result(&gMysql);
+		unsigned uCount=0;
+		unsigned uNode=0;
+		unsigned uDatacenter=0;
+		while((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uNode);
+			sscanf(field[1],"%u",&uDatacenter);
+
+			if(uPriority>2)
+				sprintf(gcQuery,"INSERT INTO tJob"
+					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+					",cLabel='TestBlockAccess unxsSnort'"
+					",cJobName='AllowAllAccess'"
+					",uDatacenter=%u,uNode=%u"
+					",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u;'"
+					",uJobDate=UNIX_TIMESTAMP(NOW())"
+					",uJobStatus=1",
+						uDatacenter,
+						uNode,
+						cIP,cGeoIPCountryInfo,uPriority);
+			else
+				sprintf(gcQuery,"INSERT INTO tJob"
+					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+					",cLabel='BlockAccess unxsSnort'"
+					",cJobName='BlockAccess'"
+					",uDatacenter=%u,uNode=%u"
+					",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u;'"
+					",uJobDate=UNIX_TIMESTAMP(NOW())"
+					",uJobStatus=1",
+						uDatacenter,
+						uNode,
+						cIP,cGeoIPCountryInfo,uPriority);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessBarnyard2-s2",mysql_error(&gMysql));
+				goto ProcessBarnyard2_exit2;
+			}
+			uCount++;
+		}//while for each server job
+
+		//Mark as processed. No need to process anymore. We need to add date and expiration fields.
+		sprintf(gcQuery,"INSERT INTO tBlockedIP SET uBlockedIP=INET_ATON('%s')",cIP);
+		mysql_query(&gMysqlLocal,gcQuery);
+
+		//We leverage the already existing unxsVZ tIP for now
+		if(uPriority>2)
+			UpdateVZIP(cIP,"unxsSnort testing;");
+		else
+			UpdateVZIP(cIP,"unxsSnort blocked;");
+
+		//Send email etc. one for each IP
+		char cMsg[100]={""};
+		sprintf(cMsg,"%.15s %.64s",cIP,cGeoIPCountryInfo);
+		ForkPostAddScript(cMsg,cIP);
+
+		//debug only
+		logfileLine("ProcessBarnyard2",cIP);
+		logfileLine("ProcessBarnyard2",cGeoIPCountryInfo);
+
+	}//while each event
+
+ProcessBarnyard2_exit2:
+	if(res!=NULL)
+		mysql_free_result(res);
+ProcessBarnyard2_exit1:
+	if(resLocal!=NULL)
+		mysql_free_result(resLocal);
+ProcessBarnyard2_exit0:
+	mysql_close(&gMysql);
+	mysql_close(&gMysqlLocal);
+	logfileLine("ProcessBarnyard2","end");
+
+}//void ProcessBarnyard2(unsigned uPriority)
