@@ -1200,6 +1200,18 @@ while((field=mysql_fetch_row(res)))
 					if((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"%s(%s) %s",field[0],field[2],field[1]);
+						sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
+						if(!strstr(cCommentUpdated," CN="))
+						{
+							sprintf(gcQuery,"UPDATE tIP"
+								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								",cComment=CONCAT(cComment,' CN=%s;')"
+								" WHERE uIP=%u",
+									guLoginClient,field[1],
+									uCtIP);
+							mysql_query(&gMysql,gcQuery);
+							sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
+						}
 						break;
 					}
 					sprintf(cResult,"no country info available");
