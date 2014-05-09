@@ -776,7 +776,7 @@ void ExttIPAuxTable(void)
 					" LEFT JOIN tDatacenter ON tIP.uDatacenter=tDatacenter.uDatacenter"
 					" LEFT JOIN tNode ON tContainer.uNode=tNode.uNode"
 					" LEFT JOIN tClient ON tIP.uOwner=tClient.uClient"
-					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u)",uGroup);
+					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u) ORDER BY tIP.uIP DESC",uGroup);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
