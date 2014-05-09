@@ -6000,8 +6000,8 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
         MYSQL_ROW field;
 
 	char cTemplate[512]={
-				"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? != 0 ];then"
-					" /sbin/iptables -I FORWARD -s %s -p tcp -m tcp --dport 443 -j ACCEPT;"
+				"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
+					" /sbin/iptables -I FORWARD -s %1$s -p tcp -m tcp --dport 443 -j ACCEPT;"
 				" fi;"
 					};
 
@@ -7444,11 +7444,11 @@ void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,uns
 
 	//remove DROP but add ACCEPT for accounting
 	char cTemplate[512]={
-			"/sbin/iptables -L -n | grep -w %s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
-				" /sbin/iptables -D FORWARD -s %s -j DROP;"
+			"/sbin/iptables -L -n | grep -w %1$s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
+				" /sbin/iptables -D FORWARD -s %1$s -j DROP;"
 			" fi;"
-			"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? != 0 ];then"
-				" /sbin/iptables -I FORWARD -s %s -j ACCEPT;"
+			"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
+				" /sbin/iptables -I FORWARD -s %1$s -j ACCEPT;"
 			" fi;"
 									};
 
