@@ -844,6 +844,8 @@ void ProcessBarnyard2(unsigned uPriority)
 	unsigned uEventCount=0;
 	while((fieldLocal=mysql_fetch_row(resLocal)))
 	{
+		unsigned uTmpPriority=0;
+
 		uEventCount++;
 		if(uEventCount>16)
 		{
@@ -865,25 +867,28 @@ void ProcessBarnyard2(unsigned uPriority)
 		if(uPriority>1 && uIP)
 		{
 			MYSQL_RES *resLocal=NULL;
-			MYSQL_ROW fieldLocal;
 
 			//escalate based on alerts from same IP from more than one target dst IP in last 48 hours.
-			sprintf(gcQuery,"SELECT COUNT(iphdr.ip_dst)"
+			sprintf(gcQuery,"SELECT DISTINCT iphdr.ip_dst"
 			" FROM event,iphdr,signature"
 			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400*2)"
-			" AND iphdr.ip_src=%u GROUP BY iphdr.ip_dst ORDER BY event.timestamp DESC",uIP);
+			" AND iphdr.ip_src=%u",uIP);
 			mysql_query(&gMysqlLocal,gcQuery);
 			if(mysql_errno(&gMysqlLocal))
 				logfileLine("ProcessBarnyard2-s3",mysql_error(&gMysqlLocal));
 		
         		resLocal=mysql_store_result(&gMysqlLocal);
 			unsigned uDstIPCount=0;
-			if((fieldLocal=mysql_fetch_row(resLocal)))
-				sscanf(fieldLocal[0],"%u",&uDstIPCount);
-			if(uDstIPCount>1)
-				uPriority=1;
+			uDstIPCount=mysql_num_rows(resLocal);
 			if(resLocal!=NULL)
 				mysql_free_result(resLocal);
+			if(uDstIPCount>1)
+			{
+				uTmpPriority=1;
+				char cMsg[64]={""};
+				sprintf(cMsg,"priority escalation %u",uDstIPCount);
+				logfileLine("ProcessBarnyard2",cMsg);
+			}
 		}
 
 		//Create a tJob entry for each active tNode
@@ -908,6 +913,7 @@ void ProcessBarnyard2(unsigned uPriority)
 			sscanf(field[0],"%u",&uNode);
 			sscanf(field[1],"%u",&uDatacenter);
 
+			//if(uPriority>2 && !uTmpPriority)
 			if(uPriority>2)
 				sprintf(gcQuery,"INSERT INTO tJob"
 					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
@@ -946,6 +952,7 @@ void ProcessBarnyard2(unsigned uPriority)
 		mysql_query(&gMysqlLocal,gcQuery);
 
 		//We leverage the already existing unxsVZ tIP for now
+		//if(uPriority>2 && !uTmpPriority)
 		if(uPriority>2)
 			UpdateVZIP(cIP,"unxsSnort testing;");
 		else
