@@ -5999,8 +5999,11 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	char cTemplate[512]={"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? != 0 ];then"
-			" /sbin/iptables -I FORWARD -s %s -p tcp -m tcp --dport 443 -j ACCEPT; fi;"};
+	char cTemplate[512]={
+				"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? != 0 ];then"
+					" /sbin/iptables -I FORWARD -s %s -p tcp -m tcp --dport 443 -j ACCEPT;"
+				" fi;"
+					};
 
 	FILE *fp;
 	char cPrivateKey[256]={""};
@@ -6069,8 +6072,11 @@ void DenyAccess(unsigned uJob,const char *cJobData)
 	}
 
 	//Test fixed rule for now
-	sprintf(gcQuery,"/sbin/iptables -L -n | grep %1$.15s > /dev/null; if [ $? == 0 ];then"
-			" /sbin/iptables -D FORWARD -s %1$.15s -p tcp -m tcp --dport 443 -j ACCEPT; fi;",cIPv4);
+	sprintf(gcQuery,
+				" /sbin/iptables -L -n | grep %1$.15s > /dev/null; if [ $? == 0 ];then"
+					" /sbin/iptables -D FORWARD -s %1$.15s -p tcp -m tcp --dport 443 -j ACCEPT;"
+				" fi;"
+					,cIPv4);
 	if(system(gcQuery))
 		logfileLine("DenyAccess","iptables del command failed but ignored");
 
@@ -7359,7 +7365,7 @@ void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 
 	//remove any ACCEPT then DROP
 	char cTemplate[512]={	
-				"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? == 0 ];then"
+				"/sbin/iptables -L -n | grep -w %1$s | grep -w ACCEPT > /dev/null; if [ $? == 0 ];then"
 					" /sbin/iptables -D FORWARD -s %1$s -j ACCEPT > /dev/null 2>&1;"
 				" fi;"
 				"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
@@ -7438,11 +7444,11 @@ void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,uns
 
 	//remove DROP but add ACCEPT for accounting
 	char cTemplate[512]={
-			"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? == 0 ];then"
-				"/sbin/iptables -D FORWARD -s %s -j DROP;"
+			"/sbin/iptables -L -n | grep -w %s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
+				" /sbin/iptables -D FORWARD -s %s -j DROP;"
 			" fi;"
 			"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? != 0 ];then"
-				"/sbin/iptables -I FORWARD -s %s -j ACCEPT;"
+				" /sbin/iptables -I FORWARD -s %s -j ACCEPT;"
 			" fi;"
 									};
 
@@ -7525,8 +7531,15 @@ void AllowAllAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsi
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	char cTemplate[512]={"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? != 0 ];then"
-			" /sbin/iptables -I FORWARD -s %s -j ACCEPT; fi;"};
+	//add ACCEPT but try to remove DROP if it exists
+	char cTemplate[512]={
+				"/sbin/iptables -L -n | grep -w %s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
+					" /sbin/iptables -D FORWARD -s %s -j DROP;"
+				" fi;"
+				"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? != 0 ];then"
+					" /sbin/iptables -I FORWARD -s %s -j ACCEPT;"
+				" fi;"
+							};
 
 	FILE *fp;
 	char cPrivateKey[256]={""};
