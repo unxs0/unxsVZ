@@ -7533,11 +7533,11 @@ void AllowAllAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsi
 
 	//add ACCEPT but try to remove DROP if it exists
 	char cTemplate[512]={
-				"/sbin/iptables -L -n | grep -w %s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
-					" /sbin/iptables -D FORWARD -s %s -j DROP;"
+				"/sbin/iptables -L -n | grep -w %1$s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
+					" /sbin/iptables -D FORWARD -s %1$s -j DROP;"
 				" fi;"
-				"/sbin/iptables -L -n | grep -w %s > /dev/null; if [ $? != 0 ];then"
-					" /sbin/iptables -I FORWARD -s %s -j ACCEPT;"
+				"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
+					" /sbin/iptables -I FORWARD -s %1$s -j ACCEPT;"
 				" fi;"
 							};
 
