@@ -50,6 +50,7 @@ static unsigned uNodeSearch=0;
 static char cuNodeSearchPullDown[256]={""};
 static unsigned uNodeSearchNot=0;
 static unsigned uIPv4Exclude=0;
+static unsigned uFirewallMode=0;
 static unsigned uOwnerSearch=0;
 static unsigned uDatacenterSearch=0;
 static char cuDatacenterSearchPullDown[256]={""};
@@ -148,6 +149,8 @@ void ProcesstIPVars(pentry entries[], int x)
 			uNodeSearchNot=1;
 		else if(!strcmp(entries[i].name,"uIPv4ExcludeNoCA"))
 			uIPv4Exclude=1;
+		else if(!strcmp(entries[i].name,"uFirewallMode"))
+			uFirewallMode=1;
 		else if(!strcmp(entries[i].name,"cCommentSearch"))
 			sprintf(cCommentSearch,"%.32s",entries[i].val);
 
@@ -323,6 +326,12 @@ void tIP(const char *cResult)
 void tIPSearchSet(unsigned uStep)
 {
 	OpenRow("<u>Set search parameters</u>","black");
+
+	OpenRow("Display options","black");
+	printf("<input title='Show firewall specific columns and filter options' type=checkbox name=uFirewallMode ");
+	if(uFirewallMode)
+		printf(" checked");
+	printf("> Firewall mode");
 
 	OpenRow("IPv4 pattern","black");
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
@@ -675,11 +684,19 @@ void CreatetIP(void)
 			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
 			"cComment VARCHAR(255) NOT NULL DEFAULT '',"
 			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
+			//New
+			"uIPNum INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uIPNum),"
+			"uFWStatus TINYINT UNSIGNED NOT NULL DEFAULT 0,"
+			"uFWRule INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uFWRule),"
+			"uCountryCode TINYINT UNSIGNED NOT NULL DEFAULT 0, INDEX (uCountryCode),"
+			"INDEX (uDatacenter),"
+			//end New
 			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uAvailable INT UNSIGNED NOT NULL DEFAULT 0,"
+			//Changed to tiny: storage only
+			"uAvailable TINYINT UNSIGNED NOT NULL DEFAULT 0,"
 			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

@@ -744,12 +744,7 @@ void ExttIPAuxTable(void)
 				" The comment section must start with \"FW NOC entered;\" or one of the unxsSnort allowed comments.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group BlockAccess'>\n");
-			printf("&nbsp; <input title='Create UndoBlockAccess jobs for all firewalls."
-				" Only operates on unavailable CustomerPremise datacenter IPs."
-				" The comment section must start with one of the unxsSnort allowed comments."
-				" If it starts with \"FW unxsSnort testing;\" or with \"FW NOC entered;\""
-				" and it has not been blocked yet it can not be unblocked."
-				" To create a search set use FW%% pattern.'"
+			printf("&nbsp; <input title='Create UndoBlockAccess jobs for all firewalls.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group UndoBlockAccess'>\n");
 			printf("&nbsp; <input title='Show country information in results field.'"
@@ -760,7 +755,24 @@ void ExttIPAuxTable(void)
 			sprintf(gcQuery,"Search Set Contents");
 			OpenFieldSet(gcQuery,100);
 			uGroup=uGetSearchGroup(gcUser,31);
-			sprintf(gcQuery,"SELECT"
+			if(uFirewallMode)
+				sprintf(gcQuery,"SELECT"
+					" tIP.uIP,"
+					" tIP.cLabel,"
+					" IF(tIP.uAvailable>0,'Yes','No'),"
+					" IFNULL(tDatacenter.cLabel,''),"
+					" tClient.cLabel,"
+					" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
+					" tIP.uFWStatus,"
+					" tIP.uFWRule,"
+					" tIP.uCountryCode,"
+					" tIP.cComment"
+					" FROM tIP"
+					" LEFT JOIN tDatacenter ON tIP.uDatacenter=tDatacenter.uDatacenter"
+					" LEFT JOIN tClient ON tIP.uOwner=tClient.uClient"
+					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u) ORDER BY tIP.uIP DESC",uGroup);
+			else
+				sprintf(gcQuery,"SELECT"
 					" tIP.uIP,"
 					" tIP.cLabel,"
 					" IF(tIP.uAvailable>0,'Yes','No'),"
@@ -789,15 +801,27 @@ void ExttIPAuxTable(void)
 
 				printf("<table>");
 				printf("<tr>");
-				printf("<td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> <u>cLabel</u></td>"
-					"<td><u>Available</u></td>"
-					"<td><u>Datacenter</u></td>"
-					"<td><u>Node</u></td>"
-					"<td><u>Hostname</u></td>"
-					"<td><u>Owner</u></td>"
-					"<td><u>ModifiedDate</u></td>"
-					"<td><u>Comment</u></td>"
-					"<td><u>Set operation result</u></td></tr>");
+				if(uFirewallMode)
+					printf("<td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> <u>cLabel</u></td>"
+						"<td><u>Available</u></td>"
+						"<td><u>Datacenter</u></td>"
+						"<td><u>Owner</u></td>"
+						"<td><u>ModifiedDate</u></td>"
+						"<td><u>uFWStatus</u></td>"
+						"<td><u>uFWRule</u></td>"
+						"<td><u>uCountryCode</u></td>"
+						"<td><u>Comment</u></td>"
+						"<td><u>Set operation result</u></td></tr>");
+				else
+					printf("<td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> <u>cLabel</u></td>"
+						"<td><u>Available</u></td>"
+						"<td><u>Datacenter</u></td>"
+						"<td><u>Node</u></td>"
+						"<td><u>Hostname</u></td>"
+						"<td><u>Owner</u></td>"
+						"<td><u>ModifiedDate</u></td>"
+						"<td><u>Comment</u></td>"
+						"<td><u>Set operation result</u></td></tr>");
 //Reset margin start
 while((field=mysql_fetch_row(res)))
 {
@@ -1107,14 +1131,6 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"must not be available");
 						break;
 					}
-					if(	
-						strncmp(cComment,"FW unxsSnort blocked;",strlen("FW unxsSnort blocked;")) &&
-						strncmp(cComment,"FW unxsSnort --block-ip;",strlen("FW unxsSnort --block-ip;")) &&
-						!strstr(cComment,"NOC BLOCKED;")  )
-					{
-						sprintf(cResult,"Not allowed to unblock");
-						break;
-					}
 
 					//Create an UndoBlockAccess tJob for each active tNode
 					sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
@@ -1234,28 +1250,75 @@ while((field=mysql_fetch_row(res)))
 		printf(" bgcolor=#EFE7CF ");
 	printf(">");
 
-	//Allow instant feedback like cResult
-	if(!cCommentUpdated[0])
-		sprintf(cCommentUpdated,"%.255s",field[8]);
 
-	char cContainerURL[256]={""};
-	if(field[5][0])
-		sprintf(cContainerURL,"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>",field[9],field[5]);
-	printf("<td width=200 valign=top>"
-	"<input type=checkbox name=Ct%s >" //0
-	"<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>" //0 and 1
-	"</td>"
-	"<td>%s</td>" //2
-	"<td>%s</td>" //3
-	"<td>%s</td>" //4
-	"<td>%s</td>" //5
-	"<td>%s</td>" //6
-	"<td>%s</td>" //7
-	"<td>%s</td>" //8
-	"<td>%s</td>\n", //cResult
-		field[0],field[0],field[1],field[2],field[3],field[4],
-				cContainerURL,//5 with 9
-		field[6],field[7],cCommentUpdated,cResult);
+/*
+			0		" tIP.uIP,"
+			1		" tIP.cLabel,"
+			2		" IF(tIP.uAvailable>0,'Yes','No'),"
+			3		" IFNULL(tDatacenter.cLabel,''),"
+			4		" tClient.cLabel,"
+			5		" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
+			6		" tIP.uFWStatus,"
+			7		" tIP.uFWRule,"
+			8		" tIP.uCountryCode"
+			9		" tIP.cComment,"
+*/
+	if(uFirewallMode)
+	{
+		//Allow instant feedback like cResult
+		if(!cCommentUpdated[0])
+			sprintf(cCommentUpdated,"%.255s",field[9]);
+		printf("<td width=200 valign=top>"
+		"<input type=checkbox name=Ct%s >" //0
+		"<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>" //0 and 1
+		"</td>"
+		"<td>%s</td>" //2
+		"<td>%s</td>" //3
+		"<td>%s</td>" //4
+		"<td>%s</td>" //5
+		"<td>%s</td>" //6
+		"<td>%s</td>" //7
+		"<td>%s</td>" //8
+		"<td>%s</td>" //9
+		"<td>%s</td>\n", //cResult
+			field[0],//uIP
+			field[0],field[1],//uIP,cLabel
+			field[2],//Available Yes/No
+			field[3],//Datacenter
+			field[4],//Owner
+			field[5],//date
+			field[6],//status
+			field[7],//rule
+			field[8],//country code
+				cCommentUpdated,
+				cResult);
+	}
+	else
+	{
+		//Allow instant feedback like cResult
+		if(!cCommentUpdated[0])
+			sprintf(cCommentUpdated,"%.255s",field[8]);
+		char cContainerURL[256]={""};
+		if(field[5][0])
+			sprintf(cContainerURL,"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>",
+					field[9],field[5]);
+
+		printf("<td width=200 valign=top>"
+		"<input type=checkbox name=Ct%s >" //0
+		"<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>" //0 and 1
+		"</td>"
+		"<td>%s</td>" //2
+		"<td>%s</td>" //3
+		"<td>%s</td>" //4
+		"<td>%s</td>" //5
+		"<td>%s</td>" //6
+		"<td>%s</td>" //7
+		"<td>%s</td>" //8
+		"<td>%s</td>\n", //cResult
+			field[0],field[0],field[1],field[2],field[3],field[4],
+					cContainerURL,//5 with 9
+			field[6],field[7],cCommentUpdated,cResult);
+	}
 	printf("</tr>");
 
 }//while()

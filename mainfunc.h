@@ -1429,8 +1429,6 @@ void UpdateSchema(void)
 	unsigned uBackupDate=0;
 	unsigned uSource=0;
 
-	unsigned uIPDatacenter=0;
-	unsigned uIPComment=0;
 	unsigned uOSTemplateDatacenter=0;
 	unsigned uConfigDatacenter=0;
 	unsigned uNameserverDatacenter=0;
@@ -1482,6 +1480,19 @@ void UpdateSchema(void)
 	}
        	mysql_free_result(res);
 
+
+	//
+	//tIP
+	unsigned uIPNum=0;
+	unsigned uFWStatus=0;
+	unsigned uFWRule=0;
+	unsigned uCountryCode=0;
+	unsigned uIPDatacenter=0;
+	unsigned uIPComment=0;
+	unsigned utIPuDatacenterIndex=0;
+	unsigned utIPuIPNumIndex=0;
+	unsigned utIPuFWRuleIndex=0;
+	unsigned utIPuCountryCodeIndex=0;
 	sprintf(gcQuery,"SHOW COLUMNS IN tIP");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1494,8 +1505,33 @@ void UpdateSchema(void)
 			uIPDatacenter=1;
 		if(!strcmp(field[0],"cComment"))
 			uIPComment=1;
+		if(!strcmp(field[0],"uIPNum"))
+			uIPNum=1;
+		if(!strcmp(field[0],"uFWStatus"))
+			uFWStatus=1;
+		if(!strcmp(field[0],"uFWRule"))
+			uFWRule=1;
+		if(!strcmp(field[0],"uCountryCode"))
+			uCountryCode=1;
 	}
        	mysql_free_result(res);
+
+	sprintf(gcQuery,"SHOW INDEX IN tIP");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[2],"uDatacenter")) utIPuDatacenterIndex=1;
+		if(!strcmp(field[2],"uIPNum")) utIPuIPNumIndex=1;
+		if(!strcmp(field[2],"uFWRule")) utIPuFWRuleIndex=1;
+		if(!strcmp(field[2],"uCountryCode")) utIPuCountryCodeIndex=1;
+	}
+       	mysql_free_result(res);
+	//tIP
+	//
 
 	sprintf(gcQuery,"SHOW COLUMNS IN tOSTemplate");
 	mysql_query(&gMysql,gcQuery);
@@ -1816,6 +1852,18 @@ void UpdateSchema(void)
 			printf("Added INDEX cLabel tGlossary\n");
 	}
 
+
+
+	//
+	//tIP changes section
+
+/*
+			"uIPNum INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uIPNum),"
+			"uFWStatus TINYINT UNSIGNED NOT NULL DEFAULT 0,"
+			"uFWRule INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uFWRule),"
+			"uCountryCode TINYINT UNSIGNED NOT NULL DEFAULT 0,"
+			"INDEX (uDatacenter),"
+*/
 	if(!uIPDatacenter)
 	{
 		sprintf(gcQuery,"ALTER TABLE tIP ADD uDatacenter INT UNSIGNED NOT NULL DEFAULT 0");
@@ -1825,7 +1873,6 @@ void UpdateSchema(void)
 		else
 			printf("Added uDatacenter to tIP\n");
 	}
-
 	if(!uIPComment)
 	{
 		sprintf(gcQuery,"ALTER TABLE tIP ADD cComment VARCHAR(255) NOT NULL DEFAULT ''");
@@ -1835,6 +1882,90 @@ void UpdateSchema(void)
 		else
 			printf("Added cComment to tIP\n");
 	}
+	if(!uIPNum)
+	{
+		sprintf(gcQuery,"ALTER TABLE tIP ADD uIPNum INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uIPNum to tIP\n");
+	}
+	if(!uFWStatus)
+	{
+		sprintf(gcQuery,"ALTER TABLE tIP ADD uFWStatus TINYINT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uFWStatus to tIP\n");
+	}
+	if(!uFWRule)
+	{
+		sprintf(gcQuery,"ALTER TABLE tIP ADD uFWRule INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uFWStatus to tIP\n");
+	}
+	if(!uCountryCode)
+	{
+		sprintf(gcQuery,"ALTER TABLE tIP ADD uCountryCode TINYINT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uCountryCode to tIP\n");
+	}
+	//Not important if repeated
+	sprintf(gcQuery,"ALTER TABLE tIP MODIFY uAvailable TINYINT UNSIGNED NOT NULL DEFAULT 0");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+
+
+	//indexes
+	if(!utIPuDatacenterIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tIP ADD INDEX (uDatacenter)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uDatacenter to tIP\n");
+	}
+	if(!utIPuIPNumIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tIP ADD INDEX (uIPNum)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uIPNum to tIP\n");
+	}
+	if(!utIPuFWRuleIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tIP ADD INDEX (uFWRule)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uFWRule to tIP\n");
+	}
+	if(!utIPuCountryCodeIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tIP ADD INDEX (uCountryCode)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uCountryCode to tIP\n");
+	}
+	//tIP
+	//
+
+
 
 	if(!uOSTemplateDatacenter)
 	{
