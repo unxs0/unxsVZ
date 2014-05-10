@@ -15,6 +15,15 @@ NOTES
 #include "snort.h"
 #include <sys/sysinfo.h>
 
+//unxsVZ tIP FW codes
+#define uFWWAITINGBLOCK 1
+#define uFWWAITINGACCESS 2
+#define uFWBLOCKED 3
+#define uFWACCESS 4
+#define uFWREMOVED 5
+#define uFWWAITINGREMOVAL 6
+
+
 #define cSNORTLOGFILE "/var/log/unxsSnortLog"
 char gcLockfile[64]={"/tmp/unxsSnort.lock"};
 
@@ -38,10 +47,10 @@ unsigned BlockIP(const char *cIP);
 unsigned DumpBlocked(void);
 unsigned RemoveBlocked(const char *cIP);
 unsigned UnBlockIP(const char *cIP);
-unsigned UpdateVZIP(const char *cIP,const char *cComment,unsigned uSignatureID,const char *cCountryCode);
+unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus, unsigned uFWRule,unsigned uCountryCode);
 unsigned uGetLastSignatureID(unsigned uIP);
 void ProcessBarnyard2(unsigned uPriority);
-void GetCountryCode(const char *cIP,char *cCountryCode);
+unsigned uGetCountryCode(const char *cIP,char *cCountryCode);
 //external protos
 void TextConnectDb(void);
 
@@ -533,10 +542,12 @@ unsigned BlockIP(const char *cIP)
         resLocal=mysql_store_result(&gMysqlLocal);
 	char cCountryInfo[100]={""};
 	char cCountryCode[3]={"--"};
+	unsigned uCountryCode=0;
 	if((fieldLocal=mysql_fetch_row(resLocal)))
 	{
 		sprintf(cCountryInfo,"%s %.2s(%.10s) %.50s",cIP,fieldLocal[0],fieldLocal[2],fieldLocal[1]);
 		sprintf(cCountryCode,"%.2s",fieldLocal[0]);
+		sscanf(fieldLocal[2],"%u",&uCountryCode);
 	}
 	else
 	{
@@ -590,9 +601,10 @@ unsigned BlockIP(const char *cIP)
 
 		sprintf(gcQuery,"INSERT INTO tBlockedIP SET uBlockedIP=INET_ATON('%s')",cIP);
 		mysql_query(&gMysqlLocal,gcQuery);
-		UpdateVZIP(cIP,"unxsSnort --block-ip;",0,cCountryCode);
 
 	}//while each server
+	if(uCount)
+		UpdateVZIP(cIP,0,uFWWAITINGBLOCK,0,uCountryCode);
 
 	if((gLfp=fopen(cSNORTLOGFILE,"a"))==NULL)
 	{
@@ -665,13 +677,18 @@ unsigned UnBlockIP(const char *cIP)
 
 		uCount++;
 
+	}//while each server
+
+	if(uCount)
+	{
 		sprintf(gcQuery,"DELETE FROM tBlockedIP WHERE uBlockedIP=INET_ATON('%s')",cIP);
 		mysql_query(&gMysqlLocal,gcQuery);
 		char cCountryCode[3]={"--"};
-		GetCountryCode(cIP,cCountryCode);
-		UpdateVZIP(cIP,"unxsSnort --unblock-ip;",0,cCountryCode);
+		unsigned uCountryCode=0;
+		uCountryCode=uGetCountryCode(cIP,cCountryCode);
+		UpdateVZIP(cIP,0,uFWWAITINGACCESS,0,uCountryCode);
+	}
 
-	}//while each server
 
 	if((gLfp=fopen(cSNORTLOGFILE,"a"))==NULL)
 	{
@@ -762,17 +779,24 @@ unsigned RemoveBlocked(const char *cIP)
 }//unsigned RemoveBlocked(chatr *cIP)
 
 
-unsigned UpdateVZIP(const char *cIP,const char *cComment,unsigned uSignatureID,const char *cCountryCode)
+unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus, unsigned uFWRule,unsigned uCountryCode)
 {
 	//gMysql must be ready
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-				" cLabel='%s'"
+	if(uIPNum)
+		sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+				" uIPNum=%u"
 				" AND uDatacenter=41"//CustomerPremise magic number fix ASAP
-				" AND SUBSTR(cComment,1,2)='FW'"
+				" AND uAvailable=0 LIMIT 1",uIPNum);
+	else if(cIP[0])
+		sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+				" uIPNum=INET_ATON('%s')"
+				" AND uDatacenter=41"//CustomerPremise magic number fix ASAP
 				" AND uAvailable=0 LIMIT 1",cIP);
+	else
+		return(2);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -784,8 +808,8 @@ unsigned UpdateVZIP(const char *cIP,const char *cComment,unsigned uSignatureID,c
 	{
 		sprintf(gcQuery,"UPDATE tIP"
 				" SET uModBy=2,uModDate=UNIX_TIMESTAMP(NOW()),"
-				"cComment=CONCAT(cComment,' %s SID=%u;')"
-				" WHERE uIP=%s",cComment,uSignatureID,field[0]);
+				" uFWStatus=%u,uFWRule=%u,uCountryCode=%u"
+				" WHERE uIP=%s",uFWStatus,uFWRule,uCountryCode,field[0]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -796,12 +820,22 @@ unsigned UpdateVZIP(const char *cIP,const char *cComment,unsigned uSignatureID,c
 	}
 	else
 	{
-		sprintf(gcQuery,"INSERT INTO tIP"
-				" SET cLabel='%s'"
+		if(uIPNum)
+			sprintf(gcQuery,"INSERT INTO tIP"
+				" SET uIPNum=%u,cLabel=INET_NTOA(%u)"
 				",uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-				",cComment='FW %s SID=%u; CN=%s;'"
+				",uFWStatus=%u,uFWRule=%u,uCountryCode=%u"
 				",uDatacenter=41"//CustomerPremise magic number fix ASAP
-				",uAvailable=0",cIP,cComment,uSignatureID,cCountryCode);
+				",uAvailable=0",uIPNum,uIPNum,uFWStatus,uFWRule,uCountryCode);
+		else if(cIP[0])
+			sprintf(gcQuery,"INSERT INTO tIP"
+				" SET uIPNum=INET_ATON('%s'),cLabel='%s'"
+				",uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				",uFWStatus=%u,uFWRule=%u,uCountryCode=%u"
+				",uDatacenter=41"//CustomerPremise magic number fix ASAP
+				",uAvailable=0",cIP,cIP,uFWStatus,uFWRule,uCountryCode);
+		else
+			return(3);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -993,17 +1027,23 @@ void ProcessBarnyard2(unsigned uPriority)
 			logfileLine("ProcessBarnyard2",gcQuery);
 
 			//Mark as processed. No need to process anymore. We need to add date and expiration fields.
-			sprintf(gcQuery,"INSERT INTO tBlockedIP SET uBlockedIP=INET_ATON('%s')",cIP);
+			sprintf(gcQuery,"INSERT INTO tBlockedIP SET uBlockedIP=%u",uIP);
 			mysql_query(&gMysqlLocal,gcQuery);
 
 			//We leverage the already existing unxsVZ tIP for now
 			uSignatureID=uGetLastSignatureID(uIP);
 			char cCountryCode[3]={"--"};
-			GetCountryCode(cIP,cCountryCode);
+			unsigned uCountryCode=0;
+			uCountryCode=uGetCountryCode(cIP,cCountryCode);
 			if(uPriority>2 && !uTmpPriority)
-				UpdateVZIP(cIP,"unxsSnort testing;",uSignatureID,cCountryCode);
+			{
+				UpdateVZIP("",uIP,uFWWAITINGACCESS,uSignatureID,uCountryCode);
+			}
 			else
-				UpdateVZIP(cIP,"unxsSnort blocked;",uSignatureID,cCountryCode);
+			{
+				UpdateVZIP("",uIP,uFWWAITINGBLOCK,uSignatureID,uCountryCode);
+				logfileLine("ProcessBarnyard2","priority 1");
+			}
 
 			//Send email etc. one for each IP
 			char cMsg[100]={""};
@@ -1034,24 +1074,30 @@ ProcessBarnyard2_exit0:
 }//void ProcessBarnyard2(unsigned uPriority)
 
 
-void GetCountryCode(const char *cIP,char *cCountryCode)
+unsigned uGetCountryCode(const char *cIP,char *cCountryCode)
 {
 	MYSQL_RES *resLocal;
 	MYSQL_ROW fieldLocal;
+	unsigned uRetVal=0;
 
-	sprintf(gcQuery,"SELECT cCountryCode"
+	sprintf(gcQuery,"SELECT cCountryCode,uGeoIPCountryCode"
 			" FROM tGeoIPCountryCode"
 			" WHERE uGeoIPCountryCode="
 			"(SELECT uGeoIPCountryCode FROM tGeoIP WHERE uEndIP>=INET_ATON('%s') LIMIT 1)",cIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
-		logfileLine("ReportIP",mysql_error(&gMysqlLocal));
-		return;
+		logfileLine("uGetCountryCode",mysql_error(&gMysqlLocal));
+		return(0);
 	}
         resLocal=mysql_store_result(&gMysqlLocal);
 	if((fieldLocal=mysql_fetch_row(resLocal)))
+	{
 		sprintf(cCountryCode,"%.2s",fieldLocal[0]);
+		sscanf(fieldLocal[1],"%u",&uRetVal);
+	}
 	mysql_free_result(resLocal);
 
-}//void GetCountryCode(const char *cIP,char *cCountryCode)
+	return(uRetVal);
+
+}//unsigned uGetCountryCode(const char *cIP,char *cCountryCode)
