@@ -48,9 +48,11 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//uMasterJob: New multi related job control.
+static unsigned uMasterJob=0;
 
 
-#define VAR_LIST_tJob "tJob.uJob,tJob.cLabel,tJob.cJobName,tJob.uDatacenter,tJob.uNode,tJob.uContainer,tJob.cJobData,tJob.uJobDate,tJob.uJobStatus,tJob.cRemoteMsg,tJob.uOwner,tJob.uCreatedBy,tJob.uCreatedDate,tJob.uModBy,tJob.uModDate"
+#define VAR_LIST_tJob "tJob.uJob,tJob.cLabel,tJob.cJobName,tJob.uDatacenter,tJob.uNode,tJob.uContainer,tJob.cJobData,tJob.uJobDate,tJob.uJobStatus,tJob.cRemoteMsg,tJob.uOwner,tJob.uCreatedBy,tJob.uCreatedDate,tJob.uModBy,tJob.uModDate,tJob.uMasterJob"
 
  //Local only
 void Insert_tJob(void);
@@ -126,6 +128,8 @@ void ProcesstJobVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uMasterJob"))
+			sscanf(entries[i].val,"%u",&uMasterJob);
 
 	}
 
@@ -238,6 +242,7 @@ void tJob(const char *cResult)
 			sscanf(field[12],"%lu",&uCreatedDate);
 			sscanf(field[13],"%u",&uModBy);
 			sscanf(field[14],"%lu",&uModDate);
+			sscanf(field[15],"%u",&uMasterJob);
 
 		}
 
@@ -387,15 +392,13 @@ void tJobInput(unsigned uMode)
 //uJob
 	OpenRow(LANG_FL_tJob_uJob,"black");
 	printf("<input title='%s' type=text name=uJob value=%u size=16 maxlength=10 ",LANG_FT_tJob_uJob,uJob);
-	if(guPermLevel>=20 && uMode)
-	{
-		printf("></td></tr>\n");
-	}
-	else
-	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uJob value=%u >\n",uJob);
-	}
+	printf("disabled></td></tr>\n");
+	printf("<input type=hidden name=uJob value=%u >\n",uJob);
+//uMasterJob
+	OpenRow("uMasterJob","black");
+	printf("<input title='uMasterJob is for multi related job control' type=text name=uJob value=%u size=16 maxlength=10 ",uMasterJob);
+	printf("disabled></td></tr>\n");
+	printf("<input type=hidden name=uJob value=%u >\n",uJob);
 //cLabel
 	OpenRow(LANG_FL_tJob_cLabel,"black");
 	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=100 ",LANG_FT_tJob_cLabel,
@@ -787,7 +790,6 @@ void CreatetJob(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJob ( "
 			"uJob INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-			"uMasterJob INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uMasterJob),"
 			"cLabel VARCHAR(100) NOT NULL DEFAULT '',"
 			"cJobName VARCHAR(64) NOT NULL DEFAULT '',"
 			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uDatacenter),"
@@ -801,7 +803,8 @@ void CreatetJob(void)
 			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uMasterJob INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uMasterJob))");
 	MYSQL_RUN;
 }//CreatetJob()
 

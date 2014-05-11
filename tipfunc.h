@@ -255,10 +255,13 @@ void ExttIPCommands(pentry entries[], int x)
 				unsigned uGroup=0;
 
 				if(!strcmp(gcCommand,"Create Firewall Set"))
-					sprintf(cCommentSearch,"FW%%");
+				{
+					uFirewallMode=1;
+					uFWStatusAnySearch=1;
+				}
 
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
-						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0)
+						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0 && uFWStatusSearch==0 && uFWStatusAnySearch==0)
 	                        	tIP("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,31))==0)
@@ -274,7 +277,7 @@ void ExttIPCommands(pentry entries[], int x)
 				}
 				else
 				{
-					if(!strcmp(gcCommand,"Create Search Set"))
+					if(!strcmp(gcCommand,"Create Search Set") || !strcmp(gcCommand,"Create Firewall Set"))
 					{
 						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u",uGroup);
 						mysql_query(&gMysql,gcQuery);
@@ -300,11 +303,50 @@ void ExttIPCommands(pentry entries[], int x)
 					uLink=0;
 				}
 
+				if(u24Limit)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400)");
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(u12Limit)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uCreatedDate>(UNIX_TIMESTAMP(NOW())-43200)");
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(u4Limit)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uCreatedDate>(UNIX_TIMESTAMP(NOW())-14400)");
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
 				if(uDatacenterSearch)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," uDatacenter=%u",uDatacenterSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uFWStatusSearch || uFWStatusAnySearch)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					if(uFWStatusAnySearch)
+						sprintf(cQuerySection," uFWStatus>0");
+					else
+						sprintf(cQuerySection," uFWStatus=%u",uFWStatusSearch);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -762,14 +804,17 @@ void ExttIPAuxTable(void)
 					" IF(tIP.uAvailable>0,'Yes','No'),"
 					" IFNULL(tDatacenter.cLabel,''),"
 					" tClient.cLabel,"
+					" FROM_UNIXTIME(tIP.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
 					" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
-					" tIP.uFWStatus,"
+					" IFNULL(tFWStatus.cLabel,''),"
 					" tIP.uFWRule,"
-					" tIP.uCountryCode,"
+					" IFNULL(tGeoIPCountryCode.cCountryCode,''),"
 					" tIP.cComment"
 					" FROM tIP"
 					" LEFT JOIN tDatacenter ON tIP.uDatacenter=tDatacenter.uDatacenter"
 					" LEFT JOIN tClient ON tIP.uOwner=tClient.uClient"
+					" LEFT JOIN tFWStatus ON tIP.uFWStatus=tFWStatus.uFWStatus"
+					" LEFT JOIN tGeoIPCountryCode ON tIP.uCountryCode=tGeoIPCountryCode.uGeoIPCountryCode"
 					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u) ORDER BY tIP.uIP DESC",uGroup);
 			else
 				sprintf(gcQuery,"SELECT"
@@ -780,6 +825,7 @@ void ExttIPAuxTable(void)
 					" IFNULL(tNode.cLabel,''),"
 					" IFNULL(tContainer.cHostname,''),"
 					" tClient.cLabel,"
+					" FROM_UNIXTIME(tIP.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
 					" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
 					" tIP.cComment,"
 					" tContainer.uContainer"
@@ -806,6 +852,7 @@ void ExttIPAuxTable(void)
 						"<td><u>Available</u></td>"
 						"<td><u>Datacenter</u></td>"
 						"<td><u>Owner</u></td>"
+						"<td><u>CreatedDate</u></td>"
 						"<td><u>ModifiedDate</u></td>"
 						"<td><u>uFWStatus</u></td>"
 						"<td><u>uFWRule</u></td>"
@@ -819,6 +866,7 @@ void ExttIPAuxTable(void)
 						"<td><u>Node</u></td>"
 						"<td><u>Hostname</u></td>"
 						"<td><u>Owner</u></td>"
+						"<td><u>CreatedDate</u></td>"
 						"<td><u>ModifiedDate</u></td>"
 						"<td><u>Comment</u></td>"
 						"<td><u>Set operation result</u></td></tr>");
@@ -1312,6 +1360,7 @@ while((field=mysql_fetch_row(res)))
 		"<td>%s</td>" //7
 		"<td>%s</td>" //8
 		"<td>%s</td>" //9
+		"<td>%s</td>" //cComment
 		"<td>%s</td>\n", //cResult
 			field[0],//uIP
 			field[0],field[1],//uIP,cLabel
@@ -1319,9 +1368,10 @@ while((field=mysql_fetch_row(res)))
 			field[3],//Datacenter
 			field[4],//Owner
 			field[5],//date
-			field[6],//status
-			field[7],//rule
-			field[8],//country code
+			field[6],//date
+			field[7],//status
+			field[8],//rule
+			field[9],//country code
 				cCommentUpdated,
 				cResult);
 	}
@@ -1329,11 +1379,11 @@ while((field=mysql_fetch_row(res)))
 	{
 		//Allow instant feedback like cResult
 		if(!cCommentUpdated[0])
-			sprintf(cCommentUpdated,"%.255s",field[8]);
+			sprintf(cCommentUpdated,"%.255s",field[9]);
 		char cContainerURL[256]={""};
 		if(field[5][0])
 			sprintf(cContainerURL,"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>",
-					field[9],field[5]);
+					field[10],field[5]);
 
 		printf("<td width=200 valign=top>"
 		"<input type=checkbox name=Ct%s >" //0
@@ -1346,10 +1396,11 @@ while((field=mysql_fetch_row(res)))
 		"<td>%s</td>" //6
 		"<td>%s</td>" //7
 		"<td>%s</td>" //8
+		"<td>%s</td>" //8
 		"<td>%s</td>\n", //cResult
 			field[0],field[0],field[1],field[2],field[3],field[4],
 					cContainerURL,//5 with 9
-			field[6],field[7],cCommentUpdated,cResult);
+			field[6],field[7],field[8],cCommentUpdated,cResult);
 	}
 	printf("</tr>");
 
