@@ -787,6 +787,7 @@ void CreatetJob(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tJob ( "
 			"uJob INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"uMasterJob INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uMasterJob),"
 			"cLabel VARCHAR(100) NOT NULL DEFAULT '',"
 			"cJobName VARCHAR(64) NOT NULL DEFAULT '',"
 			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uDatacenter),"

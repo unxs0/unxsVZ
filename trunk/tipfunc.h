@@ -1014,13 +1014,15 @@ while((field=mysql_fetch_row(res)))
 					MYSQL_RES *res;
 					MYSQL_ROW field;
 					char cIP[16]={""};
-					char cComment[32]={""};
-					unsigned uDatacenter=0;
-					unsigned uAvailable=0;
 					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
+					char cComment[32]={""};
 					sprintf(cComment,"%.31s",ForeignKey("tIP","cComment",uCtIP));
+					unsigned uAvailable=0;
 					sscanf(ForeignKey("tIP","uAvailable",uCtIP),"%u",&uAvailable);
+					unsigned uDatacenter=0;
 					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
+					unsigned uFWStatus=0;
+					sscanf(ForeignKey("tIP","uFWStatus",uCtIP),"%u",&uFWStatus);
 					if(!cIP[0])
 					{
 						sprintf(cResult,"data error");
@@ -1036,11 +1038,7 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"must not be available");
 						break;
 					}
-					if(
-						strncmp(cComment,"FW unxsSnort blocked;",strlen("FW unxsSnort blocked;")) &&
-						strncmp(cComment,"FW unxsSnort --block-ip;",strlen("FW unxsSnort --block-ip;")) &&
-						strncmp(cComment,"FW unxsSnort testing;",strlen("FW unxsSnort testing;")) &&
-						strncmp(cComment,"FW NOC entered;",strlen("FW NOC entered;"))  )
+					if( uFWStatus && (uFWStatus==uFWWAITINGBLOCK || uFWStatus==uFWWAITINGACCESS || uFWStatus==uFWWAITINGREMOVAL))
 					{
 						sprintf(cResult,"Not allowed to block");
 						break;
@@ -1061,6 +1059,15 @@ while((field=mysql_fetch_row(res)))
 					}
 					res=mysql_store_result(&gMysql);
 					unsigned uCount=0;
+					//multiple related job control
+					//jobqueue.c must handle jobs
+					//that have a uMasterJob!=0 by checking
+					//that all tJobs with the same uMasterJob 
+					//AND that the master job uJob=uMasterJob have been done ok.
+					//If all are done then it updates the related item,
+					//in this case the tIP.uFWStatus. So all check but only the last
+					//finishes the job set update.
+					unsigned uMasterJob=0;//first job is master job
 					while((field=mysql_fetch_row(res)))
 					{
 						unsigned uNode=0;
@@ -1072,6 +1079,7 @@ while((field=mysql_fetch_row(res)))
 							",cLabel='BlockAccess NOC blocked'"
 							",cJobName='BlockAccess'"
 							",uDatacenter=%u,uNode=%u"
+							",uMasterJob=%u"
 							",cJobData='cIPv4=%.15s;'"
 							",uJobDate=UNIX_TIMESTAMP(NOW())"
 							",uJobStatus=1",
@@ -1079,6 +1087,7 @@ while((field=mysql_fetch_row(res)))
 								guLoginClient,
 								uDatacenter,
 								uNode,
+								uMasterJob,
 								cIP);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
@@ -1086,6 +1095,8 @@ while((field=mysql_fetch_row(res)))
 							sprintf(cResult,"%.31s",mysql_error(&gMysql));
 							break;
 						}
+						if(!uMasterJob)
+							uMasterJob=mysql_insert_id(&gMysql);
 						uCount++;
 					}//while node
 					sprintf(cResult,"%u jobs created",uCount);
@@ -1093,9 +1104,11 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(gcQuery,"UPDATE tIP"
 								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								",uFWStatus=%u"
 								",cComment=CONCAT(cComment,' NOC BLOCKED;')"
 								" WHERE uIP=%u",
 									guLoginClient,
+									uFWWAITINGACCESS,
 									uCtIP);
 						mysql_query(&gMysql,gcQuery);
 						sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
@@ -1109,13 +1122,15 @@ while((field=mysql_fetch_row(res)))
 					MYSQL_RES *res;
 					MYSQL_ROW field;
 					char cIP[16]={""};
-					char cComment[32]={""};
-					unsigned uDatacenter=0;
-					unsigned uAvailable=0;
 					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
+					char cComment[32]={""};
 					sprintf(cComment,"%.31s",ForeignKey("tIP","cComment",uCtIP));
+					unsigned uAvailable=0;
 					sscanf(ForeignKey("tIP","uAvailable",uCtIP),"%u",&uAvailable);
+					unsigned uDatacenter=0;
 					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
+					unsigned uFWStatus=0;
+					sscanf(ForeignKey("tIP","uFWStatus",uCtIP),"%u",&uFWStatus);
 					if(!cIP[0])
 					{
 						sprintf(cResult,"data error");
@@ -1129,6 +1144,11 @@ while((field=mysql_fetch_row(res)))
 					if(uAvailable==1)
 					{
 						sprintf(cResult,"must not be available");
+						break;
+					}
+					if( uFWStatus && (uFWStatus==uFWWAITINGBLOCK || uFWStatus==uFWWAITINGACCESS || uFWStatus==uFWWAITINGREMOVAL))
+					{
+						sprintf(cResult,"not allowed to un block");
 						break;
 					}
 
@@ -1147,6 +1167,7 @@ while((field=mysql_fetch_row(res)))
 					}
 					res=mysql_store_result(&gMysql);
 					unsigned uCount=0;
+					unsigned uMasterJob=0;//first job is master job
 					while((field=mysql_fetch_row(res)))
 					{
 						unsigned uNode=0;
@@ -1158,6 +1179,7 @@ while((field=mysql_fetch_row(res)))
 							",cLabel='UndoBlockAccess NOC unblocked'"
 							",cJobName='UndoBlockAccess'"
 							",uDatacenter=%u,uNode=%u"
+							",uMasterJob=%u"
 							",cJobData='cIPv4=%.15s;'"
 							",uJobDate=UNIX_TIMESTAMP(NOW())"
 							",uJobStatus=1",
@@ -1165,6 +1187,7 @@ while((field=mysql_fetch_row(res)))
 								guLoginClient,
 								uDatacenter,
 								uNode,
+								uMasterJob,
 								cIP);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
@@ -1173,15 +1196,19 @@ while((field=mysql_fetch_row(res)))
 							break;
 						}
 						uCount++;
+						if(!uMasterJob)
+							uMasterJob=mysql_insert_id(&gMysql);
 					}//while node
 					sprintf(cResult,"%u jobs created",uCount);
 					if(uCount)
 					{
 						sprintf(gcQuery,"UPDATE tIP"
 								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								",uFWStatus=%u"
 								",cComment=CONCAT(cComment,' NOC UNBLOCKED;')"
 								" WHERE uIP=%u",
 									guLoginClient,
+									uFWWAITINGBLOCK,
 									uCtIP);
 						mysql_query(&gMysql,gcQuery);
 						sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
@@ -1217,13 +1244,18 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"%s(%s) %s",field[0],field[2],field[1]);
 						sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
+						unsigned uGeoIPCountryCode=0;
+						sscanf(field[2],"%u",&uGeoIPCountryCode);
 						if(!strstr(cCommentUpdated," CN="))
 						{
 							sprintf(gcQuery,"UPDATE tIP"
 								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								",uCountryCode=%u"
 								",cComment=CONCAT(cComment,' CN=%s;')"
 								" WHERE uIP=%u",
-									guLoginClient,field[1],
+									guLoginClient,
+									uGeoIPCountryCode,
+									field[1],
 									uCtIP);
 							mysql_query(&gMysql,gcQuery);
 							sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
@@ -1704,9 +1736,9 @@ void AddIPRange(char *cIPRange)
 			if(uD==0 || uD==1 || uD==255)
 				uAvailable=0;
 		}
-		sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uOwner=%u,uCreatedBy=%u,uAvailable=%u"
+		sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uIPNum=INET_ATON('%s'),uOwner=%u,uCreatedBy=%u,uAvailable=%u"
 				",uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u",
-					cIPs[i],guCompany,guLoginClient,uAvailable,uDatacenter);
+					cIPs[i],cIPs[i],guCompany,guLoginClient,uAvailable,uDatacenter);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));

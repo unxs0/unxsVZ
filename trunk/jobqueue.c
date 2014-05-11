@@ -63,8 +63,8 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 void AllowAllAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
-void TestBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void DenyAccess(unsigned uJob,const char *cJobData);
+void UpdateIPFWStatus(const char *cIPv4,unsigned uFWStatus);
 void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNewVeid);
 void AppFunctions(FILE *fp,char *cFunction);
@@ -449,10 +449,6 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"AllowAccess") && uNode)
 	{
 		AllowAccess(uJob,cJobData,uDatacenter,uNode);
-	}
-	else if(!strcmp(cJobName,"TestBlockAccess") && uNode)
-	{
-		TestBlockAccess(uJob,cJobData,uDatacenter,uNode);
 	}
 	else if(!strcmp(cJobName,"UndoBlockAccess") && uNode)
 	{
@@ -5979,6 +5975,7 @@ CommonExit:
 }//void SwapIPContainer()
 
 
+//AllowAccess and DenyAccess are used for unxsvzOrg.cgi interface only at this time
 //These functions assume something like this at end part of /etc/sysconfig/iptables:
 // -A FORWARD -p tcp -m tcp --dport 443 -j REJECT --reject-with icmp-port-unreachable
 void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
@@ -6051,11 +6048,13 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 
 	logfileLine("AllowAccess","iptables command ok");
 	tJobDoneUpdate(uJob);
+	//UpdateIPFWStatus(cIPv4,uFWACCESS);
 	return;
 
 }//void AllowAccess()
 
 
+//AllowAccess and DenyAccess are used for unxsvzOrg.cgi interface only at this time
 void DenyAccess(unsigned uJob,const char *cJobData)
 {
 	char cIPv4[16]={""};
@@ -6082,6 +6081,7 @@ void DenyAccess(unsigned uJob,const char *cJobData)
 
 	logfileLine("DenyAccess","iptables command ok");
 	tJobDoneUpdate(uJob);
+	//UpdateIPFWStatus(cIPv4,uFWBLOCKED);
 	return;
 
 }//void DenyAccess(unsigned uJob,const char *cJobData)
@@ -7419,6 +7419,31 @@ void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 
 	logfileLine("BlockAccess","iptables command ok");
 	tJobDoneUpdate(uJob);
+
+	//
+	//Multiple related job control system
+	unsigned uMasterJob=0;
+	unsigned uAllJobsDone=1;
+	sscanf(ForeignKey("tJob","uMasterJob",uJob),"%u",&uMasterJob);
+	if(!uMasterJob)
+		uMasterJob=uJob;
+	sprintf(gcQuery,"SELECT uJob FROM tJob"
+			" WHERE (uMasterJob=%u OR uJob=%u)"
+			" AND uJobStatus!=%u",
+				uMasterJob,uMasterJob,uDONEOK);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("BlockAccess",mysql_error(&gMysql));
+	else
+	{
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			uAllJobsDone=0;
+		mysql_free_result(res);
+	}
+	if(uAllJobsDone)
+		UpdateIPFWStatus(cIPv4,uFWBLOCKED);
+	//end
 	return;
 
 }//void BlockAccess()
@@ -7498,18 +7523,34 @@ void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,uns
 
 	logfileLine("UndoBlockAccess","iptables command ok");
 	tJobDoneUpdate(uJob);
+
+	//
+	//Multiple related job control system
+	unsigned uMasterJob=0;
+	unsigned uAllJobsDone=1;
+	sscanf(ForeignKey("tJob","uMasterJob",uJob),"%u",&uMasterJob);
+	if(!uMasterJob)
+		uMasterJob=uJob;
+	sprintf(gcQuery,"SELECT uJob FROM tJob"
+			" WHERE (uMasterJob=%u OR uJob=%u)"
+			" AND uJobStatus!=%u",
+				uMasterJob,uMasterJob,uDONEOK);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("UndoBlockAccess",mysql_error(&gMysql));
+	else
+	{
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			uAllJobsDone=0;
+		mysql_free_result(res);
+	}
+	if(uAllJobsDone)
+		UpdateIPFWStatus(cIPv4,uFWACCESS);
+	//end
 	return;
 
 }//void UndoBlockAccess()
-
-
-void TestBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
-{
-	logfileLine("TestBlockAccess","iptables command ok");
-	tJobDoneUpdate(uJob);
-	return;
-
-}//void TestBlockAccess()
 
 
 //All port access
@@ -7587,6 +7628,47 @@ void AllowAllAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsi
 
 	logfileLine("AllowAllAccess","iptables command ok");
 	tJobDoneUpdate(uJob);
+
+	//
+	//Multiple related job control system
+	unsigned uMasterJob=0;
+	unsigned uAllJobsDone=1;
+	sscanf(ForeignKey("tJob","uMasterJob",uJob),"%u",&uMasterJob);
+	if(!uMasterJob)
+		uMasterJob=uJob;
+	sprintf(gcQuery,"SELECT uJob FROM tJob"
+			" WHERE (uMasterJob=%u OR uJob=%u)"
+			" AND uJobStatus!=%u",
+				uMasterJob,uMasterJob,uDONEOK);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("AllowAllAccess",mysql_error(&gMysql));
+	else
+	{
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			uAllJobsDone=0;
+		mysql_free_result(res);
+	}
+	if(uAllJobsDone)
+		UpdateIPFWStatus(cIPv4,uFWACCESS);
+	//end
+
 	return;
 
 }//void AllowAllAccess()
+
+
+void UpdateIPFWStatus(const char *cIPv4,unsigned uFWStatus)
+{
+	sprintf(gcQuery,"UPDATE tIP"
+		" SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),"
+		" uFWStatus=%u"
+		" WHERE uIPNum=INET_ATON('%s')",uFWStatus,cIPv4);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("UpdateIPFWStatus",mysql_error(&gMysql));
+	else if(mysql_affected_rows(&gMysql)!=1)
+		logfileLine("UpdateIPFWStatus","mysql_affected_rows()!=1");
+
+}//void UpdateIPFWStatus(const char *cIPv4,unsigned uFWACCESS)
