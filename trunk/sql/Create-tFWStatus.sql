@@ -1,5 +1,7 @@
 /* create this table and load default data */
 
+USE unxsvz;
+
 DROP TABLE IF EXISTS tFWStatus;
 
 CREATE TABLE IF NOT EXISTS tFWStatus ( 
@@ -12,7 +14,7 @@ CREATE TABLE IF NOT EXISTS tFWStatus (
 	uModDate INT UNSIGNED NOT NULL DEFAULT 0 );
 
 LOAD DATA INFILE '/home/unxs/tFWStatus.csv' 
-        INTO TABLE tFWStatus;
+        INTO TABLE tFWStatus
         FIELDS TERMINATED BY ',' ENCLOSED BY '"' 
         LINES TERMINATED BY '\n' STARTING BY '' 
         ;
