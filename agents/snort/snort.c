@@ -981,6 +981,7 @@ void ProcessBarnyard2(unsigned uPriority)
 		unsigned uNode=0;
 		unsigned uDatacenter=0;
 		unsigned uCount=0;
+		unsigned uMasterJob=0;//first job is master job
 		while((field=mysql_fetch_row(res)))
 		{
 			sscanf(field[0],"%u",&uNode);
@@ -992,11 +993,13 @@ void ProcessBarnyard2(unsigned uPriority)
 					",cLabel='TestBlockAccess unxsSnort'"
 					",cJobName='AllowAllAccess'"
 					",uDatacenter=%u,uNode=%u"
+					",uMasterJob=%u"
 					",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u/%u;'"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1",
 						uDatacenter,
 						uNode,
+						uMasterJob,
 						cIP,cGeoIPCountryInfo,uPriority,uTmpPriority);
 			else
 				sprintf(gcQuery,"INSERT INTO tJob"
@@ -1004,11 +1007,13 @@ void ProcessBarnyard2(unsigned uPriority)
 					",cLabel='BlockAccess unxsSnort'"
 					",cJobName='BlockAccess'"
 					",uDatacenter=%u,uNode=%u"
+					",uMasterJob=%u"
 					",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u/%u;'"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1",
 						uDatacenter,
 						uNode,
+						uMasterJob,
 						cIP,cGeoIPCountryInfo,uPriority,uTmpPriority);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -1017,6 +1022,8 @@ void ProcessBarnyard2(unsigned uPriority)
 				goto ProcessBarnyard2_exit2;
 			}
 			uCount++;
+			if(!uMasterJob)
+				uMasterJob=mysql_insert_id(&gMysql);
 		}//while for each server job
 
 		if(uCount)
