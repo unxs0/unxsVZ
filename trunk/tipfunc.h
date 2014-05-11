@@ -307,25 +307,23 @@ void ExttIPCommands(pentry entries[], int x)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400)");
+					sprintf(cQuerySection," uModDate>(UNIX_TIMESTAMP(NOW())-86400)");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
-
-				if(u12Limit)
+				else if(u12Limit)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," uCreatedDate>(UNIX_TIMESTAMP(NOW())-43200)");
+					sprintf(cQuerySection," uModDate>(UNIX_TIMESTAMP(NOW())-43200)");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
-
-				if(u4Limit)
+				else if(u4Limit)
 				{
 					if(uLink)
 						strcat(gcQuery," AND");
-					sprintf(cQuerySection," uCreatedDate>(UNIX_TIMESTAMP(NOW())-14400)");
+					sprintf(cQuerySection," uModDate>(UNIX_TIMESTAMP(NOW())-14400)");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -815,7 +813,7 @@ void ExttIPAuxTable(void)
 					" LEFT JOIN tClient ON tIP.uOwner=tClient.uClient"
 					" LEFT JOIN tFWStatus ON tIP.uFWStatus=tFWStatus.uFWStatus"
 					" LEFT JOIN tGeoIPCountryCode ON tIP.uCountryCode=tGeoIPCountryCode.uGeoIPCountryCode"
-					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u) ORDER BY tIP.uIP DESC",uGroup);
+					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u) ORDER BY tIP.uModDate DESC",uGroup);
 			else
 				sprintf(gcQuery,"SELECT"
 					" tIP.uIP,"
@@ -843,6 +841,7 @@ void ExttIPAuxTable(void)
 			{
 				char cResult[100]={""};
 				char cCommentUpdated[256]={""};
+				char cFWStatusUpdated[256]={""};
 				char cCtLabel[100]={""};
 
 				printf("<table>");
@@ -874,6 +873,7 @@ void ExttIPAuxTable(void)
 while((field=mysql_fetch_row(res)))
 {
 	cCommentUpdated[0]=0;
+	cFWStatusUpdated[0]=0;
 	if(guMode==12002)
 	{
 		register int i;
@@ -1156,10 +1156,11 @@ while((field=mysql_fetch_row(res)))
 								",cComment=CONCAT(cComment,' NOC BLOCKED;')"
 								" WHERE uIP=%u",
 									guLoginClient,
-									uFWWAITINGACCESS,
+									uFWWAITINGBLOCK,
 									uCtIP);
 						mysql_query(&gMysql,gcQuery);
 						sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
+						sprintf(cFWStatusUpdated,"%.255s",ForeignKey("tFWStatus","cLabel",uFWWAITINGBLOCK));
 					}
 					break;
 				}//Group BlockAccess
@@ -1256,10 +1257,11 @@ while((field=mysql_fetch_row(res)))
 								",cComment=CONCAT(cComment,' NOC UNBLOCKED;')"
 								" WHERE uIP=%u",
 									guLoginClient,
-									uFWWAITINGBLOCK,
+									uFWWAITINGACCESS,
 									uCtIP);
 						mysql_query(&gMysql,gcQuery);
 						sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
+						sprintf(cFWStatusUpdated,"%.255s",ForeignKey("tFWStatus","cLabel",uFWWAITINGACCESS));
 					}
 					break;
 				}//Group UndoBlockAccess
@@ -1337,17 +1339,20 @@ while((field=mysql_fetch_row(res)))
 			2		" IF(tIP.uAvailable>0,'Yes','No'),"
 			3		" IFNULL(tDatacenter.cLabel,''),"
 			4		" tClient.cLabel,"
-			5		" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
-			6		" tIP.uFWStatus,"
-			7		" tIP.uFWRule,"
-			8		" tIP.uCountryCode"
-			9		" tIP.cComment,"
+			5		" FROM_UNIXTIME(tIP.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
+			6		" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
+			7		" tIP.uFWStatus,"
+			8		" tIP.uFWRule,"
+			9		" tIP.uCountryCode"
+			10		" tIP.cComment,"
 */
 	if(uFirewallMode)
 	{
 		//Allow instant feedback like cResult
 		if(!cCommentUpdated[0])
-			sprintf(cCommentUpdated,"%.255s",field[9]);
+			sprintf(cCommentUpdated,"%.255s",field[10]);
+		if(!cFWStatusUpdated[0])
+			sprintf(cFWStatusUpdated,"%.255s",field[7]);
 		printf("<td width=200 valign=top>"
 		"<input type=checkbox name=Ct%s >" //0
 		"<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>" //0 and 1
@@ -1369,7 +1374,8 @@ while((field=mysql_fetch_row(res)))
 			field[4],//Owner
 			field[5],//date
 			field[6],//date
-			field[7],//status
+			//field[7],//status
+			cFWStatusUpdated,//status
 			field[8],//rule
 			field[9],//country code
 				cCommentUpdated,

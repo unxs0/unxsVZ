@@ -344,25 +344,19 @@ void tIPSearchSet(unsigned uStep)
 		printf(" checked");
 	printf("> Firewall mode");
 
-	if(uFirewallMode)
-	{
-		OpenRow("Date Limits","black");
-
-		printf("<input title='Only show last 24 hours FW entries' type=checkbox name=u24Limit");
-		if(u24Limit)
-			printf(" checked");
-		printf("> Limit to last 24Hrs");
-
-		printf("&nbsp; <input title='Only show last 12 hours FW entries' type=checkbox name=u12Limit");
-		if(u12Limit)
-			printf(" checked");
-		printf("> Limit to last 12Hrs");
-
-		printf("&nbsp; <input title='Only show last 4 hours FW entries' type=checkbox name=u4Limit");
-		if(u4Limit)
-			printf(" checked");
-		printf("> Limit to last 4Hrs");
-	}
+	OpenRow("Date Limits","black");
+	printf("<input title='Only show last 24 hours FW entries' type=checkbox name=u24Limit");
+	if(u24Limit)
+		printf(" checked");
+	printf("> Limit to last 24Hrs");
+	printf("&nbsp; <input title='Only show last 12 hours FW entries' type=checkbox name=u12Limit");
+	if(u12Limit)
+		printf(" checked");
+	printf("> Limit to last 12Hrs");
+	printf("&nbsp; <input title='Only show last 4 hours FW entries' type=checkbox name=u4Limit");
+	if(u4Limit)
+		printf(" checked");
+	printf("> Limit to last 4Hrs");
 
 	OpenRow("IPv4 pattern","black");
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
