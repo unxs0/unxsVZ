@@ -51,8 +51,13 @@ static char cuNodeSearchPullDown[256]={""};
 static unsigned uNodeSearchNot=0;
 static unsigned uIPv4Exclude=0;
 static unsigned uFirewallMode=0;
+static unsigned u24Limit=0;
+static unsigned u12Limit=0;
+static unsigned u4Limit=0;
 static unsigned uOwnerSearch=0;
 static unsigned uDatacenterSearch=0;
+static unsigned uFWStatusSearch=0;
+static unsigned uFWStatusAnySearch=0;
 static char cuDatacenterSearchPullDown[256]={""};
 int ReadYesNoPullDownTriState(const char *cLabel);
 void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode);
@@ -151,6 +156,12 @@ void ProcesstIPVars(pentry entries[], int x)
 			uIPv4Exclude=1;
 		else if(!strcmp(entries[i].name,"uFirewallMode"))
 			uFirewallMode=1;
+		else if(!strcmp(entries[i].name,"u24Limit"))
+			u24Limit=1;
+		else if(!strcmp(entries[i].name,"u12Limit"))
+			u12Limit=1;
+		else if(!strcmp(entries[i].name,"u4Limit"))
+			u4Limit=1;
 		else if(!strcmp(entries[i].name,"cCommentSearch"))
 			sprintf(cCommentSearch,"%.32s",entries[i].val);
 
@@ -332,6 +343,26 @@ void tIPSearchSet(unsigned uStep)
 	if(uFirewallMode)
 		printf(" checked");
 	printf("> Firewall mode");
+
+	if(uFirewallMode)
+	{
+		OpenRow("Date Limits","black");
+
+		printf("<input title='Only show last 24 hours FW entries' type=checkbox name=u24Limit");
+		if(u24Limit)
+			printf(" checked");
+		printf("> Limit to last 24Hrs");
+
+		printf("&nbsp; <input title='Only show last 12 hours FW entries' type=checkbox name=u12Limit");
+		if(u12Limit)
+			printf(" checked");
+		printf("> Limit to last 12Hrs");
+
+		printf("&nbsp; <input title='Only show last 4 hours FW entries' type=checkbox name=u4Limit");
+		if(u4Limit)
+			printf(" checked");
+		printf("> Limit to last 4Hrs");
+	}
 
 	OpenRow("IPv4 pattern","black");
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cIPv4Search"
