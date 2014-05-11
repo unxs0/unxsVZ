@@ -4,7 +4,7 @@ FILE
 	$Id$
 PURPOSE
 	Agent to run on Snort IDS servers usually via barnyard2.
-	E.g. Create DenyAccess tJob for certain events for all active nodes.
+	E.g. Create tJob entries for certain events for all active nodes.
 
 AUTHOR
 	Gary Wallis for Unxiservice, LLC. (C) 2008-2014.
@@ -823,14 +823,14 @@ unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus, unsigned
 		if(uIPNum)
 			sprintf(gcQuery,"INSERT INTO tIP"
 				" SET uIPNum=%u,cLabel=INET_NTOA(%u)"
-				",uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				",uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uModDate=UNIX_TIMESTAMP(NOW())"
 				",uFWStatus=%u,uFWRule=%u,uCountryCode=%u"
 				",uDatacenter=41"//CustomerPremise magic number fix ASAP
 				",uAvailable=0",uIPNum,uIPNum,uFWStatus,uFWRule,uCountryCode);
 		else if(cIP[0])
 			sprintf(gcQuery,"INSERT INTO tIP"
 				" SET uIPNum=INET_ATON('%s'),cLabel='%s'"
-				",uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				",uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uModDate=UNIX_TIMESTAMP(NOW())"
 				",uFWStatus=%u,uFWRule=%u,uCountryCode=%u"
 				",uDatacenter=41"//CustomerPremise magic number fix ASAP
 				",uAvailable=0",cIP,cIP,uFWStatus,uFWRule,uCountryCode);
