@@ -784,6 +784,7 @@ unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus, unsigned
 	//gMysql must be ready
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uIP=0;
 
 	if(uIPNum)
 		sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
@@ -806,10 +807,11 @@ unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus, unsigned
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
+		sscanf(field[0],"%u",&uIP);
 		sprintf(gcQuery,"UPDATE tIP"
 				" SET uModBy=2,uModDate=UNIX_TIMESTAMP(NOW()),"
 				" uFWStatus=%u,uFWRule=%u,uCountryCode=%u"
-				" WHERE uIP=%s",uFWStatus,uFWRule,uCountryCode,field[0]);
+				" WHERE uIP=%u",uFWStatus,uFWRule,uCountryCode,uIP);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -823,14 +825,16 @@ unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus, unsigned
 		if(uIPNum)
 			sprintf(gcQuery,"INSERT INTO tIP"
 				" SET uIPNum=%u,cLabel=INET_NTOA(%u)"
-				",uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uModDate=UNIX_TIMESTAMP(NOW())"
+				",uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				",uModBy=2,uModDate=UNIX_TIMESTAMP(NOW())"
 				",uFWStatus=%u,uFWRule=%u,uCountryCode=%u"
 				",uDatacenter=41"//CustomerPremise magic number fix ASAP
 				",uAvailable=0",uIPNum,uIPNum,uFWStatus,uFWRule,uCountryCode);
 		else if(cIP[0])
 			sprintf(gcQuery,"INSERT INTO tIP"
 				" SET uIPNum=INET_ATON('%s'),cLabel='%s'"
-				",uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uModDate=UNIX_TIMESTAMP(NOW())"
+				",uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				",uModBy=2,uModDate=UNIX_TIMESTAMP(NOW())"
 				",uFWStatus=%u,uFWRule=%u,uCountryCode=%u"
 				",uDatacenter=41"//CustomerPremise magic number fix ASAP
 				",uAvailable=0",cIP,cIP,uFWStatus,uFWRule,uCountryCode);
@@ -843,8 +847,26 @@ unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus, unsigned
 			mysql_free_result(res);
 			return(1);
 		}
+		uIP=mysql_insert_id(&gMysql);
 	}
 	mysql_free_result(res);
+
+	if(uIP)
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty"
+				" SET cName='FW Activity'"
+				",cValue=CONCAT(NOW(),' uFWStatus=%u; uFWRule=%u;')"
+				",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+				",uType=31"
+				",uKey=%u",uFWStatus,uFWRule,uIP);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("UpdateVZIP-4",mysql_error(&gMysql));
+			return(1);
+		}
+	}
+
 	return(0);
 }//unsigned UpdateVZIP()
 
@@ -1030,15 +1052,15 @@ void ProcessBarnyard2(unsigned uPriority)
 		{
 			unsigned uSignatureID=0;
 
-			sprintf(gcQuery,"%u jobs created",uCount);
-			logfileLine("ProcessBarnyard2",gcQuery);
-
 			//Mark as processed. No need to process anymore. We need to add date and expiration fields.
 			sprintf(gcQuery,"INSERT INTO tBlockedIP SET uBlockedIP=%u",uIP);
 			mysql_query(&gMysqlLocal,gcQuery);
 
-			//We leverage the already existing unxsVZ tIP for now
 			uSignatureID=uGetLastSignatureID(uIP);
+
+			sprintf(gcQuery,"%u jobs created uSignatureID=%u;",uCount,uSignatureID);
+			logfileLine("ProcessBarnyard2",gcQuery);
+
 			char cCountryCode[3]={"--"};
 			unsigned uCountryCode=0;
 			uCountryCode=uGetCountryCode(cIP,cCountryCode);
