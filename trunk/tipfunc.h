@@ -779,10 +779,12 @@ void ExttIPAuxTable(void)
 			printf("&nbsp; <input title='Change datacenter using filter uDatacenterSearch select'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Change Datacenter'>\n");
-			printf("<p><input title='Create BlockAccess (iptables DROP target) jobs for all firewalls.'"
+			printf("<p><input title='Create BlockAccess (iptables DROP target) jobs for all"
+				" firewalls. Click on tIP.cLabel to get complete NOC and FW change history.''"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group BlockAccess'>\n");
-			printf("&nbsp; <input title='Create UndoBlockAccess (changes to iptables ACCEPT target) jobs for all firewalls.'"
+			printf("&nbsp; <input title='Create UndoBlockAccess (changes to iptables ACCEPT target) jobs for all"
+				" firewalls. Click on tIP.cLabel to get complete NOC and FW change history.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group UndoBlockAccess'>\n");
 			printf("&nbsp; <input title='Show country information in results field. Adds CN=cCountryName; to cComment.'"
@@ -799,7 +801,7 @@ void ExttIPAuxTable(void)
 					" tIP.cLabel,"
 					" IF(tIP.uAvailable>0,'Yes','No'),"
 					" IFNULL(tDatacenter.cLabel,''),"
-					" tClient.cLabel,"
+					" IFNULL(tClient.cLabel,''),"
 					" FROM_UNIXTIME(tIP.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
 					" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
 					" IFNULL(tFWStatus.cLabel,''),"
@@ -808,7 +810,7 @@ void ExttIPAuxTable(void)
 					" tIP.cComment"
 					" FROM tIP"
 					" LEFT JOIN tDatacenter ON tIP.uDatacenter=tDatacenter.uDatacenter"
-					" LEFT JOIN tClient ON tIP.uOwner=tClient.uClient"
+					" LEFT JOIN tClient ON tIP.uModBy=tClient.uClient"
 					" LEFT JOIN tFWStatus ON tIP.uFWStatus=tFWStatus.uFWStatus"
 					" LEFT JOIN tGeoIPCountryCode ON tIP.uCountryCode=tGeoIPCountryCode.uGeoIPCountryCode"
 					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u) ORDER BY tIP.uModDate DESC",uGroup);
@@ -848,7 +850,7 @@ void ExttIPAuxTable(void)
 					printf("<td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> <u>cLabel</u></td>"
 						"<td><u>Available</u></td>"
 						"<td><u>Datacenter</u></td>"
-						"<td><u>Owner</u></td>"
+						"<td><u>ModBy</u></td>"
 						"<td><u>CreatedDate</u></td>"
 						"<td><u>ModifiedDate</u></td>"
 						"<td><u>uFWStatus</u></td>"
@@ -1061,14 +1063,17 @@ while((field=mysql_fetch_row(res)))
 					MYSQL_ROW field;
 					char cIP[16]={""};
 					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
-					char cComment[32]={""};
-					sprintf(cComment,"%.31s",ForeignKey("tIP","cComment",uCtIP));
 					unsigned uAvailable=0;
 					sscanf(ForeignKey("tIP","uAvailable",uCtIP),"%u",&uAvailable);
 					unsigned uDatacenter=0;
 					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
 					unsigned uFWStatus=0;
 					sscanf(ForeignKey("tIP","uFWStatus",uCtIP),"%u",&uFWStatus);
+					if(guPermLevel<10)
+					{
+						sprintf(cResult,"insufficient permlevel");
+						break;
+					}
 					if(!cIP[0])
 					{
 						sprintf(cResult,"data error");
@@ -1151,15 +1156,23 @@ while((field=mysql_fetch_row(res)))
 						sprintf(gcQuery,"UPDATE tIP"
 								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 								",uFWStatus=%u"
-								",cComment=CONCAT(cComment,' NOC BLOCKED;')"
 								" WHERE uIP=%u",
 									guLoginClient,
 									uFWWAITINGBLOCK,
 									uCtIP);
 						mysql_query(&gMysql,gcQuery);
-						sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
 						sprintf(cFWStatusUpdated,"%.255s",ForeignKey("tFWStatus","cLabel",uFWWAITINGBLOCK));
+						sprintf(gcQuery,"INSERT INTO tProperty"
+								" SET uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+								",uOwner=1"
+								",cName='NOC FW Activity'"
+								",cValue=CONCAT(NOW(),' Group BlockAccess %s (%u/%u)')"
+								",uType=31"
+								",uKey=%u",
+									gcUser,guCompany,guPermLevel,uCtIP);
+						mysql_query(&gMysql,gcQuery);
 					}
+					unxsVZLog(uCtIP,"tIP","Group BlockAccess");
 					break;
 				}//Group BlockAccess
 
@@ -1170,14 +1183,17 @@ while((field=mysql_fetch_row(res)))
 					MYSQL_ROW field;
 					char cIP[16]={""};
 					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
-					char cComment[32]={""};
-					sprintf(cComment,"%.31s",ForeignKey("tIP","cComment",uCtIP));
 					unsigned uAvailable=0;
 					sscanf(ForeignKey("tIP","uAvailable",uCtIP),"%u",&uAvailable);
 					unsigned uDatacenter=0;
 					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
 					unsigned uFWStatus=0;
 					sscanf(ForeignKey("tIP","uFWStatus",uCtIP),"%u",&uFWStatus);
+					if(guPermLevel<10)
+					{
+						sprintf(cResult,"insufficient permlevel");
+						break;
+					}
 					if(!cIP[0])
 					{
 						sprintf(cResult,"data error");
@@ -1252,15 +1268,23 @@ while((field=mysql_fetch_row(res)))
 						sprintf(gcQuery,"UPDATE tIP"
 								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 								",uFWStatus=%u"
-								",cComment=CONCAT(cComment,' NOC UNBLOCKED;')"
 								" WHERE uIP=%u",
 									guLoginClient,
 									uFWWAITINGACCESS,
 									uCtIP);
 						mysql_query(&gMysql,gcQuery);
-						sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
 						sprintf(cFWStatusUpdated,"%.255s",ForeignKey("tFWStatus","cLabel",uFWWAITINGACCESS));
+						sprintf(gcQuery,"INSERT INTO tProperty"
+								" SET uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+								",uOwner=1"
+								",cName='NOC FW Activity'"
+								",cValue=CONCAT(NOW(),' Group UndoBlockAccess %s (%u/%u)')"
+								",uType=31"
+								",uKey=%u",
+									gcUser,guCompany,guPermLevel,uCtIP);
+						mysql_query(&gMysql,gcQuery);
 					}
+					unxsVZLog(uCtIP,"tIP","Group UndoBlockAccess");
 					break;
 				}//Group UndoBlockAccess
 
@@ -1369,7 +1393,7 @@ while((field=mysql_fetch_row(res)))
 			field[0],field[1],//uIP,cLabel
 			field[2],//Available Yes/No
 			field[3],//Datacenter
-			field[4],//Owner
+			field[4],//modby
 			field[5],//date
 			field[6],//date
 			//field[7],//status
@@ -1421,7 +1445,34 @@ while((field=mysql_fetch_row(res)))
 		break;
 
 		default:
-			;
+			if( !uIP || guMode!=6) return;
+
+			sprintf(gcQuery,"%s Property Panel",cLabel);
+			OpenFieldSet(gcQuery,100);
+			//UBC safe
+			sprintf(gcQuery,"SELECT uProperty,cName,cValue"
+					" FROM tProperty WHERE uKey=%u AND uType=31"
+					" ORDER BY cName",uIP);
+		        mysql_query(&gMysql,gcQuery);
+		        if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		        res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res))
+			{
+				printf("<table>");
+				while((field=mysql_fetch_row(res)))
+				{
+					printf("<tr>");
+					printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+					"gcFunction=tProperty&uProperty=%s&cReturn=tIP_%u>"
+					"%s</a></td><td>%s</td>\n",
+						field[0],uIP,field[1],field[2]);
+					printf("</tr>");
+				}
+				printf("</table>");
+			}
+			mysql_free_result(res);
+			CloseFieldSet();
 
 	}//switch(guMode)
 
