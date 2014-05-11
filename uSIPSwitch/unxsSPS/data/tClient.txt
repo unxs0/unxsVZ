@@ -1,4 +1,4 @@
-1	Root	1	1	1238945751	0	0			
+1	Root	1	1	1238945751	0	0	0			Root
 2	Acme Company	1	1	1229038586	0	0			Organization
 11	Smart GmbH	1	1	1249940558	0	0			Organization
 21	Jorg Kunkel	11	1	1249940589	0	0			Contact
