@@ -32,6 +32,15 @@ AUTHOR
 #include "language.h"
 #include "local.h"
 
+//tIP uFWStatus codes
+#define uFWWAITINGBLOCK 1
+#define uFWWAITINGACCESS 2
+#define uFWBLOCKED 3
+#define uFWACCESS 4
+#define uFWREMOVED 5
+#define uFWWAITINGREMOVAL 6
+
+
 //tStatus constants
 #define uACTIVE		1
 #define uONHOLD		2

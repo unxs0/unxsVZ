@@ -1439,10 +1439,6 @@ void UpdateSchema(void)
 	unsigned uIncorrectVeth=0;
 	unsigned uSourceIndex=0;
 	unsigned uPropertyNameIndex=0;
-	unsigned uJobStatusIndex=0;
-	unsigned uJobNodeIndex=0;
-	unsigned uJobDatacenterIndex=0;
-	unsigned uJobContainerIndex=0;
 	unsigned uTemplateLabelIndex=0;
 	unsigned uGlossaryLabelIndex=0;
 
@@ -1451,8 +1447,8 @@ void UpdateSchema(void)
 	if(TextConnectDb())
 		exit(1);
 
-	//Take note if what we need to change/add
-	//This is based on expanded and incorrect schema of previous releases. Yes this sucks.
+	//
+	//tContainer
 	sprintf(gcQuery,"SHOW COLUMNS IN tContainer");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1479,6 +1475,19 @@ void UpdateSchema(void)
 		}
 	}
        	mysql_free_result(res);
+	sprintf(gcQuery,"SHOW INDEX IN tContainer");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[2],"uSource")) uSourceIndex=1;
+	}
+       	mysql_free_result(res);
+	//tContainer
+	//
 
 
 	//
@@ -1598,18 +1607,6 @@ void UpdateSchema(void)
 	}
        	mysql_free_result(res);
 
-	sprintf(gcQuery,"SHOW INDEX IN tContainer");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		if(!strcmp(field[2],"uSource")) uSourceIndex=1;
-	}
-       	mysql_free_result(res);
-
 	sprintf(gcQuery,"SHOW INDEX IN tProperty");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1622,6 +1619,27 @@ void UpdateSchema(void)
 	}
        	mysql_free_result(res);
 
+	//
+	//tJob
+	//uMasterJob INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uMasterJob),
+	unsigned uMasterJob=0;
+	unsigned utJobuJobStatusIndex=0;
+	unsigned utJobuNodeIndex=0;
+	unsigned utJobuDatacenterIndex=0;
+	unsigned utJobuContainerIndex=0;
+	unsigned utJobuMasterJobIndex=0;
+	sprintf(gcQuery,"SHOW COLUMNS IN tJob");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uMasterJob"))
+			uMasterJob=1;
+	}
+       	mysql_free_result(res);
 	sprintf(gcQuery,"SHOW INDEX IN tJob");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1630,12 +1648,15 @@ void UpdateSchema(void)
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		if(!strcmp(field[2],"uJobStatus")) uJobStatusIndex=1;
-		else if(!strcmp(field[2],"uContainer")) uJobContainerIndex=1;
-		else if(!strcmp(field[2],"uNode")) uJobNodeIndex=1;
-		else if(!strcmp(field[2],"uDatacenter")) uJobDatacenterIndex=1;
+		if(!strcmp(field[2],"uJobStatus")) utJobuJobStatusIndex=1;
+		else if(!strcmp(field[2],"uContainer")) utJobuContainerIndex=1;
+		else if(!strcmp(field[2],"uNode")) utJobuNodeIndex=1;
+		else if(!strcmp(field[2],"uDatacenter")) utJobuDatacenterIndex=1;
+		else if(!strcmp(field[2],"uMasterJob")) utJobuMasterJobIndex=1;
 	}
        	mysql_free_result(res);
+	//tJob
+	//
 
 	sprintf(gcQuery,"SHOW INDEX IN tTemplate");
 	mysql_query(&gMysql,gcQuery);
@@ -1661,6 +1682,9 @@ void UpdateSchema(void)
 	}
        	mysql_free_result(res);
 
+
+	//
+	//tContainer
 	if(uIncorrectVeth)
 	{
 		sprintf(gcQuery,"ALTER TABLE tContainer MODIFY uVeth INT UNSIGNED NOT NULL DEFAULT 0");
@@ -1688,55 +1712,6 @@ void UpdateSchema(void)
 		else
 			printf("Added uBackupDate to tContainer\n");
 	}
-
-	sprintf(gcQuery,"SELECT uStatus FROM tStatus WHERE uStatus=81");	
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)==0)
-	{
-		sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=81,cLabel='Awaiting Clone',"
-				"uCreatedBy=1,uOwner=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Inserted uStatus=81 into tStatus\n");
-	}
-       	mysql_free_result(res);
-
-	sprintf(gcQuery,"SELECT uStatus FROM tStatus WHERE uStatus=91");	
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)==0)
-	{
-		sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=91,cLabel='Awaiting Failover',"
-				"uCreatedBy=1,uOwner=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Inserted uStatus=91 into tStatus\n");
-	}
-       	mysql_free_result(res);
-
-	//Not important if repeated
-	sprintf(gcQuery,"UPDATE tConfiguration SET cLabel='cSSHOptions' WHERE cLabel='cSSLOptions'");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-
-	//Not important if repeated
-	sprintf(gcQuery,"ALTER TABLE tOSTemplate MODIFY cLabel VARCHAR(100) NOT NULL DEFAULT ''");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		printf("%s\n",mysql_error(&gMysql));
-
 	if(uIncorrectSource)
 	{
 		sprintf(gcQuery,"ALTER TABLE tContainer MODIFY uSource INT UNSIGNED NOT NULL DEFAULT 0");
@@ -1758,7 +1733,6 @@ void UpdateSchema(void)
 			uSourceIndex=0;
 		}
 	}
-
 	if(!uSource)
 	{
 		sprintf(gcQuery,"ALTER TABLE tContainer ADD uSource INT UNSIGNED NOT NULL DEFAULT 0");
@@ -1768,7 +1742,6 @@ void UpdateSchema(void)
 		else
 			printf("Added uSource to tContainer\n");
 	}
-
 	if(!uSourceIndex)
 	{
 		sprintf(gcQuery,"ALTER TABLE tContainer ADD INDEX (uSource)");
@@ -1778,6 +1751,122 @@ void UpdateSchema(void)
 		else
 			printf("Added INDEX uSource tContainer\n");
 	}
+	//tContainer
+	//
+
+	//
+	//tJob
+	if(!uMasterJob)
+	{
+		sprintf(gcQuery,"ALTER TABLE tJob ADD uMasterJob INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uMasterJob to tJob\n");
+	}
+	if(!utJobuJobStatusIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uJobStatus)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uJobStatus tJob\n");
+	}
+	if(!utJobuNodeIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uNode)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uNode tJob\n");
+	}
+	if(!utJobuDatacenterIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uDatacenter)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uDatacenter tJob\n");
+	}
+	if(!utJobuContainerIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uContainer)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uContainer tJob\n");
+	}
+	if(!utJobuMasterJobIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uMasterJob)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uMasterJob tJob\n");
+	}
+	sprintf(gcQuery,"ALTER TABLE tJob MODIFY cRemoteMsg VARCHAR(64) NOT NULL DEFAULT ''");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	//tJob
+	//
+
+	//
+	//tStatus
+	sprintf(gcQuery,"SELECT uStatus FROM tStatus WHERE uStatus=81");	
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)==0)
+	{
+		sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=81,cLabel='Awaiting Clone',"
+				"uCreatedBy=1,uOwner=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Inserted uStatus=81 into tStatus\n");
+	}
+       	mysql_free_result(res);
+	sprintf(gcQuery,"SELECT uStatus FROM tStatus WHERE uStatus=91");	
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)==0)
+	{
+		sprintf(gcQuery,"INSERT INTO tStatus SET uStatus=91,cLabel='Awaiting Failover',"
+				"uCreatedBy=1,uOwner=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Inserted uStatus=91 into tStatus\n");
+	}
+       	mysql_free_result(res);
+	//tStatus
+	//
+
+	//Not important if repeated
+	sprintf(gcQuery,"UPDATE tConfiguration SET cLabel='cSSHOptions' WHERE cLabel='cSSLOptions'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+
+	//Not important if repeated
+	sprintf(gcQuery,"ALTER TABLE tOSTemplate MODIFY cLabel VARCHAR(100) NOT NULL DEFAULT ''");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
 
 	//alter table tProperty add index (cName)
 	if(!uPropertyNameIndex)
@@ -1791,46 +1880,6 @@ void UpdateSchema(void)
 	}
 
 
-	//alter table tJob add index
-	if(!uJobStatusIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uJobStatus)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX uJobStatus tJob\n");
-	}
-
-	if(!uJobNodeIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uNode)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX uNode tJob\n");
-	}
-
-	if(!uJobDatacenterIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uDatacenter)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX uDatacenter tJob\n");
-	}
-
-	if(!uJobContainerIndex)
-	{
-		sprintf(gcQuery,"ALTER TABLE tJob ADD INDEX (uContainer)");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Added INDEX uContainer tJob\n");
-	}
 
 	if(!uTemplateLabelIndex)
 	{
@@ -2059,18 +2108,10 @@ void UpdateSchema(void)
 			printf("Added uOTPExpires to tAuthorize\n");
 	}
 
-	//Please fix this TODO
-		sprintf(gcQuery,"ALTER TABLE tJob MODIFY cRemoteMsg VARCHAR(64) NOT NULL DEFAULT ''");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			printf("%s\n",mysql_error(&gMysql));
-		else
-			printf("Corrected cRemoteMsg of tJob\n");
-
-
 	printf("UpdateSchema(): End\n");
 
 }//void UpdateSchema(void)
+
 
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType)
 {
@@ -3151,9 +3192,9 @@ void ImportRemoteDatacenter(
 		res=mysql_store_result(&gMysql);
 		if(mysql_num_rows(res)==0)
 		{
-			sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uAvailable=0,uDatacenter=%u,uOwner=%u,"
+			sprintf(gcQuery,"INSERT INTO tIP SET uIPNum=INET_ATON('%s'),cLabel='%s',uAvailable=0,uDatacenter=%u,uOwner=%u,"
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						fieldExt[2],uLocalDatacenter,uClient);
+						fieldExt[2],fieldExt[2],uLocalDatacenter,uClient);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{

@@ -429,9 +429,9 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 			}
 			else
 			{
-				sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uDatacenter=%u,"
+				sprintf(gcQuery,"INSERT INTO tIP SET uIPNum=INET_ATON('%s'),cLabel='%s',uDatacenter=%u,"
 					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						gcIPv4,uApplianceDatacenter,uForClient,guLoginClient);
+						gcIPv4,gcIPv4,uApplianceDatacenter,uForClient,guLoginClient);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
