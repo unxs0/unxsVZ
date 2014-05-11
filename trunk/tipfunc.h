@@ -779,15 +779,13 @@ void ExttIPAuxTable(void)
 			printf("&nbsp; <input title='Change datacenter using filter uDatacenterSearch select'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Change Datacenter'>\n");
-			printf("<p><input title='Create BlockAccess jobs for all firewalls."
-				" Only operates on unavailable CustomerPremise datacenter IPs."
-				" The comment section must start with \"FW NOC entered;\" or one of the unxsSnort allowed comments.'"
+			printf("<p><input title='Create BlockAccess (iptables DROP target) jobs for all firewalls.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group BlockAccess'>\n");
-			printf("&nbsp; <input title='Create UndoBlockAccess jobs for all firewalls.'"
+			printf("&nbsp; <input title='Create UndoBlockAccess (changes to iptables ACCEPT target) jobs for all firewalls.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group UndoBlockAccess'>\n");
-			printf("&nbsp; <input title='Show country information in results field.'"
+			printf("&nbsp; <input title='Show country information in results field. Adds CN=cCountryName; to cComment.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group CountryInfo'>\n");
 			CloseFieldSet();

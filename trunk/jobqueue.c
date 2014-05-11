@@ -7347,10 +7347,10 @@ unsigned uContainerStatus(unsigned uContainer)
 
 void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
 {
-	char cIPv4[16]={""};
+	char cIPv4[32]={""};
 	char *cp;
 
-	sscanf(cJobData,"cIPv4=%15s;",cIPv4);
+	sscanf(cJobData,"cIPv4=%31s;",cIPv4);
 	if((cp=strchr(cIPv4,';')))
 		*cp=0;
 	if(!cIPv4[0])
@@ -7451,10 +7451,10 @@ void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 
 void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
 {
-	char cIPv4[16]={""};
+	char cIPv4[32]={""};
 	char *cp;
 
-	sscanf(cJobData,"cIPv4=%15s;",cIPv4);
+	sscanf(cJobData,"cIPv4=%31s;",cIPv4);
 	if((cp=strchr(cIPv4,';')))
 		*cp=0;
 	if(!cIPv4[0])
@@ -7553,13 +7553,13 @@ void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,uns
 }//void UndoBlockAccess()
 
 
-//All port access
+//All port access used by unxsSnort only at this time.
 void AllowAllAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
 {
-	char cIPv4[16]={""};
+	char cIPv4[32]={""};
 	char *cp;
 
-	sscanf(cJobData,"cIPv4=%15s;",cIPv4);
+	sscanf(cJobData,"cIPv4=%31s;",cIPv4);
 	if((cp=strchr(cIPv4,';')))
 		*cp=0;
 	if(!cIPv4[0])
@@ -7662,7 +7662,7 @@ void AllowAllAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsi
 void UpdateIPFWStatus(const char *cIPv4,unsigned uFWStatus)
 {
 	sprintf(gcQuery,"UPDATE tIP"
-		" SET uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),"
+		" SET uModDate=UNIX_TIMESTAMP(NOW()),"
 		" uFWStatus=%u"
 		" WHERE uIPNum=INET_ATON('%s')",uFWStatus,cIPv4);
 	mysql_query(&gMysql,gcQuery);
