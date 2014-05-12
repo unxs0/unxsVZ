@@ -1,4 +1,4 @@
-USE snort;
+USE unxsvz;
 
 DROP TABLE IF EXISTS tFWRules;
 CREATE TABLE IF NOT EXISTS tFWRules (
