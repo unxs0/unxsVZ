@@ -47,7 +47,8 @@ unsigned BlockIP(const char *cIP);
 unsigned DumpBlocked(void);
 unsigned RemoveBlocked(const char *cIP);
 unsigned UnBlockIP(const char *cIP);
-unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus, unsigned uFWRule,unsigned uCountryCode);
+unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus,
+		unsigned uFWRule,unsigned uCountryCode,unsigned uDstIPCount);
 unsigned uGetLastSignatureID(unsigned uIP);
 void ProcessBarnyard2(unsigned uPriority);
 unsigned uGetCountryCode(const char *cIP,char *cCountryCode);
@@ -604,7 +605,7 @@ unsigned BlockIP(const char *cIP)
 
 	}//while each server
 	if(uCount)
-		UpdateVZIP(cIP,0,uFWWAITINGBLOCK,0,uCountryCode);
+		UpdateVZIP(cIP,0,uFWWAITINGBLOCK,0,uCountryCode,0);
 
 	if((gLfp=fopen(cSNORTLOGFILE,"a"))==NULL)
 	{
@@ -686,7 +687,7 @@ unsigned UnBlockIP(const char *cIP)
 		char cCountryCode[3]={"--"};
 		unsigned uCountryCode=0;
 		uCountryCode=uGetCountryCode(cIP,cCountryCode);
-		UpdateVZIP(cIP,0,uFWWAITINGACCESS,0,uCountryCode);
+		UpdateVZIP(cIP,0,uFWWAITINGACCESS,0,uCountryCode,0);
 	}
 
 
@@ -779,7 +780,8 @@ unsigned RemoveBlocked(const char *cIP)
 }//unsigned RemoveBlocked(chatr *cIP)
 
 
-unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus, unsigned uFWRule,unsigned uCountryCode)
+unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus,
+			unsigned uFWRule,unsigned uCountryCode,unsigned uDstIPCount)
 {
 	//gMysql must be ready
         MYSQL_RES *res;
@@ -855,10 +857,10 @@ unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus, unsigned
 	{
 		sprintf(gcQuery,"INSERT INTO tProperty"
 				" SET cName='FW Activity'"
-				",cValue=CONCAT(NOW(),' uFWStatus=%u; uFWRule=%u;')"
+				",cValue=CONCAT(NOW(),' uFWStatus=%u; uFWRule=%u; uDstIPCount=%u;')"
 				",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 				",uType=31"
-				",uKey=%u",uFWStatus,uFWRule,uIP);
+				",uKey=%u",uFWStatus,uFWRule,uDstIPCount,uIP);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -940,6 +942,7 @@ void ProcessBarnyard2(unsigned uPriority)
 	while((fieldLocal=mysql_fetch_row(resLocal)))
 	{
 		unsigned uTmpPriority=0;
+		unsigned uDstIPCount=0;
 
 		uEventCount++;
 		if(uEventCount>16)
@@ -973,7 +976,6 @@ void ProcessBarnyard2(unsigned uPriority)
 				logfileLine("ProcessBarnyard2-s3",mysql_error(&gMysqlLocal));
 		
         		resLocal=mysql_store_result(&gMysqlLocal);
-			unsigned uDstIPCount=0;
 			uDstIPCount=mysql_num_rows(resLocal);
 			if(resLocal!=NULL)
 				mysql_free_result(resLocal);
@@ -1066,11 +1068,11 @@ void ProcessBarnyard2(unsigned uPriority)
 			uCountryCode=uGetCountryCode(cIP,cCountryCode);
 			if(uPriority>2 && !uTmpPriority)
 			{
-				UpdateVZIP("",uIP,uFWWAITINGACCESS,uSignatureID,uCountryCode);
+				UpdateVZIP("",uIP,uFWWAITINGACCESS,uSignatureID,uCountryCode,uDstIPCount);
 			}
 			else
 			{
-				UpdateVZIP("",uIP,uFWWAITINGBLOCK,uSignatureID,uCountryCode);
+				UpdateVZIP("",uIP,uFWWAITINGBLOCK,uSignatureID,uCountryCode,uDstIPCount);
 				logfileLine("ProcessBarnyard2","priority 1");
 			}
 
