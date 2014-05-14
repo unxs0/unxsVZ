@@ -278,7 +278,7 @@ void CreateBlockedIPTable(void)
 		
 	if(TextLocalConnectDb()) exit(1);
 
-	sprintf(gcQuery,"DROP TABLE tBlockedIP");
+	sprintf(gcQuery,"DROP TABLE IF EXISTS tBlockedIP");
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
@@ -711,9 +711,9 @@ unsigned UnBlockIP(const char *cIP)
 unsigned DumpBlocked(void)
 {
 	unsigned uRetVal=0;
-	MYSQL_RES *resLocal;
+	MYSQL_RES *resLocal=NULL;
 	MYSQL_ROW fieldLocal;
-	MYSQL_RES *resLocal2;
+	MYSQL_RES *resLocal2=NULL;
 	MYSQL_ROW fieldLocal2;
 
 	if(!guMysqlLocal)
@@ -749,8 +749,10 @@ unsigned DumpBlocked(void)
 
 	printf("uCount=%u\n",uCount);
 
-	mysql_free_result(resLocal2);
-	mysql_free_result(resLocal);
+	if(resLocal2!=NULL)
+		mysql_free_result(resLocal2);
+	if(resLocal!=NULL)
+		mysql_free_result(resLocal);
 	return(uRetVal);
 
 }//unsigned DumpBlocked(void)
