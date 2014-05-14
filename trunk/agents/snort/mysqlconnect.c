@@ -66,8 +66,8 @@ void TextConnectDb(void)
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
 			logfileLine("TextConnectDb","Could not create TextConnectDB() socket DBIP0");
-			if(rmdir("/tmp/snort.lock"))
-				logfileLine("TextConnectDb","could not rmdir(/tmp/snort.lock)");
+			if(rmdir(cLOCKDIR))
+				logfileLine("TextConnectDb","could not rmdir(cLOCKDIR)");
 			exit(1);
 		}
 
@@ -114,8 +114,8 @@ void TextConnectDb(void)
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
 			logfileLine("TextConnectDb","Could not create TextConnectDB() socket DBIP1");
-			if(rmdir("/tmp/snort.lock"))
-				logfileLine("TextConnectDb","could not rmdir(/tmp/snort.lock)");
+			if(rmdir(cLOCKDIR))
+				logfileLine("TextConnectDb","could not rmdir(cLOCKDIR)");
 			exit(1);
 		}
 
@@ -170,8 +170,8 @@ void TextConnectDb(void)
 		sprintf(cMessage,"Could not connect unexpected case");
 
 	logfileLine("TextConnectDb",cMessage);
-	if(rmdir("/tmp/snort.lock"))
-		logfileLine("TextConnectDb","could not rmdir(/tmp/snort.lock)");
+	if(rmdir(cLOCKDIR))
+		logfileLine("TextConnectDb","could not rmdir(cLOCKDIR)");
 	exit(1);
 
 }//TextConnectDb()
