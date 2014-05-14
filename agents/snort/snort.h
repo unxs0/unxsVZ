@@ -5,6 +5,8 @@ AUTHOR
 	(C) 2001-2014 Gary Wallis for Unixservice, LLC.
 */
 
+#define cLOCKDIR "/tmp/unxsSnort.lock"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pwd.h>

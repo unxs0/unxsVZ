@@ -25,7 +25,7 @@ NOTES
 
 
 #define cSNORTLOGFILE "/var/log/unxsSnortLog"
-char gcLockfile[64]={"/tmp/unxsSnort.lock"};
+char gcLockfile[64]={cLOCKDIR};
 
 MYSQL gMysql;
 MYSQL gMysqlLocal;
@@ -929,6 +929,7 @@ void ProcessBarnyard2(unsigned uPriority)
 			" AND event.signature=signature.sig_id"
 			" AND iphdr.ip_src NOT IN (SELECT uBlockedIP FROM tBlockedIP)"
 			" AND event.timestamp>(NOW()-61)"
+			//" AND event.timestamp>(NOW()-43200)"
 			" AND signature.sig_priority=%u LIMIT 17",uPriority);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
