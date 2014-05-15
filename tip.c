@@ -56,9 +56,13 @@ static unsigned u12Limit=0;
 static unsigned u4Limit=0;
 static unsigned uOwnerSearch=0;
 static unsigned uDatacenterSearch=0;
+static unsigned uCountryCodeSearch=0;
 static unsigned uFWStatusSearch=0;
 static unsigned uFWStatusAnySearch=0;
 static char cuDatacenterSearchPullDown[256]={""};
+static char cuCountryCodeSearchPullDown[256]={""};
+static char cuFWStatusSearchPullDown[256]={""};
+static unsigned uCountryCodeSearchNot=0;
 int ReadYesNoPullDownTriState(const char *cLabel);
 void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode);
 
@@ -136,6 +140,20 @@ void ProcesstIPVars(pentry entries[], int x)
 			sprintf(cuDatacenterSearchPullDown,"%.255s",entries[i].val);
 			uDatacenterSearch=ReadPullDown("tDatacenter","cLabel",cuDatacenterSearchPullDown);
 		}
+		else if(!strcmp(entries[i].name,"uFWStatusSearch"))
+			sscanf(entries[i].val,"%u",&uFWStatusSearch);
+		else if(!strcmp(entries[i].name,"cuFWStatusSearchPullDown"))
+		{
+			sprintf(cuFWStatusSearchPullDown,"%.255s",entries[i].val);
+			uFWStatusSearch=ReadPullDown("tFWStatus","cLabel",cuFWStatusSearchPullDown);
+		}
+		else if(!strcmp(entries[i].name,"uCountryCodeSearch"))
+			sscanf(entries[i].val,"%u",&uCountryCodeSearch);
+		else if(!strcmp(entries[i].name,"cuCountryCodeSearchPullDown"))
+		{
+			sprintf(cuCountryCodeSearchPullDown,"%.255s",entries[i].val);
+			uCountryCodeSearch=ReadPullDown("tGeoIPCountryCode","cCountryCode",cuCountryCodeSearchPullDown);
+		}
 		else if(!strcmp(entries[i].name,"uNodeSearch"))
 			sscanf(entries[i].val,"%u",&uNodeSearch);
 		else if(!strcmp(entries[i].name,"cuNodeSearchPullDown"))
@@ -152,6 +170,8 @@ void ProcesstIPVars(pentry entries[], int x)
 		}
 		else if(!strcmp(entries[i].name,"uNodeSearchNotNoCA"))
 			uNodeSearchNot=1;
+		else if(!strcmp(entries[i].name,"uCountryCodeSearchNot"))
+			uCountryCodeSearchNot=1;
 		else if(!strcmp(entries[i].name,"uIPv4ExcludeNoCA"))
 			uIPv4Exclude=1;
 		else if(!strcmp(entries[i].name,"uFirewallMode"))
@@ -365,6 +385,20 @@ void tIPSearchSet(unsigned uStep)
 	if(uIPv4Exclude)
 		printf(" checked");
 	printf("> Exclude RFC1918 IPs");
+
+	if(uFirewallMode)
+	{
+		OpenRow("Country Code","black");
+		tTablePullDown("tGeoIPCountryCode;cuCountryCodeSearchPullDown","cCountryCode","cCountryCode",uCountryCodeSearch,1);
+		printf("<input title='Logical NOT of selected country if any. Including default any country (no country)'"
+			" type=checkbox name=uCountryCodeSearchNot ");
+		if(uCountryCodeSearchNot)
+			printf(" checked");
+		printf("> Not");
+
+		OpenRow("uFWStatus Code","black");
+		tTablePullDown("tFWStatus;cuFWStatusSearchPullDown","cLabel","cLabel",uFWStatusSearch,1);
+	}
 
 	OpenRow("Datacenter","black");
 	tTablePullDown("tDatacenter;cuDatacenterSearchPullDown","cLabel","cLabel",uDatacenterSearch,1);

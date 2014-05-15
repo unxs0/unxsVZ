@@ -976,16 +976,22 @@ void ExttNodeAuxTable(void)
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 		        res=mysql_store_result(&gMysql);
+			char cPrivate[32]={"private"};
 			if(mysql_num_rows(res))
 			{
 				printf("<table>");
 				while((field=mysql_fetch_row(res)))
 				{
+					char *cValue;
+					if(guPermLevel<10 && (strstr(field[1],"passwd")||strstr(field[1],"Passwd")))
+						cValue=cPrivate;
+					else
+						cValue=field[2];
 					printf("<tr>");
 					printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
 							"gcFunction=tProperty&uProperty=%s&cReturn=tNode_%u>"
 							"%s</a></td><td>%s</td>\n",
-								field[0],uNode,field[1],field[2]);
+								field[0],uNode,field[1],cValue);
 					printf("</tr>");
 				}
 				printf("</table>");
