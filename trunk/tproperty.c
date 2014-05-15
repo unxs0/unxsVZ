@@ -314,16 +314,22 @@ void tPropertyInput(unsigned uMode)
 		printf("<input type=hidden name=cName value=\"%s\">\n",EncodeDoubleQuotes(cName));
 	}
 //cValue
+	char cPrivate[32]={"private"};
+	char *cpValue;
+	if(cName[0] && guPermLevel<10 && (strstr(cName,"passwd")||strstr(cName,"Passwd")))
+		cpValue=cPrivate;
+	else
+		cpValue=cValue;
 	OpenRow(LANG_FL_tProperty_cValue,"black");
 	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cValue ",LANG_FT_tProperty_cValue);
 	if(guPermLevel>=0 && uMode)
 	{
-		printf(">%s</textarea></td></tr>\n",cValue);
+		printf(">%s</textarea></td></tr>\n",cpValue);
 	}
 	else
 	{
-		printf("disabled>%s</textarea></td></tr>\n",cValue);
-		printf("<input type=hidden name=cValue value=\"%s\" >\n",EncodeDoubleQuotes(cValue));
+		printf("disabled>%s</textarea></td></tr>\n",cpValue);
+		printf("<input type=hidden name=cValue value=\"%s\" >\n",EncodeDoubleQuotes(cpValue));
 	}
 //uType
 	OpenRow(LANG_FL_tProperty_uType,"black");
@@ -581,6 +587,7 @@ void tPropertyList(void)
 
 	mysql_data_seek(res,guStart-1);
 
+	char cPrivate[32]={"private"};
 	for(guN=0;guN<(guEnd-guStart+1);guN++)
 	{
 		field=mysql_fetch_row(res);
@@ -625,6 +632,11 @@ void tPropertyList(void)
 			gMysql=gMysqlSave;
 			sprintf(cLinkExtra,"&cuDatacenterSelect=%s",cuDatacenterSelect);
 		}
+		char *cValue;
+		if(guPermLevel<10 && (strstr(field[1],"passwd")||strstr(field[1],"Passwd")))
+			cValue=cPrivate;
+		else
+			cValue=field[2];
 		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s%s>%s</a>"
 			"<td>%s"
 			"<td><textarea rows=1 cols=80 disabled>%s</textarea>"
@@ -637,7 +649,7 @@ void tPropertyList(void)
 			"<td>%s</tr>"
 			,field[0],cLinkExtra,field[0]
 			,field[1]
-			,field[2]
+			,cValue
 			,ForeignKey("tType","cLabel",uKey)
 			,cTable,field[4],field[4]
 			,ForeignKey(TCLIENT,"cLabel",strtoul(field[5],NULL,10))

@@ -129,7 +129,7 @@ void ExttIPCommands(pentry entries[], int x)
 				unsigned uGroup=0;
 
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
-						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0)
+						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0 )
 	                        	tIP("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,31))==0)
@@ -173,6 +173,32 @@ void ExttIPCommands(pentry entries[], int x)
 								" WHERE tContainer.cLabel IS NULL)");
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
+				}
+
+
+				if(uFirewallMode)
+				{
+					if(uCountryCodeSearch || uCountryCodeSearchNot)
+					{
+						if(uLink)
+							strcat(gcQuery," AND");
+						if(uCountryCodeSearchNot && uCountryCodeSearch)
+							sprintf(cQuerySection," uCountryCode!=%u",uCountryCodeSearch);
+						else if(uCountryCodeSearch)
+							sprintf(cQuerySection," uCountryCode=%u",uCountryCodeSearch);
+						else
+							sprintf(cQuerySection," uCountryCode=0");
+						strcat(gcQuery,cQuerySection);
+						uLink=1;
+					}
+					if(uFWStatusSearch)
+					{
+						if(uLink)
+							strcat(gcQuery," AND");
+						sprintf(cQuerySection," uFWStatus=%u",uFWStatusSearch);
+						strcat(gcQuery,cQuerySection);
+						uLink=1;
+					}
 				}
 
 				//YesNo tristate
@@ -349,6 +375,31 @@ void ExttIPCommands(pentry entries[], int x)
 					uLink=1;
 				}
 
+				if(uFirewallMode)
+				{
+					if(uCountryCodeSearch || uCountryCodeSearchNot)
+					{
+						if(uLink)
+							strcat(gcQuery," AND");
+						if(uCountryCodeSearchNot && uCountryCodeSearch)
+							sprintf(cQuerySection," uCountryCode!=%u",uCountryCodeSearch);
+						else if(uCountryCodeSearch)
+							sprintf(cQuerySection," uCountryCode=%u",uCountryCodeSearch);
+						else
+							sprintf(cQuerySection," uCountryCode=0");
+						strcat(gcQuery,cQuerySection);
+						uLink=1;
+					}
+					if(uFWStatusSearch)
+					{
+						if(uLink)
+							strcat(gcQuery," AND");
+						sprintf(cQuerySection," uFWStatus=%u",uFWStatusSearch);
+						strcat(gcQuery,cQuerySection);
+						uLink=1;
+					}
+				}
+
 				if(uNodeSearch || uNodeSearchNot)
 				{
 					if(uLink)
@@ -500,6 +551,10 @@ void ExttIPCommands(pentry entries[], int x)
 					mysql_free_result(res);
 					tIP("Can't delete an IP in use");
 				}
+				sprintf(gcQuery,"DELETE FROM tProperty WHERE uType=31 AND uKey=%u",uIP);
+        			mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
 	                        guMode=2001;
 				tIP(LANG_NB_CONFIRMDEL);
 			}
@@ -799,19 +854,20 @@ void ExttIPAuxTable(void)
 				sprintf(gcQuery,"SELECT"
 					" tIP.uIP,"
 					" tIP.cLabel,"
-					" IF(tIP.uAvailable>0,'Yes','No'),"
-					" IFNULL(tDatacenter.cLabel,''),"
+					//" IF(tIP.uAvailable>0,'Yes','No'),"
+					//" IFNULL(tDatacenter.cLabel,''),"
 					" IFNULL(tClient.cLabel,''),"
 					" FROM_UNIXTIME(tIP.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
 					" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
 					" IFNULL(tFWStatus.cLabel,''),"
-					" tIP.uFWRule,"
+					" IFNULL(tFWRules.cRuleName,'No rule. Most likely added by NOC staff.'),"
 					" IFNULL(tGeoIPCountryCode.cCountryCode,''),"
 					" tIP.cComment"
 					" FROM tIP"
 					" LEFT JOIN tDatacenter ON tIP.uDatacenter=tDatacenter.uDatacenter"
 					" LEFT JOIN tClient ON tIP.uModBy=tClient.uClient"
 					" LEFT JOIN tFWStatus ON tIP.uFWStatus=tFWStatus.uFWStatus"
+					" LEFT JOIN tFWRules ON tIP.uFWRule=tFWRules.uFWRules"
 					" LEFT JOIN tGeoIPCountryCode ON tIP.uCountryCode=tGeoIPCountryCode.uGeoIPCountryCode"
 					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u) ORDER BY tIP.uModDate DESC",uGroup);
 			else
@@ -848,8 +904,8 @@ void ExttIPAuxTable(void)
 				printf("<tr>");
 				if(uFirewallMode)
 					printf("<td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> <u>cLabel</u></td>"
-						"<td><u>Available</u></td>"
-						"<td><u>Datacenter</u></td>"
+						//"<td><u>Available</u></td>"
+						//"<td><u>Datacenter</u></td>"
 						"<td><u>ModBy</u></td>"
 						"<td><u>CreatedDate</u></td>"
 						"<td><u>ModifiedDate</u></td>"
@@ -911,6 +967,12 @@ while((field=mysql_fetch_row(res)))
 				{
 					MYSQL_RES *res;
 
+					if(guPermLevel<12)
+					{
+						sprintf(cResult,"must be root");
+						break;
+					}
+
 					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uIP=%u",uGroup,uCtIP);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
@@ -926,6 +988,11 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"IP in use");
 						break;
 					}
+
+					sprintf(gcQuery,"DELETE FROM tProperty WHERE uType=31 AND uKey=%u",uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
 
 					sprintf(gcQuery,"DELETE FROM tIP WHERE uIP=%u",uCtIP);
 					mysql_query(&gMysql,gcQuery);
@@ -1089,9 +1156,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"must not be available");
 						break;
 					}
-					if( uFWStatus && (uFWStatus==uFWWAITINGBLOCK || uFWStatus==uFWWAITINGACCESS || uFWStatus==uFWWAITINGREMOVAL))
+					if( uFWStatus && uFWStatus!=uFWACCESS)
 					{
-						sprintf(cResult,"Not allowed to block");
+						sprintf(cResult,"incorrect status for op");
 						break;
 					}
 
@@ -1209,9 +1276,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"must not be available");
 						break;
 					}
-					if( uFWStatus && (uFWStatus==uFWWAITINGBLOCK || uFWStatus==uFWWAITINGACCESS || uFWStatus==uFWWAITINGREMOVAL))
+					if(uFWStatus!=uFWBLOCKED)
 					{
-						sprintf(cResult,"not allowed to un block");
+						sprintf(cResult,"incorrect status for op");
 						break;
 					}
 
@@ -1358,29 +1425,29 @@ while((field=mysql_fetch_row(res)))
 /*
 			0		" tIP.uIP,"
 			1		" tIP.cLabel,"
-			2		" IF(tIP.uAvailable>0,'Yes','No'),"
-			3		" IFNULL(tDatacenter.cLabel,''),"
-			4		" tClient.cLabel,"
-			5		" FROM_UNIXTIME(tIP.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
-			6		" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
-			7		" tIP.uFWStatus,"
-			8		" tIP.uFWRule,"
-			9		" tIP.uCountryCode"
-			10		" tIP.cComment,"
+					" IF(tIP.uAvailable>0,'Yes','No'),"
+					" IFNULL(tDatacenter.cLabel,''),"
+			2		" tClient.cLabel,"
+			3		" FROM_UNIXTIME(tIP.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
+			4		" FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),"
+			5		" tIP.uFWStatus,"
+			6		" tIP.uFWRule,"
+			7		" tIP.uCountryCode"
+			8		" tIP.cComment,"
 */
 	if(uFirewallMode)
 	{
 		//Allow instant feedback like cResult
 		if(!cCommentUpdated[0])
-			sprintf(cCommentUpdated,"%.255s",field[10]);
+			sprintf(cCommentUpdated,"%.255s",field[8]);
 		if(!cFWStatusUpdated[0])
-			sprintf(cFWStatusUpdated,"%.255s",field[7]);
-		printf("<td width=200 valign=top>"
+			sprintf(cFWStatusUpdated,"%.255s",field[5]);
+		printf("<td width=120 valign=top>"
 		"<input type=checkbox name=Ct%s >" //0
 		"<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>" //0 and 1
 		"</td>"
-		"<td>%s</td>" //2
-		"<td>%s</td>" //3
+		//"<td>%s</td>" //2
+		//"<td>%s</td>" //3
 		"<td>%s</td>" //4
 		"<td>%s</td>" //5
 		"<td>%s</td>" //6
@@ -1391,15 +1458,15 @@ while((field=mysql_fetch_row(res)))
 		"<td>%s</td>\n", //cResult
 			field[0],//uIP
 			field[0],field[1],//uIP,cLabel
-			field[2],//Available Yes/No
-			field[3],//Datacenter
-			field[4],//modby
-			field[5],//date
-			field[6],//date
-			//field[7],//status
+			//field[2],//Available Yes/No
+			//field[3],//Datacenter
+			field[2],//modby
+			field[3],//date
+			field[4],//date
+			//field[n],//status
 			cFWStatusUpdated,//status
-			field[8],//rule
-			field[9],//country code
+			field[6],//rule
+			field[7],//country code
 				cCommentUpdated,
 				cResult);
 	}
