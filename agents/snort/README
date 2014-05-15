@@ -3,10 +3,12 @@ SQL configuration
 
 unxsVZ grants required:
 
-grant SELECT,INSERT,UPDATE on unxsvz.tJob to unxsvz@1.2.3.4 identified by 'wsxedc';
-grant SELECT on unxsvz.tNode to unxsvz@1.2.3.4 identified by 'wsxedc';
-grant SELECT on unxsvz.tDatacenter to unxsvz@1.2.3.4 identified by 'wsxedc';
-grant SELECT,UPDATE,INSERT,DELETE on unxsvz.tIP to unxsvz@1.2.3.4 identified by 'wsxedc';
+GRANT UPDATE,SELECT,INSERT ON unxsvz.tJob TO unxsvz@1.2.3.4 IDENTIFIED BY 'wsxedc';
+GRANT SELECT ON unxsvz.tNode TO unxsvz@1.2.3.4 IDENTIFIED BY 'wsxedc';
+GRANT SELECT ON unxsvz.tDatacenter TO unxsvz@1.2.3.4 IDENTIFIED BY 'wsxedc';
+GRANT SELECT ON unxsvz.tContainer TO unxsvz@1.2.3.4 IDENTIFIED BY 'wsxedc';
+GRANT UPDATE,SELECT,INSERT,DELETE ON unxsvz.tIP TO unxsvz@1.2.3.4 IDENTIFIED BY 'wsxedc';
+GRANT UPDATE,SELECT,INSERT ON unxsvz.tProperty TO unxsvz@1.2.3.4 IDENTIFIED BY 'wsxedc';
 
 local snort grants required:
 
