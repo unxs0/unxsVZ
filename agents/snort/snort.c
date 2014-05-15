@@ -13,6 +13,7 @@ NOTES
 */
 
 #include "snort.h"
+#include "local.h"
 #include <sys/sysinfo.h>
 
 //unxsVZ tIP FW codes
@@ -859,10 +860,10 @@ unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus,
 	{
 		sprintf(gcQuery,"INSERT INTO tProperty"
 				" SET cName='FW Activity'"
-				",cValue=CONCAT(NOW(),' uFWStatus=%u; uFWRule=%u; uDstIPCount=%u;')"
+				",cValue=CONCAT(NOW(),' cIDS=%s; uFWStatus=%u; uFWRule=%u; uDstIPCount=%u;')"
 				",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 				",uType=31"
-				",uKey=%u",uFWStatus,uFWRule,uDstIPCount,uIP);
+				",uKey=%u",cIDS,uFWStatus,uFWRule,uDstIPCount,uIP);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -1017,13 +1018,14 @@ void ProcessBarnyard2(unsigned uPriority)
 			if(uPriority>2 && !uTmpPriority)
 				sprintf(gcQuery,"INSERT INTO tJob"
 					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-					",cLabel='TestBlockAccess unxsSnort'"
+					",cLabel='TestBlockAccess unxsSnort %s'"
 					",cJobName='AllowAllAccess'"
 					",uDatacenter=%u,uNode=%u"
 					",uMasterJob=%u"
 					",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u/%u;'"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1",
+						cIDS,
 						uDatacenter,
 						uNode,
 						uMasterJob,
@@ -1031,13 +1033,14 @@ void ProcessBarnyard2(unsigned uPriority)
 			else
 				sprintf(gcQuery,"INSERT INTO tJob"
 					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-					",cLabel='BlockAccess unxsSnort'"
+					",cLabel='BlockAccess unxsSnort %s'"
 					",cJobName='BlockAccess'"
 					",uDatacenter=%u,uNode=%u"
 					",uMasterJob=%u"
 					",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u/%u;'"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1",
+						cIDS,
 						uDatacenter,
 						uNode,
 						uMasterJob,

@@ -19,3 +19,5 @@ LEGAL
 //See makefile and mysqlrad.h CustomExample sections
 //#define DBPORT 4306
 //#define DBSOCKET "/var/lib/mysql/mysql4.sock"
+
+#define cIDS "snort0"
