@@ -635,6 +635,8 @@ void tPropertyList(void)
 		char *cValue;
 		if(guPermLevel<10 && (strstr(field[1],"passwd")||strstr(field[1],"Passwd")))
 			cValue=cPrivate;
+		else if(guPermLevel<12 && (strstr(field[1],"Root")||strstr(field[1],"root")))
+			cValue=cPrivate;
 		else
 			cValue=field[2];
 		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%s%s>%s</a>"

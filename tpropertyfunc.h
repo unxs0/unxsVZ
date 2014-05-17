@@ -81,6 +81,8 @@ void ExttPropertyCommands(pentry entries[], int x)
 
                         	guMode=2000;
 				//Check entries here
+				if(guPermLevel<12 && (strstr(cName,"Root") || strstr(cName,"root")))
+	                        	tProperty("R/root is a reserved name or name part.");
                         	guMode=0;
 
 				uProperty=0;
