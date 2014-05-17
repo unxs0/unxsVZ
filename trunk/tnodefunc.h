@@ -985,6 +985,8 @@ void ExttNodeAuxTable(void)
 					char *cValue;
 					if(guPermLevel<10 && (strstr(field[1],"passwd")||strstr(field[1],"Passwd")))
 						cValue=cPrivate;
+					else if(guPermLevel<12 && (strstr(field[1],"Root")||strstr(field[1],"root")))
+						cValue=cPrivate;
 					else
 						cValue=field[2];
 					printf("<tr>");
