@@ -960,29 +960,36 @@ void ProcessBarnyard2(unsigned uPriority)
 		sscanf(fieldLocal[1],"%u",&uIP);
 		sprintf(cIP,"%.15s",fieldLocal[0]);
 
+		if(!uIP)
+		{
+			logfileLine("ProcessBarnyard2","error uIP==0");
+			continue;
+		}
+
 		//Get country info
 		char cGeoIPCountryInfo[64]={"no country info available"};
 		CheckIP("",cGeoIPCountryInfo,uIP);
 
 
 		//Check to see if we should escalate priority
-		if(uPriority>1 && uIP)
-		{
-			MYSQL_RES *resLocal=NULL;
-
-			//escalate based on alerts from same IP from more than one target dst IP in last 48 hours.
-			sprintf(gcQuery,"SELECT DISTINCT iphdr.ip_dst"
+		//escalate based on alerts from same IP from more than one target dst IP in last 48 hours.
+		//but calculate uDstIPCount for all events
+		MYSQL_RES *resLocal2=NULL;
+		sprintf(gcQuery,"SELECT DISTINCT iphdr.ip_dst"
 			" FROM event,iphdr,signature"
 			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400*2)"
 			" AND iphdr.ip_src=%u",uIP);
-			mysql_query(&gMysqlLocal,gcQuery);
-			if(mysql_errno(&gMysqlLocal))
-				logfileLine("ProcessBarnyard2-s3",mysql_error(&gMysqlLocal));
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+			logfileLine("ProcessBarnyard2-s3",mysql_error(&gMysqlLocal));
 		
-        		resLocal=mysql_store_result(&gMysqlLocal);
-			uDstIPCount=mysql_num_rows(resLocal);
-			if(resLocal!=NULL)
-				mysql_free_result(resLocal);
+        	resLocal2=mysql_store_result(&gMysqlLocal);
+		uDstIPCount=mysql_num_rows(resLocal2);
+		if(resLocal2!=NULL)
+			mysql_free_result(resLocal2);
+		if(uPriority>1)
+		{
+
 			if(uDstIPCount>3)
 			{
 				uTmpPriority=1;
