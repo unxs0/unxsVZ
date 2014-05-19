@@ -27,27 +27,27 @@ fLog "start";
 if [ -f "/etc/unxsvz/datacenter.local.sh" ];then
 	source /etc/unxsvz/datacenter.local.sh;
 else
-	echo "no /etc/unxsvz/datacenter.local.sh";
+	fLog "no /etc/unxsvz/datacenter.local.sh";
 	exit 1;
 fi
 
 if [ "$DATACENTER" == "" ];then
-	echo "no DATACENTER";
+	fLog "no DATACENTER";
 	exit 1;
 fi
 
 if [ "$DEFSECTION" == "" ];then
-	echo "no DEFSECTION";
+	fLog "no DEFSECTION";
 	exit 1;
 fi
 
 if [ "$CDEFSECTIONIN" == "" ];then
-	echo "no CDEFSECTIONIN";
+	fLog "no CDEFSECTIONIN";
 	exit 1;
 fi
 
 if [ "$CDEFSECTIONOUT" == "" ];then
-	echo "no CDEFSECTIONOUT";
+	fLog "no CDEFSECTIONOUT";
 	exit 1;
 fi
 
