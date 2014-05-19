@@ -17,25 +17,42 @@
 
 fLog() { echo "`date +%b' '%d' '%T` $0[$$]: $@"; }
 
-DATACENTER="HurricaneElectric";
+if [ "$1" == "" ];then
+	echo "usage: $0 create";
+	exit 0;
+fi
+
+fLog "start";
+
+if [ -f "/etc/unxsvz/datacenter.local.sh" ];then
+	source /etc/unxsvz/datacenter.local.sh;
+else
+	echo "no /etc/unxsvz/datacenter.local.sh";
+	exit 1;
+fi
+
+if [ "$DATACENTER" == "" ];then
+	echo "no DATACENTER";
+	exit 1;
+fi
+
+if [ "$DEFSECTION" == "" ];then
+	echo "no DEFSECTION";
+	exit 1;
+fi
+
+if [ "$CDEFSECTIONIN" == "" ];then
+	echo "no CDEFSECTIONIN";
+	exit 1;
+fi
+
+if [ "$CDEFSECTIONOUT" == "" ];then
+	echo "no CDEFSECTIONOUT";
+	exit 1;
+fi
+
 PNGFILE="/var/www/unxs/html/traffic/$DATACENTER.png"
 
-#aggreagation instructions generation
-DEFSECTION="DEF:rc13-in=/var/lib/rrd/rc13.rrd:in:MAX DEF:rc13-out=/var/lib/rrd/rc13.rrd:out:MAX DEF:rc14-in=/var/lib/rrd/rc14.rrd:in:MAX DEF:rc14-out=/var/lib/rrd/rc14.rrd:out:MAX";
-CDEFSECTIONIN="CDEF:in=rc13-in,rc14-in,+";
-CDEFSECTIONOUT="CDEF:out=rc13-out,rc14-out,+";
-#note how we start 2 after
-for N in $(seq 15 20;seq 45 52 ); do
-	DEFSECTION="$DEFSECTION DEF:rc$N-in=/var/lib/rrd/rc$N.rrd:in:MAX DEF:rc$N-out=/var/lib/rrd/rc$N.rrd:out:MAX";
-	CDEFSECTIONIN="$CDEFSECTIONIN,rc$N-in,+";
-	CDEFSECTIONOUT="$CDEFSECTIONOUT,rc$N-out,+";
-done;
-
-#debug only
-#echo $DEFSECTION;
-#echo $CDEFSECTIONIN;
-#echo $CDEFSECTIONOUT;
-#exit;
 
 /usr/bin/rrdtool graph $PNGFILE \
 		--title="$DATACENTER traffic" \
@@ -56,9 +73,16 @@ done;
 		"GPRINT:in:MAX: Max in\:%0.0lf" \
 		"GPRINT:out:MAX:Max out\:%0.0lf" \
 		"GPRINT:in:LAST:Last in\:%0.0lf" \
-		"GPRINT:out:LAST:Last out\:%0.0lf";
-#		"GPRINT:out:LAST:Last out\:%0.0lf" > /dev/null 2>&1;
+		"GPRINT:out:LAST:Last out\:%0.0lf" > /dev/null 2>&1;
 if [ $? != 0 ];then
 	fLog "rrdtool graph $PNGFILE error";
 	exit 0;
 fi
+
+/usr/sbin/allnodescp.sh $PNGFILE --remotedatacenter > /dev/null 2>&1;
+if [ $? != 0 ];then
+        fLog "allnodescp.sh $PNGFILE error";
+        exit 1;
+fi
+
+fLog "end";
