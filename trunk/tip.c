@@ -170,17 +170,17 @@ void ProcesstIPVars(pentry entries[], int x)
 		}
 		else if(!strcmp(entries[i].name,"uNodeSearchNotNoCA"))
 			uNodeSearchNot=1;
-		else if(!strcmp(entries[i].name,"uCountryCodeSearchNot"))
+		else if(!strcmp(entries[i].name,"uCountryCodeSearchNotNoCA"))
 			uCountryCodeSearchNot=1;
 		else if(!strcmp(entries[i].name,"uIPv4ExcludeNoCA"))
 			uIPv4Exclude=1;
-		else if(!strcmp(entries[i].name,"uFirewallMode"))
+		else if(!strcmp(entries[i].name,"uFirewallModeNoCA"))
 			uFirewallMode=1;
-		else if(!strcmp(entries[i].name,"u24Limit"))
+		else if(!strcmp(entries[i].name,"u24LimitNoCA"))
 			u24Limit=1;
-		else if(!strcmp(entries[i].name,"u12Limit"))
+		else if(!strcmp(entries[i].name,"u12LimitNoCA"))
 			u12Limit=1;
-		else if(!strcmp(entries[i].name,"u4Limit"))
+		else if(!strcmp(entries[i].name,"u4LimitNoCA"))
 			u4Limit=1;
 		else if(!strcmp(entries[i].name,"cCommentSearch"))
 			sprintf(cCommentSearch,"%.32s",entries[i].val);
@@ -359,21 +359,21 @@ void tIPSearchSet(unsigned uStep)
 	OpenRow("<u>Set search parameters</u>","black");
 
 	OpenRow("Display options","black");
-	printf("<input title='Show firewall specific columns and filter options' type=checkbox name=uFirewallMode ");
+	printf("<input title='Show firewall specific columns and filter options' type=checkbox name=uFirewallModeNoCA ");
 	if(uFirewallMode)
 		printf(" checked");
 	printf("> Firewall mode");
 
 	OpenRow("Date Limits","black");
-	printf("<input title='Only show last 24 hours FW entries' type=checkbox name=u24Limit");
+	printf("<input title='Only show last 24 hours FW entries' type=checkbox name=u24LimitNoCA");
 	if(u24Limit)
 		printf(" checked");
 	printf("> Limit to last 24Hrs");
-	printf("&nbsp; <input title='Only show last 12 hours FW entries' type=checkbox name=u12Limit");
+	printf("&nbsp; <input title='Only show last 12 hours FW entries' type=checkbox name=u12LimitNoCA");
 	if(u12Limit)
 		printf(" checked");
 	printf("> Limit to last 12Hrs");
-	printf("&nbsp; <input title='Only show last 4 hours FW entries' type=checkbox name=u4Limit");
+	printf("&nbsp; <input title='Only show last 4 hours FW entries' type=checkbox name=u4LimitNoCA");
 	if(u4Limit)
 		printf(" checked");
 	printf("> Limit to last 4Hrs");
@@ -391,7 +391,7 @@ void tIPSearchSet(unsigned uStep)
 		OpenRow("Country Code","black");
 		tTablePullDown("tGeoIPCountryCode;cuCountryCodeSearchPullDown","cCountryCode","cCountryCode",uCountryCodeSearch,1);
 		printf("<input title='Logical NOT of selected country if any. Including default any country (no country)'"
-			" type=checkbox name=uCountryCodeSearchNot ");
+			" type=checkbox name=uCountryCodeSearchNotNoCA ");
 		if(uCountryCodeSearchNot)
 			printf(" checked");
 		printf("> Not");
