@@ -129,7 +129,7 @@ void ExttIPCommands(pentry entries[], int x)
 				unsigned uGroup=0;
 
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
-						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0 )
+						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0 && uCountryCodeSearch==0)
 	                        	tIP("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,31))==0)
@@ -270,6 +270,7 @@ void ExttIPCommands(pentry entries[], int x)
                 }
 		else if(!strcmp(gcCommand,"Add to Search Set") || 
 				!strcmp(gcCommand,"Create Search Set") ||
+				!strcmp(gcCommand,"New Firewall Set") ||
 				!strcmp(gcCommand,"Create Firewall Set") )
                 {
 			if(guPermLevel>=9)
@@ -285,9 +286,16 @@ void ExttIPCommands(pentry entries[], int x)
 					uFirewallMode=1;
 					uFWStatusAnySearch=1;
 				}
+				else if(!strcmp(gcCommand,"New Firewall Set"))
+				{
+					uFirewallMode=1;
+					u4Limit=1;
+					uFWStatusAnySearch=1;
+				}
 
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
-						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0 && uFWStatusSearch==0 && uFWStatusAnySearch==0)
+						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0 
+						&& uFWStatusSearch==0 && uFWStatusAnySearch==0 && uCountryCodeSearch==0)
 	                        	tIP("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,31))==0)
@@ -303,7 +311,8 @@ void ExttIPCommands(pentry entries[], int x)
 				}
 				else
 				{
-					if(!strcmp(gcCommand,"Create Search Set") || !strcmp(gcCommand,"Create Firewall Set"))
+					if(!strcmp(gcCommand,"Create Search Set") || !strcmp(gcCommand,"Create Firewall Set")
+						|| !strcmp(gcCommand,"New Firewall Set"))
 					{
 						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u",uGroup);
 						mysql_query(&gMysql,gcQuery);
@@ -476,6 +485,20 @@ void ExttIPCommands(pentry entries[], int x)
 				{
 	                        	tIP("No records were added to your search set. Filter returned 0 records");
 				}
+			}
+			else
+			{
+				tIP("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
+		else if(!strcmp(gcCommand,"Firewall Operations"))
+                {
+			if(guPermLevel>=9)
+			{
+                        	guMode=12001;
+				uFirewallMode=1;
+				u4Limit=1;
+	                        tIP("Firewall Operations");
 			}
 			else
 			{
@@ -700,14 +723,14 @@ void ExttIPButtons(void)
 				" to reuse your initial search critieria. Your search set is persistent even across unxsVZ sessions.<p>");
 			printf("<input type=submit class=largeButton title='Create an initial or replace an existing search set'"
 				" name=gcCommand value='Create Search Set'>");
-			printf("<input type=submit class=largeButton title='Add the results to your current search set. Do not add the same search"
-				" over and over again it will not result in any change but may slow down processing.'"
-				" name=gcCommand value='Add to Search Set'>");
-			printf("<p><input type=submit class=largeButton title='Apply the right panel filter to refine your existing search set"
-				" by removing set elements that match the filter settings.'"
-				" name=gcCommand value='Remove from Search Set'>");
 			printf("<input type=submit class=largeButton title='Create special firewall IP search set'"
 				" name=gcCommand value='Create Firewall Set'>");
+			printf("<p><input type=submit class=largeButton title='Add the results to your current search set. Do not add the same search"
+				" over and over again it will not result in any change but may slow down processing.'"
+				" name=gcCommand value='Add to Search Set'>");
+			printf("<input type=submit class=largeButton title='Apply the right panel filter to refine your existing search set"
+				" by removing set elements that match the filter settings.'"
+				" name=gcCommand value='Remove from Search Set'>");
 			printf("<p><input type=submit class=largeButton title='Reload current search set. Good for checking for any new status updates'"
 				" name=gcCommand value='Reload Search Set'>");
 			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
@@ -760,8 +783,13 @@ void ExttIPButtons(void)
 				" To add an initial range use [New], then [Modify], enter new CIDR range."
 				"<p>You can also delete available IPs <i>en masse</i> via the cIPRange at the [Delete]"
 				" stage.");
+			printf("<p><input type=submit class=largeButton title='Open user search set page in firewall control mode.'"
+				" name=gcCommand value='Firewall Operations'>\n");
+			printf("<p><input type=submit class=lwarnButton title='Open user search set page in firewall control mode."
+				" Creating a new last 4 hour set. Any saved set will be lost.'"
+				" name=gcCommand value='New Firewall Set'>\n");
 			printf("<p><input type=submit class=largeButton title='Open user search set page. There you can create search sets and operate"
-				" on selected containers of the loaded container set.'"
+				" on selected IPs of the loaded IP number set.'"
 				" name=gcCommand value='Search Set Operations'>\n");
 			printf("<p><input type=submit class=largeButton title='Create report on IP usage and errors for the loaded IP'"
 				" name=gcCommand value='IP Report Single'>\n");
@@ -845,6 +873,13 @@ void ExttIPAuxTable(void)
 			printf("&nbsp; <input title='Show country information in results field. Adds CN=cCountryName; to cComment.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group CountryInfo'>\n");
+			printf("&nbsp; <input title='Show datacenter and destination IP counts, as found in linked tProperty entries."
+				" Scores over 3 probably justify a firewall DROP.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Reputation Score'>\n");
+			printf("&nbsp; <input title='Remove IP from all iptables node firewalls'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group RemoveFW'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -1123,6 +1158,122 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Group Change Datacenter
 
+				//Group RemoveFW
+				else if(!strcmp(gcCommand,"Group RemoveFW"))
+				{
+					MYSQL_RES *res;
+					MYSQL_ROW field;
+					char cIP[16]={""};
+					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
+					unsigned uAvailable=0;
+					sscanf(ForeignKey("tIP","uAvailable",uCtIP),"%u",&uAvailable);
+					unsigned uDatacenter=0;
+					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
+					unsigned uFWStatus=0;
+					sscanf(ForeignKey("tIP","uFWStatus",uCtIP),"%u",&uFWStatus);
+					if(guPermLevel<12)
+					{
+						sprintf(cResult,"insufficient permlevel");
+						break;
+					}
+					if(!cIP[0])
+					{
+						sprintf(cResult,"data error");
+						break;
+					}
+					if(uDatacenter!=41)
+					{
+						sprintf(cResult,"wrong datacenter");
+						break;
+					}
+					if(uAvailable==1)
+					{
+						sprintf(cResult,"must not be available");
+						break;
+					}
+					if( uFWStatus!=uFWACCESS && uFWStatus!=uFWBLOCKED)
+					{
+						sprintf(cResult,"incorrect status for op");
+						break;
+					}
+
+					//Create a tJob for each active tNode
+					sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
+								" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1"
+								" AND tDatacenter.cLabel!='CustomerPremise'"
+								" AND tNode.uDatacenter=tDatacenter.uDatacenter");
+					//			debug only
+					//			" AND tNode.uDatacenter=tDatacenter.uDatacenter LIMIT 1");
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.31s",mysql_error(&gMysql));
+						break;
+					}
+					res=mysql_store_result(&gMysql);
+					unsigned uCount=0;
+					unsigned uMasterJob=0;//first job is master job
+					char cJobLabel[32]={"RemoveDropFromIPTables"};
+					if(uFWStatus==uFWACCESS)
+						sprintf(cJobLabel,"RemoveAcceptFromIPTables");
+					while((field=mysql_fetch_row(res)))
+					{
+						unsigned uNode=0;
+						unsigned uDatacenter=0;
+						sscanf(field[0],"%u",&uNode);
+						sscanf(field[1],"%u",&uDatacenter);
+						sprintf(gcQuery,"INSERT INTO tJob"
+							" SET uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							",cLabel='%sNOC'"
+							",cJobName='%s'"
+							",uDatacenter=%u,uNode=%u"
+							",uMasterJob=%u"
+							",cJobData='cIPv4=%.15s;'"
+							",uJobDate=UNIX_TIMESTAMP(NOW())"
+							",uJobStatus=1",
+								guCompany,
+								guLoginClient,
+								cJobLabel,cJobLabel,
+								uDatacenter,
+								uNode,
+								uMasterJob,
+								cIP);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							sprintf(cResult,"%.31s",mysql_error(&gMysql));
+							break;
+						}
+						if(!uMasterJob)
+							uMasterJob=mysql_insert_id(&gMysql);
+						uCount++;
+					}//while node
+					sprintf(cResult,"%u jobs created",uCount);
+					if(uCount)
+					{
+						sprintf(gcQuery,"UPDATE tIP"
+								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								",uFWStatus=%u"
+								" WHERE uIP=%u",
+									guLoginClient,
+									uFWWAITINGREMOVAL,
+									uCtIP);
+						mysql_query(&gMysql,gcQuery);
+						sprintf(cFWStatusUpdated,"%.255s",ForeignKey("tFWStatus","cLabel",uFWWAITINGBLOCK));
+						sprintf(gcQuery,"INSERT INTO tProperty"
+								" SET uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+								",uOwner=1"
+								",cName='NOC FW Activity'"
+								",cValue=CONCAT(NOW(),' Group RemoveFW %s (%u/%u)')"
+								",uType=31"
+								",uKey=%u",
+									gcUser,guCompany,guPermLevel,uCtIP);
+						mysql_query(&gMysql,gcQuery);
+					}
+					unxsVZLog(uCtIP,"tIP","Group RemoveFW");
+					break;
+				}//Group RemoveFW
+
 				//Group BlockAccess
 				else if(!strcmp(gcCommand,"Group BlockAccess"))
 				{
@@ -1355,6 +1506,60 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Group UndoBlockAccess
 
+				//Group Reputation Score
+				else if(!strcmp(gcCommand,"Group Reputation Score"))
+				{
+					MYSQL_RES *res;
+					MYSQL_ROW field;
+
+					sprintf(gcQuery,"SELECT cValue"
+							" FROM tProperty"
+							" WHERE uKey=%u"
+							" AND uType=31",uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.31s",mysql_error(&gMysql));
+						break;
+					}
+					res=mysql_store_result(&gMysql);
+					unsigned uTotalDstIPCount=0;
+					unsigned uDstIPCount;
+					register unsigned uIDSIndex;
+					unsigned uTotalIDSCount=0;
+					unsigned uIDSCount[32]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+					char *cp=NULL;
+					//Load max 32 from tConfiguration
+					char cIDS[32][32]={"mon0.gip-plano-tx","mon1.gip-plano-tx",
+								"monitor-fremont","monitor-atlanta","GIP","HE",""};
+					while((field=mysql_fetch_row(res)))
+					{
+						if((cp=strstr(field[0],"uDstIPCount="))!=NULL)
+						{
+							uDstIPCount=0;
+							sscanf(cp+strlen("uDstIPCount="),"%u",&uDstIPCount);
+							uTotalDstIPCount+=uDstIPCount;
+						}
+						if( (cp=strstr(field[0],"cIDS="))!=NULL &&
+							*(cp+strlen("cIDS="))!=0)
+						{
+							for(uIDSIndex=0;uIDSIndex<31 && cIDS[uIDSIndex][0];uIDSIndex++)
+							{
+								if(!strncmp(cIDS[uIDSIndex],cp+strlen("cIDS="),strlen(cIDS[uIDSIndex])))
+									uIDSCount[uIDSIndex]++;
+							}
+						}
+					}
+					for(uIDSIndex=0;uIDSIndex<31 && cIDS[uIDSIndex][0];uIDSIndex++)
+						uTotalIDSCount+=uIDSCount[uIDSIndex];
+					if(uTotalDstIPCount || uTotalIDSCount)
+						sprintf(cResult,"%u (DstIPCount=%u IDSCount=%u)",
+							uTotalDstIPCount*uTotalIDSCount,uTotalDstIPCount,uTotalIDSCount);
+					else
+						sprintf(cResult,"no score available");
+					break;
+				}//Group Reputation Score
+
 				//Group CountryInfo
 				else if(!strcmp(gcCommand,"Group CountryInfo"))
 				{
@@ -1519,7 +1724,7 @@ while((field=mysql_fetch_row(res)))
 			//UBC safe
 			sprintf(gcQuery,"SELECT uProperty,cName,cValue"
 					" FROM tProperty WHERE uKey=%u AND uType=31"
-					" ORDER BY cName",uIP);
+					" ORDER BY uProperty DESC",uIP);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));

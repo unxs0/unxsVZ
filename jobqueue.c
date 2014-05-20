@@ -63,6 +63,8 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 void AllowAllAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
+void RemoveDropFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
+void RemoveAcceptFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void DenyAccess(unsigned uJob,const char *cJobData);
 void UpdateIPFWStatus(const char *cIPv4,unsigned uFWStatus);
 void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
@@ -453,6 +455,14 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	else if(!strcmp(cJobName,"UndoBlockAccess") && uNode)
 	{
 		UndoBlockAccess(uJob,cJobData,uDatacenter,uNode);
+	}
+	else if(!strcmp(cJobName,"RemoveDropFromIPTables") && uNode)
+	{
+		RemoveDropFromIPTables(uJob,cJobData,uDatacenter,uNode);
+	}
+	else if(!strcmp(cJobName,"RemoveAcceptFromIPTables") && uNode)
+	{
+		RemoveAcceptFromIPTables(uJob,cJobData,uDatacenter,uNode);
 	}
 	else if(!strcmp(cJobName,"BlockAccess") && uNode)
 	{
@@ -7672,3 +7682,195 @@ void UpdateIPFWStatus(const char *cIPv4,unsigned uFWStatus)
 		logfileLine("UpdateIPFWStatus","mysql_affected_rows()!=1");
 
 }//void UpdateIPFWStatus(const char *cIPv4,unsigned uFWACCESS)
+
+
+void RemoveAcceptFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
+{
+	char cIPv4[32]={""};
+	char *cp;
+
+	sscanf(cJobData,"cIPv4=%31s;",cIPv4);
+	if((cp=strchr(cIPv4,';')))
+		*cp=0;
+	if(!cIPv4[0])
+	{
+		logfileLine("RemoveAcceptFromIPTables","Could not determine cIPv4");
+		tJobErrorUpdate(uJob,"cIPv4[0]==0");
+		return;
+	}
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//remove DROP and/or ACCEPT
+	char cTemplate[512]={
+			"/sbin/iptables -L -n | grep -w %1$s | grep -w ACCEPT > /dev/null; if [ $? == 0 ];then"
+				" /sbin/iptables -D FORWARD -s %1$s -j ACCEPT;"
+			" fi;"
+									};
+
+	FILE *fp;
+	char cPrivateKey[256]={""};
+	if((fp=fopen("/etc/unxsvz/unxsvz.key","r")))
+	{
+		if(fgets(cPrivateKey,255,fp)!=NULL)
+			cPrivateKey[strlen(cPrivateKey)-1]=0;//cut off /n
+		fclose(fp);
+	}
+
+	if(cPrivateKey[0])
+	{
+		sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
+			//trick to get most specific datacenter node combo
+			" WHERE SHA1(CONCAT(LEFT(cComment,LOCATE('#unxsVZKey=',cComment)),'%1$s'))=SUBSTR(cComment,LOCATE('#unxsVZKey=',cComment)+11)"
+			" AND ((uDatacenter=%2$u AND uNode=%3$u) OR (uDatacenter=%2$u AND uNode=0))"
+			" AND cLabel='cRemoveAcceptFromIPTablesTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",cPrivateKey,uDatacenter,uNode);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			logfileLine("RemoveAcceptFromIPTables",mysql_error(&gMysql));
+		else
+		{
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(cTemplate,"%.512s",field[0]);
+				logfileLine("RemoveAcceptFromIPTables","secure template used");
+			}
+			mysql_free_result(res);
+		}
+	}
+
+	sprintf(gcQuery,cTemplate,cIPv4,cIPv4);
+	if(system(gcQuery))
+	{
+		logfileLine("RemoveAcceptFromIPTables","iptables command failed");
+		tJobErrorUpdate(uJob,"iptables command failed");
+		return;
+	}
+
+	logfileLine("RemoveAcceptFromIPTables","iptables command ok");
+	tJobDoneUpdate(uJob);
+
+	//
+	//Multiple related job control system
+	unsigned uMasterJob=0;
+	unsigned uAllJobsDone=1;
+	sscanf(ForeignKey("tJob","uMasterJob",uJob),"%u",&uMasterJob);
+	if(!uMasterJob)
+		uMasterJob=uJob;
+	sprintf(gcQuery,"SELECT uJob FROM tJob"
+			" WHERE (uMasterJob=%u OR uJob=%u)"
+			" AND uJobStatus!=%u",
+				uMasterJob,uMasterJob,uDONEOK);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("RemoveAcceptFromIPTables",mysql_error(&gMysql));
+	else
+	{
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			uAllJobsDone=0;
+		mysql_free_result(res);
+	}
+	if(uAllJobsDone)
+		UpdateIPFWStatus(cIPv4,uFWREMOVED);
+	//end
+	return;
+
+}//void RemoveAcceptFromIPTables()
+
+
+void RemoveDropFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
+{
+	char cIPv4[32]={""};
+	char *cp;
+
+	sscanf(cJobData,"cIPv4=%31s;",cIPv4);
+	if((cp=strchr(cIPv4,';')))
+		*cp=0;
+	if(!cIPv4[0])
+	{
+		logfileLine("RemoveDropFromIPTables","Could not determine cIPv4");
+		tJobErrorUpdate(uJob,"cIPv4[0]==0");
+		return;
+	}
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//remove DROP and/or ACCEPT
+	char cTemplate[512]={
+			"/sbin/iptables -L -n | grep -w %1$s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
+				" /sbin/iptables -D FORWARD -s %1$s -j DROP;"
+			" fi;"
+									};
+
+	FILE *fp;
+	char cPrivateKey[256]={""};
+	if((fp=fopen("/etc/unxsvz/unxsvz.key","r")))
+	{
+		if(fgets(cPrivateKey,255,fp)!=NULL)
+			cPrivateKey[strlen(cPrivateKey)-1]=0;//cut off /n
+		fclose(fp);
+	}
+
+	if(cPrivateKey[0])
+	{
+		sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
+			//trick to get most specific datacenter node combo
+			" WHERE SHA1(CONCAT(LEFT(cComment,LOCATE('#unxsVZKey=',cComment)),'%1$s'))=SUBSTR(cComment,LOCATE('#unxsVZKey=',cComment)+11)"
+			" AND ((uDatacenter=%2$u AND uNode=%3$u) OR (uDatacenter=%2$u AND uNode=0))"
+			" AND cLabel='cRemoveDropFromIPTablesTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",cPrivateKey,uDatacenter,uNode);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			logfileLine("RemoveDropFromIPTables",mysql_error(&gMysql));
+		else
+		{
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(cTemplate,"%.512s",field[0]);
+				logfileLine("RemoveDropFromIPTables","secure template used");
+			}
+			mysql_free_result(res);
+		}
+	}
+
+	sprintf(gcQuery,cTemplate,cIPv4,cIPv4);
+	if(system(gcQuery))
+	{
+		logfileLine("RemoveDropFromIPTables","iptables command failed");
+		tJobErrorUpdate(uJob,"iptables command failed");
+		return;
+	}
+
+	logfileLine("RemoveDropFromIPTables","iptables command ok");
+	tJobDoneUpdate(uJob);
+
+	//
+	//Multiple related job control system
+	unsigned uMasterJob=0;
+	unsigned uAllJobsDone=1;
+	sscanf(ForeignKey("tJob","uMasterJob",uJob),"%u",&uMasterJob);
+	if(!uMasterJob)
+		uMasterJob=uJob;
+	sprintf(gcQuery,"SELECT uJob FROM tJob"
+			" WHERE (uMasterJob=%u OR uJob=%u)"
+			" AND uJobStatus!=%u",
+				uMasterJob,uMasterJob,uDONEOK);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("RemoveDropFromIPTables",mysql_error(&gMysql));
+	else
+	{
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			uAllJobsDone=0;
+		mysql_free_result(res);
+	}
+	if(uAllJobsDone)
+		UpdateIPFWStatus(cIPv4,uFWREMOVED);
+	//end
+	return;
+
+}//void RemoveDropFromIPTables()
