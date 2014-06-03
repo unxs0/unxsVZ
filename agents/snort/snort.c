@@ -53,6 +53,7 @@ unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus,
 unsigned uGetLastSignatureID(unsigned uIP);
 void ProcessBarnyard2(unsigned uPriority);
 unsigned uGetCountryCode(const char *cIP,char *cCountryCode);
+void Cleanup(void);
 //external protos
 void TextConnectDb(void);
 
@@ -112,6 +113,7 @@ int main(int iArgc, char *cArgv[])
 			"\t[--block-ip <ip dotted quad>]\n"
 			"\t[--unblock-ip <ip dotted quad>]\n"
 			"\t[--dump-blocked]\n"
+			"\t[--cleanup]\n"
 			"\t[--remove-from-blocked <ip dotted quad>]\n"
 			"\t[--version] [--create-geoip]\n"
 			"\t[--create-blockedip]\n",cArgv[0]);
@@ -161,6 +163,11 @@ int main(int iArgc, char *cArgv[])
 			if(!strcmp(cArgv[i],"--process"))
 			{
 				return(Process());
+			}
+			if(!strcmp(cArgv[i],"--cleanup"))
+			{
+				Cleanup();
+				return(0);
 			}
 			if(!strcmp(cArgv[i],"--help"))
 			{
@@ -1027,6 +1034,7 @@ void ProcessBarnyard2(unsigned uPriority)
 					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 					",cLabel='TestBlockAccess unxsSnort %s'"
 					",cJobName='AllowAllAccess'"
+					//",cJobName='TestBlockAccess'"
 					",uDatacenter=%u,uNode=%u"
 					",uMasterJob=%u"
 					",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u/%u;'"
@@ -1042,6 +1050,7 @@ void ProcessBarnyard2(unsigned uPriority)
 					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 					",cLabel='BlockAccess unxsSnort %s'"
 					",cJobName='BlockAccess'"
+					//",cJobName='TestBlockAccess'"
 					",uDatacenter=%u,uNode=%u"
 					",uMasterJob=%u"
 					",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u/%u;'"
@@ -1145,3 +1154,61 @@ unsigned uGetCountryCode(const char *cIP,char *cCountryCode)
 	return(uRetVal);
 
 }//unsigned uGetCountryCode(const char *cIP,char *cCountryCode)
+
+
+void Cleanup(void)
+{
+	if(TextLocalConnectDb())
+	{
+		return;
+	}
+	MYSQL_RES *resLocal;
+	MYSQL_ROW fieldLocal;
+
+	logfileLine("Cleanup()","start");
+	sprintf(gcQuery,"SELECT cid FROM event WHERE timestamp<(NOW() - INTERVAL 2 DAY)");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+	{
+		logfileLine("Cleanup()",mysql_error(&gMysqlLocal));
+		return;
+	}
+        resLocal=mysql_store_result(&gMysqlLocal);
+	while((fieldLocal=mysql_fetch_row(resLocal)))
+	{
+		sprintf(gcQuery,"DELETE FROM iphdr WHERE cid=%s",fieldLocal[0]);
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+		{
+			logfileLine("Cleanup()",mysql_error(&gMysqlLocal));
+			mysql_free_result(resLocal);
+			mysql_close(&gMysqlLocal);
+			return;
+		}
+		sprintf(gcQuery,"DELETE FROM udphdr WHERE cid=%s",fieldLocal[0]);
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+		{
+			logfileLine("Cleanup()",mysql_error(&gMysqlLocal));
+			mysql_free_result(resLocal);
+			mysql_close(&gMysqlLocal);
+			return;
+		}
+		sprintf(gcQuery,"DELETE FROM data WHERE cid=%s",fieldLocal[0]);
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+		{
+			logfileLine("Cleanup()",mysql_error(&gMysqlLocal));
+			mysql_free_result(resLocal);
+			mysql_close(&gMysqlLocal);
+			return;
+		}
+	}
+	sprintf(gcQuery,"DELETE FROM event WHERE timestamp<(NOW() - INTERVAL 2 DAY)");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+		logfileLine("Cleanup()",mysql_error(&gMysqlLocal));
+	mysql_free_result(resLocal);
+	mysql_close(&gMysqlLocal);
+	logfileLine("Cleanup()","end");
+}//void Cleanup(void)
