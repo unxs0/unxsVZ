@@ -26,7 +26,6 @@ NOTES
 
 
 #define cSNORTLOGFILE "/var/log/unxsSnortLog"
-char gcLockfile[64]={cLOCKDIR};
 
 MYSQL gMysql;
 MYSQL gMysqlLocal;
@@ -103,6 +102,31 @@ int main(int iArgc, char *cArgv[])
 {
 
 	//private main functions
+	char gcLockfile[64]={cLOCKDIR};
+	void AcquireLock()
+	{	
+		struct stat structStat;
+		if(!stat(gcLockfile,&structStat))
+		{
+			logfileLine("main","waiting for rmdir(gcLockfile)");
+			exit(1);
+		}
+		if(mkdir(gcLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
+		{
+			logfileLine("main","could not open gcLockfile dir");
+			exit(1);
+		}
+	}//void AcquireLock()
+
+	void ReleaseLock()
+	{
+		if(rmdir(gcLockfile))
+		{
+			logfileLine("main","could not rmdir(gcLockfile)");
+			exit(1);
+		}
+	}//void ReleaseLock()
+
 	void PrintUsage(void)
 	{
 		printf("usage: %s\n"
@@ -127,29 +151,17 @@ int main(int iArgc, char *cArgv[])
 			fprintf(stderr,"%s main() fopen logfile error\n",gcProgram);
 			return(1);
 		}
-		
-		struct stat structStat;
-		if(!stat(gcLockfile,&structStat))
-		{
-			logfileLine("main","waiting for rmdir(gcLockfile)");
-			return(1);
-		}
-		if(mkdir(gcLockfile,S_IRUSR|S_IWUSR|S_IXUSR))
-		{
-			logfileLine("main","could not open gcLockfile dir");
-			return(1);
-		}
+	
+
+		AcquireLock();
 
 		//uPriority critically important!
 		ProcessBarnyard2(1);
 		ProcessBarnyard2(2);
 		ProcessBarnyard2(3);
 
-		if(rmdir(gcLockfile))
-		{
-			logfileLine("main","could not rmdir(gcLockfile)");
-			return(1);
-		}
+		ReleaseLock();
+
 		logfileLine("main","end");
 		return(0);
 	}//unsigned Process(void)
@@ -166,7 +178,9 @@ int main(int iArgc, char *cArgv[])
 			}
 			if(!strcmp(cArgv[i],"--cleanup"))
 			{
+				AcquireLock();
 				Cleanup();
+				ReleaseLock();
 				return(0);
 			}
 			if(!strcmp(cArgv[i],"--help"))
