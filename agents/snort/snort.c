@@ -155,10 +155,39 @@ int main(int iArgc, char *cArgv[])
 
 		AcquireLock();
 
+		if(gethostname(cHostname,99)!=0)
+		{
+			logfileLine("ProcessBarnyard2","gethostname() failed");
+			exit(1);
+		}
+		TextConnectDb();
+		if(TextLocalConnectDb()) exit(1);
 		//uPriority critically important!
 		ProcessBarnyard2(1);
 		ProcessBarnyard2(2);
 		ProcessBarnyard2(3);
+
+		//truncate tables
+		//we need to save reputation info in our own table
+		sprintf(gcQuery,"TRUNCATE event");
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+			logfileLine("ProcessBarnyard2-t0",mysql_error(&gMysqlLocal));
+		sprintf(gcQuery,"TRUNCATE data");
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+			logfileLine("ProcessBarnyard2-t1",mysql_error(&gMysqlLocal));
+		sprintf(gcQuery,"TRUNCATE iphdr");
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+			logfileLine("ProcessBarnyard2-t2",mysql_error(&gMysqlLocal));
+		sprintf(gcQuery,"TRUNCATE udphdr");
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+			logfileLine("ProcessBarnyard2-t3",mysql_error(&gMysqlLocal));
+
+		mysql_close(&gMysql);
+		mysql_close(&gMysqlLocal);
 
 		ReleaseLock();
 
@@ -928,22 +957,15 @@ unsigned uGetLastSignatureID(unsigned uIP)
 void ProcessBarnyard2(unsigned uPriority)
 {
 	logfileLine("ProcessBarnyard2","start");
-	if(gethostname(cHostname,99)!=0)
-	{
-		logfileLine("ProcessBarnyard2","gethostname() failed");
-		exit(1);
-	}
 
 	//Uses login data from local.h
 	//unxsVZ connection
         MYSQL_RES *res=NULL;
         MYSQL_ROW field;
-	TextConnectDb();
 
 	//snort connection
 	MYSQL_RES *resLocal=NULL;
 	MYSQL_ROW fieldLocal;
-	if(TextLocalConnectDb()) exit(1);
 
 	//Check last 60 seconds event for priorty 1 events.
 	//If any get the IP or IPs to block.
@@ -979,6 +1001,7 @@ void ProcessBarnyard2(unsigned uPriority)
 		char cIP[16]={""};
 		sscanf(fieldLocal[1],"%u",&uIP);
 		sprintf(cIP,"%.15s",fieldLocal[0]);
+		//logfileLine("ProcessBarnyard2",cIP);
 
 		if(!uIP)
 		{
@@ -1010,7 +1033,7 @@ void ProcessBarnyard2(unsigned uPriority)
 		if(uPriority>1)
 		{
 
-			if(uDstIPCount>3)
+			if(uDstIPCount>2)
 			{
 				uTmpPriority=1;
 				char cMsg[64]={""};
@@ -1126,25 +1149,6 @@ void ProcessBarnyard2(unsigned uPriority)
 		}
 	}//while each event
 
-	//truncate tables
-	//we need to save reputation info in our own table
-	sprintf(gcQuery,"TRUNCATE event");
-	mysql_query(&gMysqlLocal,gcQuery);
-	if(mysql_errno(&gMysqlLocal))
-		logfileLine("ProcessBarnyard2-t0",mysql_error(&gMysqlLocal));
-	sprintf(gcQuery,"TRUNCATE data");
-	mysql_query(&gMysqlLocal,gcQuery);
-	if(mysql_errno(&gMysqlLocal))
-		logfileLine("ProcessBarnyard2-t1",mysql_error(&gMysqlLocal));
-	sprintf(gcQuery,"TRUNCATE iphdr");
-	mysql_query(&gMysqlLocal,gcQuery);
-	if(mysql_errno(&gMysqlLocal))
-		logfileLine("ProcessBarnyard2-t2",mysql_error(&gMysqlLocal));
-	sprintf(gcQuery,"TRUNCATE udphdr");
-	mysql_query(&gMysqlLocal,gcQuery);
-	if(mysql_errno(&gMysqlLocal))
-		logfileLine("ProcessBarnyard2-t3",mysql_error(&gMysqlLocal));
-
 ProcessBarnyard2_exit2:
 	if(res!=NULL)
 		mysql_free_result(res);
@@ -1152,8 +1156,6 @@ ProcessBarnyard2_exit1:
 	if(resLocal!=NULL)
 		mysql_free_result(resLocal);
 ProcessBarnyard2_exit0:
-	mysql_close(&gMysql);
-	mysql_close(&gMysqlLocal);
 	logfileLine("ProcessBarnyard2","end");
 
 }//void ProcessBarnyard2(unsigned uPriority)
