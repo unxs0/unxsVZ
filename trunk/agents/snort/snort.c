@@ -38,6 +38,7 @@ unsigned guNodeOwner=0;
 //local protos
 void logfileLine(const char *cFunction,const char *cLogline);
 void CreateGeoIPTable(void);
+void CreateIPHistoryTable(void);
 void CreateBlockedIPTable(void);
 void ForkPostAddScript(const char *cMsg,const char *cIP);
 void ForkPostDelScript(const char *cMsg);
@@ -140,6 +141,7 @@ int main(int iArgc, char *cArgv[])
 			"\t[--cleanup]\n"
 			"\t[--remove-from-blocked <ip dotted quad>]\n"
 			"\t[--version] [--create-geoip]\n"
+			"\t[--create-iphistory]\n"
 			"\t[--create-blockedip]\n",cArgv[0]);
 		exit(0);//this does not follow normal design rules
 	}//void PrintUsage(void)
@@ -253,6 +255,11 @@ int main(int iArgc, char *cArgv[])
 			if(!strcmp(cArgv[i],"--create-blockedip"))
 			{
 				CreateBlockedIPTable();
+				return(0);
+			}
+			if(!strcmp(cArgv[i],"--create-iphistory"))
+			{
+				CreateIPHistoryTable();
 				return(0);
 			}
 			if(!strcmp(cArgv[i],"--check-ip") && iArgc==(i+2))
@@ -505,13 +512,14 @@ unsigned ReportIP(const char *cIP, FILE *fp)
 	if((fieldLocal=mysql_fetch_row(resLocal)))
 		fprintf(fp,"%s %s(%s) %s\n\n",cIP,fieldLocal[0],fieldLocal[2],fieldLocal[1]);
 
+#define EXPERIMENTAL "yes"
 #ifdef EXPERIMENTAL
 	//list event types
 	fprintf(fp,"48hr: event name, priority, count\n");
 	sprintf(gcQuery,"SELECT signature.sig_name,signature.sig_priority,COUNT(signature.sig_name)"
-			" FROM event,iphdr,signature"
-			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400*2)"
-			" AND iphdr.ip_src=INET_ATON('%s') GROUP BY signature.sig_name ORDER BY event.timestamp DESC",cIP);
+			" FROM tIPHistory,signature"
+			" WHERE tIPHistory.uSignature=signature.sig_id AND  tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400*2)"
+			" AND tIPHistory.uIPSrc=INET_ATON('%s') GROUP BY signature.sig_name ORDER BY tIPHistory.uCreatedDate DESC",cIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
@@ -529,10 +537,10 @@ unsigned ReportIP(const char *cIP, FILE *fp)
 
 	//48 hour report of all events by dst ip 
 	fprintf(fp,"\n48hr: event dst IP, count\n");
-	sprintf(gcQuery,"SELECT INET_NTOA(iphdr.ip_dst),COUNT(iphdr.ip_dst)"
-			" FROM event,iphdr,signature"
-			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400*2)"
-			" AND iphdr.ip_src=INET_ATON('%s') GROUP BY iphdr.ip_dst ORDER BY event.timestamp DESC",cIP);
+	sprintf(gcQuery,"SELECT INET_NTOA(tIPHistory.uIPSrc),COUNT(tIPHistory.uIPDst)"
+			" FROM tIPHistory"
+			" WHERE tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400*2)"
+			" AND tIPHistory.uIPSrc=INET_ATON('%s') GROUP BY tIPHistory.uIPDst ORDER BY tIPHistory.uCreatedDate DESC",cIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
@@ -550,10 +558,10 @@ unsigned ReportIP(const char *cIP, FILE *fp)
 
 	//48 hour report of all events for given IP
 	fprintf(fp,"\n48hr: timestamp, event, dst IP\n");
-	sprintf(gcQuery,"SELECT event.timestamp,signature.sig_name,INET_NTOA(iphdr.ip_dst)"
-			" FROM event,iphdr,signature"
-			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400*2)"
-			" AND iphdr.ip_src=INET_ATON('%s') ORDER BY event.timestamp DESC",cIP);
+	sprintf(gcQuery,"SELECT FROM_UNIXTIME(tIPHistory.uCreatedDate),signature.sig_name,INET_NTOA(tIPHistory.uIPDst)"
+			" FROM tIPHistory,signature"
+			" WHERE tIPHistory.uSignature=signature.sig_id AND tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400*2)"
+			" AND tIPHistory.uIPSrc=INET_ATON('%s') ORDER BY tIPHistory.uCreatedDate DESC",cIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
@@ -934,10 +942,9 @@ unsigned uGetLastSignatureID(unsigned uIP)
 	MYSQL_ROW fieldLocal;
 
 	sprintf(gcQuery,"SELECT signature.sig_sid"
-			" FROM event,iphdr,signature"
-			" WHERE event.cid=iphdr.cid"
-			" AND event.signature=signature.sig_id"
-			" AND iphdr.ip_src=%u ORDER BY event.cid DESC LIMIT 1",uIP);
+			" FROM tIPHistory,signature"
+			" WHERE tIPHistory.uSignature=signature.sig_id"
+			" AND tIPHistory.uIPSrc=%u ORDER BY tIPHistory.uCreatedDate DESC LIMIT 1",uIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
@@ -1018,10 +1025,10 @@ void ProcessBarnyard2(unsigned uPriority)
 		//escalate based on alerts from same IP from more than one target dst IP in last 48 hours.
 		//but calculate uDstIPCount for all events
 		MYSQL_RES *resLocal2=NULL;
-		sprintf(gcQuery,"SELECT DISTINCT iphdr.ip_dst"
-			" FROM event,iphdr,signature"
-			" WHERE event.cid=iphdr.cid AND event.signature=signature.sig_id AND event.timestamp>(NOW()-86400*2)"
-			" AND iphdr.ip_src=%u",uIP);
+		sprintf(gcQuery,"SELECT DISTINCT tIPHistory.uIPDst"
+			" FROM tIPHistory,signature"
+			" WHERE tIPHistory.uSignature=signature.sig_id AND tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400*2)"
+			" AND tIPHistory.uIPSrc=%u",uIP);
 		mysql_query(&gMysqlLocal,gcQuery);
 		if(mysql_errno(&gMysqlLocal))
 			logfileLine("ProcessBarnyard2-s3",mysql_error(&gMysqlLocal));
@@ -1033,7 +1040,7 @@ void ProcessBarnyard2(unsigned uPriority)
 		if(uPriority>1)
 		{
 
-			if(uDstIPCount>2)
+			if(uDstIPCount>3)
 			{
 				uTmpPriority=1;
 				char cMsg[64]={""};
@@ -1041,6 +1048,44 @@ void ProcessBarnyard2(unsigned uPriority)
 				logfileLine("ProcessBarnyard2",cMsg);
 			}
 		}
+
+		//keep track of IP history/reputation in our own table
+		sprintf(gcQuery,"SELECT iphdr.ip_dst,signature.sig_id FROM event,iphdr,signature"
+			" WHERE event.cid=iphdr.cid"
+			" AND event.signature=signature.sig_id"
+			" AND event.timestamp>(NOW()-61)"
+			" AND iphdr.ip_src=%u"
+			" AND signature.sig_priority=%u",uIP,uPriority);
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+		{
+			logfileLine("ProcessBarnyard2-s9",mysql_error(&gMysqlLocal));
+		}
+		else
+		{
+			MYSQL_ROW fieldLocal2;
+			unsigned uIPDst=0;
+			unsigned uSignature=0;	
+        		resLocal2=mysql_store_result(&gMysqlLocal);
+			while((fieldLocal2=mysql_fetch_row(resLocal2)))
+			{
+				sscanf(fieldLocal2[0],"%u",&uIPDst);
+				sscanf(fieldLocal2[1],"%u",&uSignature);
+				sprintf(gcQuery,"INSERT INTO tIPHistory SET"
+					" uIPSrc=%u,"
+					" uIPDst=%u,"
+					" uSignature=%u,"
+					" uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							,uIP,uIPDst,uSignature);
+				mysql_query(&gMysqlLocal,gcQuery);
+				if(mysql_errno(&gMysqlLocal))
+				{
+					logfileLine("ProcessBarnyard2-i9",mysql_error(&gMysqlLocal));
+					break;
+				}
+			}
+		}
+		
 
 		//Create a tJob entry for each active tNode
 		sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
@@ -1196,53 +1241,58 @@ void Cleanup(void)
 	{
 		return;
 	}
-	MYSQL_RES *resLocal;
-	MYSQL_ROW fieldLocal;
 
 	logfileLine("Cleanup()","start");
-	sprintf(gcQuery,"SELECT cid FROM event WHERE timestamp<(NOW() - INTERVAL 2 DAY)");
+	sprintf(gcQuery,"DELETE FROM tIPHistory WHERE uCreatedDate<UNIX_TIMESTAMP(NOW() - INTERVAL 2 DAY)");
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
 		logfileLine("Cleanup()",mysql_error(&gMysqlLocal));
 		return;
 	}
-        resLocal=mysql_store_result(&gMysqlLocal);
-	while((fieldLocal=mysql_fetch_row(resLocal)))
-	{
-		sprintf(gcQuery,"DELETE FROM iphdr WHERE cid=%s",fieldLocal[0]);
-		mysql_query(&gMysqlLocal,gcQuery);
-		if(mysql_errno(&gMysqlLocal))
-		{
-			logfileLine("Cleanup()",mysql_error(&gMysqlLocal));
-			mysql_free_result(resLocal);
-			mysql_close(&gMysqlLocal);
-			return;
-		}
-		sprintf(gcQuery,"DELETE FROM udphdr WHERE cid=%s",fieldLocal[0]);
-		mysql_query(&gMysqlLocal,gcQuery);
-		if(mysql_errno(&gMysqlLocal))
-		{
-			logfileLine("Cleanup()",mysql_error(&gMysqlLocal));
-			mysql_free_result(resLocal);
-			mysql_close(&gMysqlLocal);
-			return;
-		}
-		sprintf(gcQuery,"DELETE FROM data WHERE cid=%s",fieldLocal[0]);
-		mysql_query(&gMysqlLocal,gcQuery);
-		if(mysql_errno(&gMysqlLocal))
-		{
-			logfileLine("Cleanup()",mysql_error(&gMysqlLocal));
-			mysql_free_result(resLocal);
-			mysql_close(&gMysqlLocal);
-			return;
-		}
-	}
-	sprintf(gcQuery,"DELETE FROM event WHERE timestamp<(NOW() - INTERVAL 2 DAY)");
-	mysql_query(&gMysqlLocal,gcQuery);
-	if(mysql_errno(&gMysqlLocal))
-		logfileLine("Cleanup()",mysql_error(&gMysqlLocal));
-	mysql_free_result(resLocal);
 	mysql_close(&gMysqlLocal);
 	logfileLine("Cleanup()","end");
 }//void Cleanup(void)
+
+
+void CreateIPHistoryTable(void)
+{
+	if((gLfp=fopen(cSNORTLOGFILE,"a"))==NULL)
+	{
+		fprintf(stderr,"%s main() fopen logfile error\n",gcProgram);
+		exit(1);
+	}
+	logfileLine("CreateIPHistoryTable","start");
+		
+	if(TextLocalConnectDb()) exit(1);
+
+	sprintf(gcQuery,"DROP TABLE IF EXISTS tIPHistory");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+	{
+		logfileLine("CreateIPHistoryTable","error");
+		logfileLine("CreateIPHistoryTable",mysql_error(&gMysqlLocal));
+		mysql_close(&gMysqlLocal);
+		return;
+	}
+
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tIPHistory ( "
+			"uIPSrc INT UNSIGNED PRIMARY KEY DEFAULT 0,"
+			"uIPDst INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uSignature INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate BIGINT UNSIGNED NOT NULL DEFAULT 0 )");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+	{
+		logfileLine("CreateIPHistoryTable","error");
+		logfileLine("CreateIPHistoryTable",mysql_error(&gMysqlLocal));
+		mysql_close(&gMysqlLocal);
+		return;
+	}
+
+	logfileLine("CreateIPHistoryTable","Ok");
+	mysql_close(&gMysqlLocal);
+	logfileLine("CreateIPHistoryTable","end");
+
+}//void CreateIPHistoryTable(void)
+
