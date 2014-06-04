@@ -476,6 +476,7 @@ unsigned ReportIP(const char *cIP, FILE *fp)
 	if((fieldLocal=mysql_fetch_row(resLocal)))
 		fprintf(fp,"%s %s(%s) %s\n\n",cIP,fieldLocal[0],fieldLocal[2],fieldLocal[1]);
 
+#ifdef EXPERIMENTAL
 	//list event types
 	fprintf(fp,"48hr: event name, priority, count\n");
 	sprintf(gcQuery,"SELECT signature.sig_name,signature.sig_priority,COUNT(signature.sig_name)"
@@ -538,7 +539,7 @@ unsigned ReportIP(const char *cIP, FILE *fp)
 		fprintf(fp,"%s,%s,%s\n",fieldLocal[0],fieldLocal[1],fieldLocal[2]);
 	}
 	fprintf(fp,"uCount=%u\n",uCount);
-
+#endif
 	mysql_free_result(resLocal);
 	return(uRetVal);
 
@@ -903,8 +904,6 @@ unsigned uGetLastSignatureID(unsigned uIP)
 	MYSQL_RES *resLocal=NULL;
 	MYSQL_ROW fieldLocal;
 
-	//Check last 60 seconds event for priorty 1 events.
-	//If any get the IP or IPs to block.
 	sprintf(gcQuery,"SELECT signature.sig_sid"
 			" FROM event,iphdr,signature"
 			" WHERE event.cid=iphdr.cid"
@@ -1126,6 +1125,25 @@ void ProcessBarnyard2(unsigned uPriority)
 			logfileLine("ProcessBarnyard2","no active servers!");
 		}
 	}//while each event
+
+	//truncate tables
+	//we need to save reputation info in our own table
+	sprintf(gcQuery,"TRUNCATE event");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+		logfileLine("ProcessBarnyard2-t0",mysql_error(&gMysqlLocal));
+	sprintf(gcQuery,"TRUNCATE data");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+		logfileLine("ProcessBarnyard2-t1",mysql_error(&gMysqlLocal));
+	sprintf(gcQuery,"TRUNCATE iphdr");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+		logfileLine("ProcessBarnyard2-t2",mysql_error(&gMysqlLocal));
+	sprintf(gcQuery,"TRUNCATE udphdr");
+	mysql_query(&gMysqlLocal,gcQuery);
+	if(mysql_errno(&gMysqlLocal))
+		logfileLine("ProcessBarnyard2-t3",mysql_error(&gMysqlLocal));
 
 ProcessBarnyard2_exit2:
 	if(res!=NULL)
