@@ -10,6 +10,24 @@ AUTHOR
 	Gary Wallis for Unxiservice, LLC. (C) 2008-2014.
 	GPLv2 License applies. See LICENSE file.
 NOTES
+	This system post processes barnyard2 snort data then deletes it.
+	So you can't really use it for webconsole stuff.
+
+	It uses the unxsVZ backend to keep track of IP number status.
+
+	It uses the unxsVZ backend jobqueue to create jobs for hardware node iptables.
+
+	Little by little I am fleshing out a system that allows for sharing reputation
+	data for attacker IPs across multiple datacenters that unxsVZ runs on.
+
+	The most interesting post or meta processing of snort alerts is to increase the
+	prioroty level based on multiple destination attacks from the same IP over time.
+
+	It seems to be very safe at this time to block IPs that violate snort rules
+	on multiple containers and more so if on multiple datacenters.
+
+	If a customer has somehting poorly configured that exhibits this behavior
+	then it is probably ok to block him and thus force the issue to be resolved.
 */
 
 #include "snort.h"
@@ -23,6 +41,7 @@ NOTES
 #define uFWACCESS 4
 #define uFWREMOVED 5
 #define uFWWAITINGREMOVAL 6
+#define uFWWHITELISTED 7
 
 
 #define cSNORTLOGFILE "/var/log/unxsSnortLog"
@@ -39,14 +58,11 @@ unsigned guNodeOwner=0;
 void logfileLine(const char *cFunction,const char *cLogline);
 void CreateGeoIPTable(void);
 void CreateIPHistoryTable(void);
-void CreateBlockedIPTable(void);
 void ForkPostAddScript(const char *cMsg,const char *cIP);
 void ForkPostDelScript(const char *cMsg);
 unsigned CheckIP(const char *cIP,char *cReport,unsigned uIP);
 unsigned ReportIP(const char *cIP, FILE *fp);
 unsigned BlockIP(const char *cIP);
-unsigned DumpBlocked(void);
-unsigned RemoveBlocked(const char *cIP);
 unsigned UnBlockIP(const char *cIP);
 unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus,
 		unsigned uFWRule,unsigned uCountryCode,unsigned uDstIPCount);
@@ -228,19 +244,10 @@ int main(int iArgc, char *cArgv[])
 				ReportIP(cArgv[i+1],stdout);
 				return(0);
 			}
-			if(!strcmp(cArgv[i],"--dump-blocked"))
-			{
-				DumpBlocked();
-				return(0);
-			}
 			if(!strcmp(cArgv[i],"--block-ip") && iArgc==(i+2))
 			{
 				BlockIP(cArgv[i+1]);
 				return(0);
-			}
-			if(!strcmp(cArgv[i],"--remove-from-blocked") && iArgc==(i+2))
-			{
-				return(RemoveBlocked(cArgv[i+1]));
 			}
 			if(!strcmp(cArgv[i],"--unblock-ip") && iArgc==(i+2))
 			{
@@ -250,11 +257,6 @@ int main(int iArgc, char *cArgv[])
 			if(!strcmp(cArgv[i],"--create-geoip"))
 			{
 				CreateGeoIPTable();
-				return(0);
-			}
-			if(!strcmp(cArgv[i],"--create-blockedip"))
-			{
-				CreateBlockedIPTable();
 				return(0);
 			}
 			if(!strcmp(cArgv[i],"--create-iphistory"))
@@ -323,45 +325,6 @@ void CreateGeoIPTable(void)
 	printf("tGeoIPCountryCode and tGeoIP tables exist or have been created\n");
 
 }//void CreateGeoIPTable(void)
-
-
-void CreateBlockedIPTable(void)
-{
-	if((gLfp=fopen(cSNORTLOGFILE,"a"))==NULL)
-	{
-		fprintf(stderr,"%s main() fopen logfile error\n",gcProgram);
-		exit(1);
-	}
-	logfileLine("CreateBlockedIPTable","start");
-		
-	if(TextLocalConnectDb()) exit(1);
-
-	sprintf(gcQuery,"DROP TABLE IF EXISTS tBlockedIP");
-	mysql_query(&gMysqlLocal,gcQuery);
-	if(mysql_errno(&gMysqlLocal))
-	{
-		logfileLine("CreateBlockedIPTable","error");
-		logfileLine("CreateBlockedIPTable",mysql_error(&gMysqlLocal));
-		mysql_close(&gMysqlLocal);
-		return;
-	}
-
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tBlockedIP ( "
-			"uBlockedIP INT UNSIGNED PRIMARY KEY DEFAULT 0 )");
-	mysql_query(&gMysqlLocal,gcQuery);
-	if(mysql_errno(&gMysqlLocal))
-	{
-		logfileLine("CreateBlockedIPTable","error");
-		logfileLine("CreateBlockedIPTable",mysql_error(&gMysqlLocal));
-		mysql_close(&gMysqlLocal);
-		return;
-	}
-
-	logfileLine("CreateBlockedIPTable","Ok");
-	mysql_close(&gMysqlLocal);
-	logfileLine("CreateBlockedIPTable","end");
-
-}//void CreateBlockedIPTable(void)
 
 
 void ForkPostAddScript(const char *cMsg,const char *cIP)
@@ -537,7 +500,7 @@ unsigned ReportIP(const char *cIP, FILE *fp)
 
 	//48 hour report of all events by dst ip 
 	fprintf(fp,"\n48hr: event dst IP, count\n");
-	sprintf(gcQuery,"SELECT INET_NTOA(tIPHistory.uIPSrc),COUNT(tIPHistory.uIPDst)"
+	sprintf(gcQuery,"SELECT INET_NTOA(tIPHistory.uIPDst),COUNT(tIPHistory.uIPDst)"
 			" FROM tIPHistory"
 			" WHERE tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400*2)"
 			" AND tIPHistory.uIPSrc=INET_ATON('%s') GROUP BY tIPHistory.uIPDst ORDER BY tIPHistory.uCreatedDate DESC",cIP);
@@ -660,9 +623,6 @@ unsigned BlockIP(const char *cIP)
 
 		uCount++;
 
-		sprintf(gcQuery,"INSERT INTO tBlockedIP SET uBlockedIP=INET_ATON('%s')",cIP);
-		mysql_query(&gMysqlLocal,gcQuery);
-
 	}//while each server
 	if(uCount)
 		UpdateVZIP(cIP,0,uFWWAITINGBLOCK,0,uCountryCode,0);
@@ -742,8 +702,6 @@ unsigned UnBlockIP(const char *cIP)
 
 	if(uCount)
 	{
-		sprintf(gcQuery,"DELETE FROM tBlockedIP WHERE uBlockedIP=INET_ATON('%s')",cIP);
-		mysql_query(&gMysqlLocal,gcQuery);
 		char cCountryCode[3]={"--"};
 		unsigned uCountryCode=0;
 		uCountryCode=uGetCountryCode(cIP,cCountryCode);
@@ -766,80 +724,6 @@ unsigned UnBlockIP(const char *cIP)
 
 	return(0);
 }//unsigned UnBlockIP()
-
-
-unsigned DumpBlocked(void)
-{
-	unsigned uRetVal=0;
-	MYSQL_RES *resLocal=NULL;
-	MYSQL_ROW fieldLocal;
-	MYSQL_RES *resLocal2=NULL;
-	MYSQL_ROW fieldLocal2;
-
-	if(!guMysqlLocal)
-		if(TextLocalConnectDb()) return(1);
-
-	sprintf(gcQuery,"SELECT INET_NTOA(uBlockedIP),uBlockedIP FROM tBlockedIP");
-	mysql_query(&gMysqlLocal,gcQuery);
-	if(mysql_errno(&gMysqlLocal))
-		return(1);
-        resLocal=mysql_store_result(&gMysqlLocal);
-	unsigned uCount=0;
-	while((fieldLocal=mysql_fetch_row(resLocal)))
-	{
-		sprintf(gcQuery,"SELECT cCountryCode,cCountryName,uGeoIPCountryCode"
-			" FROM tGeoIPCountryCode"
-			" WHERE uGeoIPCountryCode="
-			"(SELECT uGeoIPCountryCode FROM tGeoIP WHERE uEndIP>=%s LIMIT 1)",fieldLocal[1]);
-		mysql_query(&gMysqlLocal,gcQuery);
-		if(mysql_errno(&gMysqlLocal))
-			return(1);
-        	resLocal2=mysql_store_result(&gMysqlLocal);
-		if((fieldLocal2=mysql_fetch_row(resLocal2)))
-		{
-			printf("%s %s(%s) %s\n",fieldLocal[0],fieldLocal2[0],fieldLocal2[2],fieldLocal2[1]);
-			uCount++;
-		}
-		else
-		{
-			printf("%s Country info not available\n",fieldLocal[0]);
-			uCount++;
-		}
-	}
-
-	printf("uCount=%u\n",uCount);
-
-	if(resLocal2!=NULL)
-		mysql_free_result(resLocal2);
-	if(resLocal!=NULL)
-		mysql_free_result(resLocal);
-	return(uRetVal);
-
-}//unsigned DumpBlocked(void)
-
-
-unsigned RemoveBlocked(const char *cIP)
-{
-	unsigned uRetVal=0;
-
-	DumpBlocked();
-
-	if(!guMysqlLocal)
-		if(TextLocalConnectDb()) return(1);
-
-	sprintf(gcQuery,"DELETE FROM tBlockedIP WHERE uBlockedIP=INET_ATON('%s')",cIP);
-	mysql_query(&gMysqlLocal,gcQuery);
-	if(mysql_errno(&gMysqlLocal))
-	{
-		printf("%s\n",mysql_error(&gMysqlLocal));
-		return(3);
-	}
-
-	DumpBlocked();
-
-	return(uRetVal);
-
-}//unsigned RemoveBlocked(chatr *cIP)
 
 
 unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus,
@@ -979,9 +863,7 @@ void ProcessBarnyard2(unsigned uPriority)
 	sprintf(gcQuery,"SELECT DISTINCT INET_NTOA(iphdr.ip_src),iphdr.ip_src FROM event,iphdr,signature"
 			" WHERE event.cid=iphdr.cid"
 			" AND event.signature=signature.sig_id"
-			" AND iphdr.ip_src NOT IN (SELECT uBlockedIP FROM tBlockedIP)"
 			" AND event.timestamp>(NOW()-61)"
-			//" AND event.timestamp>(NOW()-43200)"
 			" AND signature.sig_priority=%u LIMIT 17",uPriority);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
@@ -1004,6 +886,7 @@ void ProcessBarnyard2(unsigned uPriority)
 			break;
 		}
 
+		MYSQL_RES *resLocal2=NULL;
 		unsigned uIP=0;//src ip number
 		char cIP[16]={""};
 		sscanf(fieldLocal[1],"%u",&uIP);
@@ -1019,35 +902,6 @@ void ProcessBarnyard2(unsigned uPriority)
 		//Get country info
 		char cGeoIPCountryInfo[64]={"no country info available"};
 		CheckIP("",cGeoIPCountryInfo,uIP);
-
-
-		//Check to see if we should escalate priority
-		//escalate based on alerts from same IP from more than one target dst IP in last 48 hours.
-		//but calculate uDstIPCount for all events
-		MYSQL_RES *resLocal2=NULL;
-		sprintf(gcQuery,"SELECT DISTINCT tIPHistory.uIPDst"
-			" FROM tIPHistory,signature"
-			" WHERE tIPHistory.uSignature=signature.sig_id AND tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400*2)"
-			" AND tIPHistory.uIPSrc=%u",uIP);
-		mysql_query(&gMysqlLocal,gcQuery);
-		if(mysql_errno(&gMysqlLocal))
-			logfileLine("ProcessBarnyard2-s3",mysql_error(&gMysqlLocal));
-		
-        	resLocal2=mysql_store_result(&gMysqlLocal);
-		uDstIPCount=mysql_num_rows(resLocal2);
-		if(resLocal2!=NULL)
-			mysql_free_result(resLocal2);
-		if(uPriority>1)
-		{
-
-			if(uDstIPCount>3)
-			{
-				uTmpPriority=1;
-				char cMsg[64]={""};
-				sprintf(cMsg,"priority escalation %u",uDstIPCount);
-				logfileLine("ProcessBarnyard2",cMsg);
-			}
-		}
 
 		//keep track of IP history/reputation in our own table
 		sprintf(gcQuery,"SELECT iphdr.ip_dst,signature.sig_id FROM event,iphdr,signature"
@@ -1085,81 +939,142 @@ void ProcessBarnyard2(unsigned uPriority)
 				}
 			}
 		}
+
+		//Check to see if we should escalate priority
+		//escalate based on alerts from same IP from more than one target dst IP in last 48 hours.
+		//but calculate uDstIPCount for all events
+		sprintf(gcQuery,"SELECT DISTINCT tIPHistory.uIPDst"
+			" FROM tIPHistory,signature"
+			" WHERE tIPHistory.uSignature=signature.sig_id AND tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400*2)"
+			" AND tIPHistory.uIPSrc=%u",uIP);
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+			logfileLine("ProcessBarnyard2-s3",mysql_error(&gMysqlLocal));
+		
+        	resLocal2=mysql_store_result(&gMysqlLocal);
+		uDstIPCount=mysql_num_rows(resLocal2);
+		if(resLocal2!=NULL)
+			mysql_free_result(resLocal2);
+		if(uPriority>1)
+		{
+
+			if(uDstIPCount>3)
+			{
+				uTmpPriority=1;
+				char cMsg[64]={""};
+				sprintf(cMsg,"priority escalation %u",uDstIPCount);
+				logfileLine("ProcessBarnyard2",cMsg);
+			}
+		}
+
 		
 
-		//Create a tJob entry for each active tNode
-		sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
-				" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1"
-				" AND tDatacenter.cLabel!='CustomerPremise'"
-				" AND tNode.uDatacenter=tDatacenter.uDatacenter");
-		//		debug only
-		//		" AND tNode.uDatacenter=tDatacenter.uDatacenter LIMIT 1");
+		//Lets check backend for tIP.uFWStatus
+		sprintf(gcQuery,"SELECT uFWStatus FROM tIP WHERE"
+			" uIPNum=%u"
+			" AND uDatacenter=41"//CustomerPremise magic number fix ASAP
+			" AND uAvailable=0 LIMIT 1",uIP);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine("ProcessBarnyard2-s1",mysql_error(&gMysql));
+			logfileLine("ProcessBarnyard2-s1a",mysql_error(&gMysql));
 			goto ProcessBarnyard2_exit1;
 		}
 		res=mysql_store_result(&gMysql);
-		unsigned uNode=0;
-		unsigned uDatacenter=0;
-		unsigned uCount=0;
-		unsigned uMasterJob=0;//first job is master job
-		while((field=mysql_fetch_row(res)))
-		{
-			sscanf(field[0],"%u",&uNode);
-			sscanf(field[1],"%u",&uDatacenter);
+		unsigned uFWStatus=0;//first job is master job
+		if((field=mysql_fetch_row(res)))
+			sscanf(field[0],"%u",&uFWStatus);
 
-			if(uPriority>2 && !uTmpPriority)
-				sprintf(gcQuery,"INSERT INTO tJob"
-					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-					",cLabel='TestBlockAccess unxsSnort %s'"
-					",cJobName='AllowAllAccess'"
-					//",cJobName='TestBlockAccess'"
-					",uDatacenter=%u,uNode=%u"
-					",uMasterJob=%u"
-					",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u/%u;'"
-					",uJobDate=UNIX_TIMESTAMP(NOW())"
-					",uJobStatus=1",
-						cIDS,
-						uDatacenter,
-						uNode,
-						uMasterJob,
-						cIP,cGeoIPCountryInfo,uPriority,uTmpPriority);
-			else
-				sprintf(gcQuery,"INSERT INTO tJob"
-					" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-					",cLabel='BlockAccess unxsSnort %s'"
-					",cJobName='BlockAccess'"
-					//",cJobName='TestBlockAccess'"
-					",uDatacenter=%u,uNode=%u"
-					",uMasterJob=%u"
-					",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u/%u;'"
-					",uJobDate=UNIX_TIMESTAMP(NOW())"
-					",uJobStatus=1",
-						cIDS,
-						uDatacenter,
-						uNode,
-						uMasterJob,
-						cIP,cGeoIPCountryInfo,uPriority,uTmpPriority);
+		sprintf(gcQuery,"cIP=%s uFWStatus=%u uTmpPriority=%u uPriority=%u",cIP,uFWStatus,uTmpPriority,uPriority);
+		logfileLine("ProcessBarnyard2",gcQuery);
+
+		//Based on uFWStatus and uPriority/uTmpPriority
+		//We create drop/allow or no job at all.
+		//If no IP status we contine as is.
+		//If we are going to DROP but status is waiting or blocked. we can skip
+		//If status is uFWWHITELISTED do nothing
+		unsigned uCount=0;
+		if( ((uFWStatus==uFWWAITINGBLOCK || uFWStatus==uFWBLOCKED) && (uPriority==1 || uTmpPriority))
+			||
+			((uFWStatus==uFWWAITINGACCESS || uFWStatus==uFWACCESS) && (uPriority>2 || !uTmpPriority))
+			||
+			((uFWStatus==uFWWHITELISTED)) )
+		{
+			logfileLine("ProcessBarnyard2","already done or whitelisted");
+			//we should add unique activity record for datacenter and signature
+		}
+		else
+		{
+		
+			//Create a tJob entry for each active tNode
+			sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
+					" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1"
+					" AND tDatacenter.cLabel!='CustomerPremise'"
+					" AND tNode.uDatacenter=tDatacenter.uDatacenter");
+			//		debug only
+			//		" AND tNode.uDatacenter=tDatacenter.uDatacenter LIMIT 1");
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				logfileLine("ProcessBarnyard2-s2",mysql_error(&gMysql));
+				logfileLine("ProcessBarnyard2-s1",mysql_error(&gMysql));
 				goto ProcessBarnyard2_exit2;
 			}
-			uCount++;
-			if(!uMasterJob)
-				uMasterJob=mysql_insert_id(&gMysql);
-		}//while for each server job
+				res=mysql_store_result(&gMysql);
+			unsigned uNode=0;
+			unsigned uDatacenter=0;
+			unsigned uMasterJob=0;//first job is master job
+			while((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&uNode);
+				sscanf(field[1],"%u",&uDatacenter);
+	
+				if(uPriority>2 && !uTmpPriority)
+					sprintf(gcQuery,"INSERT INTO tJob"
+						" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cLabel='TestBlockAccess unxsSnort %s'"
+						",cJobName='AllowAllAccess'"
+						//",cJobName='TestBlockAccess'"
+						",uDatacenter=%u,uNode=%u"
+						",uMasterJob=%u"
+						",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u/%u;'"
+						",uJobDate=UNIX_TIMESTAMP(NOW())"
+						",uJobStatus=1",
+							cIDS,
+							uDatacenter,
+							uNode,
+							uMasterJob,
+							cIP,cGeoIPCountryInfo,uPriority,uTmpPriority);
+				else
+					sprintf(gcQuery,"INSERT INTO tJob"
+						" SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						",cLabel='BlockAccess unxsSnort %s'"
+						",cJobName='BlockAccess'"
+						//",cJobName='TestBlockAccess'"
+						",uDatacenter=%u,uNode=%u"
+						",uMasterJob=%u"
+						",cJobData='cIPv4=%.15s;\nuGeoIPCountryInfo=%s;\nuPriority=%u/%u;'"
+						",uJobDate=UNIX_TIMESTAMP(NOW())"
+						",uJobStatus=1",
+							cIDS,
+							uDatacenter,
+							uNode,
+							uMasterJob,
+							cIP,cGeoIPCountryInfo,uPriority,uTmpPriority);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessBarnyard2-s2",mysql_error(&gMysql));
+					goto ProcessBarnyard2_exit2;
+				}
+				uCount++;
+				if(!uMasterJob)
+					uMasterJob=mysql_insert_id(&gMysql);
+			}//while for each server job
+		}//remote status condition
 
 		if(uCount)
 		{
 			unsigned uSignatureID=0;
-
-			//Mark as processed. No need to process anymore. We need to add date and expiration fields.
-			sprintf(gcQuery,"INSERT INTO tBlockedIP SET uBlockedIP=%u",uIP);
-			mysql_query(&gMysqlLocal,gcQuery);
 
 			uSignatureID=uGetLastSignatureID(uIP);
 
@@ -1169,14 +1084,14 @@ void ProcessBarnyard2(unsigned uPriority)
 			char cCountryCode[3]={"--"};
 			unsigned uCountryCode=0;
 			uCountryCode=uGetCountryCode(cIP,cCountryCode);
-			if(uPriority>2 && !uTmpPriority)
-			{
-				UpdateVZIP("",uIP,uFWWAITINGACCESS,uSignatureID,uCountryCode,uDstIPCount);
-			}
-			else
+			if(uPriority<3 || uTmpPriority)
 			{
 				UpdateVZIP("",uIP,uFWWAITINGBLOCK,uSignatureID,uCountryCode,uDstIPCount);
 				logfileLine("ProcessBarnyard2","priority 1");
+			}
+			else
+			{
+				UpdateVZIP("",uIP,uFWWAITINGACCESS,uSignatureID,uCountryCode,uDstIPCount);
 			}
 
 			//Send email etc. one for each IP
@@ -1187,10 +1102,6 @@ void ProcessBarnyard2(unsigned uPriority)
 			//debug only
 			logfileLine("ProcessBarnyard2",cIP);
 			logfileLine("ProcessBarnyard2",cGeoIPCountryInfo);
-		}
-		else
-		{
-			logfileLine("ProcessBarnyard2","no active servers!");
 		}
 	}//while each event
 
@@ -1277,7 +1188,7 @@ void CreateIPHistoryTable(void)
 	}
 
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tIPHistory ( "
-			"uIPSrc INT UNSIGNED PRIMARY KEY DEFAULT 0,"
+			"uIPSrc INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uIPSrc),"
 			"uIPDst INT UNSIGNED NOT NULL DEFAULT 0,"
 			" uSignature INT UNSIGNED NOT NULL DEFAULT 0,"
 			" uCreatedDate BIGINT UNSIGNED NOT NULL DEFAULT 0 )");
