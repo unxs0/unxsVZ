@@ -116,6 +116,29 @@ unsigned TextLocalConnectDb(void)
 }//void TextLocalConnectDb(void)
 
 
+void TruncateSnort(void)
+{
+		//truncate tables
+		//we need to save reputation info in our own table
+		sprintf(gcQuery,"TRUNCATE event");
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+			logfileLine("ProcessBarnyard2-t0",mysql_error(&gMysqlLocal));
+		sprintf(gcQuery,"TRUNCATE data");
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+			logfileLine("ProcessBarnyard2-t1",mysql_error(&gMysqlLocal));
+		sprintf(gcQuery,"TRUNCATE iphdr");
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+			logfileLine("ProcessBarnyard2-t2",mysql_error(&gMysqlLocal));
+		sprintf(gcQuery,"TRUNCATE udphdr");
+		mysql_query(&gMysqlLocal,gcQuery);
+		if(mysql_errno(&gMysqlLocal))
+			logfileLine("ProcessBarnyard2-t3",mysql_error(&gMysqlLocal));
+}//void TruncateSnort(void)
+
+
 int main(int iArgc, char *cArgv[])
 {
 
@@ -156,10 +179,10 @@ int main(int iArgc, char *cArgv[])
 			"\t[--unblock-ip <ip dotted quad>]\n"
 			"\t[--dump-blocked]\n"
 			"\t[--cleanup]\n"
+			"\t[--truncate-snort]\n"
 			"\t[--remove-from-blocked <ip dotted quad>]\n"
 			"\t[--version] [--create-geoip]\n"
-			"\t[--create-iphistory]\n"
-			"\t[--create-blockedip]\n",cArgv[0]);
+			"\t[--create-iphistory]\n",cArgv[0]);
 		exit(0);//this does not follow normal design rules
 	}//void PrintUsage(void)
 
@@ -186,24 +209,8 @@ int main(int iArgc, char *cArgv[])
 		ProcessBarnyard2(2);
 		ProcessBarnyard2(3);
 
-		//truncate tables
-		//we need to save reputation info in our own table
-		sprintf(gcQuery,"TRUNCATE event");
-		mysql_query(&gMysqlLocal,gcQuery);
-		if(mysql_errno(&gMysqlLocal))
-			logfileLine("ProcessBarnyard2-t0",mysql_error(&gMysqlLocal));
-		sprintf(gcQuery,"TRUNCATE data");
-		mysql_query(&gMysqlLocal,gcQuery);
-		if(mysql_errno(&gMysqlLocal))
-			logfileLine("ProcessBarnyard2-t1",mysql_error(&gMysqlLocal));
-		sprintf(gcQuery,"TRUNCATE iphdr");
-		mysql_query(&gMysqlLocal,gcQuery);
-		if(mysql_errno(&gMysqlLocal))
-			logfileLine("ProcessBarnyard2-t2",mysql_error(&gMysqlLocal));
-		sprintf(gcQuery,"TRUNCATE udphdr");
-		mysql_query(&gMysqlLocal,gcQuery);
-		if(mysql_errno(&gMysqlLocal))
-			logfileLine("ProcessBarnyard2-t3",mysql_error(&gMysqlLocal));
+		TruncateSnort();
+
 
 		mysql_close(&gMysql);
 		mysql_close(&gMysqlLocal);
@@ -223,6 +230,13 @@ int main(int iArgc, char *cArgv[])
 			if(!strcmp(cArgv[i],"--process"))
 			{
 				return(Process());
+			}
+			if(!strcmp(cArgv[i],"--truncate-snort"))
+			{
+				if(TextLocalConnectDb()) exit(1);
+				TruncateSnort();
+				mysql_close(&gMysqlLocal);
+				return(0);
 			}
 			if(!strcmp(cArgv[i],"--cleanup"))
 			{
@@ -479,10 +493,10 @@ unsigned ReportIP(const char *cIP, FILE *fp)
 #define EXPERIMENTAL "yes"
 #ifdef EXPERIMENTAL
 	//list event types
-	fprintf(fp,"48hr: event name, priority, count\n");
+	fprintf(fp,"24hr: event name, priority, count\n");
 	sprintf(gcQuery,"SELECT signature.sig_name,signature.sig_priority,COUNT(signature.sig_name)"
 			" FROM tIPHistory,signature"
-			" WHERE tIPHistory.uSignature=signature.sig_id AND  tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400*2)"
+			" WHERE tIPHistory.uSignature=signature.sig_id AND  tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400)"
 			" AND tIPHistory.uIPSrc=INET_ATON('%s') GROUP BY signature.sig_name ORDER BY tIPHistory.uCreatedDate DESC",cIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
@@ -499,11 +513,11 @@ unsigned ReportIP(const char *cIP, FILE *fp)
 	}
 	fprintf(fp,"uCount=%u\n",uCount);
 
-	//48 hour report of all events by dst ip 
-	fprintf(fp,"\n48hr: event dst IP, count\n");
+	//24 hour report of all events by dst ip 
+	fprintf(fp,"\n24hr: event dst IP, count\n");
 	sprintf(gcQuery,"SELECT INET_NTOA(tIPHistory.uIPDst),COUNT(tIPHistory.uIPDst)"
 			" FROM tIPHistory"
-			" WHERE tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400*2)"
+			" WHERE tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400)"
 			" AND tIPHistory.uIPSrc=INET_ATON('%s') GROUP BY tIPHistory.uIPDst ORDER BY tIPHistory.uCreatedDate DESC",cIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
@@ -520,11 +534,11 @@ unsigned ReportIP(const char *cIP, FILE *fp)
 	}
 	fprintf(fp,"uCount=%u\n",uCount);
 
-	//48 hour report of all events for given IP
-	fprintf(fp,"\n48hr: timestamp, event, dst IP\n");
+	//24 hour report of all events for given IP
+	fprintf(fp,"\n24hr: timestamp, event, dst IP\n");
 	sprintf(gcQuery,"SELECT FROM_UNIXTIME(tIPHistory.uCreatedDate),signature.sig_name,INET_NTOA(tIPHistory.uIPDst)"
 			" FROM tIPHistory,signature"
-			" WHERE tIPHistory.uSignature=signature.sig_id AND tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400*2)"
+			" WHERE tIPHistory.uSignature=signature.sig_id AND tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400)"
 			" AND tIPHistory.uIPSrc=INET_ATON('%s') ORDER BY tIPHistory.uCreatedDate DESC",cIP);
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
@@ -932,11 +946,11 @@ void ProcessBarnyard2(unsigned uPriority)
 		}
 
 		//Check to see if we should escalate priority
-		//escalate based on alerts from same IP from more than one target dst IP in last 48 hours.
+		//escalate based on alerts from same IP from more than one target dst IP in last 24 hours.
 		//but calculate uDstIPCount for all events
 		sprintf(gcQuery,"SELECT DISTINCT tIPHistory.uIPDst"
 			" FROM tIPHistory,signature"
-			" WHERE tIPHistory.uSignature=signature.sig_id AND tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400*2)"
+			" WHERE tIPHistory.uSignature=signature.sig_id AND tIPHistory.uCreatedDate>(UNIX_TIMESTAMP(NOW())-86400)"
 			" AND tIPHistory.uIPSrc=%u",uIP);
 		mysql_query(&gMysqlLocal,gcQuery);
 		if(mysql_errno(&gMysqlLocal))
@@ -1147,7 +1161,7 @@ void Cleanup(void)
 	}
 
 	logfileLine("Cleanup()","start");
-	sprintf(gcQuery,"DELETE FROM tIPHistory WHERE uCreatedDate<UNIX_TIMESTAMP(NOW() - INTERVAL 2 DAY)");
+	sprintf(gcQuery,"DELETE FROM tIPHistory WHERE uCreatedDate<UNIX_TIMESTAMP(NOW() - INTERVAL 1 DAY)");
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
