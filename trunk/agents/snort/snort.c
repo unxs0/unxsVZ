@@ -70,6 +70,7 @@ unsigned uGetLastSignatureID(unsigned uIP);
 void ProcessBarnyard2(unsigned uPriority);
 unsigned uGetCountryCode(const char *cIP,char *cCountryCode);
 void Cleanup(void);
+unsigned UpdateVZIPProperty(unsigned uIP,unsigned uIPNum,unsigned uFWStatus,unsigned uFWRule,unsigned uDstIPCount);
 //external protos
 void TextConnectDb(void);
 
@@ -800,20 +801,7 @@ unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus,
 	mysql_free_result(res);
 
 	if(uIP)
-	{
-		sprintf(gcQuery,"INSERT INTO tProperty"
-				" SET cName='FW Activity'"
-				",cValue=CONCAT(NOW(),' cIDS=%s; uFWStatus=%u; uFWRule=%u; uDstIPCount=%u;')"
-				",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-				",uType=31"
-				",uKey=%u",cIDS,uFWStatus,uFWRule,uDstIPCount,uIP);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			logfileLine("UpdateVZIP-4",mysql_error(&gMysql));
-			return(1);
-		}
-	}
+		UpdateVZIPProperty(uIP,0,uFWStatus,uFWRule,uDstIPCount);
 
 	return(0);
 }//unsigned UpdateVZIP()
@@ -832,7 +820,7 @@ unsigned uGetLastSignatureID(unsigned uIP)
 	mysql_query(&gMysqlLocal,gcQuery);
 	if(mysql_errno(&gMysqlLocal))
 	{
-		logfileLine("ProcessBarnyard2-s0",mysql_error(&gMysqlLocal));
+		logfileLine("uGetLastSignatureID",mysql_error(&gMysqlLocal));
 		return(0);
 	}
         resLocal=mysql_store_result(&gMysqlLocal);
@@ -904,7 +892,9 @@ void ProcessBarnyard2(unsigned uPriority)
 		CheckIP("",cGeoIPCountryInfo,uIP);
 
 		//keep track of IP history/reputation in our own table
-		sprintf(gcQuery,"SELECT iphdr.ip_dst,signature.sig_id FROM event,iphdr,signature"
+		//note sig_id and sig_sid diff
+		unsigned uFWRule=0;	
+		sprintf(gcQuery,"SELECT iphdr.ip_dst,signature.sig_id,signature.sig_sid FROM event,iphdr,signature"
 			" WHERE event.cid=iphdr.cid"
 			" AND event.signature=signature.sig_id"
 			" AND event.timestamp>(NOW()-61)"
@@ -925,6 +915,7 @@ void ProcessBarnyard2(unsigned uPriority)
 			{
 				sscanf(fieldLocal2[0],"%u",&uIPDst);
 				sscanf(fieldLocal2[1],"%u",&uSignature);
+				sscanf(fieldLocal2[2],"%u",&uFWRule);
 				sprintf(gcQuery,"INSERT INTO tIPHistory SET"
 					" uIPSrc=%u,"
 					" uIPDst=%u,"
@@ -1002,6 +993,8 @@ void ProcessBarnyard2(unsigned uPriority)
 		{
 			logfileLine("ProcessBarnyard2","already done or whitelisted");
 			//we should add unique activity record for datacenter and signature
+			//uSignature is only the last of possible multiple
+			UpdateVZIPProperty(0,uIP,uFWStatus,uFWRule,uDstIPCount);
 		}
 		else
 		{
@@ -1207,3 +1200,88 @@ void CreateIPHistoryTable(void)
 
 }//void CreateIPHistoryTable(void)
 
+
+unsigned UpdateVZIPProperty(unsigned uIP,unsigned uIPNum,unsigned uFWStatus,unsigned uFWRule,unsigned uDstIPCount)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	if(!uIP)
+	{
+		sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
+			" uIPNum=%u"
+			" AND uDatacenter=41"//CustomerPremise magic number fix ASAP
+			" AND uAvailable=0 LIMIT 1",uIPNum);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("UpdateVZIPProperty",mysql_error(&gMysql));
+			return(1);
+		}
+        	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sscanf(field[0],"%u",&uIP);
+		else
+			return(1);
+	}
+
+	sprintf(gcQuery,"SELECT uProperty,cValue FROM tProperty"
+			" WHERE cName='FWA %s %u'"
+			" AND uKey=%u"
+			" AND uType=31 LIMIT 1",
+				cIDS,uFWRule,
+					uIP);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("UpdateVZIPProperty",mysql_error(&gMysql));
+		return(1);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uMaxDstIPCount=0;
+		unsigned uCount=0;
+		if(2==sscanf(field[1],"uLastFWStatus=%*u; uMaxDstIPCount=%u; uCount=%u;",&uMaxDstIPCount,&uCount))
+		{
+			if(uDstIPCount>uMaxDstIPCount) uMaxDstIPCount=uDstIPCount;
+			uCount++;
+		}
+		else
+		{
+			logfileLine("UpdateVZIPProperty","sscanf() error");
+		}
+		sprintf(gcQuery,"UPDATE tProperty"
+			" SET cValue=CONCAT('uLastFWStatus=%u; uMaxDstIPCount=%u; uCount=%u;')"
+			",uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+			" WHERE uProperty=%s",
+				uFWStatus,uMaxDstIPCount,uCount,
+					field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("UpdateVZIPProperty",mysql_error(&gMysql));
+			return(2);
+		}
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty"
+			" SET cName='FWA %s %u'"
+			",cValue=CONCAT('uLastFWStatus=%u; uMaxDstIPCount=%u; uCount=1;')"
+			",uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+			",uType=31"
+			",uKey=%u",cIDS,uFWRule,uFWStatus,uDstIPCount,uIP);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("UpdateVZIPProperty",mysql_error(&gMysql));
+			return(3);
+		}
+	}
+	mysql_free_result(res);
+
+	//debug only
+	//logfileLine("UpdateVZIPProperty",gcQuery);
+
+	return(0);
+}//unsigned UpdateVZIPProperty()
