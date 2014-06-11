@@ -782,6 +782,7 @@ unsigned UpdateVZIP(const char *cIP,unsigned uIPNum,unsigned uFWStatus,
 			mysql_free_result(res);
 			return(1);
 		}
+		logfileLine("UpdateVZIP","UPDATE");
 	}
 	else
 	{
@@ -908,7 +909,7 @@ void ProcessBarnyard2(unsigned uPriority)
 		//keep track of IP history/reputation in our own table
 		//note sig_id and sig_sid diff
 		unsigned uFWRule=0;	
-		sprintf(gcQuery,"SELECT iphdr.ip_dst,signature.sig_id,signature.sig_sid FROM event,iphdr,signature"
+		sprintf(gcQuery,"SELECT iphdr.ip_dst,signature.sig_id,signature.sig_sid FROM iphdr,signature,event"
 			" WHERE event.cid=iphdr.cid"
 			" AND event.signature=signature.sig_id"
 			" AND event.timestamp>(NOW()-61)"
