@@ -997,10 +997,11 @@ void ProcessBarnyard2(unsigned uPriority)
 		//Based on uFWStatus and uPriority/uTmpPriority
 		//We create drop/allow or no job at all.
 		//If no IP status we contine as is.
-		//If we are going to DROP but status is waiting or blocked. we can skip
+		//If status is waiting to be blocked or blocked do nothing.
+		//If status is waiting for access or access and we are not about to create jobs to block do nothing.
 		//If status is uFWWHITELISTED do nothing
 		unsigned uCount=0;
-		if( ((uFWStatus==uFWWAITINGBLOCK || uFWStatus==uFWBLOCKED) && (uPriority==1 || uTmpPriority))
+		if( (uFWStatus==uFWWAITINGBLOCK || uFWStatus==uFWBLOCKED)
 			||
 			((uFWStatus==uFWWAITINGACCESS || uFWStatus==uFWACCESS) && (uPriority>2 || !uTmpPriority))
 			||
