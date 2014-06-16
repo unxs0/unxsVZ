@@ -472,6 +472,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	}
 	else
 	{
+		//normal load jobs
 		if(!strcmp(cJobName,"FailoverTo"))
 		{
 			FailoverTo(uJob,uContainer,cJobData);
@@ -569,6 +570,36 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		{
 			NodeCommandJob(uJob,uContainer,cJobData,uNode,uDatacenter);
 		}
+		//also in high load section
+		else if(!strcmp(cJobName,"AllowAllAccess") && uNode)
+		{
+			AllowAllAccess(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"AllowAccess") && uNode)
+		{
+			AllowAccess(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"UndoBlockAccess") && uNode)
+		{
+			UndoBlockAccess(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"RemoveDropFromIPTables") && uNode)
+		{
+			RemoveDropFromIPTables(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"RemoveAcceptFromIPTables") && uNode)
+		{
+			RemoveAcceptFromIPTables(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"BlockAccess") && uNode)
+		{
+			BlockAccess(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"DenyAccess") && uNode)
+		{
+			DenyAccess(uJob,cJobData);
+		}
+		//high load section
 		else if(1)
 		{
 			logfileLine("ProcessJob()",cJobName);
