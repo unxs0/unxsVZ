@@ -39,6 +39,7 @@ AUTHOR
 #define uFWACCESS 4
 #define uFWREMOVED 5
 #define uFWWAITINGREMOVAL 6
+#define uFWWHITELISTED 7
 
 
 //tStatus constants
