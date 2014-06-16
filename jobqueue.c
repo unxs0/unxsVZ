@@ -464,6 +464,11 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		{
 			DenyAccess(uJob,cJobData);
 		}
+		else if(1)
+		{
+			logfileLine("ProcessJob() highload",cJobName);
+			tJobErrorUpdate(uJob,cJobName);
+		}
 	}
 	else
 	{
