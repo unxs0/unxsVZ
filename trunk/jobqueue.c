@@ -124,6 +124,17 @@ static unsigned gfuNode=0;
 static unsigned gfuDatacenter=0;
 static unsigned guDebug=0;
 static char cHostname[100]={""};//file scope
+#define LINUX_SYSINFO_LOADS_SCALE 65536
+//Load and which we do nothing at all.
+#define JOBQUEUE_MASTER_MAXLOAD 80
+//Load at which we do not run clone jobs
+#define JOBQUEUE_CLONE_MAXLOAD 5
+//Low priority job load limit
+#define JOBQUEUE_NORMAL_MAXLOAD 10
+//New load control system allows for assigning specific load limits on
+//	a job per job basis. E.g. firewall block job should run no matter what
+//	since external DoS may raise load but we need to block the bad actor IP.
+static unsigned guSystemLoad=0;//sysinfo() load
 
 
 //Using the local server hostname get max 32 jobs for this node from the tJob queue.
@@ -160,20 +171,16 @@ void ProcessJobQueue(unsigned uDebug)
 		logfileLine("ProcessJobQueue","sysinfo() failed");
 		exit(1);
 	}
-#define LINUX_SYSINFO_LOADS_SCALE 65536
-#define JOBQUEUE_MAXLOAD 10 //This is equivalent to uptime 10.00 last 5 min avg load
-	if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
+	guSystemLoad=structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE;
+	if(guSystemLoad>JOBQUEUE_MASTER_MAXLOAD)
 	{
-		sprintf(gcQuery,"structSysinfo.loads[1]=%lu larger than JOBQUEUE_MAXLOAD=%u",
-				structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE,JOBQUEUE_MAXLOAD);
+		sprintf(gcQuery,"Load %u larger than master load limit %u. Exiting now.",guSystemLoad,JOBQUEUE_MASTER_MAXLOAD);
 		logfileLine("ProcessJobQueue",gcQuery);
 		exit(1);
 	}
 	//debug only
-	//sprintf(gcQuery,"%2.2f",(float)structSysinfo.loads[1]/(float)LINUX_SYSINFO_LOADS_SCALE);
-	//logfileLine("structSysinfo.loads",gcQuery);
-	//exit(0);
-
+	//sprintf(gcQuery,"Load %u, load limit %u.",guSystemLoad,JOBQUEUE_MASTER_MAXLOAD);
+	//logfileLine("debug",gcQuery);
 
 	char cRandom[8]={""};
 	int fd=open("/dev/urandom",O_RDONLY);
@@ -191,8 +198,8 @@ void ProcessJobQueue(unsigned uDebug)
 
 	unsigned uDelay=0;
     	uDelay=rand() % 60;
-	sprintf(gcQuery,"random delay of %us added",uDelay);
-	logfileLine("ProcessJobQueue",gcQuery);
+	//sprintf(gcQuery,"random delay of %us added",uDelay);
+	//logfileLine("ProcessJobQueue",gcQuery);
 	sleep(uDelay);
 
 	//Uses login data from local.h
@@ -287,9 +294,11 @@ void ProcessJobQueue(unsigned uDebug)
 			mysql_close(&gMysql);
 			exit(0);
 		}
-		if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>(JOBQUEUE_MAXLOAD/2))
+		guSystemLoad=structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE;
+		if(guSystemLoad>JOBQUEUE_CLONE_MAXLOAD)
 		{
-			logfileLine("CloneSync","structSysinfo.loads[1] too high");
+			sprintf(gcQuery,"Load %u larger than clone load limit %u. Exiting now.",guSystemLoad,JOBQUEUE_CLONE_MAXLOAD);
+			logfileLine("CloneSync",gcQuery);
 			mysql_free_result(res);
 			fclose(gLfp);
 			mysql_close(&gMysql);
@@ -372,9 +381,11 @@ void ProcessJobQueue(unsigned uDebug)
 			logfileLine("ProcessJobQueue","sysinfo() failed");
 			exit(1);
 		}
-		if(structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE>JOBQUEUE_MAXLOAD)
+		guSystemLoad=structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE;
+		if(guSystemLoad>JOBQUEUE_MASTER_MAXLOAD)
 		{
-			logfileLine("ProcessJobQueue-mainloop","structSysinfo.loads[1] too high");
+			sprintf(gcQuery,"Load %u larger than master load limit %u. Exiting now.",guSystemLoad,JOBQUEUE_MASTER_MAXLOAD);
+			logfileLine("ProcessJobQueue",gcQuery);
 			mysql_free_result(res);
 			if(rmdir("/var/run/unxsvz.lock"))
 				logfileLine("ProcessJobQueue-mainloop","/var/run/unxsvz.lock rmdir error");
@@ -420,136 +431,145 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	//		uCount++,uJob,uContainer,cJobName,cJobData);
 
 	//Is priority order needed in some cases?
-	if(!strcmp(cJobName,"FailoverTo"))
+
+
+	//Only run special high priority jobs if load is high
+	if(guSystemLoad>JOBQUEUE_NORMAL_MAXLOAD)
 	{
-		FailoverTo(uJob,uContainer,cJobData);
+		if(!strcmp(cJobName,"AllowAllAccess") && uNode)
+		{
+			AllowAllAccess(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"AllowAccess") && uNode)
+		{
+			AllowAccess(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"UndoBlockAccess") && uNode)
+		{
+			UndoBlockAccess(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"RemoveDropFromIPTables") && uNode)
+		{
+			RemoveDropFromIPTables(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"RemoveAcceptFromIPTables") && uNode)
+		{
+			RemoveAcceptFromIPTables(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"BlockAccess") && uNode)
+		{
+			BlockAccess(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"DenyAccess") && uNode)
+		{
+			DenyAccess(uJob,cJobData);
+		}
 	}
-	else if(!strcmp(cJobName,"FailoverFrom"))
+	else
 	{
-		FailoverFrom(uJob,uContainer,cJobData);
-	}
-	else if(!strcmp(cJobName,"DNSMoveContainer"))
-	{
-		DNSMoveContainer(uJob,uContainer,cJobData,uDatacenter,uNode);
-	}
-	else if(!strcmp(cJobName,"MigrateContainer"))
-	{
-		MigrateContainer(uJob,uContainer,cJobData);
-	}
-	else if(!strcmp(cJobName,"CloneContainer"))
-	{
-		CloneContainer(uJob,uContainer,cJobData);
-	}
-	else if(!strcmp(cJobName,"NewContainer"))
-	{
-		NewContainer(uJob,uContainer);
-	}
-	else if(!strcmp(cJobName,"AllowAllAccess") && uNode)
-	{
-		AllowAllAccess(uJob,cJobData,uDatacenter,uNode);
-	}
-	else if(!strcmp(cJobName,"AllowAccess") && uNode)
-	{
-		AllowAccess(uJob,cJobData,uDatacenter,uNode);
-	}
-	else if(!strcmp(cJobName,"UndoBlockAccess") && uNode)
-	{
-		UndoBlockAccess(uJob,cJobData,uDatacenter,uNode);
-	}
-	else if(!strcmp(cJobName,"RemoveDropFromIPTables") && uNode)
-	{
-		RemoveDropFromIPTables(uJob,cJobData,uDatacenter,uNode);
-	}
-	else if(!strcmp(cJobName,"RemoveAcceptFromIPTables") && uNode)
-	{
-		RemoveAcceptFromIPTables(uJob,cJobData,uDatacenter,uNode);
-	}
-	else if(!strcmp(cJobName,"BlockAccess") && uNode)
-	{
-		BlockAccess(uJob,cJobData,uDatacenter,uNode);
-	}
-	else if(!strcmp(cJobName,"DenyAccess") && uNode)
-	{
-		DenyAccess(uJob,cJobData);
-	}
-	else if(!strcmp(cJobName,"ActionScripts"))
-	{
-		//OpenVZ action scripts
-		ActionScripts(uJob,uContainer);
-	}
-	else if(!strcmp(cJobName,"StartContainer"))
-	{
-		StartContainer(uJob,uContainer);
-	}
-	else if(!strcmp(cJobName,"ActivateNATContainer"))
-	{
-		ActivateNATContainer(uJob,uContainer,uNode);
-	}
-	else if(!strcmp(cJobName,"ActivateNATNode"))
-	{
-		ActivateNATNode(uJob,uContainer,uNode);
-	}
-	else if(!strcmp(cJobName,"ChangeHostnameContainer"))
-	{
-		ChangeHostnameContainer(uJob,uContainer,cJobData);
-	}
-	else if(!strcmp(cJobName,"ExecuteCommands"))
-	{
-		ExecuteCommands(uJob,uContainer,cJobData);
-	}
-	else if(!strcmp(cJobName,"ChangeIPContainer"))
-	{
-		ChangeIPContainer(uJob,uContainer,cJobData);
-	}
-	else if(!strcmp(cJobName,"SwapIPContainer"))
-	{
-		SwapIPContainer(uJob,uContainer,cJobData);
-	}
-	else if(!strcmp(cJobName,"StopContainer"))
-	{
-		StopContainer(uJob,uContainer);
-	}
-	else if(!strcmp(cJobName,"RestartContainer"))
-	{
-		RestartContainer(uJob,uContainer);
-	}
-	else if(!strcmp(cJobName,"DestroyContainer"))
-	{
-		DestroyContainer(uJob,uContainer);
-	}
-	else if(!strcmp(cJobName,"UpdateContainerUBCJob"))
-	{
-		UpdateContainerUBC(uJob,uContainer,cJobData);
-	}
-	else if(!strcmp(cJobName,"SetUBCJob"))
-	{
-		SetContainerUBC(uJob,uContainer,cJobData);
-	}
-	else if(!strcmp(cJobName,"TemplateContainer"))
-	{
-		TemplateContainer(uJob,uContainer,cJobData);
-	}
-	else if(!strcmp(cJobName,"LocalImportTemplateJob"))
-	{
-		LocalImportTemplate(uJob,uDatacenter,cJobData);
-	}
-	else if(!strcmp(cJobName,"LocalImportConfigJob"))
-	{
-		LocalImportConfig(uJob,uDatacenter,cJobData);
-	}
-	else if(!strcmp(cJobName,"RecurringJob"))
-	{
-		RecurringJob(uJob,uDatacenter,uNode,uContainer,cJobData);
-	}
-	else if(!strcmp(cJobName,"NodeCommandJob"))
-	{
-		NodeCommandJob(uJob,uContainer,cJobData,uNode,uDatacenter);
-	}
-	else if(1)
-	{
-		logfileLine("ProcessJob()",cJobName);
-		tJobErrorUpdate(uJob,cJobName);
-	}
+		if(!strcmp(cJobName,"FailoverTo"))
+		{
+			FailoverTo(uJob,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"FailoverFrom"))
+		{
+			FailoverFrom(uJob,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"DNSMoveContainer"))
+		{
+			DNSMoveContainer(uJob,uContainer,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"MigrateContainer"))
+		{
+			MigrateContainer(uJob,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"CloneContainer"))
+		{
+			CloneContainer(uJob,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"NewContainer"))
+		{
+			NewContainer(uJob,uContainer);
+		}
+		else if(!strcmp(cJobName,"ActionScripts"))
+		{
+			//OpenVZ action scripts
+			ActionScripts(uJob,uContainer);
+		}
+		else if(!strcmp(cJobName,"StartContainer"))
+		{
+			StartContainer(uJob,uContainer);
+		}
+		else if(!strcmp(cJobName,"ActivateNATContainer"))
+		{
+			ActivateNATContainer(uJob,uContainer,uNode);
+		}
+		else if(!strcmp(cJobName,"ActivateNATNode"))
+		{
+			ActivateNATNode(uJob,uContainer,uNode);
+		}
+		else if(!strcmp(cJobName,"ChangeHostnameContainer"))
+		{
+			ChangeHostnameContainer(uJob,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"ExecuteCommands"))
+		{
+			ExecuteCommands(uJob,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"ChangeIPContainer"))
+		{
+			ChangeIPContainer(uJob,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"SwapIPContainer"))
+		{
+			SwapIPContainer(uJob,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"StopContainer"))
+		{
+			StopContainer(uJob,uContainer);
+		}
+		else if(!strcmp(cJobName,"RestartContainer"))
+		{
+			RestartContainer(uJob,uContainer);
+		}
+		else if(!strcmp(cJobName,"DestroyContainer"))
+		{
+			DestroyContainer(uJob,uContainer);
+		}
+		else if(!strcmp(cJobName,"UpdateContainerUBCJob"))
+		{
+			UpdateContainerUBC(uJob,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"SetUBCJob"))
+		{
+			SetContainerUBC(uJob,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"TemplateContainer"))
+		{
+			TemplateContainer(uJob,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"LocalImportTemplateJob"))
+		{
+			LocalImportTemplate(uJob,uDatacenter,cJobData);
+		}
+		else if(!strcmp(cJobName,"LocalImportConfigJob"))
+		{
+			LocalImportConfig(uJob,uDatacenter,cJobData);
+		}
+		else if(!strcmp(cJobName,"RecurringJob"))
+		{
+			RecurringJob(uJob,uDatacenter,uNode,uContainer,cJobData);
+		}
+		else if(!strcmp(cJobName,"NodeCommandJob"))
+		{
+			NodeCommandJob(uJob,uContainer,cJobData,uNode,uDatacenter);
+		}
+		else if(1)
+		{
+			logfileLine("ProcessJob()",cJobName);
+			tJobErrorUpdate(uJob,cJobName);
+		}
+	}//normal load jobs
 
 }//ProcessJob(...)
 
@@ -7744,6 +7764,7 @@ void RemoveAcceptFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatac
 	if(system(gcQuery))
 	{
 		logfileLine("RemoveAcceptFromIPTables","iptables command failed");
+		logfileLine("RemoveAcceptFromIPTables",cIPv4);
 		tJobErrorUpdate(uJob,"iptables command failed");
 		return;
 	}

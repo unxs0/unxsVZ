@@ -877,9 +877,18 @@ void ExttIPAuxTable(void)
 				" Scores over 3 probably justify a firewall DROP.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Reputation Score'>\n");
-			printf("&nbsp; <input title='Remove IP from all iptables node firewalls'"
+			printf("&nbsp;<input title='Set firewall status to whitelisted. This keeps the IP from being blocked by unxsSnort agent.'"
 				" type=submit class=largeButton"
+				" name=gcCommand value='Group Whitelist'>\n");
+			if(guPermLevel>=12)
+			{
+				printf("&nbsp; <input title='Remove IP from all iptables node firewalls'"
+				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group RemoveFW'>\n");
+				printf("&nbsp; <input title='Fix waiting status to completed'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group FixWaiting'>\n");
+			}
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -1540,6 +1549,12 @@ while((field=mysql_fetch_row(res)))
 							sscanf(cp+strlen("uDstIPCount="),"%u",&uDstIPCount);
 							uTotalDstIPCount+=uDstIPCount;
 						}
+						if((cp=strstr(field[0],"uMaxDstIPCount="))!=NULL)
+						{
+							uDstIPCount=0;
+							sscanf(cp+strlen("uMaxDstIPCount="),"%u",&uDstIPCount);
+							uTotalDstIPCount+=uDstIPCount;
+						}
 						if( (cp=strstr(field[0],"cIDS="))!=NULL &&
 							*(cp+strlen("cIDS="))!=0)
 						{
@@ -1609,6 +1624,127 @@ while((field=mysql_fetch_row(res)))
 					sprintf(cResult,"no country info available");
 					break;
 				}//Group CountryInfo
+
+				//Group FixWaiting
+				else if(!strcmp(gcCommand,"Group FixWaiting"))
+				{
+					char cIP[16]={""};
+					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
+					unsigned uAvailable=0;
+					sscanf(ForeignKey("tIP","uAvailable",uCtIP),"%u",&uAvailable);
+					unsigned uDatacenter=0;
+					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
+					unsigned uFWStatus=0;
+					sscanf(ForeignKey("tIP","uFWStatus",uCtIP),"%u",&uFWStatus);
+					if(guPermLevel<12)
+					{
+						sprintf(cResult,"insufficient permlevel");
+						break;
+					}
+					if(!cIP[0])
+					{
+						sprintf(cResult,"data error");
+						break;
+					}
+					if(uDatacenter!=41)
+					{
+						sprintf(cResult,"wrong datacenter");
+						break;
+					}
+					if(uAvailable==1)
+					{
+						sprintf(cResult,"must not be available");
+						break;
+					}
+					if(uFWStatus!=uFWWAITINGACCESS && uFWStatus!=uFWWAITINGBLOCK)
+					{
+						sprintf(cResult,"incorrect status for op");
+						break;
+					}
+
+					unsigned uUpdateStatus=uFWBLOCKED;
+					if(uFWStatus==uFWWAITINGACCESS)
+						uUpdateStatus=uFWACCESS;
+					sprintf(gcQuery,"UPDATE tIP"
+								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								",uFWStatus=%u"
+								" WHERE uIP=%u",
+									guLoginClient,
+									uUpdateStatus,
+									uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					sprintf(cFWStatusUpdated,"%.255s",ForeignKey("tFWStatus","cLabel",uUpdateStatus));
+					sprintf(gcQuery,"INSERT INTO tProperty"
+								" SET uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+								",uOwner=1"
+								",cName='NOC FW Activity'"
+								",cValue=CONCAT(NOW(),' Group FixWaiting %s (%u/%u)')"
+								",uType=31"
+								",uKey=%u",
+									gcUser,guCompany,guPermLevel,uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					unxsVZLog(uCtIP,"tIP","Group FixWaiting");
+					sprintf(cResult,"fixed");
+					break;
+				}//Group FixWaiting
+
+				//Group Whitelist
+				else if(!strcmp(gcCommand,"Group Whitelist"))
+				{
+					char cIP[16]={""};
+					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
+					unsigned uAvailable=0;
+					sscanf(ForeignKey("tIP","uAvailable",uCtIP),"%u",&uAvailable);
+					unsigned uDatacenter=0;
+					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
+					unsigned uFWStatus=0;
+					sscanf(ForeignKey("tIP","uFWStatus",uCtIP),"%u",&uFWStatus);
+					if(guPermLevel<10)
+					{
+						sprintf(cResult,"insufficient permlevel");
+						break;
+					}
+					if(!cIP[0])
+					{
+						sprintf(cResult,"data error");
+						break;
+					}
+					if(uDatacenter!=41)
+					{
+						sprintf(cResult,"wrong datacenter");
+						break;
+					}
+					if(uAvailable==1)
+					{
+						sprintf(cResult,"must not be available");
+						break;
+					}
+					if( uFWStatus && uFWStatus!=uFWACCESS)
+					{
+						sprintf(cResult,"incorrect status for op");
+						break;
+					}
+					sprintf(gcQuery,"UPDATE tIP"
+								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+								",uFWStatus=%u"
+								" WHERE uIP=%u",
+									guLoginClient,
+									uFWWHITELISTED,
+									uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					sprintf(cFWStatusUpdated,"%.255s",ForeignKey("tFWStatus","cLabel",uFWWHITELISTED));
+					sprintf(gcQuery,"INSERT INTO tProperty"
+								" SET uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+								",uOwner=1"
+								",cName='NOC FW Activity'"
+								",cValue=CONCAT(NOW(),' Group Whitelist %s (%u/%u)')"
+								",uType=31"
+								",uKey=%u",
+									gcUser,guCompany,guPermLevel,uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					unxsVZLog(uCtIP,"tIP","Group Whitelist");
+					break;
+				}//Group Whitelist
 
 				else if(1)
 				{

@@ -337,31 +337,48 @@ void tAuthorizeInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=uCertClient value=%u >\n",uCertClient);
 	}
+
 //cPasswd
 	OpenRow(LANG_FL_tAuthorize_cPasswd,"black");
-	printf("<input title='%s' type=text name=cPasswd value=\"%s\" size=40 maxlength=100 "
-,LANG_FT_tAuthorize_cPasswd,EncodeDoubleQuotes(cPasswd));
-	if(guPermLevel>=0 && uMode)
+	if(guPermLevel<12 && uPerm>10)
 	{
-		printf("></td></tr>\n");
+		 printf("private");
 	}
 	else
 	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cPasswd value=\"%s\">\n",EncodeDoubleQuotes(cPasswd));
+		printf("<input title='%s' type=text name=cPasswd value=\"%s\" size=40 maxlength=100 "
+			,LANG_FT_tAuthorize_cPasswd,EncodeDoubleQuotes(cPasswd));
+		if(guPermLevel>=0 && uMode)
+		{
+			printf("></td></tr>\n");
+		}
+		else
+		{
+			printf("disabled></td></tr>\n");
+			printf("<input type=hidden name=cPasswd value=\"%s\">\n",EncodeDoubleQuotes(cPasswd));
+		}
 	}
+
 //cClrPasswd
+
 	OpenRow(LANG_FL_tAuthorize_cClrPasswd,"black");
-	printf("<input title='%s' type=text name=cClrPasswd value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tAuthorize_cClrPasswd,EncodeDoubleQuotes(cClrPasswd));
-	if(guPermLevel>=0 && uMode)
+	if(guPermLevel<12 && uPerm>10)
 	{
-		printf("></td></tr>\n");
+		 printf("private");
 	}
 	else
 	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cClrPasswd value=\"%s\">\n",EncodeDoubleQuotes(cClrPasswd));
+		printf("<input title='%s' type=text name=cClrPasswd value=\"%s\" size=40 maxlength=32 "
+				,LANG_FT_tAuthorize_cClrPasswd,EncodeDoubleQuotes(cClrPasswd));
+		if(guPermLevel>=0 && uMode)
+		{
+			printf("></td></tr>\n");
+		}
+		else
+		{
+			printf("disabled></td></tr>\n");
+			printf("<input type=hidden name=cClrPasswd value=\"%s\">\n",EncodeDoubleQuotes(cClrPasswd));
+		}
 	}
 //uOwner
 	OpenRow(LANG_FL_tAuthorize_uOwner,"black");
@@ -409,45 +426,53 @@ void tAuthorizeInput(unsigned uMode)
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 //cOTPSecret
 	OpenRow("cOTPSecret","black");
-	printf("<input title='%s' type=text name=cOTPSecret value=\"%s\" size=40 maxlength=64 ",
-						"liboath TOTP or HTOP base32 key",cOTPSecret);
-	if(guPermLevel>=0 && uMode)
+	if(guPermLevel<12 && uPerm>10)
 	{
-		printf("></td></tr>\n");
+		 printf("private");
 	}
 	else
 	{
-		printf("disabled>");
-		if(cOTPSecret[0] && cLabel[0])
+		printf("<input title='%s' type=text name=cOTPSecret value=\"%s\" size=40 maxlength=64 ",
+						"liboath TOTP or HTOP base32 key",cOTPSecret);
+		if(guPermLevel>=0 && uMode)
 		{
-
-			char *cp;
-			if((cp=strchr(cLabel,' ')))
-				*cp=0;
-			printf(" <a href=\"https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl="
-					"otpauth://totp/%.31s%%3Fsecret%%3D%.20s\">QRCode link</a>",
-							cLabel,cOTPSecret);
-			char *secret;
-			size_t secretlen=0;
-			int rc;
-			char otp[10];
-			time_t now=time(NULL);
-
-			rc=oath_init();
-			if(rc==OATH_OK)
+			printf("></td></tr>\n");
+		}
+		else
+		{
+			printf("disabled>");
+			if(cOTPSecret[0] && cLabel[0])
 			{
-				rc=oath_base32_decode(cOTPSecret,strlen(cOTPSecret),&secret,&secretlen);
+	
+				char *cp;
+				if((cp=strchr(cLabel,' ')))
+					*cp=0;
+				printf(" <a href=\"https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl="
+						"otpauth://totp/%.31s%%3Fsecret%%3D%.20s\">QRCode link</a>",
+								cLabel,cOTPSecret);
+				char *secret;
+				size_t secretlen=0;
+				int rc;
+				char otp[10];
+				time_t now=time(NULL);
+	
+				rc=oath_init();
 				if(rc==OATH_OK)
 				{
-					rc=oath_totp_generate(secret,secretlen,now,30,0,6,otp);
+					rc=oath_base32_decode(cOTPSecret,strlen(cOTPSecret),&secret,&secretlen);
 					if(rc==OATH_OK)
-						printf(" Validation code: %s",otp);
+					{
+						rc=oath_totp_generate(secret,secretlen,now,30,0,6,otp);
+						if(rc==OATH_OK)
+							printf(" Validation code: %s",otp);
+					}
 				}
 			}
+			printf("</td></tr>\n");
+			printf("<input type=hidden name=cOTPSecret value=\"%s\">\n",cOTPSecret);
 		}
-		printf("</td></tr>\n");
-		printf("<input type=hidden name=cOTPSecret value=\"%s\">\n",cOTPSecret);
 	}
+
 //uOTPExpire
 	OpenRow("uOTPExpire","black");
 	if(uOTPExpire)

@@ -116,7 +116,7 @@ static unsigned uRemoteNode=0;
 void tContainerNavList(unsigned uNode, char *cSearch);//uNode is really a node mode
 unsigned CreateNewContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
-unsigned DestroyContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
+unsigned DestroyContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner,unsigned uRemoveDNS);
 unsigned StopContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uOwner);
 unsigned uRestartContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner);
 unsigned CancelContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,unsigned uCancelMode);
@@ -1337,8 +1337,11 @@ void ExttContainerCommands(pentry entries[], int x)
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+				unsigned uRemoveDNS=1;
+				if(strstr(gcCommand," KeepDNS"))
+					uRemoveDNS=0;
 
-				if(DestroyContainerJob(uDatacenter,uNode,uContainer,uOwner))
+				if(DestroyContainerJob(uDatacenter,uNode,uContainer,uOwner,uRemoveDNS))
 				{
 					uStatus=uAWAITDEL;
 					SetContainerStatus(uContainer,5);//Awaiting Deletion
@@ -3946,8 +3949,9 @@ while((field=mysql_fetch_row(res)))
 					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
 						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
+						unsigned uRemoveDNS=1;
 						if(DestroyContainerJob(sContainer.uDatacenter,
-								sContainer.uNode,uCtContainer,guCompany))
+								sContainer.uNode,uCtContainer,guCompany,uRemoveDNS))
 						{
 							SetContainerStatus(uCtContainer,uAWAITDEL);
 							sprintf(cResult,"group destroy job created");
@@ -3987,7 +3991,8 @@ while((field=mysql_fetch_row(res)))
 							if((uStatus==uSTOPPED || uStatus==uACTIVE)
 								&& (uOwner==guCompany || guCompany==1))
 							{
-								if(DestroyContainerJob(uDatacenter,uNode,uContainer,guCompany))
+								unsigned uRemoveDNS=1;
+								if(DestroyContainerJob(uDatacenter,uNode,uContainer,guCompany,uRemoveDNS))
 								{
 									SetContainerStatus(uContainer,uAWAITDEL);
 									if((sizeof(cResult)-strlen(cResult)-strlen(" +clone job "))>0)
@@ -5918,10 +5923,16 @@ while((field=mysql_fetch_row(res)))
 
 			//Special per container buttons
 			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowDel(uOwner,uCreatedBy))
+			{
 				printf("<p><input title='Creates a job for stopping and destroying an active container."
 					" No backups may be available, the container is gone for good!'"
 					" type=submit class=lwarnButton"
 					" name=gcCommand value='Destroy %.24s'>\n",cLabel);
+				printf("&nbsp; <input title='Creates a job for stopping and destroying an active container."
+					" No backups may be available, the container is gone for good! DNS is not changed.'"
+					" type=submit class=lwarnButton"
+					" name=gcCommand value='Destroy KeepDNS'>\n");
+			}
 			CloseFieldSet();
 
 			char cLogfile[64]={"/tmp/unxsvzlog"};
@@ -6479,7 +6490,7 @@ unsigned CreateStartContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uC
 }//unsigned CreateStartContainerJob(...)
 
 
-unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner)
+unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer, unsigned uOwner,unsigned uRemoveDNS)
 {
 	unsigned uCount=0;
 	long unsigned luJobDate=0;
@@ -6518,8 +6529,11 @@ unsigned DestroyContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uCon
 	sprintf(cJobData,"cZone=%.99s;\n"
 			"cView=%.31s;\n",
 				ForeignKey("tContainer","cHostname",uContainer),cView);
-	if(!unxsBindRemoveContainer(uDatacenter,uNode,uContainer,cJobData,uOwner,guLoginClient));
+	if(uRemoveDNS)
+	{
+		if(!unxsBindRemoveContainer(uDatacenter,uNode,uContainer,cJobData,uOwner,guLoginClient));
 			unxsVZLog(uContainer,"tContainer","unxsBindRemoveContainer");
+	}
 	return(uCount);
 
 }//unsigned DestroyContainerJob()
