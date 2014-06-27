@@ -33,6 +33,7 @@ cKernel=`uname -r`;
 cdmiSytemManufacturer=`/usr/sbin/dmidecode -s system-manufacturer`;
 cdmiSytemProductName=`/usr/sbin/dmidecode -s system-product-name`;
 cIPMIIPv4=`/usr/sbin/ipmicfg -m | head -n 1 |cut -f 2 -d'='`;
+cIPMIMAC=`/usr/sbin/ipmicfg -m | tail -n 1 |cut -f 2 -d'='`;
 
 if [ "$1" != "run" ];then
 	echo "usage: $0 run";
@@ -224,6 +225,19 @@ if [ $? != 0 ];then
 	echo "mysql command 11 failed";
 fi
 echo "INSERT INTO tProperty SET cName='cIPMIIPv4',cValue='$cIPMIIPv4',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 12 failed";
+fi
+#
+#
+
+#
+#cIPMIMAC
+echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cIPMIMAC'" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 11 failed";
+fi
+echo "INSERT INTO tProperty SET cName='cIPMIMAC',cValue='$cIPMIMAC',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
 if [ $? != 0 ];then
 	echo "mysql command 12 failed";
 fi
