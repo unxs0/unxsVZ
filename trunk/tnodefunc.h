@@ -4,7 +4,7 @@ FILE
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR/LEGAL
-	(C) 2001-2009 Unixservice, LLC. GPLv2 license applies.
+	(C) 2001-2014 Gary Wallis for Unixservice, LLC. GPLv2 license applies.
  
 */
 
@@ -294,6 +294,34 @@ void ExttNodeCommands(pentry entries[], int x)
 			else
 				tNode("<blink>Error</blink>: Denied by permissions settings");
                 }
+                else if(!strcmp(gcCommand,"Node Offline"))
+                {
+                        ProcesstNodeVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+				
+				sprintf(gcQuery,"UPDATE tNode SET uStatus=%u WHERE uNode=%u",
+						uOFFLINE,uNode);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+                				htmlPlainTextError(mysql_error(&gMysql));
+				uStatus=uOFFLINE;
+				ModtNode();
+			}
+			else if(uAllowMod(uOwner,uCreatedBy))
+			{
+				tNode("<blink>Error</blink>: Denied by node status");
+			}
+			else
+			{
+				tNode("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
                 else if(!strcmp(gcCommand,"Node Container Report"))
                 {
                         ProcesstNodeVars(entries,x);
@@ -704,6 +732,8 @@ void ExttNodeButtons(void)
 				printf("<input type=submit class=lwarnButton title='Failover to this node`s clone containers"
 					" the master containers`s of down node.'"
 					" name=gcCommand value='Failover Node Wizard'><br>");
+				printf("<input type=submit class=lwarnButton title='Change node status to offline.'"
+					" name=gcCommand value='Node Offline'><br>");
 			}
 	}
 	CloseFieldSet();
