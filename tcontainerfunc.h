@@ -3083,6 +3083,9 @@ void ExttContainerButtons(void)
 				" title='Configure container and create a single container'"
 				" name=gcCommand value='Single Container Creation'>\n");
 			printf("<p><input type=submit class=largeButton"
+				" title='Configure container and create a single container override any remote container creation'"
+				" name=gcCommand value='Single Container NoRemote'>\n");
+			printf("<p><input type=submit class=largeButton"
 				" title='Configure base container and continue to create multiple containers'"
 				" name=gcCommand value='Multiple Container Creation'>\n");
 			printf("<p><input type=submit class=largeButton"

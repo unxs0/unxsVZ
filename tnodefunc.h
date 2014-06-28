@@ -828,7 +828,8 @@ void ExttNodeAuxTable(void)
 		//Hardware Information
 		case 10000:
 		case 10001:
-			OpenFieldSet("Hardware Inventory",100);
+			sprintf(gcQuery,"Hardware Inventory %s",ForeignKey("tDatacenter","cLabel",uDatacenter));
+			OpenFieldSet(gcQuery,100);
 			printf("<table>");
 			printf("<tr>"
 				"<td width=100><u>Node</u></td>"
@@ -839,6 +840,8 @@ void ExttNodeAuxTable(void)
 						" FROM tNode,tProperty"
 						" WHERE tProperty.uKey=tNode.uNode AND tProperty.uType=2"
 						" AND tNode.uStatus=1"
+						" AND tNode.uDatacenter=%u"
+						//" AND tProperty.cName='cIPMIIPv4'"
 						" AND ("
 						" tProperty.cName LIKE 'c%%' OR tProperty.cName LIKE 'Max%%'"
 						" OR tProperty.cName LIKE 'luInstalled%%'"
@@ -847,7 +850,7 @@ void ExttNodeAuxTable(void)
 						" OR tProperty.cName LIKE 'Max%%Containers'"
 						")"
 						" AND tNode.cLabel!='appliance'"
-						" ORDER BY tNode.uNode,tProperty.cName");
+						" ORDER BY tNode.uNode,tProperty.cName",uDatacenter);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
