@@ -87,7 +87,9 @@ else if(!strcmp(gcCommand,"Select Node"))
 
 //appliance and single container creation
 //lots of duplicate code in multiple container section
-else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"Appliance Creation"))
+else if(!strcmp(gcCommand,"Single Container Creation") 
+		|| !strcmp(gcCommand,"Single Container NoRemote")
+		|| !strcmp(gcCommand,"Appliance Creation"))
 {
 	if(guPermLevel>=9)
 	{
@@ -99,6 +101,7 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		unsigned uCloneNode=uTargetNode;
 		unsigned uCloneDatacenter=0;
 		unsigned uRemoteNode=0;
+		unsigned uRemote=1;
 		unsigned uRemoteDatacenter=0;
 		unsigned uCloneIPv4=uWizIPv4;
 		unsigned uRemoteIPv4=0;
@@ -112,6 +115,9 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 		char cCloneLabel[100]={""};
 
 		ProcesstContainerVars(entries,x);
+
+		if(!strcmp(gcCommand,"Single Container NoRemote"))
+			uRemote=0;
 
 		if(!strcmp(gcCommand,"Appliance Creation"))
 			uCreateAppliance=1;
@@ -224,7 +230,9 @@ else if(!strcmp(gcCommand,"Single Container Creation") || !strcmp(gcCommand,"App
 
 		//If auto clone setup check required values
 		GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
-		GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,uNode,0,0);
+
+		if(uRemote)
+			GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,uNode,0,0);
 
 		if(cAutoCloneNode[0])
 		{

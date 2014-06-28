@@ -21,7 +21,7 @@ NOTES
 #include <errno.h>
 
 //This is an important setting that depends on your network setup
-#define SELECT_TIMEOUT_USEC 10000
+#define SELECT_TIMEOUT_USEC 500000
 //10 ms
 
 //TOC protos
