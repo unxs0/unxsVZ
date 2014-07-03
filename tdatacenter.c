@@ -249,7 +249,7 @@ void tDatacenter(const char *cResult)
 
 void tDatacenterInput(unsigned uMode)
 {
-	if(uDatacenter)
+	if(uDatacenter && uStatus!=uOFFLINE)
 	{
 		char cConfigBuffer[256]={""};
 		char cConfigBuffer2[256]={"/traffic/datacenter.html"};
@@ -265,7 +265,7 @@ void tDatacenterInput(unsigned uMode)
 			GetConfiguration(cGetWhat,cConfigBuffer2,0,0,0,0);
 	
 			OpenRow("Graph","black");
-			printf("<a href=%s><img src=%s border=0></a>\n",cConfigBuffer2,cConfigBuffer);
+			printf("<a href=%s><img src=%s border=0 onerror=\"this.src='/images/noimage.jpg'\"></a>\n",cConfigBuffer2,cConfigBuffer);
 			printf("</td></tr>\n");
 		}
 	}

@@ -215,6 +215,34 @@ void ExttDatacenterCommands(pentry entries[], int x)
 			else
 				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
                 }
+                else if(!strcmp(gcCommand,"Datacenter Offline"))
+                {
+                        ProcesstDatacenterVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy) && guPermLevel>11)
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tDatacenter","uModDate",uDatacenter),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
+				
+				sprintf(gcQuery,"UPDATE tDatacenter SET uStatus=%u WHERE uDatacenter=%u",
+						uOFFLINE,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+                				htmlPlainTextError(mysql_error(&gMysql));
+				uStatus=uOFFLINE;
+				ModtDatacenter();
+			}
+			else if(uAllowMod(uOwner,uCreatedBy))
+			{
+				tDatacenter("<blink>Error</blink>: Denied by node status");
+			}
+			else
+			{
+				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
 	}
 
 }//void ExttDatacenterCommands(pentry entries[], int x)
@@ -258,6 +286,9 @@ void ExttDatacenterButtons(void)
 					" It is in these containers that actual public services run."
 					" uVeth='Yes' container traffic is not included"
 					"in the datacenter graphs at this time.");
+			if(guPermLevel>11 && uStatus!=uOFFLINE)
+				printf("<p><input type=submit class=lwarnButton title='Change datacenter status to offline.'"
+					" name=gcCommand value='Datacenter Offline'><br>");
 			//tGroupNavList();
 			tNodeNavList(uDatacenter);
 			tDatacenterNavList();

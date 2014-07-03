@@ -482,7 +482,7 @@ void tNodeHardwareDataEntry(unsigned uMode)
 void tNodeInput(unsigned uMode)
 {
 	OpenFieldSet("tNode Record Data",100);
-	if(uNode && uDatacenter)
+	if(uNode && uDatacenter && uStatus!=uOFFLINE)
 	{
 		char cNodeTrafficDomainURL[256]={""};
 		char cNodeTrafficGraphHtml[256]={""};
@@ -503,7 +503,7 @@ void tNodeInput(unsigned uMode)
 			if(cTrafficDirURL[0])
 			{
 				OpenRow("Graph","black");
-				printf("<a href=https://%s.%s/%s><img src=%s/%s.png border=0></a>\n",
+				printf("<a href=https://%s.%s/%s><img src=%s/%s.png border=0 onerror=\"this.src='/images/noimage.jpg'\"></a>\n",
 					cLabel,cNodeTrafficDomainURL,cNodeTrafficGraphHtml,cTrafficDirURL,cLabel);
 				printf("</td></tr>\n");
 			}
@@ -514,7 +514,7 @@ void tNodeInput(unsigned uMode)
 			if(cTrafficDirURL[0])
 			{
 				OpenRow("Graph","black");
-				printf("<a href=%s/%s.png><img src=%s/%s.png border=0></a>\n",
+				printf("<a href=%s/%s.png><img src=%s/%s.png border=0 onerror=\"this.src='/images/noimage.jpg'\"></a>\n",
 					cTrafficDirURL,cLabel,cTrafficDirURL,cLabel);
 				printf("</td></tr>\n");
 			}
@@ -612,7 +612,7 @@ void tNodeInput(unsigned uMode)
 	if(cGraph0[0])
 	{
 		OpenRow("Optional Graph","black");
-		printf("<img src=%s border=0>\n",cGraph0);
+		printf("<img src=%s border=0 onerror=\"this.src='/images/noimage.jpg'\">\n",cGraph0);
 		printf("</tr>\n");
 	}
 
