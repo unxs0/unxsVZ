@@ -732,7 +732,7 @@ void tContainerInput(unsigned uMode)
 		{
 	
 			OpenRow("Graph","black");
-			printf("<a href=%s/%u.html><img src=%s/%u.png border=0></a>\n",
+			printf("<a href=%s/%u.html><img src=%s/%u.png border=0 onerror=\"this.src='/images/noimage.jpg'\"></a>\n",
 					cConfigBuffer,uContainer,cConfigBuffer,uContainer);
 			printf("</td></tr>\n");
 		}

@@ -2171,7 +2171,7 @@ void funcContainerImageTag(FILE *fp)
 		sscanf(field[0],"%u",&guStatus);
 	mysql_free_result(res);
 	if(guStatus && guStatus!=uREMOTEAPPLIANCE && guStatus!=uAWAITACT)
-		fprintf(fp,"<a href=https://%s%s/admin ><img src=%s/traffic/%u.png border=0 ></a>",
+		fprintf(fp,"<a href=https://%s%s/admin ><img src=%s/traffic/%u.png border=0 onerror=\"this.src='/images/noimage.jpg'\"></a>",
 			cGetHostname(guContainer),gcAdminPort,cGetImageHost(guContainer),guContainer);
 
 }//void funcContainerImageTag(FILE *fp)

@@ -297,7 +297,7 @@ void ExttNodeCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,"Node Offline"))
                 {
                         ProcesstNodeVars(entries,x);
-			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy))
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy) && guPermLevel>11)
 			{
                         	guMode=0;
 
@@ -732,7 +732,8 @@ void ExttNodeButtons(void)
 				printf("<input type=submit class=lwarnButton title='Failover to this node`s clone containers"
 					" the master containers`s of down node.'"
 					" name=gcCommand value='Failover Node Wizard'><br>");
-				printf("<input type=submit class=lwarnButton title='Change node status to offline.'"
+				if(guPermLevel>11 && uStatus!=uOFFLINE)
+					printf("<input type=submit class=lwarnButton title='Change node status to offline.'"
 					" name=gcCommand value='Node Offline'><br>");
 			}
 	}

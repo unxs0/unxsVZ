@@ -41,6 +41,13 @@ static char cuDatacenterPullDown[256]={""};
 //cComment
 static char *cComment={""};
 
+//new added post RAD
+static unsigned uIPNum=0;
+static unsigned uFWStatus=0;
+static unsigned uFWRule=0;
+static unsigned uCountryCode=0;
+static unsigned uIPType=0;//For rfc1918, for hardware, containers, IPMI, etc.
+
 //Extensions for searching
 static char cIPv4Search[16]={""};
 static char cCommentSearch[33]={""};
@@ -66,7 +73,9 @@ static unsigned uCountryCodeSearchNot=0;
 int ReadYesNoPullDownTriState(const char *cLabel);
 void YesNoPullDownTriState(char *cFieldName, unsigned uSelect, unsigned uMode);
 
-#define VAR_LIST_tIP "tIP.uIP,tIP.cLabel,tIP.uAvailable,tIP.uOwner,tIP.uCreatedBy,tIP.uCreatedDate,tIP.uModBy,tIP.uModDate,tIP.uDatacenter,tIP.cComment"
+#define VAR_LIST_tIP "tIP.uIP,tIP.cLabel,tIP.uAvailable,tIP.uOwner,tIP.uCreatedBy,\
+			tIP.uCreatedDate,tIP.uModBy,tIP.uModDate,tIP.uDatacenter,tIP.cComment,\
+			tIP.uIPNum,tIP.uFWStatus,tIP.uFWRule,tIP.uCountryCode,tIP.uIPType"
 
  //Local only
 void tIPSearchSet(unsigned uStep);
@@ -121,6 +130,18 @@ void ProcesstIPVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uDatacenter);
 		else if(!strcmp(entries[i].name,"cComment"))
 			cComment=entries[i].val;
+		//new
+		else if(!strcmp(entries[i].name,"uIPNum"))
+			sscanf(entries[i].val,"%u",&uIPNum);
+		else if(!strcmp(entries[i].name,"uFWStatus"))
+			sscanf(entries[i].val,"%u",&uFWStatus);
+		else if(!strcmp(entries[i].name,"uFWRule"))
+			sscanf(entries[i].val,"%u",&uFWRule);
+		else if(!strcmp(entries[i].name,"uCountryCode"))
+			sscanf(entries[i].val,"%u",&uCountryCode);
+		else if(!strcmp(entries[i].name,"uIPType"))
+			sscanf(entries[i].val,"%u",&uIPType);
+		//
 		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
 		{
 			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
@@ -291,6 +312,12 @@ void tIP(const char *cResult)
 		sscanf(field[7],"%lu",&uModDate);
 		sscanf(field[8],"%u",&uDatacenter);
 		cComment=field[9];
+		//new
+		sscanf(field[10],"%u",&uIPNum);
+		sscanf(field[11],"%u",&uFWStatus);
+		sscanf(field[12],"%u",&uFWRule);
+		sscanf(field[13],"%u",&uCountryCode);
+		sscanf(field[14],"%u",&uIPType);
 
 		}
 
@@ -472,6 +499,33 @@ void tIPInput(unsigned uMode)
 		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
 	else
 		tTablePullDownOwner("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+//new
+//uIPNum
+	OpenRow("uIPNum","black");
+	printf("<input title='cLabel INET ATON' type=text name=uIPNum value=%u size=16 maxlength=10 ",uIPNum);
+	printf("disabled></td></tr>\n");
+	printf("<input type=hidden name=uIPNum value=%u >\n",uIPNum);
+//uFWStatus
+	OpenRow("uFWStatus","black");
+	printf("<input title='tFWStatus.uFWStatus' type=text name=uFWStatus value=%u size=16 maxlength=10 ",uFWStatus);
+	printf("disabled></td></tr>\n");
+	printf("<input type=hidden name=uFWStatus value=%u >\n",uFWStatus);
+//uFWRule
+	OpenRow("uFWRule","black");
+	printf("<input title='Last Snort IDS rule' type=text name=uFWRule value=%u size=16 maxlength=10 ",uFWRule);
+	printf("disabled></td></tr>\n");
+	printf("<input type=hidden name=uFWRule value=%u >\n",uFWRule);
+//uCountryCode
+	OpenRow("uCountryCode","black");
+	printf("<input title='Internal country code' type=text name=uCountryCode value=%u size=16 maxlength=10 ",uCountryCode);
+	printf("disabled></td></tr>\n");
+	printf("<input type=hidden name=uCountryCode value=%u >\n",uCountryCode);
+//uIPType
+	OpenRow("uIPType","black");
+	printf("<input title='Our IP type code' type=text name=uIPType value=%u size=16 maxlength=10 ",uIPType);
+	printf("disabled></td></tr>\n");
+	printf("<input type=hidden name=uIPNum value=%u >\n",uIPType);
+
 //cComment
 	OpenRow("cComment","black");
 	printf("<textarea title='Additional information about IP use' cols=80 wrap=hard rows=4 name=cComment ");
@@ -529,8 +583,6 @@ void tIPInput(unsigned uMode)
 		printf("---\n\n");
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
-
-
 
 }//void tIPInput(unsigned uMode)
 
@@ -677,6 +729,11 @@ void tIPList(void)
 		"<td><font face=arial,helvetica color=white>cLabel"
 		"<td><font face=arial,helvetica color=white>uAvailable"
 		"<td><font face=arial,helvetica color=white>uDatacenter"
+		"<td><font face=arial,helvetica color=white>uIPNum"
+		"<td><font face=arial,helvetica color=white>uFWStatus"
+		"<td><font face=arial,helvetica color=white>uFWRule"
+		"<td><font face=arial,helvetica color=white>uCountryCode"
+		"<td><font face=arial,helvetica color=white>uIPType"
 		"<td><font face=arial,helvetica color=white>cComment"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
@@ -718,18 +775,24 @@ void tIPList(void)
 			ctime_r(&luTime7,cBuf7);
 		else
 			sprintf(cBuf7,"---");
-		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>"
+				"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			,field[0],field[0]
 			,field[1]
 			,cBuf2
 			,ForeignKey("tDatacenter","cLabel",strtoul(field[8],NULL,10))
+			,field[10]
+			,field[11]
+			,field[12]
+			,field[13]
+			,field[14]
 			,field[9]
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
 			,cBuf5
 			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
-			,cBuf7);
+			,cBuf7
+					);
 	}
 
 	printf("</table></form>\n");
@@ -751,6 +814,7 @@ void CreatetIP(void)
 			"uFWRule INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uFWRule),"
 			"uCountryCode TINYINT UNSIGNED NOT NULL DEFAULT 0, INDEX (uCountryCode),"
 			"INDEX (uDatacenter),"
+			"uIPType INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uIPType),"
 			//end New
 			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
