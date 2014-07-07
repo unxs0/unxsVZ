@@ -126,7 +126,7 @@ static unsigned guDebug=0;
 static char cHostname[100]={""};//file scope
 #define LINUX_SYSINFO_LOADS_SCALE 65536
 //Load and which we do nothing at all.
-#define JOBQUEUE_MASTER_MAXLOAD 300
+#define JOBQUEUE_MASTER_MAXLOAD 3000
 //Load at which we do not run clone jobs
 #define JOBQUEUE_CLONE_MAXLOAD 5
 //Low priority job load limit
