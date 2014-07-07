@@ -297,8 +297,9 @@ void ProcessJobQueue(unsigned uDebug)
 		guSystemLoad=structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE;
 		if(guSystemLoad>JOBQUEUE_CLONE_MAXLOAD)
 		{
-			sprintf(gcQuery,"Load %u larger than clone load limit %u. Exiting now.",guSystemLoad,JOBQUEUE_CLONE_MAXLOAD);
+			sprintf(gcQuery,"Load %u larger than clone load limit %u. Skipping clone jobs.",guSystemLoad,JOBQUEUE_CLONE_MAXLOAD);
 			logfileLine("CloneSync",gcQuery);
+			break;
 			mysql_free_result(res);
 			fclose(gLfp);
 			mysql_close(&gMysql);
