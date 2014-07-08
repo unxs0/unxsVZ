@@ -27,13 +27,29 @@ unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o
 		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o \
 		jobqueue.o glossary.o main.o cgi.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) 
 
+###
 #new standalone job queue processor
 #needs new (and yet to be be developed) libunxsvz 
-unxsvz: jobqueue.o unxsvz.o mysqlconnect.o
-	cc jobqueue.o unxsvz.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) -lunxsvz
+unxsvzJobqueue: jobqueue.o unxsvz.o mysqlconnect.o 
+	cc jobqueue.o unxsvz.o mysqlconnect.o -o unxsvzJobqueue $(LIBS) -lunxsvz
 
 unxsvz.o: unxsvz.c mysqlrad.h local.h
 	cc -c unxsvz.c -o unxsvz.o $(CFLAGS)
+
+#lib
+libunxsvz.a: libunxsvz.o libunxsvz.h
+	ar r libunxsvz.a libunxsvz.o
+
+libunxsvz.o: libunxsvz.c libunxsvz.h
+	cc -c libunxsvz.c -o libunxsvz.o $(CFLAGS)
+
+install-libunxsvz: libunxsvz.a libunxsvz.h
+	mkdir -p /usr/lib/openisp
+	mkdir -p /usr/include/openisp
+	install libunxsvz.a /usr/lib/openisp/libunxsvz.a
+	install libunxsvz.h /usr/include/openisp/unxsvz.h
+	rm libunxsvz.a
+###
 
 mysqlconnect.o: mysqlconnect.c mysqlrad.h local.h
 	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)

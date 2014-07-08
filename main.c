@@ -103,6 +103,8 @@ void GetPLAndClient(char *cUser);
 void htmlSSLLogin(void);
 void GeneratePasswd(char *pw);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
+void AllowAccessJobs(void);
+void DenyAccessJobs(void);
 
 //mainfunc.h for symbolic links to this program
 void CalledByAlias(int iArgc,char *cArgv[]);
@@ -175,6 +177,7 @@ int main(int iArgc, char *cArgv[])
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 				MYSQL_RUN;
+				DenyAccessJobs();
 				if(gcOTPSecret[0])
 				{
 					UpdateOTPExpire(0,guLoginClient);
@@ -671,6 +674,8 @@ void Header_ism3(const char *title, int iJs)
 		printf("\t\t\t<a title='Home start page' href=unxsVZ.cgi?gcFunction=Main>Main</a>\n");
 	printf("\t\t\t</li>\n");
 
+if(guSSLCookieLogin)
+{
 	//tDatacenter
 	if(guPermLevel>=7)
 	{
@@ -968,6 +973,7 @@ void Header_ism3(const char *title, int iJs)
 		  printf(" id=current>\n");
 	  printf("\t\t\t<a title='tConfiguration' href=unxsVZ.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
 	}
+}
 
 	
 	printf("\t\t\t</ol>\n");
@@ -2072,6 +2078,7 @@ char *cGetPasswd(char *gcLogin,char *cOTPSecret,unsigned long *luOTPExpire,unsig
 
 }//char *cGetPasswd()
 
+
 int iValidLogin(int mode)
 {
 	char cSalt[16]={""};
@@ -2104,8 +2111,8 @@ int iValidLogin(int mode)
 			{
 				guCompany=1;//If next line does not work
 				GetPLAndClient(gcLogin);
-				guPermLevel=0;
-				guLoginClient=0;
+				//guPermLevel=0;
+				//guLoginClient=0;
 				//tLogType.cLabel='backend login'->uLogType=6
 				//Alpha testing ON DUPLICATE KEY UPDATE to avoid some replication problems
 				//that I have seen in logfiles.
@@ -2118,6 +2125,7 @@ int iValidLogin(int mode)
 						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 				MYSQL_RUN;
+				AllowAccessJobs();
 				if(guOTPExpired && gcOTP[0] && gcOTPSecret[0])
 				{
 					if(!uValidOTP(gcOTPSecret,gcOTP))
@@ -2184,8 +2192,8 @@ int iValidLogin(int mode)
 	{
 		guCompany=1;//If next line does not work
 		GetPLAndClient(gcLogin);
-		guPermLevel=0;
-		guLoginClient=0;
+		//guPermLevel=0;
+		//guLoginClient=0;
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,"
 				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 				" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE"
@@ -2894,3 +2902,84 @@ void tTablePullDownActive(const char *cTableName, const char *cFieldName,
 		printf("%s",cHidden);
 
 }//tTablePullDownActive()
+
+
+//Per hardware node iptables FW control. 
+//You must login to access hardware node http, ssh and other servers from your current
+//IP.
+void AllowAccessJobs(void)
+{
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT DISTINCT tNode.uNode,tNode.uDatacenter"
+				" FROM tNode,tDatacenter"
+				" WHERE tNode.uDatacenter=tDatacenter.uDatacenter"
+				" AND tDatacenter.uStatus=1"
+				" AND tNode.uStatus=1"
+				" AND tNode.cLabel!='appliance'");
+	mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		return;
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		unsigned uNode=0;
+		unsigned uDatacenter=0;
+
+		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
+
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='AllowAccess %u',cJobName='AllowAccess'"
+					",uDatacenter=%u,uNode=%u,uContainer=0"
+					",uJobDate=UNIX_TIMESTAMP(NOW())"
+					",uJobStatus=1"
+					",cJobData='cIPv4=%.15s;'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guLoginClient,
+						uDatacenter,
+						uNode,
+						gcHost,
+						guCompany,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+	}
+}//void AllowAccessJobs(void)
+
+
+void DenyAccessJobs(void)
+{
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT DISTINCT tNode.uNode,tNode.uDatacenter"
+				" FROM tNode,tDatacenter"
+				" WHERE tNode.uDatacenter=tDatacenter.uDatacenter"
+				" AND tDatacenter.uStatus=1"
+				" AND tNode.uStatus=1"
+				" AND tNode.cLabel!='appliance'");
+	mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		return;
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		unsigned uNode=0;
+		unsigned uDatacenter=0;
+
+		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
+
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DenyAccess %u',cJobName='DenyAccess'"
+					",uDatacenter=%u,uNode=%u,uContainer=0"
+					",uJobDate=UNIX_TIMESTAMP(NOW())"
+					",uJobStatus=1"
+					",cJobData='cIPv4=%.15s;'"
+					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guLoginClient,
+						uDatacenter,
+						uNode,
+						gcHost,
+						guCompany,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+	}
+}//void DenyAccessJobs(void)

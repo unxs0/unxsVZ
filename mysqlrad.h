@@ -76,6 +76,8 @@ AUTHOR
 #define PROP_NAMESERVER "7"
 #define PROP_OSTEMPLATE "8"
 #define PROP_SEARCHDOMAIN "9"
+#define PROP_IP "31"
+#define PROP_CLIENT "41"
 #define uPROP_DATACENTER 1
 #define uPROP_NODE 2
 #define uPROP_CONTAINER 3
@@ -86,6 +88,8 @@ AUTHOR
 #define uPROP_OSTEMPLATE 8
 #define uPROP_SEARCHDOMAIN 9
 #define uPROP_RECJOB	10	
+#define uPROP_IP	31
+#define uPROP_CLIENT	41
 
 //tJobStatus constants
 #define uWAITING 	1
