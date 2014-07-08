@@ -468,7 +468,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		else if(1)
 		{
 			logfileLine("ProcessJob() highload",cJobName);
-			tJobErrorUpdate(uJob,cJobName);
+			tJobWaitingUpdate(uJob);
 		}
 	}
 	else
