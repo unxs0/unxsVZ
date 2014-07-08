@@ -479,6 +479,39 @@ void ExttClientButtons(void)
 
 void ExttClientAuxTable(void)
 {
+	if(!uClient || guMode!=6)
+		return;
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="PROP_CLIENT
+			" ORDER BY cName",uClient);
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+		sprintf(gcQuery,"%s Property Panel",cLabel);
+		OpenFieldSet(gcQuery,100);
+		printf("<table cols=2>");
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("<tr>\n");
+			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+					"gcFunction=tProperty&uProperty=%s&cReturn=tClient_%u>"
+					"%s</a></td><td valign=top><pre>%s</pre></td>\n",
+						field[0],uClient,field[1],field[2]);
+			printf("</tr>\n");
+		}
+		printf("</table>");
+		CloseFieldSet();
+	}
+
+
 
 }//void ExttClientAuxTable(void)
 

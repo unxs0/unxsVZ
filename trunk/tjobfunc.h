@@ -659,7 +659,7 @@ void tJobNavList(void)
                       int     tm_isdst;       //daylight saving time
               };
 */
-
+#include <time.h>
 time_t cStartDateToUnixTime(char *cStartDate)
 {
         struct  tm locTime;
