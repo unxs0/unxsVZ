@@ -11,7 +11,7 @@
 #
 
 CFLAGS=-Wall
-LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate -loath
+LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate -loath -lunxsvz
 CGIDIR=cgi-bin
 #CGIDIR=cgi-bin/alpha
 
@@ -20,22 +20,21 @@ all: unxsVZ.cgi
 unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o \
 	tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
 	ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o \
-	tjob.o tjobstatus.o tstatus.o tconfiguration.o  jobqueue.o glossary.o main.o cgi.o mysqlconnect.o
+	tjob.o tjobstatus.o tstatus.o tconfiguration.o  glossary.o main.o cgi.o mysqlconnect.o
 	cc tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o \
 		tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
 		tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o \
 		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o \
-		jobqueue.o glossary.o main.o cgi.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) 
+		glossary.o main.o cgi.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) 
 
 ###
 #new standalone job queue processor
-#needs new (and yet to be be developed) libunxsvz 
 install-unxsVZ: unxsVZ
 	install -s unxsVZ /usr/sbin/unxsVZ
 	@ rm unxsVZ
 
 unxsVZ: jobqueue.o unxsvz.o mysqlconnect.o 
-	cc jobqueue.o unxsvz.o mysqlconnect.o -o unxsVZ $(LIBS) -lunxsvz
+	cc jobqueue.o unxsvz.o mysqlconnect.o -o unxsVZ $(LIBS)
 
 unxsvz.o: unxsvz.c mysqlrad.h local.h
 	cc -c unxsvz.c -o unxsvz.o $(CFLAGS)
@@ -157,7 +156,7 @@ local.h: local.h.default
 clean:
 	rm -f *.o
 
-install-all: unxsVZ.cgi unxsVZ
+install-all: unxsVZ unxsVZ.cgi 
 	install -s unxsVZ.cgi /var/www/unxs/$(CGIDIR)/unxsVZ.cgi
 	install -s unxsVZ /usr/sbin/unxsVZ
 	@ rm unxsVZ.cgi

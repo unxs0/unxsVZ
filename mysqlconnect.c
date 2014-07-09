@@ -24,12 +24,12 @@ NOTES
 #define SELECT_UBC_TIMEOUT_USEC 800000
 
 //TOC protos
-void ConnectDb(void);
+void ConnectDb(char *cMessage);
 unsigned TextConnectDb(void);
 unsigned ConnectDbUBC(void);
 
 
-void ConnectDb(void)
+void ConnectDb(char *cMessage)
 {
 	//Handle quick cases first
 	//Port is irrelevant here. Make it clear.
@@ -63,7 +63,7 @@ void ConnectDb(void)
 	if(DBIP0!=NULL)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
-			unxsVZ("Could not create ConnectDB() socket DBIP0");
+			sprintf(cMessage,"Could not create ConnectDB() socket DBIP0");
 
 		// Set non-blocking 
 		lFcntlArg=fcntl(iSock,F_GETFL,NULL); 
@@ -106,7 +106,7 @@ void ConnectDb(void)
 	if(DBIP1!=NULL)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
-			unxsVZ("Could not create ConnectDB() socket DBIP1");
+			sprintf(cMessage,"Could not create ConnectDB() socket DBIP1");
 
 		// Set non-blocking 
 		lFcntlArg=fcntl(iSock,F_GETFL,NULL); 
@@ -146,7 +146,6 @@ void ConnectDb(void)
 	}
 
 	//Failure exit 4 cases
-	char cMessage[256];
 	if(DBIP1!=NULL && DBIP0!=NULL)
 		sprintf(cMessage,"Could not connect to DBIP0:%1$s or DBIP1:%1$s\n",cPort);
 	else if(DBIP1==NULL && DBIP0==NULL)
@@ -158,9 +157,7 @@ void ConnectDb(void)
 	else if(1)
 		sprintf(cMessage,"Could not connect unexpected case\n");
 
-	unxsVZ(cMessage);
-
-}//ConnectDb()
+}//void ConnectDb(char *cMessage)
 
 
 unsigned TextConnectDb(void)

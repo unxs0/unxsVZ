@@ -40,7 +40,6 @@ unsigned guEnd;
 unsigned guI;
 unsigned guN=SHOWPAGE;
 char gcCommand[100];
-static char cLogKey[16]={"Ksdj458jssdUjf79"};
 char gcFilter[100];
 char gcAuxFilter[256];
 char gcFind[100];
@@ -54,6 +53,12 @@ char gcCompany[100]={""};
 char gcUser[100]={""};
 char gcHost[100]={""};
 char gcHostname[100]={""};
+
+//libunxsvz required
+char cStartDate[32]={""};
+char cStartTime[32]={""};
+unsigned guDatacenter=0;
+char cLogKey[16]={"Ksdj458jssdUjf79"};
 
 //SSLLoginCookie()
 char gcCookie[1024]={""};
@@ -89,7 +94,7 @@ void ExtMainShell(int iArgc, char *cArgv[]);
 void DashBoard(const char *cOptionalMsg);
 
 //Only local
-void ConnectDb(void);
+void ConnectDb(char *cMessage);
 void jsToggleCheckboxes(void);
 void NoSuchFunction(void);
 void unxsVZ(const char *cResult);
@@ -129,7 +134,9 @@ int main(int iArgc, char *cArgv[])
 
 	else if(getenv("REMOTE_ADDR")!=NULL)
 	{
-		ConnectDb();
+		char cMessage[256]={""};
+		ConnectDb(cMessage);
+		if(cMessage[0]) unxsVZ(cMessage);
 		sprintf(gcHost,"%.99s",getenv("REMOTE_ADDR"));
 	}
 	else
@@ -1630,6 +1637,7 @@ int ReadYesNoPullDown(const char *cLabel)
 }//ReadYesNoPullDown(char *cLabel)
 
 
+/*
 const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
 {
         MYSQL_RES *mysqlRes;
@@ -1660,7 +1668,7 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
 	}
 
 }//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
-
+*/
 
 const char *ForeignKey2(const char *cTableName, const char *cFieldName, unsigned uKey)
 {
@@ -1906,7 +1914,7 @@ char *FQDomainName(char *cInput)
 
 }//char *FQDomainName(char *cInput)
 
-
+/*
 char *ToLower(char *cInput)
 {
 	register int i;
@@ -1918,7 +1926,7 @@ char *ToLower(char *cInput)
 	return(cInput);
 
 }//char *ToLower(char *cInput)
-
+*/
 
 char *WordToLower(char *cInput)
 {
@@ -2353,7 +2361,7 @@ void GetClientOwner(unsigned uClient, unsigned *uOwner)
 
 }//void GetClientOwner(unsigned uClient, unsigned *uOwner)
 
-
+/*
 void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 {
 	char cQuery[512]={""};
@@ -2383,7 +2391,7 @@ void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 
 }//void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
-
+*/
 
 long unsigned luGetCreatedDate(char *cTableName, unsigned uTablePK)
 {

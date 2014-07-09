@@ -16,7 +16,7 @@ FREE HELP
 */
 #include "mysqlrad.h"
 
-void htmlPlainTextError(const char *cText);
+void ErrorMsg(const char *cText);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter);
@@ -30,7 +30,7 @@ unsigned GetConfiguration(const char *cName,char *cValue,
 		unsigned uContainer,
 		unsigned uHtml);
 unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate);
-void unxsVZ(const char *cText);
+void unxsVZFake(const char *cText);
 unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,char const *cHostname,
 				unsigned uDatacenter,unsigned uCreatedBy,unsigned uContainer,unsigned uNode);
 unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
@@ -45,6 +45,15 @@ unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 	unsigned uOwner,unsigned uCreatedBy);
 unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
 	unsigned uOwner,unsigned uCreatedBy);
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
+void GetNodePropUBC(const unsigned uNode,const char *cName,char *cValue);
+void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue);
+void logfileLine(const char *cFunction,const char *cLogline);
+void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
+void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValue);
+unsigned SetContainerPropertyUBC(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
+unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
+void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 
 //Global vars
 
@@ -67,6 +76,7 @@ extern char gcUser[];
 extern char gcLogin[];
 extern char gcHost[];
 extern char gcHostname[];
+extern unsigned guDatacenter;
 
 extern char gcFunction[];
 extern char gcQuery[];

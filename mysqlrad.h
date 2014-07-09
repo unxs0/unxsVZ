@@ -146,7 +146,7 @@ extern entry gentries[];
 extern int x;
 
 void unxsVZ(const char *cResult);
-void ConnectDb(void);
+void ConnectDb(char *cMessage);
 unsigned TextConnectDb(void);
 unsigned ConnectDbUBC(void);
 void logfileLine(const char *cFunction,const char *cLogline);

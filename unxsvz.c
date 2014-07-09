@@ -41,6 +41,7 @@ char gcLogin[100]={""};
 char gcHost[100]={""};
 char gcHostname[100]={""};
 
+unsigned guDatacenter=0;
 char gcFunction[100]={""};
 char gcQuery[8192]={""};
 
@@ -66,7 +67,7 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 //jobqueue.c
 void ProcessJobQueue(unsigned uDebug);
 
-static char cRELEASE={"$Id$"};
+static char cRELEASE[64]={"$Id$"};
 
 void ExtMainShell(int argc, char *argv[])
 {
@@ -82,7 +83,7 @@ void ExtMainShell(int argc, char *argv[])
                 ProcessJobQueue(1);
         else
 	{
-		printf("\n%s %s Menu\n",argv[0],cRELEASE);
+		printf("\n%s %s\nMenu\n",argv[0],cRELEASE);
 		printf("\tProcessJobQueue\n");
 		printf("\tProcessJobQueueDebug\n");
 		printf("\n");

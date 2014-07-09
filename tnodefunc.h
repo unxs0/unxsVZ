@@ -1749,7 +1749,7 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 
 }//unsigned CloneNode()
 
-
+/*
 //UBC safe should not be used for UBCs	
 void SetNodeProp(char const *cName,char const *cValue,unsigned uNode)
 {
@@ -1776,7 +1776,6 @@ void SetNodeProp(char const *cName,char const *cValue,unsigned uNode)
         	mysql_query(&gMysql,gcQuery);
 	}
 }//void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
-
 
 unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
 {
@@ -1844,6 +1843,7 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
 		
 
 }//unsigned ConnectToOptionalUBCDb()
+*/
 
 
 void tNodeHealth(void)
