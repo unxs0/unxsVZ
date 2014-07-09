@@ -30,8 +30,12 @@ unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o
 ###
 #new standalone job queue processor
 #needs new (and yet to be be developed) libunxsvz 
-unxsvzJobqueue: jobqueue.o unxsvz.o mysqlconnect.o 
-	cc jobqueue.o unxsvz.o mysqlconnect.o -o unxsvzJobqueue $(LIBS) -lunxsvz
+install-unxsVZ: unxsVZ
+	install -s unxsVZ /usr/sbin/unxsVZ
+	@ rm unxsVZ
+
+unxsVZ: jobqueue.o unxsvz.o mysqlconnect.o 
+	cc jobqueue.o unxsvz.o mysqlconnect.o -o unxsVZ $(LIBS) -lunxsvz
 
 unxsvz.o: unxsvz.c mysqlrad.h local.h
 	cc -c unxsvz.c -o unxsvz.o $(CFLAGS)
@@ -153,11 +157,11 @@ local.h: local.h.default
 clean:
 	rm -f *.o
 
-install-all: unxsVZ.cgi unxsvz
+install-all: unxsVZ.cgi unxsVZ
 	install -s unxsVZ.cgi /var/www/unxs/$(CGIDIR)/unxsVZ.cgi
-	install -s unxsvz /usr/sbin/unxsvz
+	install -s unxsVZ /usr/sbin/unxsVZ
 	@ rm unxsVZ.cgi
-	@ rm unxsvz
+	@ rm unxsVZ
 
 install: unxsVZ.cgi
 	install -s unxsVZ.cgi /var/www/unxs/$(CGIDIR)/unxsVZ.cgi
