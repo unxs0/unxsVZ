@@ -5,7 +5,7 @@ PURPOSE
 	Wrapper for mysql_real_connect() that supports very fast
 	connect to main or alternative local.h set MySQL servers.
 AUTHOR
-	(C) 2010-2011 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2014 Gary Wallis for Unixservice, LLC.
 NOTES
 	Based on unxsBind/mysqlping.c test code.
 */
@@ -63,7 +63,10 @@ void ConnectDb(char *cMessage)
 	if(DBIP0!=NULL)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
+		{
 			sprintf(cMessage,"Could not create ConnectDB() socket DBIP0");
+			return;
+		}
 
 		// Set non-blocking 
 		lFcntlArg=fcntl(iSock,F_GETFL,NULL); 
@@ -106,7 +109,10 @@ void ConnectDb(char *cMessage)
 	if(DBIP1!=NULL)
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
+		{
 			sprintf(cMessage,"Could not create ConnectDB() socket DBIP1");
+			return;
+		}
 
 		// Set non-blocking 
 		lFcntlArg=fcntl(iSock,F_GETFL,NULL); 
