@@ -756,14 +756,22 @@ void tDatacenterHealth(void)
 	if(uTargetNode)
 		sprintf(gcQuery,"SELECT ABS(CONVERT(t2.cValue,SIGNED)-CONVERT(t1.cValue,SIGNED)),t1.uKey,t1.uKey FROM"
 			" tProperty AS t1, tProperty AS t2 WHERE"
-			" t1.uKey IN (SELECT uContainer from tContainer where uStatus=%u AND uDatacenter=%u AND uNode=%u) AND"
+			" t1.uKey IN"
+			" (SELECT uContainer FROM tContainer,tNode,tDatacenter WHERE"
+			"   tContainer.uStatus=%u AND tContainer.uDatacenter=%u AND tContainer.uNode=%u AND"
+			"   tContainer.uNode=tNode.uNode AND tContainer.uDatacenter=tDatacenter.uDatacenter AND"
+			"   tDatacenter.uStatus=1 AND tNode.uStatus=1) AND"
 			" t1.uKey=t2.uKey AND t1.uType=3 AND t1.cName='Venet0.luInDelta' AND"
 			" t2.uKey=t2.uKey AND t2.uType=3 AND t2.cName='Venet0.luOutDelta'"
 			" ORDER BY ABS(CONVERT(t2.cValue,SIGNED)-CONVERT(t1.cValue,SIGNED)) DESC LIMIT 10",uACTIVE,uDatacenter,uTargetNode);
 	else
 		sprintf(gcQuery,"SELECT ABS(CONVERT(t2.cValue,SIGNED)-CONVERT(t1.cValue,SIGNED)),t1.uKey,t1.uKey FROM"
 			" tProperty AS t1, tProperty AS t2 WHERE"
-			" t1.uKey IN (SELECT uContainer from tContainer where uStatus=%u AND uDatacenter=%u) AND"
+			" t1.uKey IN"
+			" (SELECT uContainer FROM tContainer,tDatacenter WHERE"
+			"   tContainer.uStatus=%u AND tContainer.uDatacenter=%u AND"
+			"   tContainer.uDatacenter=tDatacenter.uDatacenter AND"
+			"   tDatacenter.uStatus=1) AND"
 			" t1.uKey=t2.uKey AND t1.uType=3 AND t1.cName='Venet0.luInDelta' AND"
 			" t2.uKey=t2.uKey AND t2.uType=3 AND t2.cName='Venet0.luOutDelta'"
 			" ORDER BY ABS(CONVERT(t2.cValue,SIGNED)-CONVERT(t1.cValue,SIGNED)) DESC LIMIT 10",uACTIVE,uDatacenter);
@@ -779,9 +787,15 @@ void tDatacenterHealth(void)
 	{	
         	printf("<p><u>Last 5min top diff</u><br>\n");
 
+		unsigned uContainer;
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
-				"%s %sB/s</a><br>\n",field[1],field[2],field[0]);
+		{
+			uContainer=0;
+			sscanf(field[1],"%u",&uContainer);
+			if(uContainer)
+				printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s %sB/s</a><br>\n",field[2],ForeignKey("tContainer","cHostname",uContainer),field[0]);
+		}
 	}
         mysql_free_result(res);
 

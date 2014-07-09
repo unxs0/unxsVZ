@@ -1637,39 +1637,6 @@ int ReadYesNoPullDown(const char *cLabel)
 }//ReadYesNoPullDown(char *cLabel)
 
 
-/*
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
-{
-        MYSQL_RES *mysqlRes;
-        MYSQL_ROW mysqlField;
-
-	static char scKey[16];
-
-        sprintf(gcQuery,"SELECT %s FROM %s WHERE _rowid=%u",
-                        cFieldName,cTableName,uKey);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql)) return(mysql_error(&gMysql));
-
-        mysqlRes=mysql_store_result(&gMysql);
-        if(mysql_num_rows(mysqlRes)==1)
-        {
-                mysqlField=mysql_fetch_row(mysqlRes);
-                return(mysqlField[0]);
-        }
-
-	if(!uKey)
-	{
-        	return("---");
-	}
-	else
-	{
-		sprintf(scKey,"%u",uKey);
-        	return(scKey);
-	}
-
-}//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
-*/
-
 const char *ForeignKey2(const char *cTableName, const char *cFieldName, unsigned uKey)
 {
         MYSQL_RES *mysqlRes;
@@ -1914,19 +1881,6 @@ char *FQDomainName(char *cInput)
 
 }//char *FQDomainName(char *cInput)
 
-/*
-char *ToLower(char *cInput)
-{
-	register int i;
-
-	for(i=0;cInput[i];i++)
-		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
-	cInput[i]=0;
-
-	return(cInput);
-
-}//char *ToLower(char *cInput)
-*/
 
 char *WordToLower(char *cInput)
 {
@@ -2361,37 +2315,6 @@ void GetClientOwner(unsigned uClient, unsigned *uOwner)
 
 }//void GetClientOwner(unsigned uClient, unsigned *uOwner)
 
-/*
-void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
-{
-	char cQuery[512]={""};
-
-	//uLogType==1 is this back-office cgi by default tLogType install
-        sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.63s',uLogType=1,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',"
-			" cHost='%.99s',uTablePK=%u,cTableName='%.31s',cHash=MD5(CONCAT('%s','%u','%u','%s','%s',"
-			" '%u','%s','%s',UNIX_TIMESTAMP(NOW()))),uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-		cLogEntry,
-		guPermLevel,
-		guLoginClient,
-		gcLogin,
-		gcHost,
-		uTablePK,
-		cTableName,
-		cLogEntry,
-		guPermLevel,
-		guLoginClient,
-		gcLogin,
-		gcHost,
-		uTablePK,
-		cTableName,
-		cLogKey,
-		guCompany);
-
-	mysql_query(&gMysql,cQuery);
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
-
-}//void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
-*/
 
 long unsigned luGetCreatedDate(char *cTableName, unsigned uTablePK)
 {
