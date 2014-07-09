@@ -19,7 +19,7 @@ FREE HELP
 char *strptime(const char *s, const char *format, struct tm *tm);
 
 //file TOC
-void htmlPlainTextError(const char *cText);
+void ErrorMsg(const char *cText);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void SetContainerNode(unsigned uContainer,unsigned uNode);
 void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter);
@@ -49,12 +49,21 @@ unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 		unsigned uOwner,unsigned uCreatedBy);
 unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
 	unsigned uOwner,unsigned uCreatedBy);
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
+void GetNodePropUBC(const unsigned uNode,const char *cName,char *cValue);
+void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue);
+void logfileLine(const char *cFunction,const char *cLogline);
+void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
+void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValue);
+unsigned SetContainerPropertyUBC(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
+unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
+void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 
 //This is a compatability function that should be deprecated and replaced.
-void htmlPlainTextError(const char *cText)
+void ErrorMsg(const char *cText)
 {
 	printf("%s\n",cText);
-}//void htmlPlainTextError(const char *cText)
+}//void ErrorMsg(const char *cText)
 
 void SetContainerStatus(unsigned uContainer,unsigned uStatus)
 {
@@ -63,7 +72,7 @@ void SetContainerStatus(unsigned uContainer,unsigned uStatus)
 					uStatus,guLoginClient,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		ErrorMsg(mysql_error(&gMysql));
 
 }//void SetContainerStatus(unsigned uContainer,unsigned uStatus)
 
@@ -75,7 +84,7 @@ void SetContainerNode(unsigned uContainer,unsigned uNode)
 					uNode,guLoginClient,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		ErrorMsg(mysql_error(&gMysql));
 
 }//void SetContainerNode(unsigned uContainer,unsigned uNode)
 
@@ -87,7 +96,7 @@ void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter)
 					uDatacenter,guLoginClient,uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		ErrorMsg(mysql_error(&gMysql));
 
 }//void SetContainerDatacenter(unsigned uContainer,unsigned uDatacenter)
 
@@ -107,7 +116,7 @@ unsigned uCheckMaxContainers(unsigned uNode)
 		sprintf(cBuffer2,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uStatus=1",uNode);
 		mysql_query(&gMysql,cBuffer2);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			ErrorMsg(mysql_error(&gMysql));
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 			SetNodeProp("ActiveContainers",field[0],uNode);
@@ -144,7 +153,7 @@ unsigned uCheckMaxCloneContainers(unsigned uNode)
 		sprintf(cBuffer2,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uSource!=0",uNode);
 		mysql_query(&gMysql,cBuffer2);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			ErrorMsg(mysql_error(&gMysql));
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 			SetNodeProp("CloneContainers",field[0],uNode);
@@ -231,7 +240,7 @@ unsigned GetConfiguration(const char *cName,char *cValue,
         mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
 	{
-        	        htmlPlainTextError(mysql_error(&gMysql));
+        	        ErrorMsg(mysql_error(&gMysql));
 	}
         res=mysql_store_result(&gMysql);
         if((field=mysql_fetch_row(res)))
@@ -314,10 +323,10 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
 }//unsigned ConnectToOptionalUBCDb()
 
 
-void unxsVZ(const char *cText)
+void unxsVZFake(const char *cText)
 {
 	printf("%s\n",cText);
-}//void unxsVZ(const char *cText)
+}//void unxsVZFake(const char *cText)
 
 
 //Create DNS job for unxsBind based on tContainer type.
@@ -372,7 +381,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 				" AND tContainer.uContainer=%u",uContainer);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			ErrorMsg(mysql_error(&gMysql));
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -418,7 +427,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 				" AND tContainer.uContainer=%u",uContainer);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			ErrorMsg(mysql_error(&gMysql));
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 			sscanf(field[0],"%u",&uMainPort);
@@ -432,7 +441,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 				" AND tContainer.uSource=%u",uDatacenter,uContainer);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			ErrorMsg(mysql_error(&gMysql));
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -462,7 +471,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 				" AND tContainer.uContainer=%u",uCloneContainer);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
+			ErrorMsg(mysql_error(&gMysql));
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 			sscanf(field[0],"%u",&uBackupPort);
@@ -552,7 +561,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 			sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE uIP=%u",uIPv4);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
+				ErrorMsg(mysql_error(&gMysql));
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
 				sprintf(cIPv4,"%.31s",field[0]);
@@ -615,7 +624,7 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 				uOwner,uLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		ErrorMsg(mysql_error(&gMysql));
 	uJob=mysql_insert_id(&gMysql);
 	unxsVZLog(uContainer,"tContainer","NodeCommandJob");
 	return(uJob);
@@ -631,7 +640,7 @@ void SetNodeProp(char const *cName,char const *cValue,unsigned uNode)
 	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",uNode,cName);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		ErrorMsg(mysql_error(&gMysql));
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
@@ -664,7 +673,7 @@ unsigned uGetPrimaryContainerGroup(unsigned uContainer)
 				" tGroupGlue.uGroup=tGroup.uGroup AND tGroup.uGroupType=1 AND tGroupGlue.uContainer=%u)",uContainer);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		ErrorMsg(mysql_error(&gMysql));
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
@@ -742,7 +751,7 @@ void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 		guCompany);
 
 	mysql_query(&gMysql,cQuery);
-	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
+	if(mysql_errno(&gMysql)) ErrorMsg(mysql_error(&gMysql));
 }//void unxsVZLog()
 
 
@@ -778,7 +787,7 @@ unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uCont
 				uOwner,uCreatedBy);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		ErrorMsg(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
 	unxsVZLog(uContainer,"tContainer","unxsBindPBXRecordJob");
 	return(uCount);
@@ -819,10 +828,367 @@ unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContai
 				uOwner,uCreatedBy);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
+		ErrorMsg(mysql_error(&gMysql));
 	uCount=mysql_insert_id(&gMysql);
 	unxsVZLog(uContainer,"tContainer","unxsBindARecordJob");
 	return(uCount);
 
 }//unsigned unxsBindARecordJob()
 
+
+
+//Not UBC safe. Use function below
+void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uNode==0) return;
+
+	//2 is node
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",
+				uNode,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("GetNodeProp",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetNodeProp()
+
+
+//UBC safe
+void GetNodePropUBC(const unsigned uNode,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uNode==0) return;
+
+	unsigned uDatacenter=0;
+	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
+	if(!uDatacenter)
+	{
+		logfileLine("GetNodePropUBC","!uDatacenter error");
+		return;
+	}
+	if(ConnectToOptionalUBCDb(uDatacenter,1))
+	{
+		logfileLine("GetNodePropUBC","ConnectToOptionalUBCDb error");
+		return;
+	}
+	//2 is node
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",
+				uNode,cName);
+	mysql_query(&gMysqlUBC,gcQuery);
+	if(mysql_errno(&gMysqlUBC))
+	{
+		logfileLine("GetNodePropUBC",mysql_error(&gMysqlUBC));
+		return;
+	}
+        res=mysql_store_result(&gMysqlUBC);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetNodePropUBC()
+
+
+//UBC safe
+void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uDatacenter==0) return;
+
+	//1 is datacenter
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=1 AND cName='%s'",
+				uDatacenter,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		if(gLfp!=NULL)
+		{
+			logfileLine("GetDatacenterProp",mysql_error(&gMysql));
+			exit(2);
+		}
+		else
+		{
+			ErrorMsg(mysql_error(&gMysql));
+		}
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetDatacenterProp()
+
+
+void logfileLine(const char *cFunction,const char *cLogline)
+{
+	time_t luClock;
+	char cTime[32];
+	pid_t pidThis;
+	const struct tm *tmTime;
+
+	pidThis=getpid();
+
+	time(&luClock);
+	tmTime=localtime(&luClock);
+	strftime(cTime,31,"%b %d %T",tmTime);
+
+	if(gLfp==NULL)
+		gLfp=stdout;
+        fprintf(gLfp,"%s jobqueue.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
+	fflush(gLfp);
+
+}//void logfileLine(char *cLogline)
+
+
+//Do not use for UBC props. Not distributed UBC safe. Use the below function.
+void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0) return;
+
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='%s'",
+				uContainer,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		if(gLfp!=NULL)
+		{
+			logfileLine("GetContainerProp",mysql_error(&gMysql));
+			exit(2);
+		}
+		else
+		{
+			ErrorMsg(mysql_error(&gMysql));
+		}
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetContainerProp(...)
+
+
+//UBC safe
+//Only for UBC properties
+void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0) return;
+
+	unsigned uDatacenter=0;
+	sscanf(ForeignKey("tContainer","uDatacenter",uContainer),"%u",&uDatacenter);
+	if(!uDatacenter)
+	{
+		logfileLine("GetContainerPropUBC","!uDatacenter error");
+		return;
+	}
+	unsigned uPrivate=0;
+	if(guDatacenter && guDatacenter==uDatacenter)
+		uPrivate=1;
+	if(ConnectToOptionalUBCDb(uDatacenter,uPrivate))
+	{
+		logfileLine("GetContainerPropUBC","ConnectToOptionalUBCDb error");
+		return;
+	}
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='%s'",
+				uContainer,cName);
+	mysql_query(&gMysqlUBC,gcQuery);
+	if(mysql_errno(&gMysqlUBC))
+	{
+		logfileLine("GetContainerPropUBC",mysql_error(&gMysqlUBC));
+		return;	
+	}
+        res=mysql_store_result(&gMysqlUBC);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+	mysql_close(&gMysqlUBC);
+
+}//void GetContainerPropUBC()
+
+
+//UBC safe
+unsigned SetContainerPropertyUBC(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0 || cPropertyName[0]==0 || cPropertyValue[0]==0)
+		return(1);
+
+	unsigned uDatacenter=0;
+	sscanf(ForeignKey("tContainer","uDatacenter",uContainer),"%u",&uDatacenter);
+	if(!uDatacenter)
+	{
+		logfileLine("SetContainerPropertyUBC","!uDatacenter error");
+		return(1);
+	}
+	if(ConnectToOptionalUBCDb(uDatacenter,1))
+	{
+		logfileLine("SetContainerPropertyUBC","ConnectToOptionalUBCDb error");
+		return(1);
+	}
+
+	//UBC safe
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND cName='%s'",
+					uContainer,cPropertyName);
+	mysql_query(&gMysqlUBC,gcQuery);
+	if(mysql_errno(&gMysqlUBC))
+	{
+		logfileLine("SetContainerPropertyUBC",mysql_error(&gMysqlUBC));
+		return(2);
+	}
+        res=mysql_store_result(&gMysqlUBC);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%s",
+					cPropertyValue,field[0]);
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
+		{
+			mysql_free_result(res);
+			logfileLine("SetContainerPropertyUBC",mysql_error(&gMysqlUBC));
+			return(3);
+		}
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET cName='%s',cValue='%s',uType=3,uKey=%u,"
+				"uOwner=(SELECT uOwner FROM tContainer WHERE uContainer=%u),"
+				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cPropertyName,cPropertyValue,uContainer,uContainer);
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
+		{
+			mysql_free_result(res);
+			logfileLine("SetContainerPropertyUBC",mysql_error(&gMysqlUBC));
+			return(4);
+		}
+	}
+	mysql_free_result(res);
+
+	return(0);
+
+}//void SetContainerPropertyUBC()
+
+
+//Not UBC safe use above function
+unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0 || cPropertyName[0]==0 || cPropertyValue[0]==0)
+		return(1);
+
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND cName='%s'",
+					uContainer,cPropertyName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("SetContainerProperty",mysql_error(&gMysql));
+		return(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%s",
+					cPropertyValue,field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			mysql_free_result(res);
+			logfileLine("SetContainerProperty",mysql_error(&gMysql));
+			return(3);
+		}
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET cName='%s',cValue='%s',uType=3,uKey=%u,"
+				"uOwner=(SELECT uOwner FROM tContainer WHERE uContainer=%u),"
+				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cPropertyName,cPropertyValue,uContainer,uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			mysql_free_result(res);
+			logfileLine("SetContainerProperty",mysql_error(&gMysql));
+			return(4);
+		}
+	}
+	mysql_free_result(res);
+
+	return(0);
+
+}//void SetContainerProperty()
+
+
+//UBC safe
+void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uGroup==0) return;
+
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=11 AND cName='%s'",
+				uGroup,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("GetGroupProp",mysql_error(&gMysql));
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetGroupProp()

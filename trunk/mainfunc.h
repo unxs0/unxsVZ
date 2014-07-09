@@ -1041,11 +1041,7 @@ void ExtMainShell(int argc, char *argv[])
 		exit(0);
 	}
 
-        if(argc==2 && !strcmp(argv[1],"ProcessJobQueue"))
-                ProcessJobQueue(0);
-        if(argc==2 && !strcmp(argv[1],"ProcessJobQueueDebug"))
-                ProcessJobQueue(1);
-        else if(argc==2 && !strcmp(argv[1],"UpdateSchema"))
+        if(argc==2 && !strcmp(argv[1],"UpdateSchema"))
                 UpdateSchema();
         else if(argc==4 && !strcmp(argv[1],"GetContainerPropUBC"))
 	{
@@ -1107,10 +1103,6 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
 		printf("\tInitialize|Backup|RestoreAll <mysql root passwd>\n");
 		printf("\tRestore <mysql root passwd> <Restore table name>\n");
-		printf("\nCrontab Ops:\n");
-		printf("\tProcessJobQueue\n");
-		printf("\tProcessJobQueueDebug\n");
-		//printf("\tProcessExtJobQueue <cServer>\n");
 		printf("\nSpecial Admin Ops:\n");
 		printf("\tUpdateNodeInfo\n");
 		printf("\tUpdateSchema\n");
@@ -2667,7 +2659,7 @@ void TextError(const char *cError, unsigned uContinue)
 
 }//void TextError(const char *cError, unsigned uContinue)
 
-
+/*
 unsigned GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
 		unsigned uNode,
@@ -2717,7 +2709,7 @@ unsigned GetConfiguration(const char *cName,char *cValue,
 	return(uConfiguration);
 
 }//unsigned GetConfiguration(...)
-
+*/
 
 unsigned HostnameContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,char *cPrevHostname,unsigned uOwner,unsigned uLoginClient);
 void UpdateCloneHostnames(void)

@@ -27,7 +27,7 @@ FILE CONTENTS
 	5-. Rest of functions.
 */
 
-#include "mysqlrad.h"
+#include "libunxsvz.h"
 #include <openisp/template.h>
 #include <sys/sysinfo.h>
 
@@ -121,7 +121,6 @@ unsigned uContainerStatus(unsigned uContainer);
 
 //file scoped vars.
 static unsigned gfuNode=0;
-static unsigned gfuDatacenter=0;
 static unsigned guDebug=0;
 static char cHostname[100]={""};//file scope
 #define LINUX_SYSINFO_LOADS_SCALE 65536
@@ -258,7 +257,7 @@ void ProcessJobQueue(unsigned uDebug)
 
 	//Some file scoped globals we need to cleanout someday
 	gfuNode=uNode;
-	gfuDatacenter=uDatacenter;
+	guDatacenter=uDatacenter;
 
 	//Special recurring jobs based on special containers
 	//Main loop normal jobs
@@ -1835,7 +1834,7 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//Optional bandwidth limit for inter datacenter transfers
 	char cVZMigrateBWLimit[32]={""};
 	char cSCPBWLimit[64]={""};
-	if(uTargetDatacenter && uTargetDatacenter!=gfuDatacenter)
+	if(uTargetDatacenter && uTargetDatacenter!=guDatacenter)
 	{
         	MYSQL_RES *res;
         	MYSQL_ROW field;
@@ -1871,10 +1870,10 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//and others specific. But is slower than the other option with what maybe
 	//very large numbers of per node tConfiguration entries.
 	char cSSHOptions[256]={""};
-	GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSSHOptions[0])
 	{
-		GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSSHOptions[0])
 			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 	}
@@ -1884,10 +1883,10 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		cSSHOptions[0]=0;
 	}
 	char cSCPOptions[256]={""};
-	GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSCPOptions[0])
 	{
-		GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSCPOptions[0])
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
@@ -1963,116 +1962,6 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 
 
 
-
-//UBC safe
-void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(uGroup==0) return;
-
-	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=11 AND cName='%s'",
-				uGroup,cName);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("GetGroupProp",mysql_error(&gMysql));
-		exit(2);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		char *cp;
-		if((cp=strchr(field[0],'\n')))
-			*cp=0;
-		sprintf(cValue,"%.255s",field[0]);
-	}
-	mysql_free_result(res);
-
-}//void GetGroupProp(...)
-
-
-//Do not use for UBC props. Not distributed UBC safe. Use the below function.
-void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(uContainer==0) return;
-
-	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='%s'",
-				uContainer,cName);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		if(gLfp!=NULL)
-		{
-			logfileLine("GetContainerProp",mysql_error(&gMysql));
-			exit(2);
-		}
-		else
-		{
-			htmlPlainTextError(mysql_error(&gMysql));
-		}
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		char *cp;
-		if((cp=strchr(field[0],'\n')))
-			*cp=0;
-		sprintf(cValue,"%.255s",field[0]);
-	}
-	mysql_free_result(res);
-
-}//void GetContainerProp(...)
-
-
-//UBC safe
-//Only for UBC properties
-void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValue)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(uContainer==0) return;
-
-	unsigned uDatacenter=0;
-	sscanf(ForeignKey("tContainer","uDatacenter",uContainer),"%u",&uDatacenter);
-	if(!uDatacenter)
-	{
-		logfileLine("GetContainerPropUBC","!uDatacenter error");
-		return;
-	}
-	unsigned uPrivate=0;
-	if(gfuDatacenter && gfuDatacenter==uDatacenter)
-		uPrivate=1;
-	if(ConnectToOptionalUBCDb(uDatacenter,uPrivate))
-	{
-		logfileLine("GetContainerPropUBC","ConnectToOptionalUBCDb error");
-		return;
-	}
-	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='%s'",
-				uContainer,cName);
-	mysql_query(&gMysqlUBC,gcQuery);
-	if(mysql_errno(&gMysqlUBC))
-	{
-		logfileLine("GetContainerPropUBC",mysql_error(&gMysqlUBC));
-		return;	
-	}
-        res=mysql_store_result(&gMysqlUBC);
-	if((field=mysql_fetch_row(res)))
-	{
-		char *cp;
-		if((cp=strchr(field[0],'\n')))
-			*cp=0;
-		sprintf(cValue,"%.255s",field[0]);
-	}
-	mysql_free_result(res);
-	mysql_close(&gMysqlUBC);
-
-}//void GetContainerPropUBC()
 
 
 void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
@@ -2374,10 +2263,10 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	}
 
 	char cSnapshotDir[256]={""};
-	GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSnapshotDir[0])
 	{
-		GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSnapshotDir[0])
 			GetConfiguration("cSnapshotDir",cSnapshotDir,0,0,0,0);//Last try global
 	}
@@ -2674,7 +2563,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&uTargetDatacenter);
 	mysql_free_result(res);
-	if(gfuDatacenter!=uTargetDatacenter && uTargetDatacenter!=0 && gfuDatacenter!=0)
+	if(guDatacenter!=uTargetDatacenter && uTargetDatacenter!=0 && guDatacenter!=0)
 	{
 		logfileLine("CloneContainer","CloneRemoteContainer() bypass test on");
 		//CloneRemoteContainer(uJob,uContainer,cJobData,uNewVeid);
@@ -2765,10 +2654,10 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	//and others specific. But is slower than the other option with what maybe
 	//very large numbers of per node tConfiguration entries.
 	char cSSHOptions[256]={""};
-	GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSSHOptions[0])
 	{
-		GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSSHOptions[0])
 			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 	}
@@ -2777,10 +2666,10 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		sprintf(cSSHOptions,"-p 22 -c arcfour");
 
 	char cSCPOptions[256]={""};
-	GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSCPOptions[0])
 	{
-		GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSCPOptions[0])
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
@@ -2790,10 +2679,10 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
 
 	char cSnapshotDir[256]={""};
-	GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSnapshotDir[0])
 	{
-		GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSnapshotDir[0])
 			GetConfiguration("cSnapshotDir",cSnapshotDir,0,0,0,0);//Last try global
 	}
@@ -2864,7 +2753,7 @@ void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 	}
 	//Optional bandwidth limit for inter datacenter transfers
 	char cSCPBWLimit[32]={""};
-	if(uTargetDatacenter && uTargetDatacenter!=gfuDatacenter)
+	if(uTargetDatacenter && uTargetDatacenter!=guDatacenter)
 	{
         	MYSQL_RES *res;
         	MYSQL_ROW field;
@@ -3487,10 +3376,10 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 
 	//5-. copy to all same datacenter nodes nicely (hopefully on GB 2nd NIC internal lan.)
 	char cSCPOptions[256]={""};
-	GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSCPOptions[0])
 	{
-		GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSCPOptions[0])
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
@@ -3498,7 +3387,7 @@ void LocalImportTemplate(unsigned uJob,unsigned uDatacenter,const char *cJobData
 	//Configure normal default via /etc/ssh/ssh_config
 	if(uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
-	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",gfuDatacenter,gfuNode);
+	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",guDatacenter,gfuNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -3593,10 +3482,10 @@ void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData)
 
 	//3-. copy to all same datacenter nodes nicely (hopefully on GB 2nd NIC internal lan.)
 	char cSCPOptions[256]={""};
-	GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSCPOptions[0])
 	{
-		GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSCPOptions[0])
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
@@ -3604,7 +3493,7 @@ void LocalImportConfig(unsigned uJob,unsigned uDatacenter,const char *cJobData)
 	//Configure normal default via /etc/ssh/ssh_config
 	if(uNotValidSystemCallArg(cSCPOptions))
 		sprintf(cSCPOptions,"-P 22 -c arcfour");
-	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",gfuDatacenter,gfuNode);
+	sprintf(gcQuery,"SELECT cLabel FROM tNode WHERE uDatacenter=%u AND uNode!=%u",guDatacenter,gfuNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -3958,10 +3847,10 @@ void FailoverTo(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//	This adds 3 seconds to every job
 	//arpsend -c 5 -U -i 65.49.53.159 eth0
 	char cArpDevice[256]={""};
-	GetConfiguration("cArpDevice",cArpDevice,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cArpDevice",cArpDevice,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cArpDevice[0])
 	{
-		GetConfiguration("cArpDevice",cArpDevice,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cArpDevice",cArpDevice,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cArpDevice[0])
 			GetConfiguration("cArpDevice",cArpDevice,0,0,0,0);//Last try global
 		else
@@ -4554,121 +4443,6 @@ unsigned GetContainerNodeStatus(const unsigned uContainer, unsigned *uStatus)
 }//void GetContainerNodeStatus()
 
 
-//UBC safe
-unsigned SetContainerPropertyUBC(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(uContainer==0 || cPropertyName[0]==0 || cPropertyValue[0]==0)
-		return(1);
-
-	unsigned uDatacenter=0;
-	sscanf(ForeignKey("tContainer","uDatacenter",uContainer),"%u",&uDatacenter);
-	if(!uDatacenter)
-	{
-		logfileLine("SetContainerPropertyUBC","!uDatacenter error");
-		return(1);
-	}
-	if(ConnectToOptionalUBCDb(uDatacenter,1))
-	{
-		logfileLine("SetContainerPropertyUBC","ConnectToOptionalUBCDb error");
-		return(1);
-	}
-
-	//UBC safe
-	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND cName='%s'",
-					uContainer,cPropertyName);
-	mysql_query(&gMysqlUBC,gcQuery);
-	if(mysql_errno(&gMysqlUBC))
-	{
-		logfileLine("SetContainerPropertyUBC",mysql_error(&gMysqlUBC));
-		return(2);
-	}
-        res=mysql_store_result(&gMysqlUBC);
-	if((field=mysql_fetch_row(res)))
-	{
-		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%s",
-					cPropertyValue,field[0]);
-		mysql_query(&gMysqlUBC,gcQuery);
-		if(mysql_errno(&gMysqlUBC))
-		{
-			mysql_free_result(res);
-			logfileLine("SetContainerPropertyUBC",mysql_error(&gMysqlUBC));
-			return(3);
-		}
-	}
-	else
-	{
-		sprintf(gcQuery,"INSERT INTO tProperty SET cName='%s',cValue='%s',uType=3,uKey=%u,"
-				"uOwner=(SELECT uOwner FROM tContainer WHERE uContainer=%u),"
-				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					cPropertyName,cPropertyValue,uContainer,uContainer);
-		mysql_query(&gMysqlUBC,gcQuery);
-		if(mysql_errno(&gMysqlUBC))
-		{
-			mysql_free_result(res);
-			logfileLine("SetContainerPropertyUBC",mysql_error(&gMysqlUBC));
-			return(4);
-		}
-	}
-	mysql_free_result(res);
-
-	return(0);
-
-}//void SetContainerPropertyUBC()
-
-
-//Not UBC safe use above function
-unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(uContainer==0 || cPropertyName[0]==0 || cPropertyValue[0]==0)
-		return(1);
-
-	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uType=3 AND uKey=%u AND cName='%s'",
-					uContainer,cPropertyName);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("SetContainerProperty",mysql_error(&gMysql));
-		return(2);
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s' WHERE uProperty=%s",
-					cPropertyValue,field[0]);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			mysql_free_result(res);
-			logfileLine("SetContainerProperty",mysql_error(&gMysql));
-			return(3);
-		}
-	}
-	else
-	{
-		sprintf(gcQuery,"INSERT INTO tProperty SET cName='%s',cValue='%s',uType=3,uKey=%u,"
-				"uOwner=(SELECT uOwner FROM tContainer WHERE uContainer=%u),"
-				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					cPropertyName,cPropertyValue,uContainer,uContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			mysql_free_result(res);
-			logfileLine("SetContainerProperty",mysql_error(&gMysql));
-			return(4);
-		}
-	}
-	mysql_free_result(res);
-
-	return(0);
-
-}//void SetContainerProperty()
-
 
 unsigned FailToJobDone(unsigned uJob)
 {
@@ -4698,135 +4472,6 @@ unsigned FailToJobDone(unsigned uJob)
 
 }//unsigned FailToJobDone(unsigned uContainer)
 
-
-//Not UBC safe. Use function below
-void GetNodeProp(const unsigned uNode,const char *cName,char *cValue)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(uNode==0) return;
-
-	//2 is node
-	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",
-				uNode,cName);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("GetNodeProp",mysql_error(&gMysql));
-		return;
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		char *cp;
-		if((cp=strchr(field[0],'\n')))
-			*cp=0;
-		sprintf(cValue,"%.255s",field[0]);
-	}
-	mysql_free_result(res);
-
-}//void GetNodeProp()
-
-
-//UBC safe
-void GetNodePropUBC(const unsigned uNode,const char *cName,char *cValue)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(uNode==0) return;
-
-	unsigned uDatacenter=0;
-	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
-	if(!uDatacenter)
-	{
-		logfileLine("GetNodePropUBC","!uDatacenter error");
-		return;
-	}
-	if(ConnectToOptionalUBCDb(uDatacenter,1))
-	{
-		logfileLine("GetNodePropUBC","ConnectToOptionalUBCDb error");
-		return;
-	}
-	//2 is node
-	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",
-				uNode,cName);
-	mysql_query(&gMysqlUBC,gcQuery);
-	if(mysql_errno(&gMysqlUBC))
-	{
-		logfileLine("GetNodePropUBC",mysql_error(&gMysqlUBC));
-		return;
-	}
-        res=mysql_store_result(&gMysqlUBC);
-	if((field=mysql_fetch_row(res)))
-	{
-		char *cp;
-		if((cp=strchr(field[0],'\n')))
-			*cp=0;
-		sprintf(cValue,"%.255s",field[0]);
-	}
-	mysql_free_result(res);
-
-}//void GetNodePropUBC()
-
-
-//UBC safe
-void GetDatacenterProp(const unsigned uDatacenter,const char *cName,char *cValue)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(uDatacenter==0) return;
-
-	//1 is datacenter
-	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=1 AND cName='%s'",
-				uDatacenter,cName);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		if(gLfp!=NULL)
-		{
-			logfileLine("GetDatacenterProp",mysql_error(&gMysql));
-			exit(2);
-		}
-		else
-		{
-			htmlPlainTextError(mysql_error(&gMysql));
-		}
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		char *cp;
-		if((cp=strchr(field[0],'\n')))
-			*cp=0;
-		sprintf(cValue,"%.255s",field[0]);
-	}
-	mysql_free_result(res);
-
-}//void GetDatacenterProp()
-
-
-void logfileLine(const char *cFunction,const char *cLogline)
-{
-	time_t luClock;
-	char cTime[32];
-	pid_t pidThis;
-	const struct tm *tmTime;
-
-	pidThis=getpid();
-
-	time(&luClock);
-	tmTime=localtime(&luClock);
-	strftime(cTime,31,"%b %d %T",tmTime);
-
-	if(gLfp==NULL)
-		gLfp=stdout;
-        fprintf(gLfp,"%s jobqueue.%s[%u]: %s\n",cTime,cFunction,pidThis,cLogline);
-	fflush(gLfp);
-
-}//void logfileLine(char *cLogline)
 
 
 unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneContainer)
@@ -4890,7 +4535,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 
 			//start of scheduler block
 			//If remote datacenter check for schedule limitations of backup traffic
-			if(uCloneDatacenter && uCloneDatacenter!=gfuDatacenter)
+			if(uCloneDatacenter && uCloneDatacenter!=guDatacenter)
 			{
 				unsigned uCount=0;//should be two items
 				unsigned uCloneScheduleStart=0;//0hrs to 24hrs
@@ -4985,10 +4630,10 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 
 			//Try to keep options out of scripts
 			char cSSHOptions[256]={""};
-			GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+			GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,gfuNode,0,0);//First try node specific
 			if(!cSSHOptions[0])
 			{
-				GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+				GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,0,0,0);//Second try datacenter wide
 				if(!cSSHOptions[0])
 					GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 			}
@@ -5095,7 +4740,7 @@ unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneC
 			//	 where * is empty str or "Active"
 			unsigned uBWLimit=0;//0 is no limit
 
-			if(uCloneDatacenter && uCloneDatacenter!=gfuDatacenter)
+			if(uCloneDatacenter && uCloneDatacenter!=guDatacenter)
 			{
 				//UBC safe
 				sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
@@ -5485,10 +5130,10 @@ unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uClon
 
 			//Try to keep options out of scripts
 			char cSSHOptions[256]={""};
-			GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+			GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,gfuNode,0,0);//First try node specific
 			if(!cSSHOptions[0])
 			{
-				GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+				GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,0,0,0);//Second try datacenter wide
 				if(!cSSHOptions[0])
 					GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 			}
@@ -5674,10 +5319,10 @@ void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsig
 	//and others specific. But is slower than the other option with what maybe
 	//very large numbers of per node tConfiguration entries.
 	char cSSHOptions[256]={""};
-	GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSSHOptions[0])
 	{
-		GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSSHOptions[0])
 			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 	}
@@ -6663,10 +6308,10 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 
 	//SSH and SCP options
 	char cSSHOptions[256]={""};
-	GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSSHOptions[0])
 	{
-		GetConfiguration("cSSHOptions",cSSHOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSSHOptions[0])
 			GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
 	}
@@ -6676,10 +6321,10 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 		cSSHOptions[0]=0;
 	}
 	char cSCPOptions[256]={""};
-	GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSCPOptions[0])
 	{
-		GetConfiguration("cSCPOptions",cSCPOptions,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSCPOptions",cSCPOptions,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSCPOptions[0])
 			GetConfiguration("cSCPOptions",cSCPOptions,0,0,0,0);//Last try global
 	}
@@ -6691,10 +6336,10 @@ void DNSMoveContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned 
 
 	//0-. Get configuration data
 	char cSnapshotDir[256]={""};
-	GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,gfuNode,0,0);//First try node specific
+	GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSnapshotDir[0])
 	{
-		GetConfiguration("cSnapshotDir",cSnapshotDir,gfuDatacenter,0,0,0);//Second try datacenter wide
+		GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,0,0,0);//Second try datacenter wide
 		if(!cSnapshotDir[0])
 			GetConfiguration("cSnapshotDir",cSnapshotDir,0,0,0,0);//Last try global
 	}
