@@ -66,6 +66,7 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 //jobqueue.c
 void ProcessJobQueue(unsigned uDebug);
 
+static char cRELEASE={"$Id$"};
 
 void ExtMainShell(int argc, char *argv[])
 {
@@ -81,7 +82,7 @@ void ExtMainShell(int argc, char *argv[])
                 ProcessJobQueue(1);
         else
 	{
-		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
+		printf("\n%s %s Menu\n",argv[0],cRELEASE);
 		printf("\tProcessJobQueue\n");
 		printf("\tProcessJobQueueDebug\n");
 		printf("\n");
