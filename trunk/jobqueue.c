@@ -82,6 +82,9 @@ void LogError(char *cErrorMsg,unsigned uKey);
 void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData);
 void SetJobStatus(unsigned uJob,unsigned uJobStatus);
 
+void LoginFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
+void LogoutFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
+
 unsigned uNotValidSystemCallArg(char *cSSHOptions);
 unsigned GetContainerStatus(const unsigned uContainer, unsigned *uStatus);
 unsigned GetContainerMainIP(const unsigned uContainer,char *cIP);
@@ -436,7 +439,12 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 	//Only run special high priority jobs if load is high
 	if(guSystemLoad>JOBQUEUE_NORMAL_MAXLOAD)
 	{
-		if(!strcmp(cJobName,"AllowAllAccess") && uNode)
+		//Must also be in normal load section
+		if(!strcmp(cJobName,"LoginFirewallJob") && uNode)
+		{
+			LoginFirewallJob(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"AllowAllAccess") && uNode)
 		{
 			AllowAllAccess(uJob,cJobData,uDatacenter,uNode);
 		}
@@ -570,7 +578,16 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		{
 			NodeCommandJob(uJob,uContainer,cJobData,uNode,uDatacenter);
 		}
+		else if(!strcmp(cJobName,"LogoutFirewallJob") && uNode)
+		{
+			LogoutFirewallJob(uJob,cJobData,uDatacenter,uNode);
+		}
+
 		//also in high load section
+		else if(!strcmp(cJobName,"LoginFirewallJob") && uNode)
+		{
+			LoginFirewallJob(uJob,cJobData,uDatacenter,uNode);
+		}
 		else if(!strcmp(cJobName,"AllowAllAccess") && uNode)
 		{
 			AllowAllAccess(uJob,cJobData,uDatacenter,uNode);
@@ -7577,3 +7594,168 @@ void RemoveDropFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatacen
 	return;
 
 }//void RemoveDropFromIPTables()
+
+
+void LoginFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
+{
+	char cIPv4[16]={""};
+	char *cp;
+
+	sscanf(cJobData,"cIPv4=%15s;",cIPv4);
+	if((cp=strchr(cIPv4,';')))
+		*cp=0;
+	if(!cIPv4[0])
+	{
+		logfileLine("LoginFirewallJob","Could not determine cIPv4");
+		tJobErrorUpdate(uJob,"cIPv4[0]==0");
+		return;
+	}
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	char cTemplate[512]={
+				"/sbin/iptables -L -n | grep -w %1$s | grep -w multiport > /dev/null; if [ $? != 0 ];then"
+					" /sbin/iptables -I INPUT -s %1$s -p tcp -m multiport --dports %2$s  -j ACCEPT;"
+				" fi;"
+					};
+	FILE *fp;
+	char cPrivateKey[256]={""};
+	if((fp=fopen("/etc/unxsvz/unxsvz.key","r")))
+	{
+		if(fgets(cPrivateKey,255,fp)!=NULL)
+			cPrivateKey[strlen(cPrivateKey)-1]=0;//cut off /n
+		fclose(fp);
+	}
+
+	if(cPrivateKey[0])
+	{
+		sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
+			//trick to get most specific datacenter node combo
+			" WHERE SHA1(CONCAT(LEFT(cComment,LOCATE('#unxsVZKey=',cComment)),'%1$s'))=SUBSTR(cComment,LOCATE('#unxsVZKey=',cComment)+11)"
+			" AND ((uDatacenter=%2$u AND uNode=%3$u) OR (uDatacenter=%2$u AND uNode=0))"
+			" AND cLabel='cLoginFirewallJobTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",cPrivateKey,uDatacenter,uNode);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			logfileLine("LoginFirewallJob",mysql_error(&gMysql));
+		else
+		{
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(cTemplate,"%.512s",field[0]);
+				logfileLine("LoginFirewallJob","secure template used");
+			}
+			mysql_free_result(res);
+		}
+	}
+
+	char cLoginFirewallJobPorts[256]={""};
+	GetConfiguration("cLoginFirewallJobPorts",cLoginFirewallJobPorts,uDatacenter,uNode,0,0);//First try node specific
+	if(!cLoginFirewallJobPorts[0])
+	{
+		GetConfiguration("cLoginFirewallJobPorts",cLoginFirewallJobPorts,uDatacenter,0,0,0);//Second try datacenter wide
+		if(!cLoginFirewallJobPorts[0])
+			GetConfiguration("cLoginFirewallJobPorts",cLoginFirewallJobPorts,0,0,0,0);//Last try global
+		else
+			//default
+			sprintf(cLoginFirewallJobPorts,"22,443,80");
+	}
+
+	sprintf(gcQuery,cTemplate,cIPv4,cLoginFirewallJobPorts);
+	if(system(gcQuery))
+	{
+		logfileLine("LoginFirewallJob","iptables command failed");
+		tJobErrorUpdate(uJob,"iptables command failed");
+		return;
+	}
+
+	logfileLine("LoginFirewallJob","iptables command ok");
+	tJobDoneUpdate(uJob);
+	//UpdateIPFWStatus(cIPv4,uFWACCESS);
+	return;
+
+}//void LoginFirewallJob()
+
+
+void LogoutFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
+{
+	char cIPv4[16]={""};
+	char *cp;
+
+	sscanf(cJobData,"cIPv4=%15s;",cIPv4);
+	if((cp=strchr(cIPv4,';')))
+		*cp=0;
+	if(!cIPv4[0])
+	{
+		logfileLine("LogoutFirewallJob","Could not determine cIPv4");
+		tJobErrorUpdate(uJob,"cIPv4[0]==0");
+		return;
+	}
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	char cTemplate[512]={
+				"/sbin/iptables -L -n | grep -w %1$s | grep -w multiport > /dev/null; if [ $? == 0 ];then"
+					" /sbin/iptables -D INPUT -s %1$s -p tcp -m multiport --dports %2$s  -j ACCEPT;"
+				" fi;"
+					};
+	FILE *fp;
+	char cPrivateKey[256]={""};
+	if((fp=fopen("/etc/unxsvz/unxsvz.key","r")))
+	{
+		if(fgets(cPrivateKey,255,fp)!=NULL)
+			cPrivateKey[strlen(cPrivateKey)-1]=0;//cut off /n
+		fclose(fp);
+	}
+
+	if(cPrivateKey[0])
+	{
+		sprintf(gcQuery,"SELECT cComment FROM tConfiguration"
+			//trick to get most specific datacenter node combo
+			" WHERE SHA1(CONCAT(LEFT(cComment,LOCATE('#unxsVZKey=',cComment)),'%1$s'))=SUBSTR(cComment,LOCATE('#unxsVZKey=',cComment)+11)"
+			" AND ((uDatacenter=%2$u AND uNode=%3$u) OR (uDatacenter=%2$u AND uNode=0))"
+			" AND cLabel='cLogoutFirewallJobTemplate' AND cValue='cComment' ORDER BY uNode DESC LIMIT 1",cPrivateKey,uDatacenter,uNode);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			logfileLine("LogoutFirewallJob",mysql_error(&gMysql));
+		else
+		{
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(cTemplate,"%.512s",field[0]);
+				logfileLine("LogoutFirewallJob","secure template used");
+			}
+			mysql_free_result(res);
+		}
+	}
+
+	char cLoginFirewallJobPorts[256]={""};
+	GetConfiguration("cLoginFirewallJobPorts",cLoginFirewallJobPorts,uDatacenter,uNode,0,0);//First try node specific
+	if(!cLoginFirewallJobPorts[0])
+	{
+		GetConfiguration("cLoginFirewallJobPorts",cLoginFirewallJobPorts,uDatacenter,0,0,0);//Second try datacenter wide
+		if(!cLoginFirewallJobPorts[0])
+			GetConfiguration("cLoginFirewallJobPorts",cLoginFirewallJobPorts,0,0,0,0);//Last try global
+		else
+			//default
+			sprintf(cLoginFirewallJobPorts,"22,443,80");
+	}
+
+	sprintf(gcQuery,cTemplate,cIPv4,cLoginFirewallJobPorts);
+	if(system(gcQuery))
+	{
+		logfileLine("LogoutFirewallJob","iptables command failed");
+		tJobErrorUpdate(uJob,"iptables command failed");
+		return;
+	}
+
+	logfileLine("LogoutFirewallJob","iptables command ok");
+	tJobDoneUpdate(uJob);
+	//UpdateIPFWStatus(cIPv4,uFWACCESS);
+	return;
+
+}//void LogoutFirewallJob()
+
