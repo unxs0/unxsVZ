@@ -108,8 +108,8 @@ void GetPLAndClient(char *cUser);
 void htmlSSLLogin(void);
 void GeneratePasswd(char *pw);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
-void AllowAccessJobs(void);
-void DenyAccessJobs(void);
+void LoginFirewallJobs(void);
+void LogoutFirewallJobs(void);
 
 //mainfunc.h for symbolic links to this program
 void CalledByAlias(int iArgc,char *cArgv[]);
@@ -184,7 +184,7 @@ int main(int iArgc, char *cArgv[])
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 				MYSQL_RUN;
-				DenyAccessJobs();
+				LogoutFirewallJobs();
 				if(gcOTPSecret[0])
 				{
 					UpdateOTPExpire(0,guLoginClient);
@@ -2087,7 +2087,7 @@ int iValidLogin(int mode)
 						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 				MYSQL_RUN;
-				AllowAccessJobs();
+				LoginFirewallJobs();
 				if(guOTPExpired && gcOTP[0] && gcOTPSecret[0])
 				{
 					if(!uValidOTP(gcOTPSecret,gcOTP))
@@ -2838,14 +2838,22 @@ void tTablePullDownActive(const char *cTableName, const char *cFieldName,
 //Per hardware node iptables FW control. 
 //You must login to access hardware node http, ssh and other servers from your current
 //IP.
-void AllowAccessJobs(void)
+void LoginFirewallJobs(void)
 {
         MYSQL_RES *res;
 	MYSQL_ROW field;
 
+	char cCreateLoginJobs[256]={""};
+	GetConfiguration("cCreateLoginJobs",cCreateLoginJobs,0,0,0,0);
+	if(strncmp(cCreateLoginJobs,"Via tNode::tProperty:cCreateLoginJobs",sizeof("Via tNode::tProperty:cCreateLoginJobs")))
+		return;
+
 	sprintf(gcQuery,"SELECT DISTINCT tNode.uNode,tNode.uDatacenter"
-				" FROM tNode,tDatacenter"
+				" FROM tNode,tDatacenter,tProperty"
 				" WHERE tNode.uDatacenter=tDatacenter.uDatacenter"
+				" AND tProperty.uKey=tNode.uNode"
+				" AND tProperty.cName='cCreateLoginJobs'"
+				" AND tProperty.cValue='Yes'"
 				" AND tDatacenter.uStatus=1"
 				" AND tNode.uStatus=1"
 				" AND tNode.cLabel!='appliance'");
@@ -2861,30 +2869,37 @@ void AllowAccessJobs(void)
 		sscanf(field[0],"%u",&uNode);
 		sscanf(field[1],"%u",&uDatacenter);
 
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='AllowAccess %u',cJobName='AllowAccess'"
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LoginFirewallJobs()',cJobName='LoginFirewallJob'"
 					",uDatacenter=%u,uNode=%u,uContainer=0"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1"
-					",cJobData='cIPv4=%.15s;'"
+					",cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						guLoginClient,
 						uDatacenter,
 						uNode,
 						gcHost,
 						guCompany,guLoginClient);
 		mysql_query(&gMysql,gcQuery);
 	}
-}//void AllowAccessJobs(void)
+}//void LoginFirewallJobs(void)
 
 
-void DenyAccessJobs(void)
+void LogoutFirewallJobs(void)
 {
         MYSQL_RES *res;
 	MYSQL_ROW field;
 
+	char cCreateLoginJobs[256]={""};
+	GetConfiguration("cCreateLoginJobs",cCreateLoginJobs,0,0,0,0);
+	if(strncmp(cCreateLoginJobs,"Via tNode::tProperty:cCreateLoginJobs",sizeof("Via tNode::tProperty:cCreateLoginJobs")))
+		return;
+
 	sprintf(gcQuery,"SELECT DISTINCT tNode.uNode,tNode.uDatacenter"
-				" FROM tNode,tDatacenter"
+				" FROM tNode,tDatacenter,tProperty"
 				" WHERE tNode.uDatacenter=tDatacenter.uDatacenter"
+				" AND tProperty.uKey=tNode.uNode"
+				" AND tProperty.cName='cCreateLoginJobs'"
+				" AND tProperty.cValue='Yes'"
 				" AND tDatacenter.uStatus=1"
 				" AND tNode.uStatus=1"
 				" AND tNode.cLabel!='appliance'");
@@ -2900,17 +2915,16 @@ void DenyAccessJobs(void)
 		sscanf(field[0],"%u",&uNode);
 		sscanf(field[1],"%u",&uDatacenter);
 
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DenyAccess %u',cJobName='DenyAccess'"
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LogoutFirewallJobs()',cJobName='LogoutFirewallJob'"
 					",uDatacenter=%u,uNode=%u,uContainer=0"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1"
-					",cJobData='cIPv4=%.15s;'"
+					",cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						guLoginClient,
 						uDatacenter,
 						uNode,
 						gcHost,
 						guCompany,guLoginClient);
 		mysql_query(&gMysql,gcQuery);
 	}
-}//void DenyAccessJobs(void)
+}//void LogoutFirewallJobs(void)
