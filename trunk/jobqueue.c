@@ -619,7 +619,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		//high load section
 		else if(1)
 		{
-			logfileLine("ProcessJob()",cJobName);
+			logfileLine("ProcessJob() not found",cJobName);
 			tJobErrorUpdate(uJob,cJobName);
 		}
 	}//normal load jobs
@@ -7616,7 +7616,7 @@ void LoginFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,un
 
 	char cTemplate[512]={
 				"/sbin/iptables -L -n | grep -w %1$s | grep -w multiport > /dev/null; if [ $? != 0 ];then"
-					" /sbin/iptables -I INPUT -s %1$s -p tcp -m multiport --dports %2$s  -j ACCEPT;"
+					" /sbin/iptables -I INPUT -s %1$s -p tcp -m multiport --dports %2$s -j ACCEPT;"
 				" fi;"
 					};
 	FILE *fp;
@@ -7657,7 +7657,7 @@ void LoginFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,un
 		GetConfiguration("cLoginFirewallJobPorts",cLoginFirewallJobPorts,uDatacenter,0,0,0);//Second try datacenter wide
 		if(!cLoginFirewallJobPorts[0])
 			GetConfiguration("cLoginFirewallJobPorts",cLoginFirewallJobPorts,0,0,0,0);//Last try global
-		else
+		if(!cLoginFirewallJobPorts[0])
 			//default
 			sprintf(cLoginFirewallJobPorts,"22,443,80");
 	}
@@ -7666,6 +7666,8 @@ void LoginFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,un
 	if(system(gcQuery))
 	{
 		logfileLine("LoginFirewallJob","iptables command failed");
+		logfileLine("cLoginFirewallJobPorts",cLoginFirewallJobPorts);
+		logfileLine("cTemplate",gcQuery);
 		tJobErrorUpdate(uJob,"iptables command failed");
 		return;
 	}
@@ -7739,7 +7741,7 @@ void LogoutFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,u
 		GetConfiguration("cLoginFirewallJobPorts",cLoginFirewallJobPorts,uDatacenter,0,0,0);//Second try datacenter wide
 		if(!cLoginFirewallJobPorts[0])
 			GetConfiguration("cLoginFirewallJobPorts",cLoginFirewallJobPorts,0,0,0,0);//Last try global
-		else
+		if(!cLoginFirewallJobPorts[0])
 			//default
 			sprintf(cLoginFirewallJobPorts,"22,443,80");
 	}
@@ -7748,6 +7750,8 @@ void LogoutFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,u
 	if(system(gcQuery))
 	{
 		logfileLine("LogoutFirewallJob","iptables command failed");
+		logfileLine("cLoginFirewallJobPorts",cLoginFirewallJobPorts);
+		logfileLine("cTemplate",gcQuery);
 		tJobErrorUpdate(uJob,"iptables command failed");
 		return;
 	}
