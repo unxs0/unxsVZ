@@ -1,0 +1,64 @@
+###
+#
+#Private LAN eth1 ACCEPT everything
+#
+#Container firewall(FW): FORWARD Our intial design is to allow everything and specifically DROP
+#for certain IPs
+#
+#Hardware access control: INPUT initial design is to DROP everything and in the
+#custom chains only specifically allowed IPs and
+#some enterprise ranges like peer servers
+###
+*filter
+:INPUT DROP [258:23648]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [257:19160]
+#custom chains managed by unxsVZ
+:UnxsVZ-SSH - [0:0]
+:UnxsVZ-HTTP - [0:0]
+:UnxsVZ-FW - [0:0]
+#
+#INPUT
+#
+#first rules added (-A) go to the top
+#	e.g. are looked at first as packets traverse rules
+#since default policy is DROP for INPUT chain we need
+#to make sure our local LAN traffic is not affected
+-A INPUT -i eth1 -j ACCEPT
+#
+#allow dig and ping whois and other initiated locally exchanges
+-A INPUT -i eth0 -m state --state ESTABLISHED,RELATED -j ACCEPT
+#always allow our peer servers full access
+#DC0 node29-36
+-A INPUT -i eth0 -s 1.2.3.0/24 -j ACCEPT
+#
+#
+#insert custom chains into INPUT after the rules for IPs we 
+#	will not dynamically manage
+#from non LAN servers we allow nothing else
+#	and only via our controlled custom chains
+-A INPUT -i eth0 -p tcp --dport 12237 -j UnxsVZ-SSH
+-A INPUT -i eth0 -p tcp --dport 9333 -j UnxsVZ-HTTP
+#
+#FORWARD
+#
+#insert custom FW chains into FORWARD for container FWing
+-A FORWARD -i eth0 -j UnxsVZ-FW
+#
+#CUSTOM chain section
+#
+#all the following must stay at the bottom of
+#	the rules. so you must use -I for any additions.
+#example managed entries:
+#	DEFAULT DROP CHAINS:
+#		iptables -I UnxsVZ-SSH -s 123.2.3.4 -j ACCEPT
+#		iptables -I UnxsVZ-HTTP -s 12.12.3.4 -j ACCEPT
+#	FW ACCEPT CHAIN:
+#		iptables -I UnxsVZ-FW -s 23.21.3.40 -j DROP
+#login hardware node SSH setup
+-A UnxsVZ-SSH -j RETURN 
+#login hardware node HTTP setup
+-A UnxsVZ-HTTP -j RETURN 
+#firewall setup
+-A UnxsVZ-FW -j RETURN 
+COMMIT
