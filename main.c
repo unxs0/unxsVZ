@@ -108,8 +108,8 @@ void GetPLAndClient(char *cUser);
 void htmlSSLLogin(void);
 void GeneratePasswd(char *pw);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
-void LoginFirewallJobs(void);
-void LogoutFirewallJobs(void);
+void LoginFirewallJobs(unsigned uLoginClient);
+void LogoutFirewallJobs(unsigned uLoginClient);
 
 //mainfunc.h for symbolic links to this program
 void CalledByAlias(int iArgc,char *cArgv[]);
@@ -184,7 +184,7 @@ int main(int iArgc, char *cArgv[])
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 				MYSQL_RUN;
-				LogoutFirewallJobs();
+				LogoutFirewallJobs(guLoginClient);
 				if(gcOTPSecret[0])
 				{
 					UpdateOTPExpire(0,guLoginClient);
@@ -2087,7 +2087,7 @@ int iValidLogin(int mode)
 						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 				MYSQL_RUN;
-				LoginFirewallJobs();
+				LoginFirewallJobs(guLoginClient);
 				if(guOTPExpired && gcOTP[0] && gcOTPSecret[0])
 				{
 					if(!uValidOTP(gcOTPSecret,gcOTP))
@@ -2838,7 +2838,7 @@ void tTablePullDownActive(const char *cTableName, const char *cFieldName,
 //Per hardware node iptables FW control. 
 //You must login to access hardware node http, ssh and other servers from your current
 //IP.
-void LoginFirewallJobs(void)
+void LoginFirewallJobs(unsigned uLoginClient)
 {
         MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -2884,7 +2884,7 @@ void LoginFirewallJobs(void)
 }//void LoginFirewallJobs(void)
 
 
-void LogoutFirewallJobs(void)
+void LogoutFirewallJobs(unsigned uLoginClient)
 {
         MYSQL_RES *res;
 	MYSQL_ROW field;
