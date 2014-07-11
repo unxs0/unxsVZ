@@ -58,6 +58,7 @@ void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValu
 unsigned SetContainerPropertyUBC(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
+void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
 
 //This is a compatability function that should be deprecated and replaced.
 void ErrorMsg(const char *cText)
@@ -1192,3 +1193,40 @@ void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue)
 	mysql_free_result(res);
 
 }//void GetGroupProp()
+
+
+//UBC safe
+void GetClientProp(const unsigned uClient,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uClient==0) return;
+
+	//41 is tClient
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=41 AND cName='%s'",
+				uClient,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		if(gLfp!=NULL)
+		{
+			logfileLine("GetDatacenterProp",mysql_error(&gMysql));
+			exit(2);
+		}
+		else
+		{
+			ErrorMsg(mysql_error(&gMysql));
+		}
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetClientProp()

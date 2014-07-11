@@ -54,6 +54,7 @@ void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValu
 unsigned SetContainerPropertyUBC(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
+void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
 
 //Global vars
 
