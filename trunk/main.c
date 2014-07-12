@@ -2043,6 +2043,21 @@ char *cGetPasswd(char *gcLogin,char *cOTPSecret,unsigned long *luOTPExpire,unsig
 
 int iValidLogin(int mode)
 {
+	//private function
+	void UpdateLogLoginOk(void)
+	{
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
+			" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+			" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE"
+			" cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
+			" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+			" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
+				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
+		MYSQL_RUN;
+		LoginFirewallJobs(guLoginClient);
+	}
+
 	char cSalt[16]={""};
 	char cPassword[100]={""};
 
@@ -2073,27 +2088,13 @@ int iValidLogin(int mode)
 			{
 				guCompany=1;//If next line does not work
 				GetPLAndClient(gcLogin);
-				//guPermLevel=0;
-				//guLoginClient=0;
-				//tLogType.cLabel='backend login'->uLogType=6
-				//Alpha testing ON DUPLICATE KEY UPDATE to avoid some replication problems
-				//that I have seen in logfiles.
-				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
-					" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
-					" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE"
-					" cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
-					" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
-					" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
-						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
-				MYSQL_RUN;
-				LoginFirewallJobs(guLoginClient);
 				if(guOTPExpired && gcOTP[0] && gcOTPSecret[0])
 				{
 					if(!uValidOTP(gcOTPSecret,gcOTP))
 					{
 						guRequireOTPLogin=1;
 						sprintf(gcOTPInfo,"{%s}/[%s] %u login invalid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+						LogoutFirewallJobs(guLoginClient);
 						return(0);
 					}
 					else
@@ -2102,6 +2103,7 @@ int iValidLogin(int mode)
 						guOTPExpired=0;
 						UpdateOTPExpire(uAuthorize,0);
 						sprintf(gcOTPInfo,"{%s}/[%s] %u login valid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+						UpdateLogLoginOk();
 						return(1);
 					}
 				}
@@ -2109,9 +2111,11 @@ int iValidLogin(int mode)
 				{
 					guRequireOTPLogin=1;
 					sprintf(gcOTPInfo,"{%s}/[%s] %u login valid but expired",gcOTPSecret,gcOTP,guOTPExpired);
+					LogoutFirewallJobs(guLoginClient);
 					return(0);
 				}
 				sprintf(gcOTPInfo,"{%s}/[%s] %u login valid",gcOTPSecret,gcOTP,guOTPExpired);
+				UpdateLogLoginOk();
 				return(1);
 			}
 		}
@@ -2126,6 +2130,7 @@ int iValidLogin(int mode)
 					{
 						guRequireOTPLogin=1;
 						sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login expired invalid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+						LogoutFirewallJobs(guLoginClient);
 						return(0);
 					}
 					else
@@ -2141,6 +2146,7 @@ int iValidLogin(int mode)
 				{
 					guRequireOTPLogin=1;
 					sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login expired no gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+					LogoutFirewallJobs(guLoginClient);
 					return(0);
 				}
 				sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login valid",gcOTPSecret,gcOTP,guOTPExpired);
@@ -2165,6 +2171,7 @@ int iValidLogin(int mode)
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 		MYSQL_RUN;
+		LogoutFirewallJobs(guLoginClient);
 	}
 
 	if(guOTPExpired)
@@ -2838,16 +2845,26 @@ void tTablePullDownActive(const char *cTableName, const char *cFieldName,
 //Per hardware node iptables FW control. 
 //You must login to access hardware node http, ssh and other servers from your current
 //IP.
+void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
 void LoginFirewallJobs(unsigned uLoginClient)
 {
         MYSQL_RES *res;
 	MYSQL_ROW field;
 
+	//Master condition
 	char cCreateLoginJobs[256]={""};
 	GetConfiguration("cCreateLoginJobs",cCreateLoginJobs,0,0,0,0);
 	if(strncmp(cCreateLoginJobs,"Via tNode::tProperty:cCreateLoginJobs",sizeof("Via tNode::tProperty:cCreateLoginJobs")))
 		return;
 
+	//Check tClient for what kind of LoginFirewallJobs to create
+	char cEnableSSHOnLogin[256]={""};
+	char cJobName[32]={"LoginFirewallJobHTTP"};
+	GetClientProp(uLoginClient,"cEnableSSHOnLogin",cEnableSSHOnLogin);
+	if(strncmp(cEnableSSHOnLogin,"Yes",sizeof("Yes")))
+		sprintf(cJobName,"%.31s","LoginFirewallJob");
+
+	//Only for nodes with tProperty.cName=cCreateLoginJobs
 	sprintf(gcQuery,"SELECT DISTINCT tNode.uNode,tNode.uDatacenter"
 				" FROM tNode,tDatacenter,tProperty"
 				" WHERE tNode.uDatacenter=tDatacenter.uDatacenter"
@@ -2869,20 +2886,21 @@ void LoginFirewallJobs(unsigned uLoginClient)
 		sscanf(field[0],"%u",&uNode);
 		sscanf(field[1],"%u",&uDatacenter);
 
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LoginFirewallJobs(%u)',cJobName='LoginFirewallJob'"
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LoginFirewallJobs(%u)',cJobName='%s'"
 					",uDatacenter=%u,uNode=%u,uContainer=0"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1"
 					",cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						uLoginClient,
+						cJobName,
 						uDatacenter,
 						uNode,
 						gcHost,
 						guCompany,guLoginClient);
 		mysql_query(&gMysql,gcQuery);
 	}
-}//void LoginFirewallJobs(void)
+}//void LoginFirewallJobs(unsigned uLoginClient)
 
 
 void LogoutFirewallJobs(unsigned uLoginClient)
@@ -2895,6 +2913,13 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 	if(strncmp(cCreateLoginJobs,"Via tNode::tProperty:cCreateLoginJobs",sizeof("Via tNode::tProperty:cCreateLoginJobs")))
 		return;
 
+	//Check tClient for what kind of LoginFirewallJobs to create
+	char cEnableSSHOnLogin[256]={""};
+	char cJobName[32]={"LogoutFirewallJobHTTP"};
+	GetClientProp(uLoginClient,"cEnableSSHOnLogin",cEnableSSHOnLogin);
+	if(strncmp(cEnableSSHOnLogin,"Yes",sizeof("Yes")))
+		sprintf(cJobName,"%.31s","LogoutFirewallJob");
+
 	sprintf(gcQuery,"SELECT DISTINCT tNode.uNode,tNode.uDatacenter"
 				" FROM tNode,tDatacenter,tProperty"
 				" WHERE tNode.uDatacenter=tDatacenter.uDatacenter"
@@ -2916,17 +2941,18 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 		sscanf(field[0],"%u",&uNode);
 		sscanf(field[1],"%u",&uDatacenter);
 
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LogoutFirewallJobs(%u)',cJobName='LogoutFirewallJob'"
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LogoutFirewallJobs(%u)',cJobName='%s'"
 					",uDatacenter=%u,uNode=%u,uContainer=0"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1"
 					",cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 						uLoginClient,
+						cJobName,
 						uDatacenter,
 						uNode,
 						gcHost,
 						guCompany,guLoginClient);
 		mysql_query(&gMysql,gcQuery);
 	}
-}//void LogoutFirewallJobs(void)
+}//void LogoutFirewallJobs(unsigned uLoginClient)

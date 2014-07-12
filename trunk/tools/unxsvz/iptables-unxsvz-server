@@ -37,8 +37,8 @@
 #	will not dynamically manage
 #from non LAN servers we allow nothing else
 #	and only via our controlled custom chains
--A INPUT -i eth0 -p tcp --dport 12237 -j UnxsVZ-SSH
--A INPUT -i eth0 -p tcp --dport 9333 -j UnxsVZ-HTTP
+-A INPUT -i eth0 -p tcp --dport 22 -j UnxsVZ-SSH
+-A INPUT -i eth0 -p tcp --dport 443 -j UnxsVZ-HTTP
 #
 #FORWARD
 #
