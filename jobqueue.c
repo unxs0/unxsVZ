@@ -448,6 +448,14 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		{
 			LoginFirewallJob(uJob,cJobData,uDatacenter,uNode);
 		}
+		else if(!strcmp(cJobName,"LoginFirewallJobHTTP") && uNode)
+		{
+			LoginFirewallJobHTTP(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"LoginFirewallJobSSH") && uNode)
+		{
+			LoginFirewallJobSSH(uJob,cJobData,uDatacenter,uNode);
+		}
 		else if(!strcmp(cJobName,"AllowAllAccess") && uNode)
 		{
 			AllowAllAccess(uJob,cJobData,uDatacenter,uNode);
@@ -586,11 +594,27 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		{
 			LogoutFirewallJob(uJob,cJobData,uDatacenter,uNode);
 		}
+		else if(!strcmp(cJobName,"LogoutFirewallJobHTTP") && uNode)
+		{
+			LogoutFirewallJobHTTP(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"LogoutFirewallJobSSH") && uNode)
+		{
+			LogoutFirewallJobSSH(uJob,cJobData,uDatacenter,uNode);
+		}
 
 		//also in high load section
 		else if(!strcmp(cJobName,"LoginFirewallJob") && uNode)
 		{
 			LoginFirewallJob(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"LoginFirewallJobHTTP") && uNode)
+		{
+			LoginFirewallJobHTTP(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"LoginFirewallJobSSH") && uNode)
+		{
+			LoginFirewallJobSSH(uJob,cJobData,uDatacenter,uNode);
 		}
 		else if(!strcmp(cJobName,"AllowAllAccess") && uNode)
 		{
