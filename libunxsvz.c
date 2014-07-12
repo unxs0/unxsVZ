@@ -59,6 +59,11 @@ unsigned SetContainerPropertyUBC(const unsigned uContainer,const char *cProperty
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
+void GetIPProp(const unsigned uIP,const char *cName,char *cValue);
+void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue);
+void SetIPProp(char const *cName,char const *cValue,unsigned uIP);
+void SetIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP);
+void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 
 //This is a compatability function that should be deprecated and replaced.
 void ErrorMsg(const char *cText)
@@ -1211,7 +1216,7 @@ void GetClientProp(const unsigned uClient,const char *cName,char *cValue)
 	{
 		if(gLfp!=NULL)
 		{
-			logfileLine("GetDatacenterProp",mysql_error(&gMysql));
+			logfileLine("GetClientProp",mysql_error(&gMysql));
 			exit(2);
 		}
 		else
@@ -1230,3 +1235,148 @@ void GetClientProp(const unsigned uClient,const char *cName,char *cValue)
 	mysql_free_result(res);
 
 }//void GetClientProp()
+
+
+//UBC safe
+void GetIPProp(const unsigned uIP,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uIP==0) return;
+
+	//31 is tIP
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=31 AND cName='%s'",
+				uIP,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		if(gLfp!=NULL)
+		{
+			logfileLine("GetIPProp",mysql_error(&gMysql));
+			exit(2);
+		}
+		else
+		{
+			ErrorMsg(mysql_error(&gMysql));
+		}
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetIPProp()
+
+
+//UBC safe
+void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(!cHostIP[0]) return;
+
+	//31 is tIP
+	sprintf(gcQuery,"SELECT cValue FROM tProperty"
+			" WHERE uKey=(SELECT uIP FROM tIP WHERE uIPNum=INET_ATON('%.15s') LIMIT 1)"
+			" AND uType=31 AND cName='%s'",
+				cHostIP,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		if(gLfp!=NULL)
+		{
+			logfileLine("GetIPProp",mysql_error(&gMysql));
+			exit(2);
+		}
+		else
+		{
+			ErrorMsg(mysql_error(&gMysql));
+		}
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetIPPropFromHost()
+
+
+//UBC safe should not be used for UBCs	
+void SetIPProp(char const *cName,char const *cValue,unsigned uIP)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%u AND uType=31 AND cName='%s'",uIP,cName);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		ErrorMsg(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uProperty=%s",
+			cValue,guLoginClient,field[0]);
+        	mysql_query(&gMysql,gcQuery);
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,cName='%s',cValue='%s',uType=31,uOwner=%u,"
+				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uIP,
+					cName,cValue,guLoginClient,guLoginClient);
+        	mysql_query(&gMysql,gcQuery);
+	}
+}//void SetIPProp();
+
+
+//UBC safe should not be used for UBCs	
+void SetIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+			" WHERE uKey=(SELECT uIP FROM tIP WHERE uIPNum=INET_ATON('%s'))"
+			" AND uType=31 AND cName='%s'",cHostIP,cName);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		ErrorMsg(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uProperty=%s",
+			cValue,guLoginClient,field[0]);
+        	mysql_query(&gMysql,gcQuery);
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=INET_ATON('%s'),cName='%s',cValue='%s',uType=31,uOwner=%u,"
+				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cHostIP,
+					cName,cValue,guLoginClient,guLoginClient);
+        	mysql_query(&gMysql,gcQuery);
+	}
+}//void SetIPPropFromHost()
+
+
+void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany)
+{
+	char cValue[256]={""};
+
+	sprintf(cValue,"gcUser=%.31s;gcCompany=%.31s;",gcUser,gcCompany);
+
+	SetIPPropFromHost("cLoginSession",cValue,gcHost);
+
+}//void CreateLoginSession()

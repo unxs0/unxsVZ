@@ -55,6 +55,11 @@ unsigned SetContainerPropertyUBC(const unsigned uContainer,const char *cProperty
 unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
+void GetIPProp(const unsigned uIP,const char *cName,char *cValue);
+void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue);
+void SetIPProp(char const *cName,char const *cValue,unsigned uIP);
+void SetIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP);
+void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 
 //Global vars
 
