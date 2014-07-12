@@ -2869,12 +2869,13 @@ void LoginFirewallJobs(unsigned uLoginClient)
 		sscanf(field[0],"%u",&uNode);
 		sscanf(field[1],"%u",&uDatacenter);
 
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LoginFirewallJobs()',cJobName='LoginFirewallJob'"
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LoginFirewallJobs(%u)',cJobName='LoginFirewallJob'"
 					",uDatacenter=%u,uNode=%u,uContainer=0"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1"
 					",cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						uLoginClient,
 						uDatacenter,
 						uNode,
 						gcHost,
@@ -2915,12 +2916,13 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 		sscanf(field[0],"%u",&uNode);
 		sscanf(field[1],"%u",&uDatacenter);
 
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LogoutFirewallJobs()',cJobName='LogoutFirewallJob'"
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LogoutFirewallJobs(%u)',cJobName='LogoutFirewallJob'"
 					",uDatacenter=%u,uNode=%u,uContainer=0"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1"
 					",cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'"
 					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						uLoginClient,
 						uDatacenter,
 						uNode,
 						gcHost,
