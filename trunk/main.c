@@ -2846,6 +2846,9 @@ void tTablePullDownActive(const char *cTableName, const char *cFieldName,
 //You must login to access hardware node http, ssh and other servers from your current
 //IP.
 void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
+void GetIPProp(const unsigned uIP,const char *cName,char *cValue);
+void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue);
+void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 void LoginFirewallJobs(unsigned uLoginClient)
 {
         MYSQL_RES *res;
@@ -2863,6 +2866,20 @@ void LoginFirewallJobs(unsigned uLoginClient)
 	GetClientProp(uLoginClient,"cEnableSSHOnLogin",cEnableSSHOnLogin);
 	if(strncmp(cEnableSSHOnLogin,"Yes",sizeof("Yes")))
 		sprintf(cJobName,"%.31s","LoginFirewallJob");
+
+	//Check for cLoginSession
+	char cLoginSession[256]={""};
+	char gcUserSection[64]={""};
+	GetIPPropFromHost(gcHost,"cLoginSession",cLoginSession);
+	if(cLoginSession[0])
+	{
+		sprintf(gcUserSection,"gcUser=%s;",gcUser);
+		if(strstr(cLoginSession,gcUserSection))
+		//already logged in do nothing
+		return;
+	}
+	CreateLoginSession(gcHost,gcUser,gcCompany);
+
 
 	//Only for nodes with tProperty.cName=cCreateLoginJobs
 	sprintf(gcQuery,"SELECT DISTINCT tNode.uNode,tNode.uDatacenter"
