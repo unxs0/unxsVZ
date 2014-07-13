@@ -61,11 +61,12 @@ void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
 void GetIPProp(const unsigned uIP,const char *cName,char *cValue);
 void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue);
-void SetIPProp(char const *cName,char const *cValue,unsigned uIP);
-void SetIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP);
+void SetUpdateIPProp(char const *cName,char const *cValue,unsigned uIP);
+void SetUpdateIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP);
 unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP);
 void CreateLoginSession(const char *cHostIP,const char *gcUser,const char *gcCompany);
 void RemoveLoginSession(const char *cHostIP,const char *gcUser,const char *gcCompany);
+void NewNoDupsIPProp(char const *cName,char const *cValue,unsigned uIP);
 
 //This is a compatability function that should be deprecated and replaced.
 void ErrorMsg(const char *cText)
@@ -1316,7 +1317,7 @@ void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue)
 
 
 //UBC safe should not be used for UBCs	
-void SetIPProp(char const *cName,char const *cValue,unsigned uIP)
+void SetUpdateIPProp(char const *cName,char const *cValue,unsigned uIP)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -1340,11 +1341,11 @@ void SetIPProp(char const *cName,char const *cValue,unsigned uIP)
 					cName,cValue,guLoginClient,guLoginClient);
         	mysql_query(&gMysql,gcQuery);
 	}
-}//void SetIPProp();
+}//void SetUpdateIPProp();
 
 
 //UBC safe should not be used for UBCs	
-void SetIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP)
+void SetUpdateIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -1370,7 +1371,7 @@ void SetIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP)
 					cName,cValue,guLoginClient,guLoginClient);
         	mysql_query(&gMysql,gcQuery);
 	}
-}//void SetIPPropFromHost()
+}//void SetUpdateIPPropFromHost()
 
 
 #define uLOGIN_IPTYPE 7
@@ -1416,7 +1417,7 @@ void CreateLoginSession(const char *cHostIP,const char *gcUser,const char *gcCom
 		char cValue[256]={""};
 		//must match RemoveLoginSession() SQL query
 		sprintf(cValue,"gcUser=%.31s;gcCompany=%.31s;",gcUser,gcCompany);
-		SetIPProp("cLoginSession",cValue,uIP);
+		NewNoDupsIPProp("cLoginSession",cValue,uIP);
 	}
 }//void CreateLoginSession()
 
@@ -1435,3 +1436,25 @@ void RemoveLoginSession(const char *cHostIP,const char *gcUser,const char *gcCom
 		ErrorMsg(mysql_error(&gMysql));
 
 }//void RemoveLoginSession()
+
+
+//UBC safe should not be used for UBCs	
+void NewNoDupsIPProp(char const *cName,char const *cValue,unsigned uIP)
+{
+        MYSQL_RES *res;
+
+	//31 is tIP property type
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%u AND uType=31 AND cName='%s' AND cValue='%s'",uIP,cName,cValue);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		ErrorMsg(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)<1)
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,cName='%s',cValue='%s',uType=31,uOwner=%u,"
+				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uIP,
+					cName,cValue,guCompany,guLoginClient);
+        	mysql_query(&gMysql,gcQuery);
+	}
+}//void NewNoDupsIPProp();

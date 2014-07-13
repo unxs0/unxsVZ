@@ -57,11 +57,12 @@ void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
 void GetIPProp(const unsigned uIP,const char *cName,char *cValue);
 void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue);
-void SetIPProp(char const *cName,char const *cValue,unsigned uIP);
-void SetIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP);
+void SetUpdateIPProp(char const *cName,char const *cValue,unsigned uIP);
+void SetUpdateIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP);
 unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP);
 void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 void RemoveLoginSession(const char *cHostIP,const char *gcUser,const char *gcCompany);
+void NewNoDupsIPProp(char const *cName,char const *cValue,unsigned uIP);
 
 //Global vars
 
