@@ -17,6 +17,7 @@
 :UnxsVZ-SSH - [0:0]
 :UnxsVZ-HTTP - [0:0]
 :UnxsVZ-FW - [0:0]
+:UnxsVZ-FWCUST - [0:0]
 #
 #INPUT
 #
@@ -44,6 +45,7 @@
 #
 #insert custom FW chains into FORWARD for container FWing
 -A FORWARD -i eth0 -j UnxsVZ-FW
+-A FORWARD -i eth0 -p tcp -m multiport --dports 443,444 -j UnxsVZ-FWCUST
 #
 #CUSTOM chain section
 #
@@ -61,4 +63,5 @@
 -A UnxsVZ-HTTP -j RETURN 
 #firewall setup
 -A UnxsVZ-FW -j RETURN 
+-A UnxsVZ-FWCUST -j RETURN 
 COMMIT

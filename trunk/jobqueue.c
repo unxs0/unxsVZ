@@ -193,12 +193,18 @@ void ProcessJobQueue(unsigned uDebug)
 	if(fd>0)
 	{
 		if(!read(fd,cRandom,sizeof(cRandom))!=sizeof(cRandom))
+		{
 			(void)srand((unsigned int)cRandom[0]);
+		}
+		else
+		{
+			logfileLine("ProcessJobQueue","/dev/urandom read error");
+			(void)srand((int)time((time_t *)NULL));
+		}
 	}
-
-	if(!cRandom[0])
+	else
 	{
-		logfileLine("ProcessJobQueue","/dev/urandom error");
+		logfileLine("ProcessJobQueue","/dev/urandom file error");
 		(void)srand((int)time((time_t *)NULL));
 	}
 
@@ -5734,7 +5740,7 @@ CommonExit:
 
 //AllowAccess and DenyAccess are used for unxsvzOrg.cgi interface only at this time
 //These functions assume something like this at end part of /etc/sysconfig/iptables:
-// -A FORWARD -p tcp -m tcp --dport 443 -j REJECT --reject-with icmp-port-unreachable
+// -A UnxsVZ-FWCUST -p tcp -m tcp --dport 443 -j REJECT --reject-with icmp-port-unreachable
 void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
 {
 	char cIPv4[16]={""};
@@ -5754,8 +5760,8 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
         MYSQL_ROW field;
 
 	char cTemplate[512]={
-				"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
-					" /sbin/iptables -I FORWARD -s %1$s -p tcp -m tcp --dport 443 -j ACCEPT;"
+				"/sbin/iptables -L UnxsVZ-FWCUST -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
+					" /sbin/iptables -I UnxsVZ-FWCUST -s %1$s -j ACCEPT;"
 				" fi;"
 					};
 
@@ -5829,8 +5835,8 @@ void DenyAccess(unsigned uJob,const char *cJobData)
 
 	//Test fixed rule for now
 	sprintf(gcQuery,
-				" /sbin/iptables -L -n | grep %1$.15s > /dev/null; if [ $? == 0 ];then"
-					" /sbin/iptables -D FORWARD -s %1$.15s -p tcp -m tcp --dport 443 -j ACCEPT;"
+				" /sbin/iptables -L UnxsVZ-FWCUST -n | grep %1$.15s > /dev/null; if [ $? == 0 ];then"
+					" /sbin/iptables -D UnxsVZ-FWCUST -s %1$.15s -j ACCEPT;"
 				" fi;"
 					,cIPv4);
 	if(system(gcQuery))
@@ -7122,11 +7128,11 @@ void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 
 	//remove any ACCEPT then DROP
 	char cTemplate[512]={	
-				"/sbin/iptables -L -n | grep -w %1$s | grep -w ACCEPT > /dev/null; if [ $? == 0 ];then"
-					" /sbin/iptables -D FORWARD -s %1$s -j ACCEPT > /dev/null 2>&1;"
+				"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s | grep -w ACCEPT > /dev/null; if [ $? == 0 ];then"
+					" /sbin/iptables -D UnxsVZ-FW -s %1$s -j ACCEPT > /dev/null 2>&1;"
 				" fi;"
-				"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
-					" /sbin/iptables -I FORWARD -s %1$s -j DROP;"
+				"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
+					" /sbin/iptables -I UnxsVZ-FW -s %1$s -j DROP;"
 				" fi;"
 					};
 
@@ -7226,11 +7232,11 @@ void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,uns
 
 	//remove DROP but add ACCEPT for accounting
 	char cTemplate[512]={
-			"/sbin/iptables -L -n | grep -w %1$s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
-				" /sbin/iptables -D FORWARD -s %1$s -j DROP;"
+			"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
+				" /sbin/iptables -D UnxsVZ-FW -s %1$s -j DROP;"
 			" fi;"
-			"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
-				" /sbin/iptables -I FORWARD -s %1$s -j ACCEPT;"
+			"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
+				" /sbin/iptables -I UnxsVZ-FW -s %1$s -j ACCEPT;"
 			" fi;"
 									};
 
@@ -7331,11 +7337,11 @@ void AllowAllAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsi
 
 	//add ACCEPT but try to remove DROP if it exists
 	char cTemplate[512]={
-				"/sbin/iptables -L -n | grep -w %1$s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
-					" /sbin/iptables -D FORWARD -s %1$s -j DROP;"
+				"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
+					" /sbin/iptables -D UnxsVZ-FW -s %1$s -j DROP;"
 				" fi;"
-				"/sbin/iptables -L -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
-					" /sbin/iptables -I FORWARD -s %1$s -j ACCEPT;"
+				"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s > /dev/null; if [ $? != 0 ];then"
+					" /sbin/iptables -I UnxsVZ-FW -s %1$s -j ACCEPT;"
 				" fi;"
 							};
 
@@ -7451,8 +7457,8 @@ void RemoveAcceptFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatac
 
 	//remove DROP and/or ACCEPT
 	char cTemplate[512]={
-			"/sbin/iptables -L -n | grep -w %1$s | grep -w ACCEPT > /dev/null; if [ $? == 0 ];then"
-				" /sbin/iptables -D FORWARD -s %1$s -j ACCEPT;"
+			"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s | grep -w ACCEPT > /dev/null; if [ $? == 0 ];then"
+				" /sbin/iptables -D UnxsVZ-FW -s %1$s -j ACCEPT;"
 			" fi;"
 									};
 
@@ -7546,10 +7552,10 @@ void RemoveDropFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatacen
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	//remove DROP and/or ACCEPT
+	//remove DROP
 	char cTemplate[512]={
-			"/sbin/iptables -L -n | grep -w %1$s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
-				" /sbin/iptables -D FORWARD -s %1$s -j DROP;"
+			"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
+				" /sbin/iptables -D UnxsVZ-FW -s %1$s -j DROP;"
 			" fi;"
 									};
 
