@@ -88,6 +88,7 @@ void LoginFirewallJobSSH(unsigned uJob,const char *cJobData,unsigned uDatacenter
 void LogoutFirewallJobSSH(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void LoginFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void LogoutFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
+void StartIptables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 
 unsigned uNotValidSystemCallArg(char *cSSHOptions);
 unsigned GetContainerStatus(const unsigned uContainer, unsigned *uStatus);
@@ -607,6 +608,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		else if(!strcmp(cJobName,"LogoutFirewallJobSSH") && uNode)
 		{
 			LogoutFirewallJobSSH(uJob,cJobData,uDatacenter,uNode);
+		}
+		else if(!strcmp(cJobName,"StartIptables") && uNode)
+		{
+			StartIptables(uJob,cJobData,uDatacenter,uNode);
 		}
 
 		//also in high load section
@@ -8061,3 +8066,100 @@ void LogoutFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,u
 
 }//void LogoutFirewallJob()
 
+
+void StartIptables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode)
+{
+
+	//restart iptables from /etc/sysconfig/iptables
+	system("/sbin/service iptables stop > /dev/null 2>&1");
+	if(system("/sbin/service iptables start > /dev/null 2>&1"))
+	{
+		logfileLine("StartIptables","/sbin/service iptables start error");
+		tJobErrorUpdate(uJob,"iptables start error");
+		return;
+	}
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	char cCommand[100]={""};
+	//
+	//UnxsVZ-FW section
+	//
+	//will start using uIPType soon...depends on unxsSnort changes etc.
+	//customer premise IPs with uFWStatus
+	//FW DROP or WAITING DROP
+	sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE (uFWStatus=3 OR uFWStatus=1) AND uDatacenter=41 AND uAvailable=0");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("StartIptables",mysql_error(&gMysql));
+	else
+	{
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			sprintf(cCommand,"/sbin/iptables -I UnxsVZ-FW -s %1$s -j DROP;",field[0]);
+			if(system(cCommand))
+			{
+				logfileLine("StartIptables",cCommand);
+				break;
+			}
+		}
+		mysql_free_result(res);
+	}
+	//FW ACCEPT or WAITING ACCEPT
+	sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE (uFWStatus=4 OR uFWStatus=2) AND uDatacenter=41 AND uAvailable=0");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("StartIptables",mysql_error(&gMysql));
+	else
+	{
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			sprintf(cCommand,"/sbin/iptables -I UnxsVZ-FW -s %1$s -j ACCEPT;",field[0]);
+			if(system(cCommand))
+			{
+				logfileLine("StartIptables",cCommand);
+				break;
+			}
+		}
+		mysql_free_result(res);
+	}
+	//
+	//
+
+	//
+	//UnxsVZ-HTTP section
+	//
+	//will start using uIPType soon...depends on unxsSnort changes etc.
+	//customer premise IPs with uFWStatus
+	//FW DROP or WAITING DROP
+	sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tProperty"
+			" WHERE tIP.uIPType=7 AND tIP.uAvailable=0"
+			" AND tProperty.uKey=tIP.uIP"
+			" AND tProperty.uType=31"
+			" AND tProperty.cName='cLoginSession'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("StartIptables",mysql_error(&gMysql));
+	else
+	{
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			sprintf(cCommand,"/sbin/iptables -I UnxsVZ-HTTP -s %1$s -j ACCEPT;",field[0]);
+			if(system(cCommand))
+			{
+				logfileLine("StartIptables",cCommand);
+				break;
+			}
+		}
+		mysql_free_result(res);
+	}
+	//
+	//
+
+	logfileLine("StartIptables","done");
+	tJobDoneUpdate(uJob);
+	return;
+}//void StartIptables()
