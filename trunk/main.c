@@ -2849,6 +2849,7 @@ void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
 void GetIPProp(const unsigned uIP,const char *cName,char *cValue);
 void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue);
 void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
+void RemoveLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 void LoginFirewallJobs(unsigned uLoginClient)
 {
         MYSQL_RES *res;
@@ -2864,7 +2865,7 @@ void LoginFirewallJobs(unsigned uLoginClient)
 	char cEnableSSHOnLogin[256]={""};
 	char cJobName[32]={"LoginFirewallJobHTTP"};
 	GetClientProp(uLoginClient,"cEnableSSHOnLogin",cEnableSSHOnLogin);
-	if(strncmp(cEnableSSHOnLogin,"Yes",sizeof("Yes")))
+	if(!strncmp(cEnableSSHOnLogin,"Yes",sizeof("Yes")))
 		sprintf(cJobName,"%.31s","LoginFirewallJob");
 
 	//Check for cLoginSession
@@ -2873,12 +2874,13 @@ void LoginFirewallJobs(unsigned uLoginClient)
 	GetIPPropFromHost(gcHost,"cLoginSession",cLoginSession);
 	if(cLoginSession[0])
 	{
-		sprintf(gcUserSection,"gcUser=%s;",gcUser);
+		sprintf(gcUserSection,"gcUser=%s;",gcLogin);
 		if(strstr(cLoginSession,gcUserSection))
 		//already logged in do nothing
 		return;
 	}
-	CreateLoginSession(gcHost,gcUser,gcCompany);
+	//For existing or creates new tIP entry
+	CreateLoginSession(gcHost,gcLogin,gcCompany);
 
 
 	//Only for nodes with tProperty.cName=cCreateLoginJobs
@@ -2934,8 +2936,17 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 	char cEnableSSHOnLogin[256]={""};
 	char cJobName[32]={"LogoutFirewallJobHTTP"};
 	GetClientProp(uLoginClient,"cEnableSSHOnLogin",cEnableSSHOnLogin);
-	if(strncmp(cEnableSSHOnLogin,"Yes",sizeof("Yes")))
+	if(!strncmp(cEnableSSHOnLogin,"Yes",sizeof("Yes")))
 		sprintf(cJobName,"%.31s","LogoutFirewallJob");
+
+	//Remove corresponding session
+	RemoveLoginSession(gcHost,gcLogin,gcCompany);
+	//Check for any remaining cLoginSession for given IP
+	char cLoginSession[256]={""};
+	GetIPPropFromHost(gcHost,"cLoginSession",cLoginSession);
+	if(cLoginSession[0])
+		//someone else logged in from same IP
+		return;
 
 	sprintf(gcQuery,"SELECT DISTINCT tNode.uNode,tNode.uDatacenter"
 				" FROM tNode,tDatacenter,tProperty"

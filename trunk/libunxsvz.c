@@ -63,7 +63,9 @@ void GetIPProp(const unsigned uIP,const char *cName,char *cValue);
 void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue);
 void SetIPProp(char const *cName,char const *cValue,unsigned uIP);
 void SetIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP);
-void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
+unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP);
+void CreateLoginSession(const char *cHostIP,const char *gcUser,const char *gcCompany);
+void RemoveLoginSession(const char *cHostIP,const char *gcUser,const char *gcCompany);
 
 //This is a compatability function that should be deprecated and replaced.
 void ErrorMsg(const char *cText)
@@ -1371,12 +1373,65 @@ void SetIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP)
 }//void SetIPPropFromHost()
 
 
-void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany)
+#define uLOGIN_IPTYPE 7
+unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP)
 {
-	char cValue[256]={""};
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uIP=0;
 
-	sprintf(cValue,"gcUser=%.31s;gcCompany=%.31s;",gcUser,gcCompany);
+	sprintf(gcQuery,"SELECT uIP FROM tIP"
+			" WHERE uIPNum=INET_ATON('%s') LIMIT 1",cHostIP);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		ErrorMsg(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uIP);
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tIP"
+				" SET cLabel='%.15s',"
+				" uIPNum=INET_ATON('%s'),"
+				" uIPType=%u,"
+				" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					cHostIP,cHostIP,uLOGIN_IPTYPE,guCompany,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			ErrorMsg(mysql_error(&gMysql));
+		uIP=mysql_insert_id(&gMysql);
+	}
+	return(uIP);
+}//unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP)
 
-	SetIPPropFromHost("cLoginSession",cValue,gcHost);
 
+void CreateLoginSession(const char *cHostIP,const char *gcUser,const char *gcCompany)
+{
+	unsigned uIP=0;
+
+	if((uIP=uGetOrAddLoginSessionHostIP(cHostIP)))
+	{
+		char cValue[256]={""};
+		//must match RemoveLoginSession() SQL query
+		sprintf(cValue,"gcUser=%.31s;gcCompany=%.31s;",gcUser,gcCompany);
+		SetIPProp("cLoginSession",cValue,uIP);
+	}
 }//void CreateLoginSession()
+
+
+void RemoveLoginSession(const char *cHostIP,const char *gcUser,const char *gcCompany)
+{
+	if(!cHostIP[0] || !gcUser[0]) return;
+
+	//31 is tIP
+	sprintf(gcQuery,"DELETE FROM tProperty"
+			" WHERE uKey=(SELECT uIP FROM tIP WHERE uIPNum=INET_ATON('%.15s') LIMIT 1)"
+			" AND uType=31 AND cValue='gcUser=%.31s;gcCompany=%.31s;'",
+				cHostIP,gcUser,gcCompany);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		ErrorMsg(mysql_error(&gMysql));
+
+}//void RemoveLoginSession()
