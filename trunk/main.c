@@ -2852,6 +2852,10 @@ void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcComp
 void RemoveLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 void LoginFirewallJobs(unsigned uLoginClient)
 {
+	//Only users with two factor authentication via OTP
+	//can access hardware nodes at this time.
+	if(!gcOTPSecret[0])
+		return;
         MYSQL_RES *res;
 	MYSQL_ROW field;
 
