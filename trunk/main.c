@@ -346,6 +346,8 @@ void unxsVZ(const char *cResult)
 			ContainerReport(cResult);
 		else if(!strcmp(cResult,"CapacityReport"))
 			CapacityReport(cResult);
+		else if(!strcmp(cResult,"SessionReport"))
+			SessionReport(cResult);
 		else
 			DashBoard(cResult);
 	}
