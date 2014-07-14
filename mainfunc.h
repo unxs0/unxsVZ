@@ -108,6 +108,10 @@ int iExtMainCommands(pentry entries[], int x)
 		{
 			unxsVZ("CloneReport");
 		}
+		else if(!strcmp(gcCommand,"SessionReport"))
+		{
+			unxsVZ("SessionReport");
+		}
 		else if(!strcmp(gcCommand,"ContainerReport"))
 		{
 			unxsVZ("ContainerReport");
@@ -1019,6 +1023,8 @@ void ExtMainContent(void)
 		printf("</td></tr>\n");
         	OpenRow("Admin Functions","black");
 		printf("<td><input type=hidden name=gcFunction value=MainTools>\n");
+		printf(" <input title='Login sessions' class=largeButton type=submit name=gcCommand"
+			" value=SessionReport > \n");
 		printf(" <input title='Find containers not being cloned' class=largeButton type=submit name=gcCommand"
 			" value=CloneReport > \n");
 		printf(" <input title='Find inconsistencies between actual node vz containers and unxsVZ status'"
@@ -4956,4 +4962,62 @@ void ExtracttJob(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 	exit(0);
 
 }//void ExtracttJob(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
+
+
+void SessionReport(const char *cOptionalMsg)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+        MYSQL_RES *mysqlRes2;
+        MYSQL_ROW mysqlField2;
+
+	//To handle error messages etc.
+	if(cOptionalMsg[0] && strcmp(cOptionalMsg,"SessionReport"))
+	{
+		printf("%s\n",cOptionalMsg);
+		return;
+	}
+
+	OpenFieldSet("Login Sessions",100);
+
+	OpenRow("<u>All Sessions</u>","black");
+	sprintf(gcQuery,"SELECT"
+				" tIP.cLabel,"
+				" tProperty.cValue,"
+				" tClient.cLabel,"
+				" FROM_UNIXTIME(tProperty.uCreatedDate)"
+			" FROM tIP,tProperty,tClient"
+			" WHERE tProperty.uType=31"
+			" AND tProperty.uKey=tIP.uIP"
+			" AND tClient.uClient=tProperty.uCreatedBy"
+			" AND tProperty.cName='cLoginSession'"
+				" ORDER BY tProperty.uCreatedDate DESC");
+	macro_mySQLQueryErrorText
+	printf("</td></tr><tr><td></td>"
+			"<td><u>cIPv4</u></td>"
+			"<td><u>Session Data</u></td>"
+			"<td><u>User</u></td>"
+			"<td><u>Date Created</u></td>"
+			"<td><u>Date Expires</u></td>\n");
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		char cLogin[32]={"n/a"};
+		char *cp,*cp2;
+		if((cp=strstr(mysqlField[1],"gcUser=")))
+		{
+			if((cp2=strchr(cp+sizeof("gcUser="),';')))
+				*cp2=0;
+			sprintf(cLogin,"%.31s",cp+sizeof("gcUser=")-1);
+		}
+		sprintf(gcQuery,"SELECT FROM_UNIXTIME(uOTPExpire) FROM tAuthorize WHERE cLabel='%s'",cLogin);
+		macro_mySQLQueryErrorText2
+        	if((mysqlField2=mysql_fetch_row(mysqlRes2)))
+			printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
+						mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField2[0]);
+	}
+	mysql_free_result(mysqlRes);
+
+	CloseFieldSet();
+
+}//void SessionReport(const char *cOptionalMsg)
 
