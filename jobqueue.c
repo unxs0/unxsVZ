@@ -115,6 +115,7 @@ void RestartContainer(unsigned uJob,unsigned uContainer);
 void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cValue);
 void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode);
 void ActivateNATNode(unsigned uJob,unsigned uContainer,unsigned uNode);
+void AlwaysRunTheseJobs(unsigned uNode);
 
 //extern protos
 unsigned TextConnectDb(void); //mysqlconnect.c
@@ -154,9 +155,7 @@ void ProcessJobQueue(unsigned uDebug)
 	unsigned uDatacenter=0;
 	unsigned uNode=0;
 	unsigned uContainer=0;
-	unsigned uCloneContainer=0;
 	unsigned uJob=0;
-	unsigned uError=0;
 	struct sysinfo structSysinfo;
 
 	if(uDebug) guDebug=1;
@@ -273,89 +272,8 @@ void ProcessJobQueue(unsigned uDebug)
 	gfuNode=uNode;
 	guDatacenter=uDatacenter;
 
-	//Special recurring jobs based on special containers
-	//Main loop normal jobs
-	//1-. Maintain clone containers
-	//We need to rsync from running container to clone container
-	//where the source container is running on this node
-	//and the target node is a remote node.
-	//1 uACTIVE
-	//31 uSTOPPED
-	//logfileLine("ProcessCloneSyncJob","Start");
-	//Select clone containers of active or stopped source containers
-	//running on this node
-	sprintf(gcQuery,"SELECT t1.uContainer,t2.uContainer,t1.uStatus FROM tContainer AS t1,tContainer AS t2"
-			" WHERE (t2.uStatus=1 OR t2.uStatus=31)"
-			" AND t1.uSource=t2.uContainer AND t2.uNode=%u",uNode);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("CloneSync",mysql_error(&gMysql));
-		mysql_close(&gMysql);
-		exit(2);
-	}
-        res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		unsigned uCloneStatus=0;
 
-		if(sysinfo(&structSysinfo))
-		{
-			logfileLine("CloneSync","sysinfo() failed");
-			mysql_free_result(res);
-			fclose(gLfp);
-			mysql_close(&gMysql);
-			exit(0);
-		}
-		guSystemLoad=structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE;
-		if(guSystemLoad>JOBQUEUE_CLONE_MAXLOAD)
-		{
-			sprintf(gcQuery,"Load %u larger than clone load limit %u. Skipping clone jobs.",guSystemLoad,JOBQUEUE_CLONE_MAXLOAD);
-			logfileLine("CloneSync",gcQuery);
-			break;
-			mysql_free_result(res);
-			fclose(gLfp);
-			mysql_close(&gMysql);
-			exit(0);
-		}
-		sscanf(field[0],"%u",&uCloneContainer);
-		sscanf(field[1],"%u",&uContainer);
-		sscanf(field[2],"%u",&uCloneStatus);
-		if(guDebug)
-		{
-			sprintf(gcQuery,"uCloneStatus=%u",uCloneStatus);
-			logfileLine("CloneSync",gcQuery);
-		}
-
-		switch(uCloneStatus)
-		{
-			//We only move the delta files to the
-			//remote node for backup (cold spare) and possible remote failover BC/DR.
-			//Provided sample script osdeltasync.sh handles the details.
-			case uINITSETUP:
-				if((uError=ProcessOSDeltaSyncJob(uNode,uContainer,uCloneContainer)))
-				{
-					logfileLine("ProcessOSDeltaCloneSyncJob uError",field[1]);
-					//error return(6) when clone script fails.
-					if(uError!=6)
-						LogError("ProcessOSDeltaCloneSyncJob()",uError);
-				}
-			break;
-
-			//Here provided sample script clonesync.sh does an rsync
-			//and keeps the clone container as warm spare.
-			case uSTOPPED:
-			case uACTIVE:
-				if((uError=ProcessCloneSyncJob(uNode,uContainer,uCloneContainer)))
-				{
-					logfileLine("ProcessCloneSyncJob uError",field[1]);
-					//error return(6) when clone script fails.
-					if(uError!=6)
-						LogError("ProcessCloneSyncJob()",uError);
-				}
-		}
-	}
-	mysql_free_result(res);
+	AlwaysRunTheseJobs(uNode);
 
 	if(guDebug)
 	{
@@ -8163,3 +8081,199 @@ void StartIptables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsig
 	tJobDoneUpdate(uJob);
 	return;
 }//void StartIptables()
+
+
+//Run the special jobs in this function everytime we run the jobqueue processor
+void AlwaysRunTheseJobs(unsigned uNode)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
+	struct sysinfo structSysinfo;
+
+	//
+	//Sync container job section
+
+	unsigned uContainer=0;
+	unsigned uCloneContainer=0;
+	unsigned uError=0;
+	//Special recurring jobs based on special containers
+	//Main loop normal jobs
+	//1-. Maintain clone containers
+	//We need to rsync from running container to clone container
+	//where the source container is running on this node
+	//and the target node is a remote node.
+	//1 uACTIVE
+	//31 uSTOPPED
+	//logfileLine("ProcessCloneSyncJob","Start");
+	//Select clone containers of active or stopped source containers
+	//running on this node
+	sprintf(gcQuery,"SELECT t1.uContainer,t2.uContainer,t1.uStatus FROM tContainer AS t1,tContainer AS t2"
+			" WHERE (t2.uStatus=1 OR t2.uStatus=31)"
+			" AND t1.uSource=t2.uContainer AND t2.uNode=%u",uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("CloneSync",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		unsigned uCloneStatus=0;
+
+		if(sysinfo(&structSysinfo))
+		{
+			logfileLine("CloneSync","sysinfo() failed");
+			mysql_free_result(res);
+			fclose(gLfp);
+			mysql_close(&gMysql);
+			exit(0);
+		}
+		guSystemLoad=structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE;
+		if(guSystemLoad>JOBQUEUE_CLONE_MAXLOAD)
+		{
+			sprintf(gcQuery,"Load %u larger than clone load limit %u. Skipping clone jobs.",guSystemLoad,JOBQUEUE_CLONE_MAXLOAD);
+			logfileLine("CloneSync",gcQuery);
+			break;
+		}
+		sscanf(field[0],"%u",&uCloneContainer);
+		sscanf(field[1],"%u",&uContainer);
+		sscanf(field[2],"%u",&uCloneStatus);
+		if(guDebug)
+		{
+			sprintf(gcQuery,"uCloneStatus=%u",uCloneStatus);
+			logfileLine("CloneSync",gcQuery);
+		}
+
+		switch(uCloneStatus)
+		{
+			//We only move the delta files to the
+			//remote node for backup (cold spare) and possible remote failover BC/DR.
+			//Provided sample script osdeltasync.sh handles the details.
+			case uINITSETUP:
+				if((uError=ProcessOSDeltaSyncJob(uNode,uContainer,uCloneContainer)))
+				{
+					logfileLine("ProcessOSDeltaCloneSyncJob uError",field[1]);
+					//error return(6) when clone script fails.
+					if(uError!=6)
+						LogError("ProcessOSDeltaCloneSyncJob()",uError);
+				}
+			break;
+
+			//Here provided sample script clonesync.sh does an rsync
+			//and keeps the clone container as warm spare.
+			case uSTOPPED:
+			case uACTIVE:
+				if((uError=ProcessCloneSyncJob(uNode,uContainer,uCloneContainer)))
+				{
+					logfileLine("ProcessCloneSyncJob uError",field[1]);
+					//error return(6) when clone script fails.
+					if(uError!=6)
+						LogError("ProcessCloneSyncJob()",uError);
+				}
+		}
+	}
+	mysql_free_result(res);
+	//
+	//End sync container job section
+
+	//
+	//Firewall job section
+	char cTemplate[512]={
+				"/sbin/iptables -L UnxsVZ-SSH -n | grep -w %1$s > /dev/null; if [ $? == 0 ];then"
+					" /sbin/iptables -D UnxsVZ-SSH -s %1$s -j ACCEPT;"
+				" fi;"
+				"/sbin/iptables -L UnxsVZ-HTTP -n | grep -w %1$s > /dev/null; if [ $? == 0 ];then"
+					" /sbin/iptables -D UnxsVZ-HTTP -s %1$s -j ACCEPT;"
+				" fi;"
+					};
+	
+	//Remove expired items from iptables per node firewall
+	//sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE (uFWStatus=3 OR uFWStatus=1) AND uDatacenter=41 AND uAvailable=0");
+	//
+	sprintf(gcQuery,"SELECT tIP.cLabel,tProperty.uProperty,tProperty.cValue,tIP.uIP FROM tIP,tProperty,tAuthorize"
+			" WHERE tProperty.uKey=tIP.uIP"
+			" AND tProperty.uType=31"
+			" AND tProperty.cName='cLoginSession'"
+			" AND tProperty.uCreatedBy=tAuthorize.uCertClient"
+			" AND tAuthorize.uOTPExpire<UNIX_TIMESTAMP(NOW())"
+			" AND tAuthorize.uOTPExpire>0"
+			" ORDER BY tIP.uIP");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ExpiredItems",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(sysinfo(&structSysinfo))
+		{
+			logfileLine("ExpiredItems","sysinfo() failed");
+			mysql_free_result(res);
+			fclose(gLfp);
+			mysql_close(&gMysql);
+			exit(0);
+		}
+		guSystemLoad=structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE;
+		if(guSystemLoad>JOBQUEUE_CLONE_MAXLOAD)
+		{
+			sprintf(gcQuery,"Load %u larger than clone load limit %u. Skipping ExpiredItems jobs.",guSystemLoad,JOBQUEUE_CLONE_MAXLOAD);
+			logfileLine("ExpiredItems",gcQuery);
+			break;
+		}
+	
+		unsigned uCount=0;
+		sprintf(gcQuery,"SELECT COUNT(tProperty.uProperty) FROM tProperty"
+			" WHERE tProperty.uKey=%s"
+			" AND tProperty.uType=31"
+			" AND tProperty.cName='cLoginSession'",field[3]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ExpiredItems",mysql_error(&gMysql));
+			break;
+		}
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+			sscanf(field2[0],"%u",&uCount);
+		mysql_free_result(res2);
+
+		//if(guDebug)
+		if(1)
+		{
+			sprintf(gcQuery,"cLabel=cIPv4=%s;cValue=(%s);uCount=%u;",field[0],field[2],uCount);
+			logfileLine("ExpiredItems",gcQuery);
+		}
+
+		if(uCount==1)
+		{
+			sprintf(gcQuery,cTemplate,field[0]);
+			if(system(gcQuery))
+			{
+				logfileLine("ExpiredItems","iptables command failed");
+				if(guDebug)
+					logfileLine("cTemplate",gcQuery);
+				continue;
+			}
+			//if(guDebug)
+				logfileLine("ExpiredItems",field[0]);
+		}
+
+		sprintf(gcQuery,"DELETE FROM tProperty WHERE uProperty=%s",field[1]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			logfileLine("ExpiredItems",mysql_error(&gMysql));
+		//if(guDebug)
+			logfileLine("ExpiredItems",field[1]);
+	}
+	mysql_free_result(res);
+	//
+	//End firewall job section
+
+}//AlwaysRunTheseJobs()
