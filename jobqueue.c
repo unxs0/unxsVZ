@@ -7999,7 +7999,7 @@ void StartIptables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsig
 
         MYSQL_RES *res;
         MYSQL_ROW field;
-	char cCommand[100]={""};
+	char cCommand[256]={""};
 	//
 	//UnxsVZ-FW section
 	//
@@ -8052,8 +8052,9 @@ void StartIptables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsig
 	//will start using uIPType soon...depends on unxsSnort changes etc.
 	//customer premise IPs with uFWStatus
 	//FW DROP or WAITING DROP
-	sprintf(gcQuery,"SELECT tIP.cLabel FROM tIP,tProperty"
-			" WHERE tIP.uIPType=7 AND tIP.uAvailable=0"
+	sprintf(gcQuery,"SELECT DISTINCT tIP.cLabel,tProperty.uCreatedBy FROM tIP,tProperty"
+			//" WHERE (tIP.uIPType=7 OR tIP.uIPType=0) AND tIP.uAvailable=0"
+			" WHERE tIP.uAvailable=0"
 			" AND tProperty.uKey=tIP.uIP"
 			" AND tProperty.uType=31"
 			" AND tProperty.cName='cLoginSession'");
@@ -8062,15 +8063,26 @@ void StartIptables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsig
 		logfileLine("StartIptables",mysql_error(&gMysql));
 	else
 	{
+		char cEnableSSHOnLogin[256];
+		unsigned uClient=0;
 		res=mysql_store_result(&gMysql);
 		while((field=mysql_fetch_row(res)))
 		{
-			sprintf(cCommand,"/sbin/iptables -I UnxsVZ-HTTP -s %1$s -j ACCEPT;",field[0]);
+			cEnableSSHOnLogin[0]=0;
+			sscanf(field[1],"%u",&uClient);
+			if(uClient)
+				GetClientProp(uClient,"cEnableSSHOnLogin",cEnableSSHOnLogin);
+			if(!strncmp(cEnableSSHOnLogin,"Yes",sizeof("Yes")))
+				sprintf(cCommand,"/sbin/iptables -I UnxsVZ-HTTP -s %1$s -j ACCEPT;"
+						"/sbin/iptables -I UnxsVZ-SSH -s %1$s -j ACCEPT;",field[0]);
+			else
+				sprintf(cCommand,"/sbin/iptables -I UnxsVZ-HTTP -s %1$s -j ACCEPT;",field[0]);
 			if(system(cCommand))
 			{
 				logfileLine("StartIptables",cCommand);
 				break;
 			}
+			logfileLine("StartIptables",field[0]);
 		}
 		mysql_free_result(res);
 	}
@@ -8191,9 +8203,8 @@ void AlwaysRunTheseJobs(unsigned uNode)
 				" fi;"
 					};
 	
-	//Remove expired items from iptables per node firewall
-	//sprintf(gcQuery,"SELECT cLabel FROM tIP WHERE (uFWStatus=3 OR uFWStatus=1) AND uDatacenter=41 AND uAvailable=0");
-	//
+	//Remove expired items from iptables per node firewall, but only when we reach the last session for a given IP.
+	//Remove the expired session from tIP::tProperty always.
 	sprintf(gcQuery,"SELECT tIP.cLabel,tProperty.uProperty,tProperty.cValue,tIP.uIP FROM tIP,tProperty,tAuthorize"
 			" WHERE tProperty.uKey=tIP.uIP"
 			" AND tProperty.uType=31"
