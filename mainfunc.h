@@ -5017,6 +5017,30 @@ void SessionReport(const char *cOptionalMsg)
 	}
 	mysql_free_result(mysqlRes);
 
+	OpenRow("<u>Configured Hardware Nodes</u>","black");
+	sprintf(gcQuery,"SELECT"
+				" tNode.cLabel,"
+				" tDatacenter.cLabel,"
+				" FROM_UNIXTIME(tProperty.uCreatedDate)"
+			" FROM tNode,tProperty,tDatacenter"
+			" WHERE tProperty.uType=2"
+			" AND tProperty.uKey=tNode.uNode"
+			" AND tProperty.cName='cCreateLoginJobs'"
+			" AND tProperty.cValue='Yes'"
+			" AND tDatacenter.uDatacenter=tNode.uDatacenter"
+				" ORDER BY tProperty.uCreatedDate DESC");
+	macro_mySQLQueryErrorText
+	printf("</td></tr><tr><td></td>"
+			"<td><u>Node</u></td>"
+			"<td><u>Datacenter</u></td>"
+			"<td><u>Date Created</u></td>");
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td>\n",
+						mysqlField[0],mysqlField[1],mysqlField[2]);
+	}
+	mysql_free_result(mysqlRes);
+
 	CloseFieldSet();
 
 }//void SessionReport(const char *cOptionalMsg)
