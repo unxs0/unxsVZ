@@ -243,6 +243,57 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
 			}
 		}
+                else if(!strcmp(gcCommand,"Activate Firewalls"))
+                {
+                        ProcesstDatacenterVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy) && guPermLevel>11)
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tDatacenter","uModDate",uDatacenter),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
+
+        			MYSQL_RES *res;
+        			MYSQL_ROW field;
+				sprintf(gcQuery,"SELECT tNode.uNode FROM tDatacenter,tNode"
+						" WHERE tNode.uDatacenter=tDatacenter.uDatacenter"
+						" AND tNode.uStatus=1 AND tDatacenter.uDatacenter=%u",uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+                				htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				unsigned uJobs=0;
+				while((field=mysql_fetch_row(res)))
+				{
+					sprintf(gcQuery,"INSERT INTO tJob"
+						" SET cLabel='StartIptables::tDatacenter',"
+						" cJobName='StartIptables',"
+						" uJobStatus=1,"
+						" uDatacenter=%u,"
+						" uNode=%s,"
+						" uJobDate=UNIX_TIMESTAMP(NOW()),"
+						" uOwner=%u,"
+						" uCreatedBy=%u,"
+						" uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								uDatacenter,field[0],guCompany,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				htmlPlainTextError(mysql_error(&gMysql));
+					if(mysql_affected_rows(&gMysql)) uJobs++;
+				}
+				sprintf(gcQuery,"%u tJobs created",uJobs);
+				tDatacenter(gcQuery);
+			}
+			else if(uAllowMod(uOwner,uCreatedBy))
+			{
+				tDatacenter("<blink>Error</blink>: Denied by node status");
+			}
+			else
+			{
+				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
 	}
 
 }//void ExttDatacenterCommands(pentry entries[], int x)
@@ -287,8 +338,13 @@ void ExttDatacenterButtons(void)
 					" uVeth='Yes' container traffic is not included"
 					"in the datacenter graphs at this time.");
 			if(guPermLevel>11 && uStatus!=uOFFLINE)
-				printf("<p><input type=submit class=lwarnButton title='Change datacenter status to offline.'"
-					" name=gcCommand value='Datacenter Offline'><br>");
+			{
+					printf("<p><input type=submit class=lwarnButton title='Change datacenter status to offline.'"
+						" name=gcCommand value='Datacenter Offline'><br>");
+				printf("<p><input type=submit class=lwarnButton title='Create firewall restart jobs for all"
+					" active datacenter nodes. Uses tIP FW and login session data'"
+					" name=gcCommand value='Activate Firewalls'><br>");
+			}
 			//tGroupNavList();
 			tNodeNavList(uDatacenter);
 			tDatacenterNavList();
