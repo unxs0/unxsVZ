@@ -8262,7 +8262,8 @@ void AlwaysRunTheseJobs(unsigned uNode)
 			logfileLine("ExpiredItems",gcQuery);
 		}
 
-		if(uCount==1)
+		//can be 0
+		if(uCount<2)
 		{
 			sprintf(gcQuery,cTemplate,field[0]);
 			if(system(gcQuery))
