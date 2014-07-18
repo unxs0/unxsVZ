@@ -8319,7 +8319,7 @@ void RemoveAcceptsFromChainIfNotSession(char const *cChain)
 {
 	FILE *fp;
 	char cIPv4[32];
-	sprintf(gcQuery,"iptables -L %.32s -n | grep ACCEPT |awk '{print $4}'",cChain);
+	sprintf(gcQuery,"/sbin/iptables -L %.32s -n |grep ACCEPT |awk '{print $4}'",cChain);
 	if((fp=popen(gcQuery,"r")))
 	{
 		char *cp;
