@@ -173,8 +173,8 @@ int main(int iArgc, char *cArgv[])
 				unxsVZ("");
 			else if(!strcmp(gcFunction,"Logout"))
 			{
-				printf("Set-Cookie: unxsVZLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				printf("Set-Cookie: unxsVZPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsVZLogin=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsVZPasswd=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
 				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
 				" uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE "
@@ -1907,8 +1907,8 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: unxsVZLogin=%s;\n",gcLogin);
-		printf("Set-Cookie: unxsVZPasswd=%s;\n",gcPasswd);
+		printf("Set-Cookie: unxsVZLogin=%s; secure;\n",gcLogin);
+		printf("Set-Cookie: unxsVZPasswd=%s; secure;\n",gcPasswd);
 		strncpy(gcUser,gcLogin,41);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
@@ -3032,9 +3032,15 @@ void LoginFirewallJobs(unsigned uLoginClient)
 		//already logged in do nothing
 		return;
 	}
+
 	//For existing or creates new tIP entry
+	//For each unique IP or NAT user we create a session
 	CreateLoginSession(gcHost,gcLogin,gcCompany);
 
+	//If NAT user:
+	//No need to create login jobs since session already exists for another user same IP?
+	if(cLoginSession[0])
+		return;
 
 	//Only for nodes with tProperty.cName=cCreateLoginJobs
 	sprintf(gcQuery,"SELECT DISTINCT tNode.uNode,tNode.uDatacenter"
