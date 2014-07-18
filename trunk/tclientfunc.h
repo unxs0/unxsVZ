@@ -57,6 +57,7 @@ void tTablePullDownResellers(unsigned uSelector,unsigned uBanner);
 void ContactsNavList(void);
 void htmlRecordContext(void);
 
+void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
 
 void ExtProcesstClientVars(pentry entries[], int x)
 {
@@ -358,6 +359,35 @@ void ExttClientCommands(pentry entries[], int x)
 
 		}//Confirm auth
 
+                else if(!strcmp(gcCommand,"cEnableSSHOnLogin"))
+                {
+                        ProcesstClientVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) && guPermLevel>11 && uClient)
+			{
+				guMode=0;
+				char cEnableSSHOnLogin[256]={""};
+				GetClientProp(uClient,"cEnableSSHOnLogin",cEnableSSHOnLogin);
+				if(!strcmp(cEnableSSHOnLogin,"Yes"))
+					tClient("cEnableSSHOnLogin already set");
+					
+				sprintf(gcQuery,"INSERT INTO tProperty"
+						" SET uType=41,uKey=%u,"
+						" cName='cEnableSSHOnLogin',cValue='Yes',"
+						" uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uOwner=%u",
+							uClient,guLoginClient,guCompany);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+				{
+					printf("Content-type: text/plain\n\n");
+                			printf("mysql_error: %s\n",mysql_error(&gMysql));
+					exit(0);
+				}
+				tClient("cEnableSSHOnLogin tProperty entry created.");
+			}
+			else
+				tClient("<blink>Error</blink>: Denied by permissions settings");
+		}
+
 	}
 
 }//void ExttClientCommands(pentry entries[], int x)
@@ -461,6 +491,10 @@ void ExttClientButtons(void)
 					"type=submit name=gcCommand value='Authorize'>",cLabel);
 			}
 
+			if(guPermLevel>11 && uClient)
+			printf("<p><input class=largeButton"
+				" title='Add tClient::tProperty that configures the hardware node iptables for ssh access from login IP'"
+					"type=submit name=gcCommand value='cEnableSSHOnLogin'>");
 			ContactsNavList();
 	}
 
@@ -479,7 +513,7 @@ void ExttClientButtons(void)
 
 void ExttClientAuxTable(void)
 {
-	if(!uClient || guMode!=6)
+	if(!uClient)
 		return;
 
         MYSQL_RES *res;
