@@ -67,6 +67,7 @@ unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP);
 void CreateLoginSession(const char *cHostIP,const char *gcUser,const char *gcCompany);
 void RemoveLoginSession(const char *cHostIP,const char *gcUser,const char *gcCompany);
 void NewNoDupsIPProp(char const *cName,char const *cValue,unsigned uIP);
+void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue);
 
 //This is a compatability function that should be deprecated and replaced.
 void ErrorMsg(const char *cText)
@@ -1275,4 +1276,42 @@ void GetIPProp(const unsigned uIP,const char *cName,char *cValue)
 	mysql_free_result(res);
 
 }//void GetIPProp()
+
+//UBC safe
+void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(!cHostIP[0]) return;
+
+	//31 is tIP
+	sprintf(gcQuery,"SELECT cValue FROM tProperty"
+			" WHERE uKey IN (SELECT uIP FROM tIP WHERE uIPNum=INET_ATON('%.15s'))"
+			" AND uType=31 AND cName='%s'",
+				cHostIP,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		if(gLfp!=NULL)
+		{
+			logfileLine("GetIPProp",mysql_error(&gMysql));
+			exit(2);
+		}
+		else
+		{
+			ErrorMsg(mysql_error(&gMysql));
+		}
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetIPPropFromHost()
 

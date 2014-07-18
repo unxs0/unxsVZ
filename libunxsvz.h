@@ -56,6 +56,7 @@ unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyNam
 void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
 void GetIPProp(const unsigned uIP,const char *cName,char *cValue);
+void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue);
 
 //Global vars
 
