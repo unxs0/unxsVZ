@@ -63,6 +63,7 @@ void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void ChangeGroup(unsigned uContainer, unsigned uGroup);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 char *strptime(const char *s, const char *format, struct tm *tm);
+void TestJob(char const *cJobname);
 
 //jobqueue.c
 void ProcessJobQueue(unsigned uDebug);
@@ -81,11 +82,14 @@ void ExtMainShell(int argc, char *argv[])
                 ProcessJobQueue(0);
         if(argc==2 && !strcmp(argv[1],"ProcessJobQueueDebug"))
                 ProcessJobQueue(1);
+        if(argc==3 && !strcmp(argv[1],"TestJob"))
+                TestJob(argv[2]);
         else
 	{
 		printf("\n%s %s\nMenu\n",argv[0],cRELEASE);
 		printf("\tProcessJobQueue\n");
 		printf("\tProcessJobQueueDebug\n");
+		printf("\tTestJob <special cJobname>\n");
 		printf("\n");
 	}
 	mysql_close(&gMysql);

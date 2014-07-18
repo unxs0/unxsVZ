@@ -2854,44 +2854,6 @@ void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcComp
 void RemoveLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 void NewNoDupsIPProp(char const *cName,char const *cValue,unsigned uIP);
 
-//UBC safe
-void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue)
-{
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	if(!cHostIP[0]) return;
-
-	//31 is tIP
-	sprintf(gcQuery,"SELECT cValue FROM tProperty"
-			" WHERE uKey IN (SELECT uIP FROM tIP WHERE uIPNum=INET_ATON('%.15s'))"
-			" AND uType=31 AND cName='%s'",
-				cHostIP,cName);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		if(gLfp!=NULL)
-		{
-			logfileLine("GetIPProp",mysql_error(&gMysql));
-			exit(2);
-		}
-		else
-		{
-			htmlPlainTextError(mysql_error(&gMysql));
-		}
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		char *cp;
-		if((cp=strchr(field[0],'\n')))
-			*cp=0;
-		sprintf(cValue,"%.255s",field[0]);
-	}
-	mysql_free_result(res);
-
-}//void GetIPPropFromHost()
-
 
 //UBC safe should not be used for UBCs	
 void SetUpdateIPProp(char const *cName,char const *cValue,unsigned uIP)
@@ -2928,7 +2890,7 @@ void SetUpdateIPPropFromHost(char const *cName,char const *cValue,char const *cH
         MYSQL_ROW field;
 
 	sprintf(gcQuery,"SELECT uProperty FROM tProperty"
-			" WHERE uKey=(SELECT uIP FROM tIP WHERE uIPNum=INET_ATON('%s'))"
+			" WHERE uKey IN (SELECT uIP FROM tIP WHERE uIPNum=INET_ATON('%s'))"
 			" AND uType=31 AND cName='%s'",cHostIP,cName);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -3005,7 +2967,7 @@ void RemoveLoginSession(const char *cHostIP,const char *gcUser,const char *gcCom
 
 	//31 is tIP
 	sprintf(gcQuery,"DELETE FROM tProperty"
-			" WHERE uKey=(SELECT uIP FROM tIP WHERE uIPNum=INET_ATON('%.15s') LIMIT 1)"
+			" WHERE uKey IN (SELECT uIP FROM tIP WHERE uIPNum=INET_ATON('%.15s'))"
 			" AND uType=31 AND cValue='gcUser=%.31s;gcCompany=%.31s;'",
 				cHostIP,gcUser,gcCompany);
 	mysql_query(&gMysql,gcQuery);

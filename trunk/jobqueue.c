@@ -36,6 +36,7 @@ FILE CONTENTS
 //	table of contents
 
 //local protos, order=ret type, in file
+void TestJob(char const *cJobname);
 void ProcessJobQueue(unsigned uDebug);
 void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		unsigned uContainer,char *cJobName,char *cJobData);
@@ -89,6 +90,7 @@ void LogoutFirewallJobSSH(unsigned uJob,const char *cJobData,unsigned uDatacente
 void LoginFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void LogoutFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void StartIptables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
+void RemoveAcceptsFromChainIfNotSession(char const *cChain);
 
 unsigned uNotValidSystemCallArg(char *cSSHOptions);
 unsigned GetContainerStatus(const unsigned uContainer, unsigned *uStatus);
@@ -143,6 +145,24 @@ static char cHostname[100]={""};//file scope
 //	a job per job basis. E.g. firewall block job should run no matter what
 //	since external DoS may raise load but we need to block the bad actor IP.
 static unsigned guSystemLoad=0;//sysinfo() load
+
+
+//Just for easy local testing of certain things
+void TestJob(char const *cJobName)
+{
+	guDebug=1;
+	if(!strcmp(cJobName,"RemoveAcceptsFromChainIfNotSession"))
+	{
+		if(TextConnectDb())
+			exit(1);
+		RemoveAcceptsFromChainIfNotSession("UnxsVZ-HTTP");
+	}
+	else
+	{
+		printf("No %s found in TestJob()\n",cJobName);
+	}
+
+}//void TestJob(char const *cJobname)
 
 
 //Using the local server hostname get max 32 jobs for this node from the tJob queue.
@@ -8285,7 +8305,55 @@ void AlwaysRunTheseJobs(unsigned uNode)
 			logfileLine("ExpiredItems",field[1]);
 	}
 	mysql_free_result(res);
+
+	//Need to cleanup for users that close browser without logging out
+	RemoveAcceptsFromChainIfNotSession("UnxsVZ-HTTP");
+	RemoveAcceptsFromChainIfNotSession("UnxsVZ-SSH");
 	//
 	//End firewall job section
 
 }//AlwaysRunTheseJobs()
+
+
+void RemoveAcceptsFromChainIfNotSession(char const *cChain)
+{
+	FILE *fp;
+	char cIPv4[32];
+	sprintf(gcQuery,"iptables -L %.32s -n | grep ACCEPT |awk '{print $4}'",cChain);
+	if((fp=popen(gcQuery,"r")))
+	{
+		char *cp;
+		char cTemplate[512]={
+				"/sbin/iptables -L %2$s -n | grep -w %1$s > /dev/null; if [ $? == 0 ];then"
+					" /sbin/iptables -D %2$s -s %1$s -j ACCEPT;"
+				" fi;"
+					};
+	
+		while(fgets(cIPv4,31,fp)!=NULL)
+		{
+			if((cp=strchr(cIPv4,'\n')))
+				*cp=0;
+			if(guDebug)
+				printf("%.31s\n",cIPv4);
+
+			//IP in valid session
+			char cLoginSession[256]={""};
+			GetIPPropFromHost(cIPv4,"cLoginSession",cLoginSession);
+			if(cLoginSession[0])
+			{
+				if(guDebug)
+					printf("\tValid session: %.255s\n",cLoginSession);
+				continue;
+			}
+
+			sprintf(gcQuery,cTemplate,cIPv4,cChain);
+			if(guDebug)
+				printf("%.511s\n",gcQuery);
+			if(system(gcQuery))
+				logfileLine("RemoveAcceptsFromChainIfNotSession","iptables command failed");
+			else
+				logfileLine("RemoveAcceptsFromChainIfNotSession",cIPv4);
+		}
+	}
+	pclose(fp);
+}//void RemoveAcceptsFromChain(char const *cChain)
