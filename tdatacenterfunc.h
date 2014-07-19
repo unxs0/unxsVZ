@@ -255,6 +255,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
 
         			MYSQL_RES *res;
+        			MYSQL_RES *res2;
         			MYSQL_ROW field;
 				sprintf(gcQuery,"SELECT tNode.uNode FROM tDatacenter,tNode"
 						" WHERE tNode.uDatacenter=tDatacenter.uDatacenter"
@@ -281,6 +282,34 @@ void ExttDatacenterCommands(pentry entries[], int x)
         				if(mysql_errno(&gMysql))
                 				htmlPlainTextError(mysql_error(&gMysql));
 					if(mysql_affected_rows(&gMysql)) uJobs++;
+
+					sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+						" WHERE cName='cCreateLoginJobs'"
+						" AND cValue='Yes'"
+						" AND uKey=%s"
+						" AND uType=2",
+							field[0]);
+					mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				htmlPlainTextError(mysql_error(&gMysql));
+	        			res2=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res2)==0)
+					{
+						//Configure tNode::tProperty
+						sprintf(gcQuery,"INSERT INTO tProperty"
+							" SET cName='cCreateLoginJobs',"
+							" cValue='Yes',"
+							" uKey=%s,"
+							" uType=2,"
+							" uOwner=%u,"
+							" uCreatedBy=%u,"
+							" uCreatedDate=UNIX_TIMESTAMP(NOW())",
+									field[0],guCompany,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+       		 				if(mysql_errno(&gMysql))
+       		         				htmlPlainTextError(mysql_error(&gMysql));
+					}
+
 				}
 				sprintf(gcQuery,"%u tJobs created",uJobs);
 				tDatacenter(gcQuery);

@@ -3006,6 +3006,7 @@ void LoginFirewallJobs(unsigned uLoginClient)
 	if(!gcOTPSecret[0])
 		return;
         MYSQL_RES *res;
+        MYSQL_RES *res2;
 	MYSQL_ROW field;
 
 	//Master condition
@@ -3064,7 +3065,18 @@ void LoginFirewallJobs(unsigned uLoginClient)
 		sscanf(field[0],"%u",&uNode);
 		sscanf(field[1],"%u",&uDatacenter);
 
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LoginFirewallJobs(%u)',cJobName='%s'"
+		//avoid extra job queue traffic
+		sprintf(gcQuery,"SELECT uJob FROM tJob"
+				" WHERE cJobName='%s' AND uJobStatus=1"
+				" AND cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'",
+							cJobName,gcHost);
+		mysql_query(&gMysql,gcQuery);
+        	if(!mysql_errno(&gMysql))
+		{
+			res2=mysql_store_result(&gMysql);
+        		if(mysql_num_rows(res2)==0)
+			{
+				sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LoginFirewallJobs(%u)',cJobName='%s'"
 					",uDatacenter=%u,uNode=%u,uContainer=0"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1"
@@ -3076,7 +3088,9 @@ void LoginFirewallJobs(unsigned uLoginClient)
 						uNode,
 						gcHost,
 						guCompany,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
+				mysql_query(&gMysql,gcQuery);
+			}
+		}
 	}
 }//void LoginFirewallJobs(unsigned uLoginClient)
 
@@ -3084,6 +3098,7 @@ void LoginFirewallJobs(unsigned uLoginClient)
 void LogoutFirewallJobs(unsigned uLoginClient)
 {
         MYSQL_RES *res;
+        MYSQL_RES *res2;
 	MYSQL_ROW field;
 
 	char cCreateLoginJobs[256]={""};
@@ -3128,7 +3143,18 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 		sscanf(field[0],"%u",&uNode);
 		sscanf(field[1],"%u",&uDatacenter);
 
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LogoutFirewallJobs(%u)',cJobName='%s'"
+		//avoid extra job queue traffic
+		sprintf(gcQuery,"SELECT uJob FROM tJob"
+				" WHERE cJobName='%s' AND uJobStatus=1"
+				" AND cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'",
+							cJobName,gcHost);
+		mysql_query(&gMysql,gcQuery);
+        	if(!mysql_errno(&gMysql))
+		{
+			res2=mysql_store_result(&gMysql);
+        		if(mysql_num_rows(res2)==0)
+			{
+				sprintf(gcQuery,"INSERT INTO tJob SET cLabel='LogoutFirewallJobs(%u)',cJobName='%s'"
 					",uDatacenter=%u,uNode=%u,uContainer=0"
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1"
@@ -3140,6 +3166,8 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 						uNode,
 						gcHost,
 						guCompany,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
+				mysql_query(&gMysql,gcQuery);
+			}
+		}
 	}
 }//void LogoutFirewallJobs(unsigned uLoginClient)
