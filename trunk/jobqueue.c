@@ -7220,6 +7220,8 @@ void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,uns
 	//logfileLine("UndoBlockAccess",cData);
 
 	sprintf(gcQuery,cTemplate,cIPv4,cIPv4);
+	if(guDebug)
+		logfileLine("UndoBlockAccess",gcQuery);
 	if(system(gcQuery))
 	{
 		logfileLine("UndoBlockAccess","iptables command failed");
@@ -7400,6 +7402,8 @@ void RemoveAcceptFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatac
 
 	//remove DROP and/or ACCEPT
 	char cTemplate[512]={
+			"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
+				" /sbin/iptables -D UnxsVZ-FW -s %1$s -j DROP;"
 			"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s | grep -w ACCEPT > /dev/null; if [ $? == 0 ];then"
 				" /sbin/iptables -D UnxsVZ-FW -s %1$s -j ACCEPT;"
 			" fi;"
@@ -8275,8 +8279,7 @@ void AlwaysRunTheseJobs(unsigned uNode)
 			sscanf(field2[0],"%u",&uCount);
 		mysql_free_result(res2);
 
-		//if(guDebug)
-		if(1)
+		if(guDebug)
 		{
 			sprintf(gcQuery,"cLabel=cIPv4=%s;cValue=(%s);uCount=%u;",field[0],field[2],uCount);
 			logfileLine("ExpiredItems",gcQuery);

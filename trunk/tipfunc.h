@@ -880,7 +880,7 @@ void ExttIPAuxTable(void)
 			printf("&nbsp;<input title='Set firewall status to whitelisted. This keeps the IP from being blocked by unxsSnort agent.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Whitelist'>\n");
-			if(guPermLevel>=12)
+			if(guPermLevel>=10)
 			{
 				printf("&nbsp; <input title='Remove IP from all iptables node firewalls'"
 				" type=submit class=lwarnButton"
@@ -1180,7 +1180,7 @@ while((field=mysql_fetch_row(res)))
 					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
 					unsigned uFWStatus=0;
 					sscanf(ForeignKey("tIP","uFWStatus",uCtIP),"%u",&uFWStatus);
-					if(guPermLevel<12)
+					if(guPermLevel<10)
 					{
 						sprintf(cResult,"insufficient permlevel");
 						break;
@@ -1636,7 +1636,7 @@ while((field=mysql_fetch_row(res)))
 					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
 					unsigned uFWStatus=0;
 					sscanf(ForeignKey("tIP","uFWStatus",uCtIP),"%u",&uFWStatus);
-					if(guPermLevel<12)
+					if(guPermLevel<10)
 					{
 						sprintf(cResult,"insufficient permlevel");
 						break;
