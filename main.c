@@ -3066,10 +3066,23 @@ void LoginFirewallJobs(unsigned uLoginClient)
 		sscanf(field[1],"%u",&uDatacenter);
 
 		//avoid extra job queue traffic
+		//delete any pending logout jobs
+		sprintf(gcQuery,"DELETE FROM tJob WHERE cLabel='LogoutFirewallJobs(%u)'"
+					" AND uDatacenter=%u AND uNode=%u AND uContainer=0"
+					" AND uJobStatus=1"
+					" AND cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'",
+						uLoginClient,
+						uDatacenter,
+						uNode,
+						gcHost);
+		mysql_query(&gMysql,gcQuery);
+
+		//do not add again
 		sprintf(gcQuery,"SELECT uJob FROM tJob"
-				" WHERE cJobName='%s' AND uJobStatus=1"
+				" WHERE cLabel='LoginFirewallJobs(%u)' AND cJobName='%s' AND uJobStatus=1"
+				" AND uDatacenter=%u AND uNode=%u AND uContainer=0"
 				" AND cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'",
-							cJobName,gcHost);
+							uLoginClient,cJobName,uDatacenter,uNode,gcHost);
 		mysql_query(&gMysql,gcQuery);
         	if(!mysql_errno(&gMysql))
 		{
@@ -3144,10 +3157,24 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 		sscanf(field[1],"%u",&uDatacenter);
 
 		//avoid extra job queue traffic
+		//delete any pending login jobs
+		sprintf(gcQuery,"DELETE FROM tJob WHERE cLabel='LoginFirewallJobs(%u)' AND cJobName='%s'"
+					" AND uDatacenter=%u AND uNode=%u AND uContainer=0"
+					" AND uJobStatus=1"
+					" AND cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'",
+						uLoginClient,
+						cJobName,
+						uDatacenter,
+						uNode,
+						gcHost);
+		mysql_query(&gMysql,gcQuery);
+
+		//do not add again
 		sprintf(gcQuery,"SELECT uJob FROM tJob"
-				" WHERE cJobName='%s' AND uJobStatus=1"
+				" WHERE cLabel='LogoutFirewallJobs(%u)' AND cJobName='%s' AND uJobStatus=1"
+				" AND uDatacenter=%u AND uNode=%u AND uContainer=0"
 				" AND cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'",
-							cJobName,gcHost);
+							uLoginClient,cJobName,uDatacenter,uNode,gcHost);
 		mysql_query(&gMysql,gcQuery);
         	if(!mysql_errno(&gMysql))
 		{
