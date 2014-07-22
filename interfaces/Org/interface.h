@@ -58,6 +58,8 @@ char *FQDomainName(char *cInput);
 void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template);
+void LogoutFirewallJobs(unsigned uLoginClient);
+void LoginFirewallJobs(unsigned uLoginClient);
 
 //Global vars all declared in main.c
 //libtemplate.a required
