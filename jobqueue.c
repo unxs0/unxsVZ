@@ -107,6 +107,7 @@ unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyNam
 unsigned FailToJobDone(unsigned uJob);
 //Clone maintenance clone UPDATE functions
 unsigned ProcessCloneSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneContainer);
+unsigned ProcessApplianceSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneContainer);
 //This is experimental designed for remote sync, but is useless as is. On the other hand the remote
 //clone function makes some sense. Based on why move the whole OS template, when we have it on the remote node.
 unsigned ProcessOSDeltaSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneContainer);
@@ -8128,11 +8129,14 @@ void AlwaysRunTheseJobs(unsigned uNode)
         MYSQL_ROW field2;
 	struct sysinfo structSysinfo;
 
-	//
 	//Sync container job section
+	// -clone and -backup containers
+	//Select clone containers of active or stopped source containers
+	//running on this node
 
 	unsigned uContainer=0;
 	unsigned uCloneContainer=0;
+	unsigned uCloneStatus=0;
 	unsigned uError=0;
 	//Special recurring jobs based on special containers
 	//Main loop normal jobs
@@ -8143,8 +8147,6 @@ void AlwaysRunTheseJobs(unsigned uNode)
 	//1 uACTIVE
 	//31 uSTOPPED
 	//logfileLine("ProcessCloneSyncJob","Start");
-	//Select clone containers of active or stopped source containers
-	//running on this node
 	sprintf(gcQuery,"SELECT t1.uContainer,t2.uContainer,t1.uStatus FROM tContainer AS t1,tContainer AS t2"
 			" WHERE (t2.uStatus=1 OR t2.uStatus=31)"
 			" AND t1.uSource=t2.uContainer AND t2.uNode=%u",uNode);
@@ -8158,8 +8160,6 @@ void AlwaysRunTheseJobs(unsigned uNode)
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		unsigned uCloneStatus=0;
-
 		if(sysinfo(&structSysinfo))
 		{
 			logfileLine("CloneSync","sysinfo() failed");
@@ -8214,7 +8214,82 @@ void AlwaysRunTheseJobs(unsigned uNode)
 	}
 	mysql_free_result(res);
 	//
+	// -clone and -backup containers
 	//End sync container job section
+	//
+
+	//Sync container job section 2
+	// -app
+	//Select active or stopped containers on this node 
+	//of active source containers running on customer premise datacenter
+	//Special recurring jobs based on special containers
+	//Main loop normal jobs
+	//1-. Maintain clone containers
+	//We need to rsync from running container to clone container
+	//where the source container is running on this node
+	//and the target node is a remote node.
+	//1 uACTIVE
+	//31 uSTOPPED
+	if(guDebug)
+		logfileLine("ApplianceSync","Start");
+	sprintf(gcQuery,"SELECT t2.uContainer,t1.uContainer,t1.uStatus FROM tContainer AS t1,tContainer AS t2"
+			" WHERE (t1.uStatus=1 OR t1.uStatus=31)"
+			" AND t2.uDatacenter=41"
+			" AND t1.uSource=t2.uContainer AND t1.uNode=%u",uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ApplianceSync",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(sysinfo(&structSysinfo))
+		{
+			logfileLine("ApplianceSync","sysinfo() failed");
+			mysql_free_result(res);
+			fclose(gLfp);
+			mysql_close(&gMysql);
+			exit(0);
+		}
+		guSystemLoad=structSysinfo.loads[1]/LINUX_SYSINFO_LOADS_SCALE;
+		if(guSystemLoad>JOBQUEUE_CLONE_MAXLOAD)
+		{
+			sprintf(gcQuery,"Load %u larger than clone load limit %u. Skipping clone jobs.",guSystemLoad,JOBQUEUE_CLONE_MAXLOAD);
+			logfileLine("ApplianceSync",gcQuery);
+			break;
+		}
+		sscanf(field[0],"%u",&uContainer);//remote customer premise container
+		sscanf(field[1],"%u",&uCloneContainer);//-app container on this node that should be sync'd from uContainer
+		sscanf(field[2],"%u",&uCloneStatus);//the status of the -app container on this node, the uCloneContainer
+		if(guDebug)
+		{
+			sprintf(gcQuery,"uCloneStatus=%u",uCloneStatus);
+			logfileLine("ApplianceSync",gcQuery);
+		}
+
+		switch(uCloneStatus)
+		{
+			//Here provided sample script appliancesync.sh does an rsync
+			//and keeps the clone container as warm spare.
+			case uSTOPPED:
+			case uACTIVE:
+				if((uError=ProcessApplianceSyncJob(uNode,uContainer,uCloneContainer)))
+				{
+					logfileLine("ProcessApplianceSyncJob uError",field[1]);
+					//error return(6) when clone script fails.
+					if(uError!=6)
+						LogError("ProcessApplianceSyncJob()",uError);
+				}
+		}
+	}
+	mysql_free_result(res);
+	if(guDebug)
+		logfileLine("ApplianceSync","end");
+	//
+	//End appliance sync container job section
 
 	//
 	//Firewall job section
@@ -8360,3 +8435,353 @@ void RemoveAcceptsFromChainIfNotSession(char const *cChain)
 	}
 	pclose(fp);
 }//void RemoveAcceptsFromChain(char const *cChain)
+
+
+//Appliances have a reverse sync system.
+//for security the CPE cannot connecto to our DB.
+//therefore from the hardware node that has the -app clone of the CPE appliance
+//we connect to their server
+//uCloneContainer is the container on THIS node
+//uContainer is the remote CPE container.
+unsigned ProcessApplianceSyncJob(unsigned uNode,unsigned uContainer,unsigned uCloneContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uPeriod=0;
+
+	if(guDebug)
+	{
+		sprintf(gcQuery,"Start appliance customer premise container %u, the -app container %u",
+					uContainer,uCloneContainer);
+		logfileLine("ProcessApplianceSyncJob",gcQuery);
+	}
+
+	//After failover cuSyncPeriod is 0 for clone (remote) container.
+	//This allows for safekeeping of potentially useful data.
+	//mainfunc RecoverMode recover cuSyncPeriod from source to clone.
+	//UBC safe
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cuSyncPeriod'",
+					uCloneContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+		return(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uPeriod);
+	mysql_free_result(res);
+
+	if(uPeriod!=0)
+	{
+		if(guDebug)
+		{
+			sprintf(gcQuery,"uPeriod=%u",uPeriod);
+			logfileLine("ProcessApplianceSyncJob",gcQuery);
+		}
+
+		sprintf(gcQuery,"SELECT tNode.cLabel,tNode.uDatacenter,tContainer.uStatus FROM tContainer,tNode WHERE"
+				" tContainer.uNode=tNode.uNode AND"
+				" tNode.uStatus=1 AND"//Active NODE
+				" tContainer.uContainer=%u AND"
+				" tContainer.uBackupDate+%u<=UNIX_TIMESTAMP(NOW())",uCloneContainer,uPeriod);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+			return(3);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			unsigned uCloneDatacenter=0;
+			unsigned uCloneStatus=0;
+        		MYSQL_RES *res2;
+			MYSQL_ROW field2;
+
+			sscanf(field[1],"%u",&uCloneDatacenter);
+			sscanf(field[2],"%u",&uCloneStatus);
+
+			//start of scheduler block
+			//If remote datacenter check for schedule limitations of backup traffic
+			if(uCloneDatacenter && uCloneDatacenter!=guDatacenter)
+			{
+				unsigned uCount=0;//should be two items
+				unsigned uCloneScheduleStart=0;//0hrs to 24hrs
+				unsigned uCloneScheduleWindow=0;//number of hours to add to above
+
+				//Get backup schedule	
+				//UBC safe
+				sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+					" AND tProperty.uKey=tGroupGlue.uGroup"
+					" AND tGroupGlue.uContainer=%u"
+					" AND tProperty.cName='cJob_RemoteApplianceSchedule' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
+						uPROP_GROUP,uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+					return(8);
+				}
+		        	res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+				{
+					uCount=sscanf(field2[0],"From %uHS for %uHS",&uCloneScheduleStart,&uCloneScheduleWindow);
+					//debug only
+					logfileLine("ProcessApplianceSyncJob cJob_RemoteApplianceSchedule",field2[0]);
+
+					//We have a schedule limit
+					if(uCount==2)
+					{
+						//Get localtime hours
+						time_t luClock;
+						struct tm structTm;
+
+						time(&luClock);
+						localtime_r(&luClock,&structTm);
+
+						//debug only
+						char cMsg[256];
+						//sprintf(cMsg,"uCloneScheduleStart=%u uCloneScheduleWindow=%u structTm.tm_hour=%u %u %u",
+						//	uCloneScheduleStart,uCloneScheduleWindow,structTm.tm_hour,uContainer,uCloneContainer);
+						//logfileLine("ProcessApplianceSyncJob",cMsg);
+
+						//Are we in the schedule window?
+						if(structTm.tm_hour>=uCloneScheduleStart && structTm.tm_hour < (uCloneScheduleStart+uCloneScheduleWindow))
+						{
+							logfileLine("ProcessApplianceSyncJob","in schedule window continue");
+						}
+						else
+						{
+							//here we randomly place next backup time in the schedule
+							(void)srand((int)time((time_t *)NULL));
+							//We need a random number of secs between uCloneScheduleStart and 
+							//based hour seconds uCloneScheduleStart+uCloneScheduleWindow
+							long unsigned uNewBackupSecs=(uCloneScheduleStart*3600)+(unsigned)((rand()/(RAND_MAX +1.0))*
+								(((uCloneScheduleStart+uCloneScheduleWindow)*3600)-(uCloneScheduleStart*3600)+1));
+							//debug only
+							//sprintf(cMsg,"Start=%u End=%u uNewBackupSecs=%lu",uCloneScheduleStart*3600,
+							//		(uCloneScheduleStart+uCloneScheduleWindow)*3600,uNewBackupSecs);
+							//logfileLine("ProcessApplianceSyncJob",cMsg);
+
+							//Make it fall during schedule
+							uNewBackupSecs+=luClock-(uPeriod+(structTm.tm_hour*3600)+(structTm.tm_min*60)+structTm.tm_sec);
+							sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=%lu"
+								" WHERE uContainer=%u",uNewBackupSecs,uCloneContainer);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+							{
+								mysql_free_result(res);
+								logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+								return(15);
+							}
+							mysql_free_result(res2);
+							sprintf(cMsg,"schedule adjusted for %u",uCloneContainer);
+							logfileLine("ProcessApplianceSyncJob",cMsg);
+							return(0);
+						}
+					}
+					else
+					{
+						logfileLine("ProcessApplianceSyncJob","cJob_RemoteApplianceSchedule format error");
+					}
+				}
+				mysql_free_result(res2);
+			}
+			//end of scheduler block
+
+			if(uNotValidSystemCallArg(field[0]))
+			{
+				mysql_free_result(res);
+				logfileLine("ProcessApplianceSyncJob","security alert");
+				return(4);
+			}
+
+			//Try to keep options out of scripts
+			char cSSHOptions[256]={""};
+			GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,gfuNode,0,0);//First try node specific
+			if(!cSSHOptions[0])
+			{
+				GetConfiguration("cSSHOptions",cSSHOptions,guDatacenter,0,0,0);//Second try datacenter wide
+				if(!cSSHOptions[0])
+					GetConfiguration("cSSHOptions",cSSHOptions,0,0,0,0);//Last try global
+			}
+			//Default for less conditions below
+			if(uNotValidSystemCallArg(cSSHOptions))
+				sprintf(cSSHOptions,"-p 22 -c arcfour");
+			unsigned uSSHPort=22;
+			char *cp;
+			if((cp=strstr(cSSHOptions,"-p ")))
+				sscanf(cp+3,"%u",&uSSHPort);
+
+			//New uBackupDate
+			unsigned uLastBackupDate=0;
+			sprintf(gcQuery,"SELECT uBackupDate FROM tContainer"
+						" WHERE uContainer=%u",uCloneContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				mysql_free_result(res);
+				logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+				return(5);
+			}
+			res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+				sscanf(field2[0],"%u",&uLastBackupDate);
+			mysql_free_result(res2);
+			sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uContainer=%u",uCloneContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				mysql_free_result(res);
+				logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+				return(5);
+			}
+
+
+			//Here we should run a script based on container primary group
+			//
+			//Primary group is oldest tGroupGlue entry.
+			char *cActivePostfix="";
+			char cOnScriptCall[512];
+			char cCommand[256]="/usr/sbin/appliancesync.sh";//default non active
+			if(uCloneStatus==uACTIVE)
+			{
+				sprintf(cCommand,"/usr/sbin/appliancesync-active.sh");//default active
+				cActivePostfix="Active";
+			}
+			//optional if so configured via tContainer primary group (lowest uGroupGlue)
+			//UBC safe
+			sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+					" AND tProperty.uKey=tGroupGlue.uGroup"
+					" AND tGroupGlue.uContainer=%u"
+					" AND tProperty.cName='cJob_ApplianceSyncScript%s' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
+						uPROP_GROUP,uContainer,cActivePostfix);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+				return(8);
+			}
+		        res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+			{
+				struct stat statInfo;
+				char *cp;
+
+				sprintf(cCommand,"%.255s",field2[0]);
+				mysql_free_result(res2);
+				//Remove trailing junk
+				if((cp=strchr(cCommand,'\n')) || (cp=strchr(cCommand,'\r'))) *cp=0;
+
+				if(uNotValidSystemCallArg(cCommand))
+				{
+					logfileLine("ProcessApplianceSyncJob","cJob_ApplianceSyncScript* security alert");
+					return(9);
+				}
+		
+				//Only run if command is chmod 500 and owned by root for extra security reasons.
+				if(stat(cCommand,&statInfo))
+				{
+					logfileLine("ProcessApplianceSyncJob","stat failed for cJob_ApplianceSyncScript*");
+					logfileLine("ProcessApplianceSyncJob",cCommand);
+					return(10);
+				}
+				if(statInfo.st_uid!=0)
+				{
+					logfileLine("ProcessApplianceSyncJob","cJob_ApplianceSyncScript* is not owned by root");
+					return(11);
+				}
+				if(statInfo.st_mode & ( S_IWOTH | S_IWGRP | S_IWUSR | S_IXOTH | S_IROTH | S_IXGRP | S_IRGRP ) )
+				{
+					logfileLine("ProcessApplianceSyncJob","cJob_ApplianceSyncScript* is not chmod 500");
+					return(12);
+				}
+			}
+			else
+			{
+				mysql_free_result(res2);
+			}
+
+			//Get optional --bwlimit value for sync script
+			//New optional parameter, configured per container group cJob_ApplianceSyncRemoteBW*
+			//	 where * is empty str or "Active"
+			unsigned uBWLimit=0;//0 is no limit
+
+			if(uCloneDatacenter && uCloneDatacenter!=guDatacenter)
+			{
+				//UBC safe
+				sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+					" AND tProperty.uKey=tGroupGlue.uGroup"
+					" AND tGroupGlue.uContainer=%u"
+					" AND tProperty.cName='cJob_ApplianceSyncRemoteBW%s' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
+						uPROP_GROUP,uContainer,cActivePostfix);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+					return(8);
+				}
+		        	res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+				{
+					sscanf(field2[0],"%u",&uBWLimit);
+					//debug only
+					logfileLine("ProcessApplianceSyncJob uBWLimit",field2[0]);
+				}
+				mysql_free_result(res2);
+			}
+
+
+			//Appliance sync requires appliance port and IP number
+			char cOrg_SSHPort[256]={"22"};
+			char cCPEIPv4[32]={""};
+			GetContainerProp(uContainer,"cOrg_SSHPort",cOrg_SSHPort);
+			if(GetContainerMainIP(uContainer,cCPEIPv4))
+				logfileLine("ProcessApplianceSyncJob","No cCPEIPv4");
+
+			sprintf(cOnScriptCall,"%.255s %u %u %s %s %u",cCommand,uContainer,uCloneContainer,cCPEIPv4,cOrg_SSHPort,uBWLimit);
+			if(guDebug)
+				logfileLine("ProcessApplianceSyncJob",cOnScriptCall);
+
+			if(system(cOnScriptCall))
+			{
+				mysql_free_result(res);
+				//Mark clone sync script error by not updating backup date.
+				sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=%u"
+						" WHERE uContainer=%u",uLastBackupDate,uCloneContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					mysql_free_result(res);
+					logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+					return(7);
+				}
+				logfileLine("ProcessApplianceSyncJob","clone sync script error");
+				logfileLine("ProcessApplianceSyncJob",cOnScriptCall);
+				return(6);
+			}
+			else
+			{
+				if(guDebug)
+				{
+					logfileLine("ProcessApplianceSyncJob","appliance sync script ok");
+					logfileLine("ProcessApplianceSyncJob",cOnScriptCall);
+				}
+			}
+		}
+		mysql_free_result(res);
+	}
+	else
+	{
+		if(guDebug)
+			logfileLine("ProcessApplianceSyncJob","no cuSyncPeriod");
+	}
+	if(guDebug)
+		logfileLine("ProcessApplianceSyncJob","End");
+	return(0);
+
+}//void ProcessApplianceSyncJob()
+
