@@ -40,7 +40,7 @@ AUTHOR
 #define uPLAINSET	21
 #define uVDNSORGTYPE	21
 
-
+void InterfaceConnectDb(void);
 
 //In main.c
 const char *cUserLevel(unsigned uPermLevel);
@@ -89,6 +89,7 @@ extern char gcDelStep[];
 extern char gcInputStatus[];
 extern unsigned guZone;
 extern unsigned guView;
+extern char gcOTPSecret[];
 
 //Menu
 //
