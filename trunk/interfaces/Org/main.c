@@ -171,11 +171,17 @@ int main(int argc, char *argv[])
 			}
 #define PERNODEFIREWALL 
 #ifdef PERNODEFIREWALL
-        	MYSQL_RES *res;
-	        MYSQL_ROW field;
+if(gcOTPSecret[0])
+{
+	LogoutFirewallJobs(guLoginClient);
+}
+else
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
 
-		//Note any status in case status changes ater an AllowAccess.
-		sprintf(gcQuery,"SELECT DISTINCT tContainer.uNode,tContainer.uDatacenter"
+	//Note any status in case status changes ater an AllowAccess.
+	sprintf(gcQuery,"SELECT DISTINCT tContainer.uNode,tContainer.uDatacenter"
 				" FROM tContainer,tNode,tDatacenter"
 				" WHERE tContainer.uNode=tNode.uNode"
 				" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
@@ -188,17 +194,17 @@ int main(int argc, char *argv[])
 				//
 				" AND tNode.cLabel!='appliance'",guOrg);
 
-		mysql_query(&gMysql,gcQuery);
-		res=mysql_store_result(&gMysql);
-		while((field=mysql_fetch_row(res)))
-		{
-			unsigned uNode=0;
-			unsigned uDatacenter=0;
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		unsigned uNode=0;
+		unsigned uDatacenter=0;
 
-			sscanf(field[0],"%u",&uNode);
-			sscanf(field[1],"%u",&uDatacenter);
+		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
 
-			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DenyAccess %u',cJobName='DenyAccess'"
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DenyAccess %u',cJobName='DenyAccess'"
 					",uDatacenter=%u,uNode=%u,uContainer=0"//All datacenters
 					",uJobDate=UNIX_TIMESTAMP(NOW())"
 					",uJobStatus=1"
@@ -209,8 +215,9 @@ int main(int argc, char *argv[])
 						uNode,
 						gcHost,
 						guOrg,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-		}
+		mysql_query(&gMysql,gcQuery);
+	}
+}
 #endif
         		guPermLevel=0;
 			gcUser[0]=0;
@@ -846,11 +853,17 @@ void SetLogin(void)
 		mysql_query(&gMysql,gcQuery);
 
 #ifdef PERNODEFIREWALL
-        	MYSQL_RES *res;
-	        MYSQL_ROW field;
+if(gcOTPSecret[0])
+{
+	LoginFirewallJobs(guLoginClient);
+}
+else
+{
+        MYSQL_RES *res;
+	MYSQL_ROW field;
 
-		//Allow access job for all active nodes that host active controlling company owned containers.
-		sprintf(gcQuery,"SELECT DISTINCT tContainer.uNode,tContainer.uDatacenter"
+	//Allow access job for all active nodes that host active controlling company owned containers.
+	sprintf(gcQuery,"SELECT DISTINCT tContainer.uNode,tContainer.uDatacenter"
 				" FROM tContainer,tNode,tDatacenter"
 				" WHERE tContainer.uNode=tNode.uNode"
 				" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
@@ -863,34 +876,37 @@ void SetLogin(void)
 				" 	uOwner=%1$u) OR uOwner=%1$u) AND cCode='Organization')) OR tContainer.uOwner=%1$u)"
 				//
 				" AND tNode.cLabel!='appliance'",guOrg);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		unsigned uNode=0;
+		unsigned uDatacenter=0;
+
+		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
+
+		//Allow access job for all nodes that host controlling company containers.
+		//The allow acces job should open FreePBX user and admin ports
+		//	it should also allow ssh port access and node ssh access based on perm level and tClient
+		//	hierarchy
+		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='AllowAccess %u',cJobName='AllowAccess'"
+				",uDatacenter=%u,uNode=%u,uContainer=0"
+				",uJobDate=UNIX_TIMESTAMP(NOW())"
+				",uJobStatus=1"
+				",cJobData='cIPv4=%.15s;'"
+				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					guLoginClient,
+					uDatacenter,
+					uNode,
+					gcHost,
+					guOrg,guLoginClient);
 		mysql_query(&gMysql,gcQuery);
-		res=mysql_store_result(&gMysql);
-		while((field=mysql_fetch_row(res)))
-		{
-			unsigned uNode=0;
-			unsigned uDatacenter=0;
-
-			sscanf(field[0],"%u",&uNode);
-			sscanf(field[1],"%u",&uDatacenter);
-
-			//Allow access job for all nodes that host controlling company containers.
-			//The allow acces job should open FreePBX user and admin ports
-			//	it should also allow ssh port access and node ssh access based on perm level and tClient
-			//	hierarchy
-			sprintf(gcQuery,"INSERT INTO tJob SET cLabel='AllowAccess %u',cJobName='AllowAccess'"
-					",uDatacenter=%u,uNode=%u,uContainer=0"
-					",uJobDate=UNIX_TIMESTAMP(NOW())"
-					",uJobStatus=1"
-					",cJobData='cIPv4=%.15s;'"
-					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						guLoginClient,
-						uDatacenter,
-						uNode,
-						gcHost,
-						guOrg,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-		}
+	}
+}
 #endif
+//PERNODEFIREWALL
+
 	}
 #ifdef cLDAPURI
 	else if(iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
