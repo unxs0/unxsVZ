@@ -25,10 +25,10 @@ NOTES
 //10 ms
 
 //TOC protos
-void ConnectDb(void);
+void InterfaceConnectDb(void);
 
 
-void ConnectDb(void)
+void InterfaceConnectDb(void)
 {
 	//Handle quick cases first
 	//Port is irrelevant here. Make it clear.
@@ -171,4 +171,4 @@ void ConnectDb(void)
 	printf(cMessage);
 	exit(0);
 
-}//ConnectDb()
+}//InterfaceConnectDb()

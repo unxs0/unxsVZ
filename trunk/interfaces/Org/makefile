@@ -17,8 +17,8 @@ CFLAGS=-Wall
 //LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
 LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -loath
 
-interface.cgi: main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o
-	cc main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o -o interface.cgi $(LIBS)
+interface.cgi: main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o
+	cc main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
@@ -40,6 +40,9 @@ ldap.o: ldap.c  interface.h ../../local.h ../../mysqlrad.h
 
 mysqlconnect.o: mysqlconnect.c  ../../local.h interface.h
 	cc -o mysqlconnect.o -c mysqlconnect.c $(CFLAGS)
+
+firewallcontrol.o: firewallcontrol.c  ../../local.h interface.h
+	cc -o firewallcontrol.o -c firewallcontrol.c $(CFLAGS)
 
 cgi.o: ../../cgi.c  ../../cgi.h
 	cc -o ../../cgi.o -c ../../cgi.c $(CFLAGS)

@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 	int cl=0;
 
 
-	ConnectDb();
+	InterfaceConnectDb();
 
 	if(getenv("REMOTE_ADDR")!=NULL)
 		sprintf(gcHost,"%.99s",getenv("REMOTE_ADDR"));
@@ -715,7 +715,7 @@ void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient)
 
 	//OTP login OK for 4 more hours. Change to configurable TODO.
 	if(!uAuthorize)
-		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=0 WHERE uCertClient=%u",
+		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=UNIX_TIMESTAMP(NOW()-1) WHERE uCertClient=%u",
 			uClient);
 	else
 		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=(UNIX_TIMESTAMP(NOW())+28800) WHERE uAuthorize=%u",
