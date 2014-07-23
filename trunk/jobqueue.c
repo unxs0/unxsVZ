@@ -8495,101 +8495,95 @@ unsigned ProcessApplianceSyncJob(unsigned uNode,unsigned uContainer,unsigned uCl
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			unsigned uCloneDatacenter=0;
 			unsigned uCloneStatus=0;
         		MYSQL_RES *res2;
 			MYSQL_ROW field2;
 
-			sscanf(field[1],"%u",&uCloneDatacenter);
 			sscanf(field[2],"%u",&uCloneStatus);
 
-			//start of scheduler block
-			//If remote datacenter check for schedule limitations of backup traffic
-			if(uCloneDatacenter && uCloneDatacenter!=guDatacenter)
-			{
-				unsigned uCount=0;//should be two items
-				unsigned uCloneScheduleStart=0;//0hrs to 24hrs
-				unsigned uCloneScheduleWindow=0;//number of hours to add to above
+			unsigned uCount=0;//should be two items
+			unsigned uCloneScheduleStart=0;//0hrs to 24hrs
+			unsigned uCloneScheduleWindow=0;//number of hours to add to above
 
-				//Get backup schedule	
-				//UBC safe
-				sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+			//Get backup schedule	
+			//UBC safe
+			sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 					" AND tProperty.uKey=tGroupGlue.uGroup"
 					" AND tGroupGlue.uContainer=%u"
-					" AND tProperty.cName='cJob_RemoteApplianceSchedule' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
+					" AND tProperty.cName='cJob_RemoteCloneSchedule' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
 						uPROP_GROUP,uContainer);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+			//if(guDebug)
+			//	logfileLine("ProcessApplianceSyncJob",gcQuery);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+				return(8);
+			}
+	        	res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+			{
+				uCount=sscanf(field2[0],"From %uHS for %uHS",&uCloneScheduleStart,&uCloneScheduleWindow);
+				//debug only
+				logfileLine("ProcessApplianceSyncJob cJob_RemoteCloneSchedule",field2[0]);
+
+				//We have a schedule limit
+				if(uCount==2)
 				{
-					logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
-					return(8);
-				}
-		        	res2=mysql_store_result(&gMysql);
-				if((field2=mysql_fetch_row(res2)))
-				{
-					uCount=sscanf(field2[0],"From %uHS for %uHS",&uCloneScheduleStart,&uCloneScheduleWindow);
+					//Get localtime hours
+					time_t luClock;
+					struct tm structTm;
+
+					time(&luClock);
+					localtime_r(&luClock,&structTm);
+
 					//debug only
-					logfileLine("ProcessApplianceSyncJob cJob_RemoteApplianceSchedule",field2[0]);
+					char cMsg[256];
+					//sprintf(cMsg,"uCloneScheduleStart=%u uCloneScheduleWindow=%u structTm.tm_hour=%u %u %u",
+					//	uCloneScheduleStart,uCloneScheduleWindow,structTm.tm_hour,uContainer,uCloneContainer);
+					//logfileLine("ProcessApplianceSyncJob",cMsg);
 
-					//We have a schedule limit
-					if(uCount==2)
+					//Are we in the schedule window?
+					if(structTm.tm_hour>=uCloneScheduleStart && structTm.tm_hour < (uCloneScheduleStart+uCloneScheduleWindow))
 					{
-						//Get localtime hours
-						time_t luClock;
-						struct tm structTm;
-
-						time(&luClock);
-						localtime_r(&luClock,&structTm);
-
-						//debug only
-						char cMsg[256];
-						//sprintf(cMsg,"uCloneScheduleStart=%u uCloneScheduleWindow=%u structTm.tm_hour=%u %u %u",
-						//	uCloneScheduleStart,uCloneScheduleWindow,structTm.tm_hour,uContainer,uCloneContainer);
-						//logfileLine("ProcessApplianceSyncJob",cMsg);
-
-						//Are we in the schedule window?
-						if(structTm.tm_hour>=uCloneScheduleStart && structTm.tm_hour < (uCloneScheduleStart+uCloneScheduleWindow))
-						{
-							logfileLine("ProcessApplianceSyncJob","in schedule window continue");
-						}
-						else
-						{
-							//here we randomly place next backup time in the schedule
-							(void)srand((int)time((time_t *)NULL));
-							//We need a random number of secs between uCloneScheduleStart and 
-							//based hour seconds uCloneScheduleStart+uCloneScheduleWindow
-							long unsigned uNewBackupSecs=(uCloneScheduleStart*3600)+(unsigned)((rand()/(RAND_MAX +1.0))*
-								(((uCloneScheduleStart+uCloneScheduleWindow)*3600)-(uCloneScheduleStart*3600)+1));
-							//debug only
-							//sprintf(cMsg,"Start=%u End=%u uNewBackupSecs=%lu",uCloneScheduleStart*3600,
-							//		(uCloneScheduleStart+uCloneScheduleWindow)*3600,uNewBackupSecs);
-							//logfileLine("ProcessApplianceSyncJob",cMsg);
-
-							//Make it fall during schedule
-							uNewBackupSecs+=luClock-(uPeriod+(structTm.tm_hour*3600)+(structTm.tm_min*60)+structTm.tm_sec);
-							sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=%lu"
-								" WHERE uContainer=%u",uNewBackupSecs,uCloneContainer);
-							mysql_query(&gMysql,gcQuery);
-							if(mysql_errno(&gMysql))
-							{
-								mysql_free_result(res);
-								logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
-								return(15);
-							}
-							mysql_free_result(res2);
-							sprintf(cMsg,"schedule adjusted for %u",uCloneContainer);
-							logfileLine("ProcessApplianceSyncJob",cMsg);
-							return(0);
-						}
+						logfileLine("ProcessApplianceSyncJob","in schedule window continue");
 					}
 					else
 					{
-						logfileLine("ProcessApplianceSyncJob","cJob_RemoteApplianceSchedule format error");
+						//here we randomly place next backup time in the schedule
+						(void)srand((int)time((time_t *)NULL));
+						//We need a random number of secs between uCloneScheduleStart and 
+						//based hour seconds uCloneScheduleStart+uCloneScheduleWindow
+						long unsigned uNewBackupSecs=(uCloneScheduleStart*3600)+(unsigned)((rand()/(RAND_MAX +1.0))*
+							(((uCloneScheduleStart+uCloneScheduleWindow)*3600)-(uCloneScheduleStart*3600)+1));
+						//debug only
+						//sprintf(cMsg,"Start=%u End=%u uNewBackupSecs=%lu",uCloneScheduleStart*3600,
+						//		(uCloneScheduleStart+uCloneScheduleWindow)*3600,uNewBackupSecs);
+						//logfileLine("ProcessApplianceSyncJob",cMsg);
+
+						//Make it fall during schedule
+						uNewBackupSecs+=luClock-(uPeriod+(structTm.tm_hour*3600)+(structTm.tm_min*60)+structTm.tm_sec);
+						sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=%lu"
+							" WHERE uContainer=%u",uNewBackupSecs,uCloneContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							mysql_free_result(res);
+							logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+							return(15);
+						}
+						mysql_free_result(res2);
+						sprintf(cMsg,"schedule adjusted for %u",uCloneContainer);
+						logfileLine("ProcessApplianceSyncJob",cMsg);
+						return(0);
 					}
 				}
-				mysql_free_result(res2);
+				else
+				{
+					logfileLine("ProcessApplianceSyncJob","cJob_RemoteCloneSchedule format error");
+				}
 			}
-			//end of scheduler block
+			mysql_free_result(res2);
 
 			if(uNotValidSystemCallArg(field[0]))
 			{
@@ -8710,30 +8704,28 @@ unsigned ProcessApplianceSyncJob(unsigned uNode,unsigned uContainer,unsigned uCl
 			//	 where * is empty str or "Active"
 			unsigned uBWLimit=0;//0 is no limit
 
-			if(uCloneDatacenter && uCloneDatacenter!=guDatacenter)
-			{
-				//UBC safe
-				sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
+			//UBC safe
+			sprintf(gcQuery,"SELECT tProperty.cValue FROM tProperty,tGroupGlue WHERE tProperty.uType=%u"
 					" AND tProperty.uKey=tGroupGlue.uGroup"
 					" AND tGroupGlue.uContainer=%u"
 					" AND tProperty.cName='cJob_ApplianceSyncRemoteBW%s' ORDER BY tGroupGlue.uGroupGlue LIMIT 1",
 						uPROP_GROUP,uContainer,cActivePostfix);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
-					return(8);
-				}
-		        	res2=mysql_store_result(&gMysql);
-				if((field2=mysql_fetch_row(res2)))
-				{
-					sscanf(field2[0],"%u",&uBWLimit);
-					//debug only
-					logfileLine("ProcessApplianceSyncJob uBWLimit",field2[0]);
-				}
-				mysql_free_result(res2);
+			mysql_query(&gMysql,gcQuery);
+			if(guDebug)
+				logfileLine("ProcessApplianceSyncJob BW query",gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine("ProcessApplianceSyncJob",mysql_error(&gMysql));
+				return(8);
 			}
-
+	        	res2=mysql_store_result(&gMysql);
+			if((field2=mysql_fetch_row(res2)))
+			{
+				sscanf(field2[0],"%u",&uBWLimit);
+				//debug only
+				logfileLine("ProcessApplianceSyncJob uBWLimit",field2[0]);
+			}
+			mysql_free_result(res2);
 
 			//Appliance sync requires appliance port and IP number
 			char cOrg_SSHPort[256]={"22"};
@@ -8743,9 +8735,6 @@ unsigned ProcessApplianceSyncJob(unsigned uNode,unsigned uContainer,unsigned uCl
 				logfileLine("ProcessApplianceSyncJob","No cCPEIPv4");
 
 			sprintf(cOnScriptCall,"%.255s %u %u %s %s %u",cCommand,uContainer,uCloneContainer,cCPEIPv4,cOrg_SSHPort,uBWLimit);
-			if(guDebug)
-				logfileLine("ProcessApplianceSyncJob",cOnScriptCall);
-
 			if(system(cOnScriptCall))
 			{
 				mysql_free_result(res);
