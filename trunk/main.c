@@ -2847,13 +2847,20 @@ void tTablePullDownActive(const char *cTableName, const char *cFieldName,
 //Per hardware node iptables FW control. 
 //You must login to access hardware node http, ssh and other servers from your current
 //IP.
+
+//library
 void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
-void GetIPProp(const unsigned uIP,const char *cName,char *cValue);
 void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue);
+
+//firewallcontrol TOC
+void SetUpdateIPProp(char const *cName,char const *cValue,unsigned uIP);
+void SetUpdateIPPropFromHost(char const *cName,char const *cValue,char const *cHostIP);
+unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP);
 void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 void RemoveLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 void NewNoDupsIPProp(char const *cName,char const *cValue,unsigned uIP);
-
+void LogoutFirewallJobs(unsigned uLoginClient);
+void LoginFirewallJobs(unsigned uLoginClient);
 
 //UBC safe should not be used for UBCs	
 void SetUpdateIPProp(char const *cName,char const *cValue,unsigned uIP)
