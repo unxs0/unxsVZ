@@ -327,7 +327,7 @@ void CapacityReport(const char *cOptionalMsg)
 	unsigned uTotalNodeCount=0;
 	unsigned uContainerCount=0;
 	unsigned uTotalContainerCount=0;
-	unsigned uOpenSlots=0;
+	int uOpenSlots=0;
 	unsigned uTotalOpenSlots=0;
 	unsigned uTotalDatacenters=0;
 
@@ -346,6 +346,7 @@ void CapacityReport(const char *cOptionalMsg)
 		"<td><u>Container Count</u></td>"
 		"<td><u>Node Count</u></td>"
 		"<td><u>Datacenter Label</u></td>\n");
+	char *cColor="black";
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%s AND uType=1 AND cName='NoCapacityPlanning'",mysqlField[2]);
@@ -374,28 +375,40 @@ void CapacityReport(const char *cOptionalMsg)
 			if((field=mysql_fetch_row(res)))
 				sscanf(field[0],"%u",&uNodeCount);
 		
-			uOpenSlots=0;	
+			uOpenSlots=0;
 			if(uNodeCount && uContainerCount)
-				uOpenSlots=(((uNodeCount/2)*80)-uContainerCount);
+				uOpenSlots=(((uNodeCount)*40)-uContainerCount);
+			if(uOpenSlots<0)
+				cColor="red";
+			else
+				cColor="black";
 
 			uTotalOpenSlots+=uOpenSlots;
 			uTotalNodeCount+=uNodeCount;
 			uTotalContainerCount+=uContainerCount;
 			uTotalDatacenters++;
+			if((uTotalNodeCount % 8) != 0)
+				cColor="red";
+			else
+				cColor="black";
 			printf("<tr><td></td>"
+				"<td><font color=%s>%d</font></td>"
 				"<td>%u</td>"
-				"<td>%u</td>"
-				"<td>%u</td>"
+				"<td><font color=%s>%u</font></td>"
 				"<td>%s</td>\n",
-						uOpenSlots,uContainerCount,uNodeCount,mysqlField[1]);
+						cColor,uOpenSlots,uContainerCount,cColor,uNodeCount,mysqlField[1]);
 	}
 	mysql_free_result(mysqlRes);
+	if((uTotalNodeCount % 8) != 0)
+		cColor="red";
+	else
+		cColor="black";
 	printf("<tr><td bgcolor=lightgray>Totals</td>"
 				"<td bgcolor=lightgray>%u</td>"
 				"<td bgcolor=lightgray>%u</td>"
-				"<td bgcolor=lightgray>%u</td>"
+				"<td bgcolor=lightgray><font color=%s>%u</font></td>"
 				"<td bgcolor=lightgray>%u</td>\n",
-						uTotalOpenSlots,uTotalContainerCount,uTotalNodeCount,uTotalDatacenters);
+						uTotalOpenSlots,uTotalContainerCount,cColor,uTotalNodeCount,uTotalDatacenters);
 
 	OpenRow("<p>&nbsp;<p><u>Containers created</u>","black");
 	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uStatus=1 AND uSource=0"
@@ -414,7 +427,6 @@ void CapacityReport(const char *cOptionalMsg)
 		sscanf(field[0],"%u",&uContainerCount);
 	printf("<tr><td bgcolor=lightgray>Last 7 days</td>"
 				"<td bgcolor=lightgray>%u</td>",uContainerCount);
-	unsigned uWeeklyContainerCount=uContainerCount;
 
 	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uStatus=1 AND uSource=0"
 			" AND uCreatedDate > (UNIX_TIMESTAMP(NOW())-(86400*30))");
@@ -430,6 +442,7 @@ void CapacityReport(const char *cOptionalMsg)
 	uContainerCount=0;
 	if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&uContainerCount);
+	unsigned uWeeklyContainerCount=uContainerCount/4;//use last month avg weekly
 	printf("<tr><td bgcolor=lightgray>Last 30 days</td>"
 				"<td bgcolor=lightgray>%u (%u per week)</td>",uContainerCount,uContainerCount/4);
 		
@@ -452,7 +465,8 @@ void CapacityReport(const char *cOptionalMsg)
 
 	
 	printf("<tr><td bgcolor=lightgray>Slots will be filled in</td>"
-				"<td bgcolor=lightgray>%u days (at %u per week)</td>",uTotalOpenSlots*7/uWeeklyContainerCount,uWeeklyContainerCount);
+				"<td bgcolor=lightgray>%u days (%u at %u per week)</td>",
+					uTotalOpenSlots*7/uWeeklyContainerCount,uTotalOpenSlots,uWeeklyContainerCount);
 		
 	OpenRow("<p>&nbsp;<p><u>Remote Backups</u>","black");
 	sprintf(gcQuery,"SELECT COUNT(tContainer.uContainer),tDatacenter.cLabel,tDatacenter.uDatacenter"
@@ -460,6 +474,7 @@ void CapacityReport(const char *cOptionalMsg)
 			" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1 AND tContainer.uStatus=1"
 			" AND tContainer.cLabel LIKE '%%-backup'"
 			" AND tContainer.uSource!=0"
+			" AND tDatacenter.cLabel!='CustomerPremise'"
 			" AND tContainer.uNode=tNode.uNode"
 			" AND tNode.uDatacenter=tDatacenter.uDatacenter"
 				" GROUP BY tDatacenter.uDatacenter");
@@ -504,6 +519,7 @@ void CapacityReport(const char *cOptionalMsg)
 			" FROM tContainer,tDatacenter,tNode"
 			" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1 AND tContainer.uStatus=31"
 			" AND tContainer.cLabel LIKE '%%-clone%%'"
+			" AND tDatacenter.cLabel!='CustomerPremise'"
 			" AND tContainer.uSource!=0"
 			" AND tContainer.uNode=tNode.uNode"
 			" AND tNode.uDatacenter=tDatacenter.uDatacenter"
@@ -548,6 +564,7 @@ void CapacityReport(const char *cOptionalMsg)
 			" FROM tIP,tDatacenter"
 			" WHERE tDatacenter.uStatus=1 AND tIP.uAvailable=1"
 			" AND tIP.uDatacenter=tDatacenter.uDatacenter"
+			" AND tDatacenter.cLabel!='CustomerPremise'"
 			" AND tIP.cLabel NOT LIKE '10.%%.%%.%%' AND"
 			" tIP.cLabel NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
 			" tIP.cLabel NOT LIKE '172.17.%%.%%' AND" 
