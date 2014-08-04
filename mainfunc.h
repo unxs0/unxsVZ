@@ -872,7 +872,7 @@ void DashBoard(const char *cOptionalMsg)
 	//
 */
 
-	if(guPermLevel>11 && guLoginClient==1)
+	if(guPermLevel>9)
 	{
 		OpenRow("System Messages (Last 10)","black");
 		sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog"
@@ -963,7 +963,7 @@ void DashBoard(const char *cOptionalMsg)
 				ctime(&luClock),mysqlField[0],mysqlField[2],mysqlField[3]);
 		}
 		mysql_free_result(mysqlRes);
-	}//end of if(guPermLevel>11 ...)
+	}//end of if(guPermLevel>9)
 
 	OpenRow("Pending or Stuck Jobs (Last 10)","black");
 	if(guPermLevel>11 && guLoginClient==1)
