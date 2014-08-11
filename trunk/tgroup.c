@@ -546,9 +546,10 @@ void tGroupList(void)
 			ctime_r(&luTime7,cBuf7);
 		else
 			sprintf(cBuf7,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tGroup&uGroup=%s>%s</a>"
 			,field[0]
-			,field[0]
+			,field[0]);
+		printf("<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[1]
 			,ForeignKey("tGroupType","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
@@ -568,7 +569,15 @@ void tGroupList(void)
 
 void CreatetGroup(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGroup ( uGroup INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uGroupType INT UNSIGNED NOT NULL DEFAULT 0,index (uGroupType) )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGroup ("
+			" uGroup INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uGroupType INT UNSIGNED NOT NULL DEFAULT 0,index (uGroupType) )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

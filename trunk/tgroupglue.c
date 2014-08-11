@@ -415,9 +415,10 @@ void tGroupGlueList(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tGroupGlue&uGroupGlue=%s>%s</a>"
 			,field[0]
-			,field[0]
+			,field[0]);
+		printf("<td>%s<td>%s<td>%s</tr>"
 			,ForeignKey("tGroup","cLabel",strtoul(field[1],NULL,10))
 			,ForeignKey("tNode","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tContainer","cLabel",strtoul(field[3],NULL,10))

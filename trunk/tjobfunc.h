@@ -16,6 +16,7 @@ void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 //ModuleFunctionProtos()
 
 static unsigned uForClient=0;
+static unsigned uJobCheckbox=0;
 static char cForClientPullDown[256]={""};
 static char cuClientPullDown[256]={""};
 static char cuDatacenterPullDown[256]={""};
@@ -352,7 +353,31 @@ void ExttJobCommands(pentry entries[], int x)
 			}
                 	tJob("Destroy Container Offline canceled, base conditions changed");
 		}
-				
+		else if(!strcmp(gcCommand,"Group Cancel"))
+                {
+			ProcesstJobVars(entries,x);
+			if(guPermLevel<12)
+				tJob("Operation denied");
+			register int i;
+			for(i=0;i<x;i++)
+			{
+				if(!strncmp(entries[i].name,"uJob",4))
+				{
+					sscanf(entries[i].name,"uJob%u",&uJobCheckbox);
+
+					//char cMsg[32]={""};
+					//sprintf(cMsg,"uJob%u",uJobCheckbox);
+					//tJob(cMsg);
+					uJobStatus=uCANCELED;
+					sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
+							" WHERE uJob=%u AND (uJobStatus=%u OR uJobStatus=%u)",
+						uJobStatus,guLoginClient,uJobCheckbox,uWAITING,uERROR);
+        				mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tJob("SQL UPDATE failed");
+				}
+			}
+		}
 	}
 
 }//void ExttJobCommands(pentry entries[], int x)
@@ -638,8 +663,12 @@ void tJobNavList(void)
         	printf("<p><u>tJobNavList (Waiting and Error) %u</u><br>\n",uNumRows);
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tJob&uJob=%s>%s/%s/%s</a><br>\n",
-				field[0],field[1],field[2],field[3]);
+			printf("<input type=checkbox name=uJob%s ><a class=darkLink href=unxsVZ.cgi?gcFunction=tJob&uJob=%s>%s/%s/%s</a><br>\n",
+				field[0],field[0],field[1],field[2],field[3]);
+		if(guPermLevel>11)
+			printf("<p><input title='Cancel all waiting or error jobs that have been checked'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Group Cancel'>\n");
 	}
         mysql_free_result(res);
 

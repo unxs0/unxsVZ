@@ -564,12 +564,13 @@ void tTemplateList(void)
 			ctime_r(&luTime10,cBuf10);
 		else
 			sprintf(cBuf10,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tTemplate&uTemplate=%s>%s</a>"
+			,field[0]
+			,field[0]);
+		printf("<td>%s<td>%s<td>%s"
 				"<td><textarea disabled>%s</textarea>"
 				"<td><textarea disabled>%s</textarea>"
 				"<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
 			,field[1]
 			,ForeignKey("tTemplateSet","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tTemplateType","cLabel",strtoul(field[3],NULL,10))
@@ -592,7 +593,18 @@ void tTemplateList(void)
 
 void CreatetTemplate(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tTemplate ( uTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', INDEX (cLabel), uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cComment TEXT NOT NULL DEFAULT '', cTemplate TEXT NOT NULL DEFAULT '', uTemplateSet INT UNSIGNED NOT NULL DEFAULT 0, uTemplateType INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tTemplate ("
+			" uTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cLabel VARCHAR(32) NOT NULL DEFAULT '', INDEX (cLabel),"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cComment TEXT NOT NULL DEFAULT '',"
+			" cTemplate TEXT NOT NULL DEFAULT '',"
+			" uTemplateSet INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uTemplateType INT UNSIGNED NOT NULL DEFAULT 0 )");
 	MYSQL_RUN;
 
 }//CreatetTemplate()
