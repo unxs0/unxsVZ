@@ -166,7 +166,7 @@ void ExttLogMonthGetHook(entry gentries[], int x)
 
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(gentries[i].name,"uLog"))
+		if(!strcmp(gentries[i].name,"uLog") || !strcmp(gentries[i].name,"uLogMonth"))
 		{
 			sscanf(gentries[i].val,"%u",&uLog);
 			guMode=6;
@@ -186,8 +186,16 @@ void ExttLogMonthSelect(void)
 
 void ExttLogMonthSelectRow(void)
 {
-	ExtSelectRow("tLogMonth",VAR_LIST_tLogMonth,uLog);
-
+	if(guLoginClient==1 && guPermLevel>11)//Root users can read access all
+		sprintf(gcQuery,"SELECT %s FROM tLogMonth WHERE uLog=%u",VAR_LIST_tLogMonth,uLog);
+	else
+		sprintf(gcQuery,"SELECT %s FROM tLogMonth," TCLIENT
+				" WHERE tLogMonth.uOwner=tClient.uClient"
+                                " AND tLogMonth.uLog=%u"
+				" AND (tClient.uClient=%u OR tClient.uOwner"
+				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%u OR uClient=%u))",
+					VAR_LIST_tLogMonth,uLog,guCompany,
+					guCompany,guLoginClient);
 }//void ExttLogMonthSelectRow(void)
 
 

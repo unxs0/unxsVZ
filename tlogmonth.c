@@ -510,9 +510,10 @@ void tLogMonthList(void)
 			ctime_r(&luTime14,cBuf14);
 		else
 			sprintf(cBuf14,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tLogMonth&uLogMonth=%s>%s</a>"
 			,field[0]
-			,field[0]
+			,field[0]);
+		printf("<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[1]
 			,ForeignKey("tLogType","cLabel",strtoul(field[2],NULL,10))
 			,field[3]

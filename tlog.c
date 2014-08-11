@@ -676,10 +676,11 @@ void tLogList(void)
 			ctime_r(&luTime16,cBuf16);
 		else
 			sprintf(cBuf16,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tLog&uLog=%s>%s</a>"
+			,field[0]
+			,field[0]);
+		printf("<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>"
 			"%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
 			,field[1]
 			,ForeignKey("tLogType","cLabel",strtoul(field[2],NULL,10))
 			,field[3]

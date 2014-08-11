@@ -534,9 +534,10 @@ void tGlossaryList(void)
 			ctime_r(&luTime7,cBuf7);
 		else
 			sprintf(cBuf7,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tGlossary&uGlossary=%s>%s</a>"
 			,field[0]
-			,field[0]
+			,field[0]);
+		printf("<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[1]
 			,field[2]
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))

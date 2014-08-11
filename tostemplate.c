@@ -489,9 +489,10 @@ void tOSTemplateList(void)
 			ctime_r(&luTime6,cBuf6);
 		else
 			sprintf(cBuf6,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tOSTemplate&uOSTemplate=%s>%s</a>"
 			,field[0]
-			,field[0]
+			,field[0]);
+		printf("<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[1]
 			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
