@@ -42,12 +42,12 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 static char cTableList[64][32]={ "tAuthorize", "tClient", "tConfig", "tConfiguration", "tContainer",
 		"tDatacenter", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tIP", "tJob",
 		"tJobStatus", "tLog", "tLogMonth", "tLogType", "tMonth", "tNameserver", "tNode",
-		"tOSTemplate", "tProperty", "tSearchdomain", "tStatus", "tTemplate", "tTemplateSet",
+		"tOSTemplate", "tPerm", "tProperty", "tSearchdomain", "tStatus", "tTemplate", "tTemplateSet",
 			"tTemplateType", "tType", ""};
 
 char cInitTableList[64][32]={ "tAuthorize", "tClient", "tConfig", "tGlossary", "tGroupType",
 		"tJobStatus", "tLogType", "tOSTemplate", "tStatus", "tTemplate", "tTemplateSet",
-			"tTemplateType", "tType", ""};
+			"tTemplateType", "tType", "tPerm", ""};
 
 void ExtMainShell(int argc, char *argv[]);
 void Initialize(char *cPasswd);
@@ -1381,6 +1381,7 @@ void Initialize(char *cPasswd)
         CreatetTemplateSet();
         CreatetTemplateType();
 	CreatetType();
+	CreatetPerm();
 
 	//Unique uContainer values starting at 101
 	sprintf(gcQuery,"INSERT INTO tContainer SET uContainer=100");
