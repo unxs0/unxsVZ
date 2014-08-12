@@ -257,6 +257,37 @@ void ExttAuthorizeButtons(void)
 
 void ExttAuthorizeAuxTable(void)
 {
+	if(!uAuthorize)
+		return;
+
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uProperty,cName,cValue FROM tProperty WHERE uKey=%u AND uType="PROP_AUTHORIZE
+			" ORDER BY cName",uAuthorize);
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{
+		sprintf(gcQuery,"%s Property Panel",cLabel);
+		OpenFieldSet(gcQuery,100);
+		printf("<table cols=2>");
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("<tr>\n");
+			printf("<td width=200 valign=top><a class=darkLink href=unxsVZ.cgi?"
+					"gcFunction=tProperty&uProperty=%s&cReturn=tClient_%u>"
+					"%s</a></td><td valign=top><pre>%s</pre></td>\n",
+						field[0],uAuthorize,field[1],field[2]);
+			printf("</tr>\n");
+		}
+		printf("</table>");
+		CloseFieldSet();
+	}
 
 }//void ExttAuthorizeAuxTable(void)
 

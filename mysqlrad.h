@@ -78,6 +78,7 @@ AUTHOR
 #define PROP_SEARCHDOMAIN "9"
 #define PROP_IP "31"
 #define PROP_CLIENT "41"
+#define PROP_AUTHORIZE "42"
 #define uPROP_DATACENTER 1
 #define uPROP_NODE 2
 #define uPROP_CONTAINER 3
@@ -90,6 +91,7 @@ AUTHOR
 #define uPROP_RECJOB	10	
 #define uPROP_IP	31
 #define uPROP_CLIENT	41
+#define uPROP_AUTHORIZE	42
 
 //tJobStatus constants
 #define uWAITING 	1
@@ -343,6 +345,21 @@ void CreatetType(void);
 void DeletetType(void);
 void ExttTypeGetHook(entry gentries[], int x);
 void ExttTypeNavBar(void);
+
+//tPerm
+int tPermCommands(pentry entries[], int x);
+void tPerm(const char *results);
+void ProcesstPermVars(pentry entries[], int x);
+void tPermContent(void);
+void tPermInputContent(void);
+void tPermInput(unsigned uMode);
+void tPermList(void);
+void NewtPerm(unsigned uMode);
+void ModtPerm(void);
+void CreatetPerm(void);
+void DeletetPerm(void);
+void ExttPermGetHook(entry gentries[], int x);
+void ExttPermNavBar(void);
 
 //tOSTemplate
 int tOSTemplateCommands(pentry entries[], int x);

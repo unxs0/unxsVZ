@@ -17,11 +17,11 @@ CGIDIR=cgi-bin
 
 all: unxsVZ.cgi
 
-unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o \
+unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tperm.o tostemplate.o tnameserver.o \
 	tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
 	ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o \
 	tjob.o tjobstatus.o tstatus.o tconfiguration.o  glossary.o main.o cgi.o mysqlconnect.o
-	cc tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tostemplate.o tnameserver.o \
+	cc tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tperm.o tostemplate.o tnameserver.o \
 		tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
 		tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o \
 		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o \
@@ -71,6 +71,9 @@ tproperty.o: tproperty.c mysqlrad.h language.h tpropertyfunc.h local.h
 
 ttype.o: ttype.c mysqlrad.h language.h ttypefunc.h local.h
 	cc -c ttype.c -o ttype.o $(CFLAGS)
+
+tperm.o: tperm.c mysqlrad.h language.h tpermfunc.h local.h
+	cc -c tperm.c -o tperm.o $(CFLAGS)
 
 tostemplate.o: tostemplate.c mysqlrad.h language.h tostemplatefunc.h local.h
 	cc -c tostemplate.c -o tostemplate.o $(CFLAGS)
