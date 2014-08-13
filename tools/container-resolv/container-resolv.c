@@ -102,6 +102,7 @@ void DNSUpdate(unsigned uPBX)
 			" WHERE tGroup.cLabel='Production PBXs'"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
 			" AND tContainer.uContainer=tGroupGlue.uContainer"
+			" AND tContainer.uSource=0"
 			" AND IF(%u,tContainer.uContainer=%u,1)"
 				,uPBX,uPBX);
 	mysql_query(&gMysql,gcQuery);
