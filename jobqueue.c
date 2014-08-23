@@ -5858,8 +5858,8 @@ void ExecuteCommands(unsigned uJob,unsigned uContainer,char *cJobData)
 	//This job has no transient status change
 	//SetContainerStatus(uContainer,1);//Active
 	tJobDoneUpdate(uJob);
-	//Clean out what may be a lot of repeated cJobData
-	sprintf(gcQuery,"UPDATE tJob SET cJobData='' WHERE uJob=%u",uJob);
+	//Clean out what may be a lot of repeated cJobData. But keep a hash for searching old jobs
+	sprintf(gcQuery,"UPDATE tJob SET cJobData=MD5(cJobData) WHERE uJob=%u",uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		logfileLine("ExecuteCommands",mysql_error(&gMysql));
