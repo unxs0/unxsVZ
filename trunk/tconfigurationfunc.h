@@ -310,7 +310,7 @@ void tConfigurationNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT tConfiguration.uConfiguration,tConfiguration.cLabel,"
+	sprintf(gcQuery,"SELECT tConfiguration.uConfiguration,tConfiguration.cLabel,tConfiguration.cValue,"
 			" IFNULL(tDatacenter.cLabel,'AllDatacenters'),IFNULL(tNode.cLabel,'AllNodes')"
 			" FROM tConfiguration"
 			" LEFT JOIN tDatacenter ON tConfiguration.uDatacenter=tDatacenter.uDatacenter"
@@ -331,7 +331,7 @@ void tConfigurationNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tConfiguration&"
-					"uConfiguration=%s>%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
+					"uConfiguration=%s>%s/%s/%s (%.32s)</a><br>\n",field[0],field[1],field[3],field[4],field[2]);
 	}
         mysql_free_result(res);
 
