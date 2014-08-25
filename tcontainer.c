@@ -439,13 +439,22 @@ void tContainerSearchSet(unsigned uStep)
 {
 	OpenRow("<u>Set search parameters</u>","black");
 
-	OpenRow("Label pattern","black");
+	OpenRow("Label pattern/Special commands","black");
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cLabelSearch"
 			" value=\"%s\" size=40 maxlength=32 >",cLabelSearch);
 	//Temp placement
-	printf("<td><textarea title='Special commands, cHostname list for remove/add (parameters are ignored),"
-					" or group execute function commands. Special commands are: SpecialSearchSet=NoRemoteClones"
-					" (must specify 'Datacenter', optionallly specify 'Primary Group', only for create).'"
+	printf("<td><textarea title='Special commands or cHostname list." 
+					"\n\n"
+					"\tcHostname list for remove/add (parameters are ignored) example:"
+					"\n\thostname.yourisp.net"
+					"\n\tanotherhost.yourisp.net"
+					"\n\t..."
+					"\n\tlasthost.yourisp.net"
+					"\n\n"
+					"Special commands are:\n1)\tSpecialSearchSet=NoRemoteClones;"
+					"\n\t(must specify \"Datacenter\", optionally specify \"Primary Group\", only for create)."
+					"\n2)\ttProperty=<cName>[,<cValue>];"
+					"\n\t(Only for create. Ignores other parameters.)'"
 			" cols=80 wrap=soft rows=1 name=cCommands>%s</textarea></td>",cCommands);
 
 	OpenRow("Hostname pattern","black");

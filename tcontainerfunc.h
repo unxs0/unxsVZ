@@ -810,6 +810,8 @@ void ExttContainerCommands(pentry entries[], int x)
                 		}
 
 				//We extend to this other optional list and ignore the other filter items
+
+				//cCommands SpecialSearchSet=NoRemoteClones
 				if(!strncmp(cCommands,"SpecialSearchSet=NoRemoteClones",sizeof("SpecialSearchSet=NoRemoteClones")) && uDatacenter)
 				{
 					uLink=1;
@@ -833,7 +835,56 @@ void ExttContainerCommands(pentry entries[], int x)
 
 	                        	sprintf(gcQuery,"%u container records added via cHostname NoRemoteClones",uNumber);
 	                        	tContainer(gcQuery);
-				}//cCommands SpecialSearchSet=NoRemoteClones 
+				}//cCommands SpecialSearchSet=NoRemoteClones
+
+				//cCommands tProperty=<cName>[,<cValue>];
+				if(!strncmp(cCommands,"tProperty=",sizeof("tProperty=")-1))
+				{
+					char cName[33]={""};
+					char cValue[100]={""};
+					char *cp0,*cp1;
+					if((cp0=strchr(cCommands,',')))
+					{
+						*cp0=0;
+						sprintf(cName,"%.32s",cCommands+sizeof("tProperty=")-1);
+						*cp0=',';
+						if((cp1=strchr(cCommands,';')))
+						{
+							*cp1=0;
+							sprintf(cValue,"%.99s",cp0+1);
+							*cp1=';';
+						}
+					}
+					else if((cp0=strchr(cCommands,';')))
+					{
+						*cp0=0;
+						sprintf(cName,"%.32s",cCommands+sizeof("tProperty=")-1);
+						*cp0=';';
+					}
+					if(cName[0])
+					{
+						uLink=1;
+						if(cName[0] && cValue[0])
+							sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uContainer)"
+							" SELECT DISTINCT %u,uContainer FROM tContainer,tProperty"
+							" WHERE tProperty.uType=3 AND tProperty.uKey=tContainer.uContainer"
+							" AND tProperty.cName='%s' AND tProperty.cValue='%s'"
+												,uGroup,cName,cValue);
+						else
+							sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uContainer)"
+							" SELECT DISTINCT %u,uContainer FROM tContainer,tProperty"
+							" WHERE tProperty.uType=3 AND tProperty.uKey=tContainer.uContainer"
+							" AND tProperty.cName='%s'"
+												,uGroup,cName);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						uNumber+=mysql_affected_rows(&gMysql);
+
+					}
+	                        	sprintf(gcQuery,"%u container records added via tProperty=&lt;cName&gt;,&lt;cValue&gt;;",uNumber);
+	                        	tContainer(gcQuery);
+				}//cCommands tProperty=<cName>[,<cValue>];
 
 				//We extend to this other optional list and ignore the other filter items
 				if(cCommands[0])
