@@ -571,6 +571,55 @@ void ExttContainerCommands(pentry entries[], int x)
 				if((uGroup=uGetSearchGroup(gcUser,2))==0)
 		                        tContainer("No search set exists. Please create one first.");
 
+				//cCommands tProperty=<cName>[,<cValue>];
+				if(!strncmp(cCommands,"tProperty=",sizeof("tProperty=")-1))
+				{
+					char cName[33]={""};
+					char cValue[100]={""};
+					char *cp0,*cp1;
+					if((cp0=strchr(cCommands,',')))
+					{
+						*cp0=0;
+						sprintf(cName,"%.32s",cCommands+sizeof("tProperty=")-1);
+						*cp0=',';
+						if((cp1=strchr(cCommands,';')))
+						{
+							*cp1=0;
+							sprintf(cValue,"%.99s",cp0+1);
+							*cp1=';';
+						}
+					}
+					else if((cp0=strchr(cCommands,';')))
+					{
+						*cp0=0;
+						sprintf(cName,"%.32s",cCommands+sizeof("tProperty=")-1);
+						*cp0=';';
+					}
+					if(cName[0])
+					{
+						uLink=1;
+						if(cName[0] && cValue[0])
+							sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uContainer IN"
+							" (SELECT DISTINCT uContainer FROM tContainer,tProperty"
+							" WHERE tProperty.uType=3 AND tProperty.uKey=tContainer.uContainer"
+							" AND tProperty.cName='%s' AND tProperty.cValue LIKE '%s')"
+												,uGroup,cName,cValue);
+						else
+							sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uContainer IN"
+							" (SELECT DISTINCT uContainer FROM tContainer,tProperty"
+							" WHERE tProperty.uType=3 AND tProperty.uKey=tContainer.uContainer"
+							" AND tProperty.cName='%s')"
+												,uGroup,cName);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						uNumber+=mysql_affected_rows(&gMysql);
+
+					}
+	                        	sprintf(gcQuery,"%u container records removed via tProperty=&lt;cName&gt;,&lt;cValue&gt;;",uNumber);
+	                        	tContainer(gcQuery);
+				}//cCommands tProperty=<cName>[,<cValue>];
+
 				//We extend to this other optional list and ignore the other filter items
 				if(cCommands[0])
 				{
@@ -868,7 +917,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uContainer)"
 							" SELECT DISTINCT %u,uContainer FROM tContainer,tProperty"
 							" WHERE tProperty.uType=3 AND tProperty.uKey=tContainer.uContainer"
-							" AND tProperty.cName='%s' AND tProperty.cValue='%s'"
+							" AND tProperty.cName='%s' AND tProperty.cValue LIKE '%s'"
 												,uGroup,cName,cValue);
 						else
 							sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uContainer)"
@@ -2345,6 +2394,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			if((uStatus==uACTIVE || uStatus==uSTOPPED) && uAllowMod(uOwner,uCreatedBy))
 			{
                         	guMode=0;
+				unsigned uIPv4WizDatacenter=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
 					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
@@ -2368,10 +2418,10 @@ void ExttContainerCommands(pentry entries[], int x)
 					if(uVeth)
 						tContainer("<blink>Error:</blink> VETH device network containers"
 									" not supported at this time!");
-					sscanf(ForeignKey("tContainer","uDatacenter",uWizContainer),"%u",&uIPv4Datacenter);
-					if(uDatacenter!=uIPv4Datacenter)
-						tContainer("<blink>Error:</blink> The specified swap container does not "
-							"belong to the same datacenter.");
+					sscanf(ForeignKey("tContainer","uDatacenter",uWizContainer),"%u",&uIPv4WizDatacenter);
+					//if(uDatacenter!=uIPv4WizDatacenter)
+					//	tContainer("<blink>Error:</blink> The specified swap container does not "
+					//		"belong to the same datacenter.");
 					//we reuse uWizIPv4 for swap method
 					uIPv4Datacenter=0;
 					sscanf(ForeignKey("tContainer","uIPv4",uWizContainer),"%u",&uWizIPv4);
@@ -2524,6 +2574,8 @@ void ExttContainerCommands(pentry entries[], int x)
 						if(uGroup)
 							UpdatePrimaryContainerGroup(uWizContainer,uGroup);
 						uIPv4=uWizIPv4;
+						//note uIPv4WizDatacenter for remote datacenter OPs
+						//rarely needed only to fix botched failover or other wierdness
 						if(IPContainerJob(uDatacenter,uSwapNode,uWizContainer,uOwner,guLoginClient,cIPOld))
 						{
 							uStatus=uAWAITIP;
@@ -2532,7 +2584,7 @@ void ExttContainerCommands(pentry entries[], int x)
 							{
 								CreateDNSJob(uIPv4,uOwner,cuWizIPv4PullDown,
 										ForeignKey("tContainer","cHostname",uWizContainer),
-											uDatacenter,guLoginClient,uContainer,uSwapNode);
+											uIPv4WizDatacenter,guLoginClient,uContainer,uSwapNode);
 							}
 							tContainer("IPContainerJob() Done.");
 						}
@@ -2761,6 +2813,8 @@ void ExttContainerButtons(void)
 			printf("<p>Or swap IPs with this container<br>");
 			tTablePullDownDatacenter("tContainer;cuWizContainerPullDown","cLabel","cLabel",uWizContainer,1,
 					cuWizContainerPullDown,0,uDatacenter);
+			printf("<br><input title='Do not select swap container with above select. Type in the exact cLabel here for swap.'"
+					" type=text name=cuWizContainerPullDown size=40 maxlength=32 > ");
 			printf("<p><input title='Create an IP change job for the current container'"
 					" type=submit class=lwarnButton"
 					" name=gcCommand value='Confirm IP Change'>\n");
@@ -2993,7 +3047,7 @@ void ExttContainerButtons(void)
 
                 case 8001:
                         printf("<p><u>Switchover Container Pair</u><br>");
-			printf("Confirm all the information presented for a manual failover to take place."
+			printf("Confirm all the information presented for a manual failover to take place. Not for <i>-backup</i> containers!"
 				"<p>Jobs will be created for the source and this container. If jobs run successfully,"
 				" everything but the container VEIDs will be switched.<p>This clone (renamed to the"
 				" source names) will be the new production container and the source container will"
@@ -3275,7 +3329,7 @@ void ExttContainerButtons(void)
 				if(uStatus==uACTIVE)
 				{
 					htmlHealth(uContainer,uDatacenter,3);
-					if(!strstr(cLabel,"-clone") && !strstr(cLabel,"-backup") && uSource==0)
+					if(!strstr(cLabel,"-clone") && uSource==0)
 						printf("<p><input title='Clone a container to this or another hardware node."
 						" The clone will be an online container with another IP and hostname."
 						" It will be kept updated via rsync on a configurable basis.'"
@@ -3302,7 +3356,7 @@ void ExttContainerButtons(void)
 					printf("<p><input title='Creates a job for starting a stopped container.'"
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Start %.25s'><br>\n",cLabel);
-					if(!strstr(cLabel,"-clone") && !strstr(cLabel,"-backup") && uSource==0)
+					if(!strstr(cLabel,"-clone") && uSource==0)
 						printf("<input title='Clone a container to this or another hardware node."
 						" The clone will be an online container with another IP and hostname."
 						" It will be kept updated via rsync on a configurable basis.'"
@@ -3471,7 +3525,7 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Creates job(s) for stopping active container(s).'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Stop'>\n");
-			printf("&nbsp; <input title='Creates job(s) for switching over cloned container(s) of same datacenter.'"
+			printf("&nbsp; <input title='Creates job(s) for switching over cloned container(s) of same datacenter. Not for -backup containers!'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Switchover'>\n");
 			printf("&nbsp; <input title='Creates external unxsBind DNS job(s) for switching service over to backup"
@@ -5214,7 +5268,7 @@ while((field=mysql_fetch_row(res)))
 
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
-					if( sContainer.uSource!=0 &&
+					if( sContainer.uSource!=0 && (!strstr(sContainer.cLabel,"-backup")) &&
 						 (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
 						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
