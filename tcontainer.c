@@ -454,7 +454,7 @@ void tContainerSearchSet(unsigned uStep)
 					"Special commands are:\n1)\tSpecialSearchSet=NoRemoteClones;"
 					"\n\t(must specify \"Datacenter\", optionally specify \"Primary Group\", only for create)."
 					"\n2)\ttProperty=<cName>[,<cValue>];"
-					"\n\t(Only for create. Ignores other parameters.)'"
+					"\n\t(Only for create, add and remove. Ignores other parameters.)'"
 			" cols=80 wrap=soft rows=1 name=cCommands>%s</textarea></td>",cCommands);
 
 	OpenRow("Hostname pattern","black");
@@ -1466,7 +1466,10 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 		char cStyle[32]={""};
 		char cValue[256]={""};
 
-		printf("<select title='If selecting nodes, light yellow items are configured as clone only.' name=%s %s>\n",cLabel,cMode);
+		if(utNode)
+			printf("<select title='If selecting nodes, light yellow items are configured as clone only.' name=%s %s>\n",cLabel,cMode);
+		else
+			printf("<select title='no title content at this time' name=%s %s>\n",cLabel,cMode);
 		//Default no selection
        		printf("<option title='No selection'>---</option>\n");
 
