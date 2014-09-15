@@ -305,7 +305,7 @@ void htmlPlainTextError(const char *cError)
 	printf("Please report this unxsvzOrg fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
-        sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,"
+        sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=2,uPermLevel=%u,uLoginClient=%u,"
 			"cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,"
 			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				guPermLevel,guLoginClient,gcLogin,gcHost,cError,gcHostname,guLoginClient);
