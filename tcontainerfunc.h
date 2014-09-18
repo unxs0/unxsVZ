@@ -2689,6 +2689,8 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> Unexpected lack of uNode.");
 				if(!uSource)
 					tContainer("<blink>Error:</blink> Unexpected lack of uSource.");
+				if(strstr(cLabel,"-backup"))
+					tContainer("<blink>Error:</blink> Not for remote -backup containers.");
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND"
 						" (uStatus=1 OR uStatus=31 OR uStatus=41)",uSource);
 				mysql_query(&gMysql,gcQuery);
@@ -2720,6 +2722,8 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=8001;
 				if(!uSource)
 					tContainer("<blink>Error:</blink> Unexpected lack of uSource!");
+				if(strstr(cLabel,"-backup"))
+					tContainer("<blink>Error:</blink> Not for remote -backup containers.");
 				if(!uDatacenter)
 					tContainer("<blink>Error:</blink> Unexpected lack of uDatacenter.");
 				if(!uNode)
@@ -3329,7 +3333,7 @@ void ExttContainerButtons(void)
 				if(uStatus==uACTIVE)
 				{
 					htmlHealth(uContainer,uDatacenter,3);
-					if(!strstr(cLabel,"-clone") && uSource==0)
+					if(!strstr(cLabel,"-clone") && !strstr(cLabel,"-backup") && uSource==0)
 						printf("<p><input title='Clone a container to this or another hardware node."
 						" The clone will be an online container with another IP and hostname."
 						" It will be kept updated via rsync on a configurable basis.'"
@@ -3346,7 +3350,7 @@ void ExttContainerButtons(void)
 					printf("<p><input title='Creates a job for stopping an active container.'"
 						" type=submit class=lwarnButton"
 						" name=gcCommand value='Stop %.24s'><br>\n",cLabel);
-					if(uSource)
+					if(uSource && !strstr(cLabel,"-backup"))
 						printf("<p><input title='Creates jobs for manual failover.'"
 						" type=submit class=lwarnButton"
 						" name=gcCommand value='Switchover %.25s'><br>\n",cLabel);
@@ -3356,7 +3360,7 @@ void ExttContainerButtons(void)
 					printf("<p><input title='Creates a job for starting a stopped container.'"
 					" type=submit class=lalertButton"
 					" name=gcCommand value='Start %.25s'><br>\n",cLabel);
-					if(!strstr(cLabel,"-clone") && uSource==0)
+					if(!strstr(cLabel,"-clone") && !strstr(cLabel,"-backup") && uSource==0)
 						printf("<input title='Clone a container to this or another hardware node."
 						" The clone will be an online container with another IP and hostname."
 						" It will be kept updated via rsync on a configurable basis.'"
@@ -3552,8 +3556,8 @@ void ExttContainerAuxTable(void)
 			printf("<p><input title='Creates job(s) with given commands to run via vzctl exec2'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Execute'>\n");
-			printf("&nbsp; <input title='Change status to stopped for awaiting failover containers."
-				" Any existing waiting FailoverFrom jobs will be canceled also.'"
+			printf("&nbsp; <input title='Change status to stopped for awaiting failover containers and other transient states."
+				" If done for awaiting failover containers then any existing waiting FailoverFrom jobs will be canceled also.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Status Stopped'>\n");
 			printf("&nbsp; <input title='Change IP for selected containers and DNS records if system is so configured'"
@@ -5526,19 +5530,46 @@ while((field=mysql_fetch_row(res)))
 
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
-					if( (sContainer.uStatus==uAWAITFAIL)
+
+/* Transient States
+#define uAWAITMOD       4
+#define uAWAITDEL       5
+#define uAWAITACT       6
+#define uAWAITMIG       21
+#define uAWAITSTOP      41
+#define uAWAITTML       51
+#define uAWAITHOST      61
+#define uAWAITIP        71
+#define uAWAITCLONE     81
+#define uAWAITFAIL      91
+#define uAWAITRESTART   111
+#define uAWAITDNSMIG    121
+*/
+					if( (sContainer.uStatus==uAWAITFAIL || 
+						sContainer.uStatus==uAWAITMOD ||
+						sContainer.uStatus==uAWAITDEL ||
+						sContainer.uStatus==uAWAITACT ||
+						sContainer.uStatus==uAWAITSTOP ||
+						sContainer.uStatus==uAWAITTML ||
+						sContainer.uStatus==uAWAITHOST ||
+						sContainer.uStatus==uAWAITIP ||
+						sContainer.uStatus==uAWAITCLONE ||
+						sContainer.uStatus==uAWAITRESTART ||
+						sContainer.uStatus==uAWAITDNSMIG )
 						&& (sContainer.uOwner==guCompany || guCompany==1))
 					{
 						SetContainerStatus(uCtContainer,uSTOPPED);
 						
-						sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u WHERE uJobStatus=%u AND uContainer=%u"
+						if(sContainer.uStatus==uAWAITFAIL)
+						{
+							sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u WHERE uJobStatus=%u AND uContainer=%u"
 								" AND cJobName='FailoverFrom'"
 									,uCANCELED,uWAITING,uCtContainer);
-		        			mysql_query(&gMysql,gcQuery);
-		        			if(mysql_errno(&gMysql))
-							sprintf(cResult,"%.31s",mysql_error(&gMysql));
-						else
-							sprintf(cResult,"status changed to stopped");
+		        				mysql_query(&gMysql,gcQuery);
+		        				if(mysql_errno(&gMysql))
+								sprintf(cResult,"%.31s",mysql_error(&gMysql));
+						}
+						sprintf(cResult,"status changed to stopped");
 					}
 					else
 					{
