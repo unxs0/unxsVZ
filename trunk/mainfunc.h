@@ -186,6 +186,14 @@ void CloneReport(const char *cOptionalMsg)
 					"<td>%s</td><td>%s</td><td>%s</td>\n",uContainer,
 						mysqlField[0],mysqlField[1],mysqlField[3],mysqlField[4]);
 			}
+			else if(cuSyncPeriod[0]==0)
+			{
+				uCount++;
+				printf("<tr><td>Clone w/no cuSyncPeriod</td><td>"
+					"<a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>%s<a></td>"
+					"<td>%s</td><td>%s</td><td>%s</td>\n",uContainer,
+						mysqlField[0],mysqlField[1],mysqlField[3],mysqlField[4]);
+			}
 		}
 	}
 	mysql_free_result(mysqlRes);
