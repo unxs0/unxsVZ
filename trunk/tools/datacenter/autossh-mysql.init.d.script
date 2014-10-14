@@ -19,10 +19,16 @@
 #	autossh of course
 #
 
+#configure these
+cSSHPort="12345";
+cLocalIPAndPort="10.10.10.10:3306";
+cRemoteIPAndPort="127.0.0.1:3306";
+cSSHUser="dbuser@db.yourisp.net";
+
+cListen="$cLocalIPAndPort:$cRemoteIPAndPort";
 function start {
         echo -n "Starting autossh"
-	#configure here
-        daemon '/usr/bin/autossh -M 0 -q -f -N -o "ServerAliveInterval 60" -o "ServerAliveCountMax 3" -L 23306:localhost:3306 -p 14678 dbuser@db.your.net'
+        daemon "/usr/bin/autossh -M 0 -q -f -N -o 'ServerAliveInterval 60' -o 'ServerAliveCountMax 3' -L $cListen -p $cSSHPort $cSSHUser";
 	RETVAL=$?;
 	if [ $? != 0 ];then
 		echo "could not start autossh";
