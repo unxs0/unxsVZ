@@ -729,7 +729,7 @@ void ProcessUBC(void)
 	if(fd>0)
 	{
 		if(!read(fd,cRandom,sizeof(cRandom))!=sizeof(cRandom))
-			(void)srand((unsigned)cRandom);
+			(void)srand((unsigned)cRandom[0]);
 	}
 
 	if(!cRandom[0])
