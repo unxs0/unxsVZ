@@ -1440,6 +1440,16 @@ void ExttZoneListSelect(void)
 		sprintf(cCat,"tZone.uMailServer=%u ORDER BY tZone.cZone",uZone);
 		strcat(gcQuery,cCat);
         }
+        else if(!strcmp(gcFilter,"uSecondaryOnly"))
+        {
+                sscanf(gcCommand,"%u",&uZone);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tZone.uSecondaryOnly=%u ORDER BY tZone.cZone",uZone);
+		strcat(gcQuery,cCat);
+        }
         else if(1)
         {
                 //None NO FILTER
@@ -1479,6 +1489,10 @@ void ExttZoneListFilter(void)
                 printf("<option>uMailServer</option>");
         else
                 printf("<option selected>uMailServer</option>");
+        if(strcmp(gcFilter,"uSecondaryOnly"))
+                printf("<option>uSecondaryOnly</option>");
+        else
+                printf("<option selected>uSecondaryOnly</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
