@@ -421,7 +421,7 @@ void tNSSetZones(unsigned uNSSet)
 
 	sprintf(gcQuery,"SELECT tZone.uZone,tZone.cZone,tZone.uView FROM tZone,tNSSet WHERE"
 			" tZone.uNSSet=tNSSet.uNSSet"
-			" AND tNSSet.uNSSet=%u ORDER BY tZone.cZone LIMIT 100",uNSSet);
+			" AND tNSSet.uNSSet=%u ORDER BY tZone.cZone",uNSSet);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -430,14 +430,20 @@ void tNSSetZones(unsigned uNSSet)
         }
 
         res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	unsigned uCount=0;
+	unsigned uNumRows=0;
+	if((uNumRows=mysql_num_rows(res)))
 	{	
-        	printf("tZone.cZone for loaded uNSSet:<br>\n");
+        	printf("tZone.cZone (%u) for loaded uNSSet:<br>\n",uNumRows);
 
 	        while((field=mysql_fetch_row(res)))
+		{
 			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tZone"
 				"&uZone=%s>%s (%s)</a><br>\n",
 				field[0],field[1],field[2]);
+			uCount++;
+			if(uCount>100) break;
+		}
 	}
         mysql_free_result(res);
 
