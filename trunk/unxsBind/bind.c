@@ -248,6 +248,7 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 
 	char *cp;
 	char cMasterNS2[100]={""};//cNameServer2
+	char cMasterNS1[100]={""};//cNameServer1
 	unsigned uNSSet2=0;
 	if((cp=strchr(cMasterNS,',')))
 	{
@@ -257,11 +258,13 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 		logfileLine("CreateMasterFiles",cMasterNS2);//cNameServer2
 		uNSSet2=uGetNSSet(cMasterNS2);//cNameServer2
 		uNSSet=uGetNSSet(cMasterNS);
+		sprintf(cMasterNS1,"%.99s",cMasterNS);
 		*cp=',';//cMasterNS will be used again!
 	}
 	else
 	{
 		uNSSet=uGetNSSet(cMasterNS);
+		sprintf(cMasterNS1,"%.99s",cMasterNS);
 	}
 
 	//debug only
@@ -348,6 +351,15 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 		//Only once for all zones. TODO this is a limitation.
 		GetConfiguration("cTSIGKeyNameTransfer",cTSIGKeyNameTransfer,0);
 		GetConfiguration("cTSIGKeyNameUpdate",cTSIGKeyNameUpdate,0);
+		//limitation first of two if two
+		char cOptionalExternalViewLine[256]={""};
+		char cOptionalExternalViewLineName[256]={""};
+		sprintf(cOptionalExternalViewLineName,"cOptionalExternalViewLine:%s",cMasterNS1);
+		GetConfiguration(cOptionalExternalViewLineName,cOptionalExternalViewLine,0);
+		if(cOptionalExternalViewLine[0])
+			logfileLine("CreateMasterFiles",cOptionalExternalViewLine);
+		//debug only
+		//printf("%s %s\n",cOptionalExternalViewLineName,cOptionalExternalViewLine);
 
 		while((field=mysql_fetch_row(res)))
 		{
@@ -360,7 +372,9 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 				char cExtraForView[1024]={""};
 
 				if(!uFirst)
+				{
 					fprintf(sfp,"};\n");
+				}
 				uFirst=0;
 				uCurrentView=uView;
 				fprintf(sfp,"\n%s\n",field[13]);
@@ -435,6 +449,12 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 			else
 				fprintf(sfp,"%s",field[0]);
 			fprintf(sfp,"\";\n\t};\n");
+		}
+		if(cOptionalExternalViewLine[0] && uView==2)
+		{
+			fprintf(sfp,"%s\n",cOptionalExternalViewLine);
+			//debug only
+			//printf("%s\n",cOptionalExternalViewLine);
 		}
 		fprintf(sfp,"};\n");
 	}
@@ -767,23 +787,36 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 		sprintf(cSlaveNS1,"%.99s",cSlaveNS);
 		*cpNS=',';//for return to as on entry
 	}
+	else
+	{
+		sprintf(cSlaveNS1,"%.99s",cSlaveNS);
+	}
 	//debug only
 	//printf("CreateSlaveFiles()cSlaveNS2=%s\n",cSlaveNS2);
 	logfileLine("CreateSlaveFiles",cSlaveNS1);
 	if(cSlaveNS2[0])
 		logfileLine("CreateSlaveFiles",cSlaveNS2);
 
+	//servers can be both master and slave
 	if(cSlaveNS2[0])
-		sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tView.cLabel,tView.cSlave,tView.uView,tNSSet.cMasterIPs,"
-			"tZone.cOptions,tZone.uSecondaryOnly FROM tZone,tNSSet,tNS,tView WHERE"
-			" tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
-			" tNS.uNSType=4 AND tZone.uView=tView.uView AND (tNS.cFQDN='%s' OR tNS.cFQDN='%s')"
+		sprintf(gcQuery,"SELECT DISTINCT"
+			" tZone.cZone,tView.cLabel,tView.cSlave,tView.uView,tNSSet.cMasterIPs,tZone.cOptions,tZone.uSecondaryOnly"
+			" FROM tZone,tNSSet,tNS,tView"
+			" WHERE tZone.uNSSet=tNSSet.uNSSet"
+			" AND tNSSet.uNSSet=tNS.uNSSet"
+			" AND tNS.uNSType=4"
+			" AND tZone.uView=tView.uView"
+			" AND (tNS.cFQDN='%s' OR tNS.cFQDN='%s')"
 			" ORDER BY tView.uOrder,tZone.cZone",cSlaveNS1,cSlaveNS2);
 	else
-		sprintf(gcQuery,"SELECT DISTINCT tZone.cZone,tView.cLabel,tView.cSlave,tView.uView,tNSSet.cMasterIPs,"
-			"tZone.cOptions,tZone.uSecondaryOnly FROM tZone,tNSSet,tNS,tView WHERE"
-			" tZone.uNSSet=tNSSet.uNSSet AND tNSSet.uNSSet=tNS.uNSSet AND"
-			" tNS.uNSType=4 AND tZone.uView=tView.uView AND tNS.cFQDN='%s'"
+		sprintf(gcQuery,"SELECT DISTINCT"
+			" tZone.cZone,tView.cLabel,tView.cSlave,tView.uView,tNSSet.cMasterIPs,tZone.cOptions,tZone.uSecondaryOnly"
+			" FROM tZone,tNSSet,tNS,tView"
+			" WHERE tZone.uNSSet=tNSSet.uNSSet"
+			" AND tNSSet.uNSSet=tNS.uNSSet"
+			" AND tNS.uNSType=4"
+			" AND tZone.uView=tView.uView"
+			" AND tNS.cFQDN='%s'"
 			" ORDER BY tView.uOrder,tZone.cZone",cSlaveNS1);
 	mysql_query(&gMysql,gcQuery);
 	//debug only
@@ -822,10 +855,15 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 		}
 	}
 
+	char cNoViewSlaveFileName[256]={""};
+	char cNoViewSlaveFile[256]={""};
+	sprintf(cNoViewSlaveFileName,"cNoViewSlaveFile:%.99s",cSlaveNS1);
+	GetConfiguration(cNoViewSlaveFileName,cNoViewSlaveFile,0);
+
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[3],"%u",&uView);
-		if(uCurrentView!=uView)
+		if(uCurrentView!=uView && !cNoViewSlaveFile[0])
 		{
 			char cExtraForViewName[100]={""};
 			char cExtraForView[1024]={""};
@@ -897,7 +935,8 @@ void CreateSlaveFiles(char *cSlaveNS, char *cZone, char *cMasterIP, unsigned uDe
 			}
 		}
 	}
-	fprintf(fp,"};\n");
+	if(!cNoViewSlaveFile[0])
+		fprintf(fp,"};\n");
 	mysql_free_result(res);
 	if(fp && !uDebug) fclose(fp);
 	rmdir("/var/run/unxsBind.lock");
