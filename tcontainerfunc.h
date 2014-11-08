@@ -2258,10 +2258,10 @@ void ExttContainerCommands(pentry entries[], int x)
 					tContainer("<blink>Error:</blink> cLabel can't have '-clone'");
 				if(strstr(cWizHostname,"-clone"))
 					tContainer("<blink>Error:</blink> cHostname can't have '-clone'");
-				if(strstr(cWizLabel,"-backup"))
-					tContainer("<blink>Error:</blink> cLabel can't have '-backup'");
-				if(strstr(cWizHostname,"-backup"))
-					tContainer("<blink>Error:</blink> cHostname can't have '-backup'");
+				if(strstr(cWizLabel,"-backup") && !strstr(cLabel,"-backup"))
+					tContainer("<blink>Error:</blink> cLabel can't have '-backup' unless it is already a '-backup'");
+				if(strstr(cWizHostname,"-backup") && !strstr(cHostname,"-backup"))
+					tContainer("<blink>Error:</blink> cHostname can't have '-backup' unless already a '-backup'");
 				//New rule: cLabel must be first part (first stop) of cHostname.
 				if(strncmp(cWizLabel,cWizHostname,uLabelLen))
 					tContainer("<blink>Error:</blink> cLabel must be first part of cHostname.");
