@@ -808,10 +808,10 @@ void ExttIPButtons(void)
 				" name=gcCommand value='Search Set Operations'>\n");
 			printf("<p><input type=submit class=largeButton title='Create report on IP usage and errors for the loaded IP'"
 				" name=gcCommand value='IP Report Single'>\n");
-			printf("<p><input type=submit class=largeButton title='!Warning make take some time. Do not abuse!"
+			printf("<p><input type=submit class=largeButton title='!Warning may take some time. Do not abuse!"
 				" Create report on assignment errors for all IPs of given datacenter'"
 				" name=gcCommand value='IP Report All'>\n");
-			printf("<p><input type=submit class=largeButton title='Non rfc-1918 class C's in use by active datacenters'"
+			printf("<p><input type=submit class=largeButton title=\"Non rfc-1918 class C's in use by active non CustomerPremise datacenters\""
 				" name=gcCommand value='Datacenter IP Report'>\n");
 			printf("<p><input type=submit class=largeButton title='Subnet analyzer for firewall consolidation'"
 				" name=gcCommand value='Firewall Subnet Report'>\n");
@@ -2452,13 +2452,19 @@ void tIPFirewallSubnetReport()
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
 
+	//tIP.uCountryCode=tGeoIPCountryCode.uGeoIPCountryCode
 	sprintf(gcQuery,"SELECT DISTINCT LEFT(tIP.cLabel,LENGTH(tIP.cLabel)-LENGTH(SUBSTRING_INDEX(tIP.cLabel,'.',-1))-1),"
-			" tDatacenter.cLabel FROM tIP,tDatacenter"
+			" tGeoIPCountryCode.cCountryCode FROM tIP,tDatacenter,tGeoIPCountryCode"
 			" WHERE tIP.uDatacenter=tDatacenter.uDatacenter"
 			" AND tDatacenter.cLabel='CustomerPremise'"
-			" AND tIP.cLabel='CustomerPremise'"
-			" ORDER BY tIP.uDatacenter,tIP.uIP");
+			" AND tIP.uCountryCode=tGeoIPCountryCode.uGeoIPCountryCode"
+			" AND tIP.uFWStatus>0"
+			" AND tIP.uIPNum>0"
+			" AND tGeoIPCountryCode.cCountryCode!='US'"
+			" ORDER BY tGeoIPCountryCode.uGeoIPCountryCode,tIP.uIPNum");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -2473,7 +2479,26 @@ void tIPFirewallSubnetReport()
 	        while((field=mysql_fetch_row(res)))
 		{
 			printf("%s.0/24 %s<br>\n",field[0],field[1]);
+			//sprintf(gcQuery,"SELECT COUNT(uIP)"
+			sprintf(gcQuery,"SELECT cLabel"
+				" FROM tIP"
+				" WHERE uIPNum>INET_ATON('%s.0') AND uIPNum<INET_ATON('%s.0')+255",field[0],field[0]);
+        		mysql_query(&gMysql,gcQuery);
+        		if(mysql_errno(&gMysql))
+        		{
+        			printf("<p><u>tIPFirewallSubnetReport</u><br>\n");
+                		printf("%s",mysql_error(&gMysql));
+                		return;
+        		}
+        		res2=mysql_store_result(&gMysql);
+	        	while((field2=mysql_fetch_row(res2)))
+        			printf(" &nbsp; %s <br>\n",field2[0]);
+        		mysql_free_result(res2);
 	        }
+	}
+	else
+	{
+        	printf("<p><u>tIPFirewallSubnetReport no rows!</u><br>\n");
 	}
         mysql_free_result(res);
 
@@ -2489,13 +2514,13 @@ void tDatacenterIPReport()
 	sprintf(gcQuery,"SELECT DISTINCT LEFT(tIP.cLabel,LENGTH(tIP.cLabel)-LENGTH(SUBSTRING_INDEX(tIP.cLabel,'.',-1))-1),"
 			" tDatacenter.cLabel FROM tIP,tDatacenter"
 			" WHERE tIP.uDatacenter=tDatacenter.uDatacenter"
+			" AND tDatacenter.cLabel!='CustomerPremise'"
 			" AND tIP.cLabel NOT LIKE '10.%%.%%.%%' AND"
 			" tIP.cLabel NOT LIKE '172.16.%%.%%' AND" //This is only the first class C of the /12
 			" tIP.cLabel NOT LIKE '172.17.%%.%%' AND" 
 			" tIP.cLabel NOT LIKE '172.18.%%.%%' AND"
 			" tIP.cLabel NOT LIKE '192.168.%%.%%'"
 			" AND tDatacenter.uStatus=1"
-			" AND tDatacenter.cLabel!='CustomerPremise'"
 			" ORDER BY tIP.uDatacenter,tIP.uIP");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -2507,7 +2532,7 @@ void tDatacenterIPReport()
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>tDatacenterIPReport</u><br>\n");
+        	printf("<p><u>tDatacenterIPReport (excluding CustomerPremise)</u><br>\n");
 	        while((field=mysql_fetch_row(res)))
 		{
 			printf("%s.0/24 %s<br>\n",field[0],field[1]);
