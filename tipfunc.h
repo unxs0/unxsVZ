@@ -13,6 +13,7 @@ AUTHOR/LEGAL
 
 void tIPReport(char *cLabel, unsigned uAux);
 void tDatacenterIPReport(void);
+void tIPFirewallSubnetReport(void);
 void tIPNavList(unsigned uAvailable);
 void tIPUsedButAvailableNavList(void);
 void tIPUsedButAvailableFix(void);
@@ -82,6 +83,19 @@ void ExttIPCommands(pentry entries[], int x)
 	                        ProcesstIPVars(entries,x);
                         	guMode=16001;
 	                        tIP("Datacenter IP Report");
+			}
+			else
+			{
+				tIP("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+		else if(!strcmp(gcCommand,"Firewall Subnet Report"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstIPVars(entries,x);
+                        	guMode=17001;
+	                        tIP("Firewall Subnet Report");
 			}
 			else
 			{
@@ -712,6 +726,7 @@ void ExttIPButtons(void)
 
 		case 15001:
 		case 16001:
+		case 17001:
 		case 14001:
 			printf("<u>IP Report in bottom panel</u><br>");
 		break;
@@ -798,6 +813,8 @@ void ExttIPButtons(void)
 				" name=gcCommand value='IP Report All'>\n");
 			printf("<p><input type=submit class=largeButton title='Non rfc-1918 class C's in use by active datacenters'"
 				" name=gcCommand value='Datacenter IP Report'>\n");
+			printf("<p><input type=submit class=largeButton title='Subnet analyzer for firewall consolidation'"
+				" name=gcCommand value='Firewall Subnet Report'>\n");
 
 			printf("<p><u>Filter by cLabel</u><br>");
 			printf("<input title='Enter cLabel start or MySQL LIKE pattern (%% or _ allowed)' type=text"
@@ -824,6 +841,7 @@ void ExttIPAuxTable(void)
 
 	switch(guMode)
 	{
+		case 17001:
 		case 16001:
 		case 15001:
 		case 14001:
@@ -834,6 +852,8 @@ void ExttIPAuxTable(void)
 				tIPReport("",uDatacenter);
 			else if(guMode==16001)
 				tDatacenterIPReport();
+			else if(guMode==17001)
+				tIPFirewallSubnetReport();
 			CloseFieldSet();
 		break;
 
@@ -2428,6 +2448,38 @@ void tIPUsedButAvailableFix(void)
 }//void tIPUsedButAvailableFix()
 
 
+void tIPFirewallSubnetReport()
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT DISTINCT LEFT(tIP.cLabel,LENGTH(tIP.cLabel)-LENGTH(SUBSTRING_INDEX(tIP.cLabel,'.',-1))-1),"
+			" tDatacenter.cLabel FROM tIP,tDatacenter"
+			" WHERE tIP.uDatacenter=tDatacenter.uDatacenter"
+			" AND tDatacenter.cLabel='CustomerPremise'"
+			" AND tIP.cLabel='CustomerPremise'"
+			" ORDER BY tIP.uDatacenter,tIP.uIP");
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tIPFirewallSubnetReport</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>tIPFirewallSubnetReport</u><br>\n");
+	        while((field=mysql_fetch_row(res)))
+		{
+			printf("%s.0/24 %s<br>\n",field[0],field[1]);
+	        }
+	}
+        mysql_free_result(res);
+
+}//void tIPFirewallSubnetReport()
+
+
 void tDatacenterIPReport()
 {
         MYSQL_RES *res;
@@ -2443,6 +2495,7 @@ void tDatacenterIPReport()
 			" tIP.cLabel NOT LIKE '172.18.%%.%%' AND"
 			" tIP.cLabel NOT LIKE '192.168.%%.%%'"
 			" AND tDatacenter.uStatus=1"
+			" AND tDatacenter.cLabel!='CustomerPremise'"
 			" ORDER BY tIP.uDatacenter,tIP.uIP");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
