@@ -24,7 +24,6 @@ TODO
 */
 
 #include <openisp/ucidr.h>
-#include <math.h>
 
 //from tresource.c
 #define VAR_LIST_tResource "tResource.uResource,tResource.uZone,tResource.cName,tResource.uTTL,tResource.uRRType,tResource.cParam1,tResource.cParam2,tResource.cComment,tResource.uOwner,tResource.uCreatedBy,tResource.uCreatedDate,tResource.uModBy,tResource.uModDate"
@@ -1043,13 +1042,14 @@ void ExttZoneButtons(void)
 			printf("<p><u>Delegation Tools</u></p>\n");
 			printf("<p>Enter below the IP block in CIDR format (e.g. 217.23.24.0/24) "
 				"or in dash format (e.g. 217.125.32.17-25) that you wish to delegate. "
-				"In the textarea you must place a list with the fully qualified domain "
+				"In the textarea you must place a list (one per line) with the fully qualified domain "
 				"name(s) of the nameserver(s) for the delegation. An optional parameter "
 				"is uTTL, if not set the default zone TTL will be used. The uSubmitJob "
 				"checkbox determines if a modify job is submitted for the zone upon "
 				"delegation. If you want to remove a block delegation enter the IP block "
 				"in CIDR format or in dash format in the cIPBlock text box and press the "
-				"[Remove Delegation] button below.</p>\n");
+				"[Remove Delegation] button below. Make sure no existing zone records will"
+				"conflict with the delelgation, if any do remove them.</p>\n");
 			DelegationTools();
 			printf("<br><input class=largeButton title='Delegate the entered IP block in a two step procedure'"
 				" type=submit name=gcCommand value='Delegate IP Block'><br>\n");
@@ -3930,25 +3930,26 @@ unsigned OnLineZoneCheck(unsigned uZone,unsigned uCalledMode,unsigned uCalledFro
 					char *cp;
 					cp=strstr(cLine,cZoneFile);
 					cp=cp+strlen(cZoneFile)+2; //2 more chars ': '
-					sprintf(cMessage,"<blink>Error: </blink> The RR has an error: %s",cp);
 					if(uCalledFrom)
 					{
 						guMode=uCalledMode;
+						sprintf(cMessage,"<blink>Error: </blink> RR error: %s (if delegation conflict remove RR)",cp);
 						tZone(cMessage);
 					}
 					else
 					{
 						guMode=uCalledMode;
+						sprintf(cMessage,"<blink>Error: </blink> RR error: %s",cp);
 						tResource(cMessage);
 					}
 				}
 			}
 			pclose(zfp);
-			unlink(cZoneFile);
+			//unlink(cZoneFile);
 			return(1);
 		}
 	}
-	unlink(cZoneFile);
+	//unlink(cZoneFile);
 
 	return(0);
 
