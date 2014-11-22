@@ -1467,7 +1467,8 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 		char cValue[256]={""};
 
 		if(utNode)
-			printf("<select title='If selecting nodes, light yellow items are configured as clone only.' name=%s %s>\n",cLabel,cMode);
+			printf("<select title='If selecting nodes, light yellow items are configured as clone only."
+					" Greener nodes have more empty slots.' name=%s %s>\n",cLabel,cMode);
 		else
 			printf("<select title='no title content at this time' name=%s %s>\n",cLabel,cMode);
 		//Default no selection
@@ -1484,9 +1485,32 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 				cValue[0]=0;
 				GetNodeProp(uField0,"NewContainerMode",cValue);
 				if(strstr(cValue,"Clone Only"))
+				{
 					sprintf(cStyle," style='background-color: #ffff99'");
+				}
 				else
+				{
 					cStyle[0]=0;
+					unsigned uMaxContainers=0,uActiveContainers=0;
+					//set background color based on how many free slots the node has.
+					GetNodeProp(uField0,"MaxContainers",cValue);
+					sscanf(cValue,"%u",&uMaxContainers);
+					GetNodeProp(uField0,"ActiveContainers",cValue);
+					sscanf(cValue,"%u",&uActiveContainers);
+					if(uMaxContainers)
+					{
+						if((uMaxContainers-uActiveContainers)>16)
+							//light green
+							sprintf(cStyle," style='background-color: #009900'");
+						else if((uMaxContainers-uActiveContainers)>8)
+							//lighter green
+							sprintf(cStyle," style='background-color: #00CC33'");
+						else if((uMaxContainers-uActiveContainers)>4)
+							//lightest green
+							sprintf(cStyle," style='background-color: #00FF66'");
+					}
+					
+				}
 			}
 
 
