@@ -2473,12 +2473,14 @@ void tIPFirewallSubnetReport()
                 return;
         }
         res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res))
+	unsigned uNumNets=0;
+	unsigned uNumInNets=0;
+	if((uNumNets=mysql_num_rows(res)))
 	{	
         	printf("<p><u>tIPFirewallSubnetReport</u><br>\n");
 	        while((field=mysql_fetch_row(res)))
 		{
-			printf("%s.0/24 %s<br>\n",field[0],field[1]);
+			//printf("%s.0/24 %s<br>\n",field[0],field[1]);
 			//sprintf(gcQuery,"SELECT COUNT(uIP)"
 			sprintf(gcQuery,"SELECT cLabel"
 				" FROM tIP"
@@ -2491,8 +2493,12 @@ void tIPFirewallSubnetReport()
                 		return;
         		}
         		res2=mysql_store_result(&gMysql);
+			uNumInNets--;//do not count first IP
 	        	while((field2=mysql_fetch_row(res2)))
-        			printf(" &nbsp; %s <br>\n",field2[0]);
+			{
+        			//printf(" &nbsp; %s <br>\n",field2[0]);
+				uNumInNets++;
+			}
         		mysql_free_result(res2);
 	        }
 	}
@@ -2501,6 +2507,8 @@ void tIPFirewallSubnetReport()
         	printf("<p><u>tIPFirewallSubnetReport no rows!</u><br>\n");
 	}
         mysql_free_result(res);
+        printf("By using /24 blocks we will be able to reduce iptables entries by %2.2f%% (%u/%u)</u><br>\n",
+						((float)uNumInNets/(float)uNumNets)*100.0,uNumInNets,uNumNets);
 
 }//void tIPFirewallSubnetReport()
 
