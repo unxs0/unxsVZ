@@ -10,6 +10,7 @@ AUTHOR/LEGAL
 NOTES
 */
 
+
 //step 1
 if(!strcmp(gcCommand,LANG_NB_NEW))
 {
@@ -1631,4 +1632,5 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 		tContainer("<blink>Error:</blink> Denied by permissions settings");
 	}
 }//Multiple containers
+
 
