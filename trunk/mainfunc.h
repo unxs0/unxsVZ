@@ -81,6 +81,7 @@ void DashBoard(const char *cOptionalMsg);
 void CloneReport(const char *cOptionalMsg);
 void ContainerReport(const char *cOptionalMsg);
 void CapacityReport(const char *cOptionalMsg);
+void NodeMapReport(const char *cOptionalMsg);
 void EncryptPasswdMD5(char *pw);
 unsigned GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,
@@ -119,6 +120,10 @@ int iExtMainCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,"CapacityReport"))
 		{
 			unxsVZ("CapacityReport");
+		}
+		else if(!strcmp(gcCommand,"NodeMapReport"))
+		{
+			unxsVZ("NodeMapReport");
 		}
 	}
 	return(0);
@@ -1054,8 +1059,10 @@ void ExtMainContent(void)
 			" value=CloneReport > \n");
 		printf(" <input title='Find inconsistencies between actual node vz containers and unxsVZ status'"
 			" class=largeButton type=submit name=gcCommand value=ContainerReport > \n");
-		printf(" <input title='Find out hoy many containers can be deployed'"
-			" class=largeButton type=submit name=gcCommand value=CapacityReport ></td></tr>\n");
+		printf(" <input title='Find out how many containers can be deployed'"
+			" class=largeButton type=submit name=gcCommand value=CapacityReport > \n");
+		printf(" <input title='Check confguration against business logic for current clone and backup system'"
+			" class=largeButton type=submit name=gcCommand value=NodeMapReport ></td></tr>\n");
 	}
 
 	CloseFieldSet();
@@ -5070,4 +5077,139 @@ void SessionReport(const char *cOptionalMsg)
 	CloseFieldSet();
 
 }//void SessionReport(const char *cOptionalMsg)
+
+
+void NodeMapReport(const char *cOptionalMsg)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	OpenFieldSet("NodeMapReport",100);
+	OpenRow("<u>Per node clone and backup configuration</u>","black");
+	sprintf(gcQuery,"SELECT tNode.uNode,tNode.cLabel,tDatacenter.cLabel,tNode.uDatacenter"
+			" FROM tDatacenter,tNode"
+			" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1"
+			" AND tNode.uDatacenter=tDatacenter.uDatacenter"
+			" AND tDatacenter.cLabel!='CustomerPremise'"
+			" AND tDatacenter.uStatus=1"
+				" ORDER BY tDatacenter.uDatacenter,tNode.uNode");
+	macro_mySQLQueryErrorText
+	printf("</td></tr><tr><td><u>Datacenter</u></td>"
+		"<td><u>Node</u></td>"
+		"<td><u>NewContainerMode</u></td>"
+		"<td><u>MaxContainers</u></td>"
+		"<td><u>MaxCloneContainers</u></td>"
+		"<td><u>ClonePeer</u></td>"
+		"<td><u>BackupPeer</u></td>"
+		"<td><u>FailoverStatus</u></td>\n");
+	char cPrevDatacenter[32]={""};	
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+			char cFailoverStatus[32]={"Error"};
+			unsigned uFailover=0;
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%s AND uType=2 AND cName='FailoverStatus'",mysqlField[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(cFailoverStatus,"%.31s",field[0]);
+				if(strcmp(cFailoverStatus,"Normal"))
+					uFailover=1;
+			}
+
+			char cBackupPeer[32]={"Error"};
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%s AND uType=2 AND cName='BackupPeer'",mysqlField[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cBackupPeer,"%.31s",field[0]);
+
+			char cClonePeer[32]={"Error"};
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%s AND uType=2 AND cName='ClonePeer'",mysqlField[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cClonePeer,"%.31s",field[0]);
+
+			unsigned uMaxCloneContainers=0;
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%s AND uType=2 AND cName='MaxCloneContainers'",mysqlField[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uMaxCloneContainers);
+
+			unsigned uMaxContainers=0;
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%s AND uType=2 AND cName='MaxContainers'",mysqlField[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uMaxContainers);
+
+			char cNewContainerMode[32]={"Error"};
+			sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%s AND uType=2 AND cName='NewContainerMode'",mysqlField[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sprintf(cNewContainerMode,"%.31s",field[0]);
+
+
+			char cDatacenter[32]={""};	
+			if(strcmp(cPrevDatacenter,mysqlField[2]))
+			{
+				sprintf(cPrevDatacenter,"%.31s",mysqlField[2]);
+				sprintf(cDatacenter,"%.31s",mysqlField[2]);
+			}
+			char *cColor="black";
+			if(uFailover)
+				cColor="red";
+			printf("<tr>"
+				"<td>%s</td>"
+				"<td><font color=%s>%s</font></td>"
+				"<td><font color=%s>%s</font></td>"
+				"<td><font color=%s>%u</font></td>"
+				"<td><font color=%s>%u</font></td>"
+				"<td><font color=%s>%s</font></td>"
+				"<td><font color=%s>%s</font></td>"
+				"<td><font color=%s>%s</font></td>\n",
+						cDatacenter,cColor,mysqlField[1],
+						cColor,cNewContainerMode,cColor,uMaxContainers,cColor,
+						uMaxCloneContainers,cColor,cClonePeer,cColor,cBackupPeer,cColor,cFailoverStatus);
+	}
+	mysql_free_result(mysqlRes);
+
+	CloseFieldSet();
+
+}//void NodeMapReport(const char *cOptionalMsg)
 

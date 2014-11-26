@@ -102,6 +102,9 @@ void tTablePullDownDatacenterCloneIPs(const char *cTableName, const char *cField
 	const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter,unsigned uClient,unsigned uNode);
 void tTablePullDownOwnerAnyAvailDatacenter(const char *cTableName, const char *cFieldName,
 	const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter,unsigned uClient);
+void tTablePullDownActiveColorCoded(const char *cTableName, const char *cFieldName,
+                        const char *cOrderby, unsigned uSelector, unsigned uMode);
+void voidGetDatacenterSlots(unsigned *uMaxContainers,unsigned *uActiveContainers,unsigned uDatacenter);
 
  //In tContainerfunc.h file included below
 void ExtProcesstContainerVars(pentry entries[], int x);
@@ -511,7 +514,7 @@ void tContainerNewStep(unsigned uStep)
 	if(uStep==1)
 	{
 		OpenRow("Select an available datacenter","black");
-		tTablePullDownActive("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+		tTablePullDownActiveColorCoded("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
 		//Helper
 		if(uNode)
 			printf("<input type=hidden name=uNode value=%u >\n",uNode);
@@ -1969,3 +1972,172 @@ void tTablePullDownOwnerAnyAvailDatacenter(const char *cTableName, const char *c
 
 }//tTablePullDownOwnerAnyAvailDatacenter()
 
+
+//no customer premise and color coded based on empty slots
+void tTablePullDownActiveColorCoded(const char *cTableName, const char *cFieldName,
+                        const char *cOrderby, unsigned uSelector, unsigned uMode)
+{
+        register int i,n;
+        char cLabel[256];
+        MYSQL_RES *mysqlRes;         
+        MYSQL_ROW mysqlField;
+
+        char cSelectName[100]={""};
+	char cHidden[100]={""};
+        char cLocalTableName[256]={""};
+        char *cp;
+	char *cMode="";
+
+	if(!uMode)
+		cMode="disabled";
+      
+        if(!cTableName[0] || !cFieldName[0] || !cOrderby[0])
+        {
+                printf("Invalid input tTablePullDownActive()");
+                return;
+        }
+
+        //Extended functionality
+        strncpy(cLocalTableName,cTableName,255);
+        if((cp=strchr(cLocalTableName,';')))
+        {
+                strncpy(cSelectName,cp+1,99);
+                cSelectName[99]=0;
+                *cp=0;
+        }
+
+	unsigned utDatacenter=0;
+	if(!strncmp(cTableName,"tDatacenter",11))
+		utDatacenter=1;
+
+	
+	if(uSelector && !uMode)
+        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uStatus=1 AND _rowid=%u AND cLabel!='CustomerPremise'",
+                                cFieldName,cLocalTableName,uSelector);
+	else
+        	sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uStatus=1  AND cLabel!='CustomerPremise' ORDER BY %s",
+                                cFieldName,cLocalTableName,cOrderby);
+
+	MYSQL_RUN_STORE_TEXT_RET_VOID(mysqlRes);
+	
+	i=mysql_num_rows(mysqlRes);
+
+	if(cSelectName[0])
+                sprintf(cLabel,"%s",cSelectName);
+        else
+                sprintf(cLabel,"%s_%sPullDown",cLocalTableName,cFieldName);
+
+        if(i>0)
+        {
+
+		if(utDatacenter)
+			printf("<select title='Greener datacenters have more empty slots.' name=%s %s>\n",cLabel,cMode);
+		else
+                	printf("<select name=%s %s>\n",cLabel,cMode);
+
+                //Default no selection
+                printf("<option title='No selection'>---</option>\n");
+
+                for(n=0;n<i;n++)
+                {
+                        int unsigned field0=0;
+			char cStyle[32]={""};
+
+                        mysqlField=mysql_fetch_row(mysqlRes);
+                        sscanf(mysqlField[0],"%u",&field0);
+
+			if(utDatacenter)
+			{
+				unsigned uMaxContainers=0;
+				unsigned uActiveContainers=0;
+				voidGetDatacenterSlots(&uMaxContainers,&uActiveContainers,field0);
+				if(uMaxContainers)
+				{
+					if((uMaxContainers-uActiveContainers)>256)
+						//light green
+						sprintf(cStyle," style='background-color: #009900' comment='%u %u'",uMaxContainers,uActiveContainers);
+					else if((uMaxContainers-uActiveContainers)>128)
+						//lighter green
+						sprintf(cStyle," style='background-color: #00CC33' comment='%u %u'",uMaxContainers,uActiveContainers);
+					else if((uMaxContainers-uActiveContainers)>64)
+						//lightest green
+						sprintf(cStyle," style='background-color: #00FF66' comment='%u %u'",uMaxContainers,uActiveContainers);
+					else if((uMaxContainers-uActiveContainers)>32)
+						//lightest green
+						sprintf(cStyle," style='background-color: #00FF88' comment='%u %u'",uMaxContainers,uActiveContainers);
+					else if((uMaxContainers-uActiveContainers)>16)
+						//lightest green
+						sprintf(cStyle," style='background-color: #00FFAA' comment='%u %u'",uMaxContainers,uActiveContainers);
+					else if(1)
+						//info
+						sprintf(cStyle," comment='%u %u'",uMaxContainers,uActiveContainers);
+						
+				}
+			}
+
+
+                        if(uSelector != field0)
+                        {
+                             printf("<option%s>%s</option>\n",cStyle,mysqlField[1]);
+                        }
+                        else
+                        {
+                             printf("<option%s selected>%s</option>\n",cStyle,mysqlField[1]);
+			     if(!uMode)
+			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
+			     		cLabel,mysqlField[1]);
+                        }
+                }
+        }
+        else
+        {
+		printf("<select name=%s %s><option title='No selection'>---</option></select>\n"
+                        ,cLabel,cMode);
+		if(!uMode)
+		sprintf(cHidden,"<input type=hidden name=%.99s value='0'>\n",cLabel);
+        }
+        printf("</select>\n");
+	if(cHidden[0])
+		printf("%s",cHidden);
+
+}//tTablePullDownActiveColorCoded()
+
+
+void voidGetDatacenterSlots(unsigned *uMaxContainers,unsigned *uActiveContainers,unsigned uDatacenter)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cValue[256]={""};
+	char cQuery[256]={""};
+
+	sprintf(cQuery,"SELECT uNode FROM tNode WHERE uDatacenter=%u AND uStatus=1",uDatacenter);
+	mysql_query(&gMysql,cQuery);
+	if(mysql_errno(&gMysql))
+		return;
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+
+		unsigned uNode=0;
+		sscanf(field[0],"%u",&uNode);
+		if(uNode)
+		{
+			cValue[0]=0;
+			GetNodeProp(uNode,"NewContainerMode",cValue);
+			if(strstr(cValue,"Clone Only")) continue;
+
+			unsigned uNodeMaxContainers=0;
+			unsigned uNodeActiveContainers=0;
+			cValue[0]=0;
+			GetNodeProp(uNode,"MaxContainers",cValue);
+			sscanf(cValue,"%u",&uNodeMaxContainers);
+			cValue[0]=0;
+			GetNodeProp(uNode,"ActiveContainers",cValue);
+			sscanf(cValue,"%u",&uNodeActiveContainers);
+			*uMaxContainers+=uNodeMaxContainers;
+			*uActiveContainers+=uNodeActiveContainers;
+		}
+	}
+	mysql_free_result(res);
+
+}//void voidGetDatacenterSlots(unsigned *uMaxContainers,unsigned *uActiveContainers,unsigned uDatacenter)
