@@ -5079,6 +5079,109 @@ void SessionReport(const char *cOptionalMsg)
 }//void SessionReport(const char *cOptionalMsg)
 
 
+void voidFixBackupPeer(char *cuNode,char *cNode)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cValue[64]={""};
+	//fix both peers via the reverse path from cValue
+	sprintf(gcQuery,"SELECT tConfiguration.cValue FROM tConfiguration"
+		" WHERE tConfiguration.uNode=%s"
+		" AND tConfiguration.cLabel='cAutoCloneNodeRemote'",cuNode);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cValue,"%.31s",field[0]);
+	if(!cValue[0])
+	{
+		//fix reverse peer via the reverse path from cValue
+		sprintf(gcQuery,"SELECT tNode.cLabel FROM tConfiguration,tNode"
+		" WHERE tConfiguration.cValue='%s'"
+		" AND tNode.uNode=tConfiguration.uNode"
+		" AND tConfiguration.cLabel='cAutoCloneNodeRemote'",cNode);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sprintf(cValue,"%.31s",field[0]);
+	}
+	if(cValue[0])
+	{
+		sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+				" WHERE cName='BackupPeer' AND uKey=%s AND uType=2"
+					,cuNode);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(gcQuery,"UPDATE tProperty"
+				" SET cValue='%s',uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
+				" WHERE uProperty=%s AND uKey=%s AND uType=2 AND cName='BackupPeer'"
+					,cValue,guLoginClient,field[0],cuNode);
+			mysql_query(&gMysql,gcQuery);
+		}
+		else
+		{
+			sprintf(gcQuery,"INSERT INTO tProperty"
+				" SET cName='BackupPeer',cValue='%s',uKey=%s,uType=2"
+				",uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u,uOwner=%u"
+					,cValue,cuNode,guLoginClient,guCompany);
+			mysql_query(&gMysql,gcQuery);
+		}
+	}
+}//void voidFixBackupPeer(char *cuNode,char *cNode)
+
+
+void voidFixClonePeer(char *cuNode,char *cNode)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cValue[64]={""};
+	sprintf(gcQuery,"SELECT tConfiguration.cValue FROM tConfiguration"
+		" WHERE tConfiguration.uNode=%s"
+		" AND tConfiguration.cLabel='cAutoCloneNode'",cuNode);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cValue,"%.31s",field[0]);
+	if(!cValue[0])
+	{
+		//fix reverse peer via the reverse path from cValue
+		sprintf(gcQuery,"SELECT tNode.cLabel FROM tConfiguration,tNode"
+		" WHERE tConfiguration.cValue='%s'"
+		" AND tNode.uNode=tConfiguration.uNode"
+		" AND tConfiguration.cLabel='cAutoCloneNode'",cNode);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sprintf(cValue,"%.31s",field[0]);
+	}
+	if(cValue[0])
+	{
+		sprintf(gcQuery,"SELECT uProperty FROM tProperty"
+				" WHERE cName='ClonePeer' AND uKey=%s AND uType=2"
+					,cuNode);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(gcQuery,"UPDATE tProperty"
+				" SET cValue='%s',uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
+				" WHERE uProperty=%s AND uKey=%s AND uType=2 AND cName='ClonePeer'"
+					,cValue,guLoginClient,field[0],cuNode);
+			mysql_query(&gMysql,gcQuery);
+		}
+		else
+		{
+			sprintf(gcQuery,"INSERT INTO tProperty"
+				" SET cName='ClonePeer',cValue='%s',uKey=%s,uType=2"
+				",uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u,uOwner=%u"
+					,cValue,cuNode,guLoginClient,guCompany);
+			mysql_query(&gMysql,gcQuery);
+		}
+	}
+}//void voidFixClonePeer(char *cuNode,char *cNode)
+
+
 void NodeMapReport(const char *cOptionalMsg)
 {
         MYSQL_RES *mysqlRes;
@@ -5142,7 +5245,23 @@ void NodeMapReport(const char *cOptionalMsg)
 					uFailover=1;
 			}
 			else
-				continue;//switch not configured yet
+			{
+				//continue;//skip not configured yet
+
+				//off for now
+				//force fix here via tConfiguration if possible
+				sprintf(cFailoverStatus,"%.31s","AutoConfigured");
+
+				voidFixBackupPeer(mysqlField[0],mysqlField[1]);
+				voidFixClonePeer(mysqlField[0],mysqlField[1]);
+
+				//this will only run once
+				sprintf(gcQuery,"INSERT INTO tProperty"
+							" SET cName='FailoverStatus',cValue='Normal',uKey=%s,uType=2"
+							",uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u,uOwner=%u"
+							,mysqlField[0],guLoginClient,guCompany);
+				mysql_query(&gMysql,gcQuery);
+			}
 
 			char cBackupPeer[64]={"Error"};
 			unsigned uBackupPeerProp=0;
@@ -5168,7 +5287,8 @@ void NodeMapReport(const char *cOptionalMsg)
 					" WHERE tProperty.uKey=tNode.uNode"
 					" AND tProperty.uType=2"
 					" AND tNode.cLabel='%s'"
-					" AND cName='BackupPeer'",cBackupPeer);
+					" AND tNode.cLabel!='%s'"
+					" AND cName='BackupPeer'",cBackupPeer,mysqlField[1]);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -5177,22 +5297,33 @@ void NodeMapReport(const char *cOptionalMsg)
 				}
 				res=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res)!=1)
-					strncat(cBackupPeer,cMsg,31-strlen(cBackupPeer)+strlen(cMsg));
-
-				sprintf(gcQuery,"SELECT tConfiguration.uConfiguration FROM tConfiguration"
-					" WHERE tConfiguration.uNode=%s"
-					" AND tConfiguration.cLabel='cAutoCloneNodeRemote'"
-					" AND tConfiguration.cValue='%s'",mysqlField[0],cBackupPeer);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
 				{
-					printf("%s\n",mysql_error(&gMysql));
-					continue;
-				}
-				res=mysql_store_result(&gMysql);
-				cMsg="tConfiguration cAutoCloneNodeRemote error";
-				if(mysql_num_rows(res)!=1)
 					strncat(cBackupPeer,cMsg,31-strlen(cBackupPeer)+strlen(cMsg));
+					//we try to fix
+					voidFixBackupPeer(mysqlField[0],mysqlField[1]);
+				}
+				else
+				{
+					sprintf(gcQuery,"SELECT tConfiguration.uConfiguration FROM tConfiguration,tNode"
+					" WHERE ( (tConfiguration.uNode=%s AND tConfiguration.cValue='%s')"
+					" OR (tConfiguration.cValue='%s' AND tNode.cLabel='%s') )"
+					" AND tNode.uNode=tConfiguration.uNode"
+					" AND tConfiguration.cLabel='cAutoCloneNodeRemote'",mysqlField[0],cBackupPeer,mysqlField[1],cBackupPeer);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						printf("%s\n",mysql_error(&gMysql));
+						continue;
+					}
+					res=mysql_store_result(&gMysql);
+					cMsg=" tConfiguration cAutoCloneNodeRemote error";
+					if(mysql_num_rows(res)!=1)
+					{
+						strncat(cBackupPeer,cMsg,31-strlen(cBackupPeer)+strlen(cMsg));
+						//we try to fix
+						voidFixBackupPeer(mysqlField[0],mysqlField[1]);
+					}
+				}
 			}
 
 
@@ -5216,7 +5347,8 @@ void NodeMapReport(const char *cOptionalMsg)
 					" WHERE tProperty.uKey=tNode.uNode"
 					" AND tProperty.uType=2"
 					" AND tNode.cLabel='%s'"
-					" AND cName='ClonePeer'",cClonePeer);
+					" AND tNode.cLabel!='%s'"
+					" AND cName='ClonePeer'",cClonePeer,mysqlField[1]);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -5226,14 +5358,19 @@ void NodeMapReport(const char *cOptionalMsg)
 			res=mysql_store_result(&gMysql);
 			cMsg=" no peer match";
 			if(mysql_num_rows(res)!=1)
+			{
 				strncat(cClonePeer,cMsg,31-strlen(cClonePeer)+strlen(cMsg));
-			else if(!strstr(cNewContainerMode,"Clone Only"))
+				//we try to fix
+				voidFixClonePeer(mysqlField[0],mysqlField[1]);
+			}
+			else
 			{
 				//business logic validation check: tConfiguration cAutoCloneNode must match
-				sprintf(gcQuery,"SELECT tConfiguration.uConfiguration FROM tConfiguration"
-					" WHERE tConfiguration.uNode=%s"
-					" AND tConfiguration.cLabel='cAutoCloneNode'"
-					" AND tConfiguration.cValue='%s'",mysqlField[0],cClonePeer);
+				sprintf(gcQuery,"SELECT tConfiguration.uConfiguration FROM tConfiguration,tNode"
+					" WHERE ( (tConfiguration.uNode=%s AND tConfiguration.cValue='%s')"
+					" OR (tConfiguration.cValue='%s' AND tNode.cLabel='%s') )"
+					" AND tNode.uNode=tConfiguration.uNode"
+					" AND tConfiguration.cLabel='cAutoCloneNode'",mysqlField[0],cClonePeer,mysqlField[1],cClonePeer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -5243,7 +5380,11 @@ void NodeMapReport(const char *cOptionalMsg)
 				res=mysql_store_result(&gMysql);
 				cMsg=" tConfiguration cAutoCloneNode error";
 				if(mysql_num_rows(res)!=1)
+				{
 					strncat(cClonePeer,cMsg,31-strlen(cClonePeer)+strlen(cMsg));
+					//we try to fix
+					voidFixClonePeer(mysqlField[0],mysqlField[1]);
+				}
 			}
 
 			unsigned uMaxCloneContainers=0;
