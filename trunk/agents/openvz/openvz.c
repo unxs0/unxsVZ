@@ -12,7 +12,7 @@ AUTHOR
 NOTES
 */
 
-#include "mysqlrad.h"
+#include "openvz.h"
 #include <sys/sysinfo.h>
 
 #define cOVZLOGFILE "/var/log/unxsOVZ.log"
