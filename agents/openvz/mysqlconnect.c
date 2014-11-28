@@ -10,7 +10,7 @@ NOTES
 	Based on unxsBind/mysqlping.c test code.
 */
 
-#include "mysqlrad.h"
+#include "openvz.h"
 #include "local.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
