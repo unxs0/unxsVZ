@@ -5202,9 +5202,12 @@ void NodeMapReport(const char *cOptionalMsg)
 	printf("</td></tr><tr><td><u>Datacenter</u></td>"
 		"<td><u>Node</u></td>"
 		"<td><u>Disk</u></td>"
-		"<td><u>NewContainerMode</u></td>"
-		"<td><u>MaxContainers</u></td>"
-		"<td><u>MaxCloneContainers</u></td>"
+		"<td><u><a class=darkLink href=#"
+			" onClick=\"open_popup('?gcFunction=Glossary&cLabel=NewContainerMode')\">NewContainerMode</a></u></td>"
+		"<td><u><a class=darkLink href=#"
+			" onClick=\"open_popup('?gcFunction=Glossary&cLabel=MaxContainers')\">MaxContainers/System/Disk</u></td>"
+		"<td><u><a class=darkLink href=#"
+			" onClick=\"open_popup('?gcFunction=Glossary&cLabel=MaxCloneContainers')\">MaxCloneContainers/System/Disk</u></td>"
 		"<td><u>ClonePeer</u></td>"
 		"<td><u>BackupPeer</u></td>"
 		"<td><u>FailoverStatus</u></td>\n");
@@ -5454,6 +5457,70 @@ void NodeMapReport(const char *cOptionalMsg)
 				strncat(cNewContainerMode,cMsg,63-strlen(cNewContainerMode)+strlen(cMsg));
 			}
 
+			unsigned uActiveContainers=0;
+			unsigned uActiveContainersProp=0;
+			sprintf(gcQuery,"SELECT cValue,uProperty FROM tProperty WHERE uKey=%s AND uType=2 AND cName='ActiveContainers'",mysqlField[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&uActiveContainers);
+				sscanf(field[1],"%u",&uActiveContainersProp);
+			}
+
+			unsigned uCloneContainers=0;
+			unsigned uCloneContainersProp=0;
+			sprintf(gcQuery,"SELECT cValue,uProperty FROM tProperty WHERE uKey=%s AND uType=2 AND cName='CloneContainers'",mysqlField[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&uCloneContainers);
+				sscanf(field[1],"%u",&uCloneContainersProp);
+			}
+
+			unsigned uDiskActiveContainers=0;
+			unsigned uDiskActiveContainersProp=0;
+			sprintf(gcQuery,"SELECT cValue,uProperty FROM tProperty WHERE uKey=%s AND uType=2 AND cName='DiskActiveContainers'",mysqlField[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&uDiskActiveContainers);
+				sscanf(field[1],"%u",&uDiskActiveContainersProp);
+			}
+
+			unsigned uDiskCloneContainers=0;
+			unsigned uDiskCloneContainersProp=0;
+			sprintf(gcQuery,"SELECT cValue,uProperty FROM tProperty WHERE uKey=%s AND uType=2 AND cName='DiskCloneContainers'",mysqlField[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				continue;
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&uDiskCloneContainers);
+				sscanf(field[1],"%u",&uDiskCloneContainersProp);
+			}
+
 			char cDatacenter[64]={""};	
 			if(strcmp(cPrevDatacenter,mysqlField[2]))
 			{
@@ -5471,20 +5538,20 @@ void NodeMapReport(const char *cOptionalMsg)
 				"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tNode&uNode=%s><font color=%s>%s</font></a></td>"
 			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%u&cReturn=tNode_%s><font color=%s>%lu</font></a></td>"
 			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%u&cReturn=tNode_%s><font color=%s>%s</font></a></td>"
-			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%u&cReturn=tNode_%s><font color=%s>%u</font></a></td>"
-			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%u&cReturn=tNode_%s><font color=%s>%u%s</font></a></td>"
+			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%u&cReturn=tNode_%s><font color=%s>%u/%u/%u</font></a></td>"
+			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%u&cReturn=tNode_%s><font color=%s>%u/%u/%u%s</font></a></td>"
 			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%u&cReturn=tNode_%s><font color=%s>%s</font></a></td>"
 			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%u&cReturn=tNode_%s><font color=%s>%s</font></a></td>"
 			"<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tProperty&uProperty=%u&cReturn=tNode_%s><font color=%s>%s</font></a>",
-						cBgColor,mysqlField[3],cDatacenter,
-						mysqlField[0],cColor,mysqlField[1],
-						uInstalledDiskSpaceProp,mysqlField[0],cColor,luInstalledDiskSpace,
-						uNewContainerModeProp,mysqlField[0],cColor,cNewContainerMode,
-						uMaxContainersProp,mysqlField[0],cColor,uMaxContainers,
-						uMaxCloneContainersProp,mysqlField[0],cColor,uMaxCloneContainers,cMaxCloneContainersMsg,
-						uClonePeerProp,mysqlField[0],cColor,cClonePeer,
-						uBackupPeerProp,mysqlField[0],cColor,cBackupPeer,
-						uFailoverStatusProp,mysqlField[0],cColor,cFailoverStatus);
+			cBgColor,mysqlField[3],cDatacenter,
+			mysqlField[0],cColor,mysqlField[1],
+			uInstalledDiskSpaceProp,mysqlField[0],cColor,luInstalledDiskSpace,
+			uNewContainerModeProp,mysqlField[0],cColor,cNewContainerMode,
+			uMaxContainersProp,mysqlField[0],cColor,uMaxContainers,uActiveContainers,uDiskActiveContainers,
+			uMaxCloneContainersProp,mysqlField[0],cColor,uMaxCloneContainers,uCloneContainers,uDiskCloneContainers,cMaxCloneContainersMsg,
+			uClonePeerProp,mysqlField[0],cColor,cClonePeer,
+			uBackupPeerProp,mysqlField[0],cColor,cBackupPeer,
+			uFailoverStatusProp,mysqlField[0],cColor,cFailoverStatus);
 	}
 	mysql_free_result(mysqlRes);
 
