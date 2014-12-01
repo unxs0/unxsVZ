@@ -59,9 +59,6 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 
 }//void logfileLine()
 
-#define LINUX_SYSINFO_LOADS_SCALE 65536
-#define JOBQUEUE_MAXLOAD 10 //This is equivalent to uptime 10.00 last 5 min avg load
-struct sysinfo structSysinfo;
 
 int main(int iArgc, char *cArgv[])
 {
@@ -99,9 +96,6 @@ int main(int iArgc, char *cArgv[])
 	if(!uContainerCheck && !uIPCheck)
 		Usage();
 
-	char cLockfile[64]={"/tmp/openvz.lock"};
-
-
 	sprintf(gcProgram,"%.31s",cArgv[0]);
 	if((gLfp=fopen(cOVZLOGFILE,"a"))==NULL)
 	{
@@ -110,6 +104,10 @@ int main(int iArgc, char *cArgv[])
 	}
 		
 	logfileLine("main","start",0);
+#define LINUX_SYSINFO_LOADS_SCALE 65536
+#define JOBQUEUE_MAXLOAD 10 //This is equivalent to uptime 10.00 last 5 min avg load
+	struct sysinfo structSysinfo;
+
 	if(sysinfo(&structSysinfo))
 	{
 		logfileLine("main","sysinfo() failed",0);
@@ -120,11 +118,9 @@ int main(int iArgc, char *cArgv[])
 		logfileLine("main","structSysinfo.loads[1] larger than JOBQUEUE_MAXLOAD",0);
 		exit(1);
 	}
-	//Check to see if this program is still running. If it is exit.
-	//This may mean losing data gathering data points. But it
-	//will avoid runaway du and other unexpected high load
-	//situations. See #120.
 
+#ifdef ReqLockFile
+	char cLockfile[64]={"/tmp/openvz.lock"};
 	struct stat structStat;
 	if(!stat(cLockfile,&structStat))
 	{
@@ -136,6 +132,7 @@ int main(int iArgc, char *cArgv[])
 		logfileLine("main","could not open cLockfile dir",0);
 		return(1);
 	}
+#endif
 
 	SetNodeInfo();//Sets global data and MySQL connection
 	if(uContainerCheck)
@@ -143,13 +140,17 @@ int main(int iArgc, char *cArgv[])
 	else if(uIPCheck)
 		IPCheck();
 
+#ifdef ReqLockFile
 	if(rmdir(cLockfile))
 	{
 		logfileLine("main","could not rmdir(cLockfile)",0);
 		return(1);
 	}
+#endif
 	logfileLine("main","end",0);
-	return(0);
+	printf("test\n");
+	fclose(gLfp);
+	exit(0);
 }//main()
 
 
@@ -413,6 +414,8 @@ void ContainerCheck(void)
 
 	SetNodePropUnsigned("DiskCloneContainers",uBackupCount+uCloneCount,guNode);
 	SetNodePropUnsigned("DiskBackupContainers",uBackupCount,guNode);
+
+	return;
 
 #ifdef CheckAgainstSystem
 	sprintf(cCommand,"/usr/sbin/vzlist -H -a -o veid,hostname 2> /dev/null");
