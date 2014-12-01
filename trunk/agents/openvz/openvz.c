@@ -23,11 +23,16 @@ unsigned guLoginClient=1;//Root user
 char cHostname[100]={""};
 char gcProgram[32]={""};
 unsigned guNodeOwner=0;
+unsigned guNode=0;
+unsigned guDatacenter=0;
+unsigned guDebugLevel=4;
 
 //local protos
 void logfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer);
-void ProcessNodeOVZ(void);
-void ProcessIPCheck(unsigned uNode);
+void SetNodeInfo(void);
+void IPCheck(void);
+void ContainerCheck(void);
+void SetNodePropUnsigned(char const *cName,unsigned uValue,unsigned uNode);
 //external protos
 void TextConnectDb(void);
 
@@ -48,7 +53,7 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 		tmTime=localtime(&luClock);
 		strftime(cTime,31,"%b %d %T",tmTime);
 
-		fprintf(gLfp,"%s unxsOVZ.%s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
+		fprintf(gLfp,"%s unxsOVZ.%s[%u]: %s. %u.\n",cTime,cFunction,pidThis,cLogline,uContainer);
 		fflush(gLfp);
 	}
 
@@ -60,6 +65,15 @@ struct sysinfo structSysinfo;
 
 int main(int iArgc, char *cArgv[])
 {
+	unsigned uContainerCheck=0;
+	unsigned uIPCheck=0;
+
+	void Usage(void)
+	{
+		printf("usage: %s [--help] [--version] [--ContainerCheck]\n",cArgv[0]);
+		exit(0);
+	}
+
 	if(iArgc>1)
 	{
 		register int i;
@@ -67,18 +81,26 @@ int main(int iArgc, char *cArgv[])
 		{
 			if(!strcmp(cArgv[i],"--help"))
 			{
-				printf("usage: %s [--help] [--version]\n",cArgv[0]);
-				exit(0);
+				Usage();
 			}
 			if(!strcmp(cArgv[i],"--version"))
 			{
 				printf("version: %s $Id: openvz.c 2074 2012-09-02 02:38:13Z Colin $\n",cArgv[0]);
 				exit(0);
 			}
+			if(!strcmp(cArgv[i],"--ContainerCheck"))
+			{
+				uContainerCheck=1;
+			}
 		}
 	}
+	else
+		Usage();
+	if(!uContainerCheck && !uIPCheck)
+		Usage();
 
 	char cLockfile[64]={"/tmp/openvz.lock"};
+
 
 	sprintf(gcProgram,"%.31s",cArgv[0]);
 	if((gLfp=fopen(cOVZLOGFILE,"a"))==NULL)
@@ -87,6 +109,7 @@ int main(int iArgc, char *cArgv[])
 		exit(1);
 	}
 		
+	logfileLine("main","start",0);
 	if(sysinfo(&structSysinfo))
 	{
 		logfileLine("main","sysinfo() failed",0);
@@ -114,7 +137,11 @@ int main(int iArgc, char *cArgv[])
 		return(1);
 	}
 
-	ProcessNodeOVZ();
+	SetNodeInfo();//Sets global data and MySQL connection
+	if(uContainerCheck)
+		ContainerCheck();
+	else if(uIPCheck)
+		IPCheck();
 
 	if(rmdir(cLockfile))
 	{
@@ -126,16 +153,14 @@ int main(int iArgc, char *cArgv[])
 }//main()
 
 
-void ProcessNodeOVZ(void)
+void SetNodeInfo(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
-	unsigned uDatacenter=0;
-	unsigned uNode=0;
 
 	if(gethostname(cHostname,99)!=0)
 	{
-		logfileLine("ProcessNodeOVZ","gethostname() failed",0);
+		logfileLine("SetNodeInfo","gethostname() failed",0);
 		exit(1);
 	}
 
@@ -154,12 +179,12 @@ void ProcessNodeOVZ(void)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[0],"%u",&uNode);
-		sscanf(field[1],"%u",&uDatacenter);
+		sscanf(field[0],"%u",&guNode);
+		sscanf(field[1],"%u",&guDatacenter);
 		sscanf(field[2],"%u",&guNodeOwner);
 	}
 	mysql_free_result(res);
-	if(!uNode)
+	if(!guNode)
 	{
 		char *cp;
 
@@ -170,42 +195,34 @@ void ProcessNodeOVZ(void)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine("ProcessNodeOVZ",mysql_error(&gMysql),0);
+			logfileLine("SetNodeInfo",mysql_error(&gMysql),0);
 			mysql_close(&gMysql);
 			exit(2);
 		}
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			sscanf(field[0],"%u",&uNode);
-			sscanf(field[1],"%u",&uDatacenter);
+			sscanf(field[0],"%u",&guNode);
+			sscanf(field[1],"%u",&guDatacenter);
 			sscanf(field[2],"%u",&guNodeOwner);
 		}
 		mysql_free_result(res);
 	}
 
-	if(!uNode)
+	if(guDebugLevel>2)
+		logfileLine("SetNodeInfo",cHostname,0);
+
+	if(!guNode)
 	{
-		logfileLine("ProcessNodeOVZ","Could not determine uNode",0);
+		logfileLine("SetNodeInfo","Could not determine uNode",0);
 		mysql_close(&gMysql);
 		exit(1);
 	}
 
-
-	//Process  node
-	if(guLogLevel>2)
-		logfileLine("ProcessIPCheck","node start",uNode);
-	ProcessIPCheck(uNode);
-
-	if(guLogLevel>2)
-		logfileLine("ProcessNodeOVZ","end",uNode);
-
-	mysql_close(&gMysql);
-
-}//void ProcessNodeOVZ(void)
+}//void SetNodeInfo(void)
 
 
-void ProcessIPCheck(unsigned uNode)
+void IPCheck(void)
 {
 	char cCommand[64];
 	char cLine[256];
@@ -224,7 +241,7 @@ void ProcessIPCheck(unsigned uNode)
 
 			if(sscanf(cLine,"%u %u.%u.%u.%u %s",&uVEID,&uA,&uB,&uC,&uD,cHostname)!=6)
 			{
-				logfileLine("ProcessIPCheck","sscanf item count error",uVEID);
+				logfileLine("IPCheck","sscanf item count error",uVEID);
 			}
 
 			char cIP[32]={""};
@@ -240,9 +257,7 @@ void ProcessIPCheck(unsigned uNode)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				//debug only
-				printf("%s\n",mysql_error(&gMysql));
-				logfileLine("ProcessIPCheck",mysql_error(&gMysql),uVEID);
+				logfileLine("IPCheck",mysql_error(&gMysql),uVEID);
 				mysql_close(&gMysql);
 				exit(2);
 			}
@@ -254,16 +269,18 @@ void ProcessIPCheck(unsigned uNode)
 					if(strcmp(field[0],cIP))
 					{
 						//debug only
-						printf("%u:%s:%s diff\n",uVEID,field[0],cHostname);
-						logfileLine("ProcessIPCheck diff",field[0],uVEID);
+						if(guDebugLevel>3)
+							printf("%u:%s:%s diff\n",uVEID,field[0],cHostname);
+						logfileLine("IPCheck diff",field[0],uVEID);
 					}
 				}
 			}
 			else
 			{
 				//debug only
-				printf("%u:%s:%s nf\n",uVEID,cIP,cHostname);
-				logfileLine("ProcessIPCheck nf",cIP,uVEID);
+				if(guDebugLevel>3)
+					printf("%u:%s:%s nf\n",uVEID,cIP,cHostname);
+				logfileLine("IPCheck nf",cIP,uVEID);
 
         			MYSQL_RES *res;
         			MYSQL_ROW field;
@@ -274,7 +291,7 @@ void ProcessIPCheck(unsigned uNode)
 				{
 					//debug only
 					printf("%s\n",mysql_error(&gMysql));
-					logfileLine("ProcessIPCheck",mysql_error(&gMysql),uVEID);
+					logfileLine("IPCheck",mysql_error(&gMysql),uVEID);
 					mysql_close(&gMysql);
 					exit(2);
 				}
@@ -284,8 +301,8 @@ void ProcessIPCheck(unsigned uNode)
 
 					while((field=mysql_fetch_row(res)))
 					{
-						//debug only
-						printf("%u:%s:%s:%s:uAvailable=%s found in tIP\n",uVEID,field[0],cHostname,field[1],field[2]);
+						if(guDebugLevel>3)
+							printf("%u:%s:%s:%s:uAvailable=%s found in tIP\n",uVEID,field[0],cHostname,field[1],field[2]);
 					}
 				}
 				else
@@ -295,9 +312,7 @@ void ProcessIPCheck(unsigned uNode)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						//debug only
-						printf("%s\n",mysql_error(&gMysql));
-						logfileLine("ProcessIPCheck",mysql_error(&gMysql),uVEID);
+						logfileLine("IPCheck",mysql_error(&gMysql),uVEID);
 						mysql_close(&gMysql);
 						exit(2);
 					}
@@ -305,7 +320,8 @@ void ProcessIPCheck(unsigned uNode)
 					while((field=mysql_fetch_row(res)))
 					{
 						//debug only
-						printf("%u:%s:%s:%s:uAvailable=%s found in tIP no container\n",uVEID,cIP,cHostname,field[0],field[1]);
+						if(guDebugLevel>3)
+							printf("%u:%s:%s:%s:uAvailable=%s found in tIP no container\n",uVEID,cIP,cHostname,field[0],field[1]);
 					}
 				}
 				mysql_free_result(res);
@@ -316,8 +332,145 @@ void ProcessIPCheck(unsigned uNode)
 	}
 	else
 	{
-		logfileLine("ProcessIPCheck","popen() failed",0);
+		logfileLine("IPCheck","popen() failed",0);
 	}
 
-}//void ProcessIPCheck(unsigned uNode)
+}//void IPCheck(void)
 
+
+void ContainerCheck(void)
+{
+	char cCommand[64];
+	char cLine[256];
+	FILE *fp;
+
+	unsigned uActiveCount=0;
+	sprintf(cCommand,"/usr/sbin/vzlist -H -o veid 2> /dev/null | /usr/bin/wc -l 2> /dev/null");
+	if((fp=popen(cCommand,"r")))
+	{
+		if(fgets(cLine,255,fp)!=NULL)
+		{
+			if(sscanf(cLine,"%u %s",&uActiveCount,cHostname)!=1)
+				logfileLine("ContainerCheck","sscanf item count error",uActiveCount);
+		}//while lines from vzlist
+		else if(guDebugLevel>4)
+		{
+			logfileLine("ContainerCheck",cCommand,uActiveCount);
+		}
+		pclose(fp);
+	}
+	else
+	{
+		logfileLine("ContainerCheck","popen(0) failed",0);
+	}
+	if(guDebugLevel>0)
+		logfileLine("ContainerCheck","uActiveCount",uActiveCount);
+	SetNodePropUnsigned("DiskActiveContainers",uActiveCount,guNode);
+
+	unsigned uCloneCount=0;
+	sprintf(cCommand,"/usr/sbin/vzlist -H -a -o hostname 2> /dev/null | /bin/grep -c '\\-clone' 2> /dev/null");
+	if((fp=popen(cCommand,"r")))
+	{
+		if(fgets(cLine,255,fp)!=NULL)
+		{
+			if(sscanf(cLine,"%u %s",&uCloneCount,cHostname)!=1)
+				logfileLine("ContainerCheck","sscanf item count error",uCloneCount);
+		}
+		else if(guDebugLevel>3)
+		{
+			logfileLine("ContainerCheck",cCommand,uCloneCount);
+		}
+		pclose(fp);
+	}
+	else
+	{
+		logfileLine("ContainerCheck","popen(0) failed",0);
+	}
+	if(guDebugLevel>0)
+		logfileLine("ContainerCheck","uCloneCount",uCloneCount);
+
+	unsigned uBackupCount=0;
+	sprintf(cCommand,"/usr/sbin/vzlist -H -a -o hostname 2> /dev/null | /bin/grep -c '\\-backup' 2> /dev/null");
+	if((fp=popen(cCommand,"r")))
+	{
+		if(fgets(cLine,255,fp)!=NULL)
+		{
+			if(sscanf(cLine,"%u %s",&uBackupCount,cHostname)!=1)
+				logfileLine("ContainerCheck","sscanf item count error",uBackupCount);
+		}
+		else if(guDebugLevel>3)
+		{
+			logfileLine("ContainerCheck",cCommand,uBackupCount);
+		}
+		pclose(fp);
+	}
+	else
+	{
+		logfileLine("ContainerCheck","popen(0) failed",0);
+	}
+	if(guDebugLevel>3)
+		logfileLine("ContainerCheck","uBackupCount",uBackupCount);
+
+	SetNodePropUnsigned("DiskCloneContainers",uBackupCount+uCloneCount,guNode);
+	SetNodePropUnsigned("DiskBackupContainers",uBackupCount,guNode);
+
+#ifdef CheckAgainstSystem
+	sprintf(cCommand,"/usr/sbin/vzlist -H -a -o veid,hostname 2> /dev/null");
+	if((fp=popen(cCommand,"r")))
+	{
+		while(fgets(cLine,255,fp)!=NULL)
+		{
+        		MYSQL_RES *res;
+        		MYSQL_ROW field;
+			char cHostname[100]={""};
+
+			unsigned uVEID=0;
+
+			if(sscanf(cLine,"%u %s",&uVEID,cHostname)!=2)
+			{
+				logfileLine("ContainerCheck","sscanf item count error",uVEID);
+			}
+			else if(guDebugLevel>3)
+			{
+				logfileLine("ContainerCheck",cHostname,uVEID);
+			}
+		}//while lines from vzlist
+		pclose(fp);
+	}
+	else
+	{
+		logfileLine("ContainerCheck","popen() failed",0);
+	}
+#endif
+
+}//void ContainerCheck(Void)
+
+
+void SetNodePropUnsigned(char const *cName,unsigned uValue,unsigned uNode)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%u AND uType=2 AND cName='%s'",uNode,cName);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		logfileLine("SetNodePropUnsigned",gcQuery,0);
+		exit(3);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%u',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uProperty=%s",
+			uValue,guLoginClient,field[0]);
+        	mysql_query(&gMysql,gcQuery);
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,cName='%s',cValue='%u',uType=2,uOwner=%u,"
+				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uNode,
+					cName,uValue,guLoginClient,guLoginClient);
+        	mysql_query(&gMysql,gcQuery);
+	}
+}//void SetNodePropUnsigned(char const *cName,unsigned uValue,unsigned uNode);
