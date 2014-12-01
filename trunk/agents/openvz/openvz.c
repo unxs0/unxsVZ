@@ -148,7 +148,6 @@ int main(int iArgc, char *cArgv[])
 	}
 #endif
 	logfileLine("main","end",0);
-	printf("test\n");
 	fclose(gLfp);
 	exit(0);
 }//main()
