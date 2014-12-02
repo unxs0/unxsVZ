@@ -414,36 +414,59 @@ void ContainerCheck(void)
 	SetNodePropUnsigned("DiskCloneContainers",uBackupCount+uCloneCount,guNode);
 	SetNodePropUnsigned("DiskBackupContainers",uBackupCount,guNode);
 
-	return;
+	//Also reset the system count
+	unsigned uSystemCloneCount=0;
+	unsigned uSystemBackupCount=0;
+	unsigned uSystemActiveCount=0;
 
-#ifdef CheckAgainstSystem
-	sprintf(cCommand,"/usr/sbin/vzlist -H -a -o veid,hostname 2> /dev/null");
-	if((fp=popen(cCommand,"r")))
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u"
+			" AND uSource!=0",guNode);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
 	{
-		while(fgets(cLine,255,fp)!=NULL)
-		{
-        		MYSQL_RES *res;
-        		MYSQL_ROW field;
-			char cHostname[100]={""};
-
-			unsigned uVEID=0;
-
-			if(sscanf(cLine,"%u %s",&uVEID,cHostname)!=2)
-			{
-				logfileLine("ContainerCheck","sscanf item count error",uVEID);
-			}
-			else if(guDebugLevel>3)
-			{
-				logfileLine("ContainerCheck",cHostname,uVEID);
-			}
-		}//while lines from vzlist
-		pclose(fp);
+		logfileLine("ContainerCheck",gcQuery,0);
+		exit(3);
 	}
-	else
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uSystemCloneCount);
+
+	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u"
+			" AND uSource!=0 AND cLabel LIKE '%%-backup%%'",guNode);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
 	{
-		logfileLine("ContainerCheck","popen() failed",0);
+		logfileLine("ContainerCheck",gcQuery,0);
+		exit(3);
 	}
-#endif
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uSystemBackupCount);
+
+	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u"
+			" AND uSource=0 AND uStatus!=11 AND uStatus!=3 AND uStatus!=7",guNode);//not initial setup not offline not cancelled
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		logfileLine("ContainerCheck",gcQuery,0);
+		exit(3);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uSystemActiveCount);
+
+	SetNodePropUnsigned("CloneContainers",uSystemCloneCount,guNode);//-clone and -backup containers any container with uSource!=0
+	SetNodePropUnsigned("BackupContainers",uSystemBackupCount,guNode);//only uSource!=0 and with label -backup
+	SetNodePropUnsigned("ActiveContainers",uSystemActiveCount,guNode);//only uSource==0 and uStatus ~= on disk
+	if(guDebugLevel>3)
+	{
+		logfileLine("ContainerCheck","CloneContainers",uSystemCloneCount);
+		logfileLine("ContainerCheck","BackupContainers",uSystemBackupCount);
+		logfileLine("ContainerCheck","ActiveContainers",uSystemActiveCount);
+	}
 
 }//void ContainerCheck(Void)
 
@@ -466,6 +489,8 @@ void SetNodePropUnsigned(char const *cName,unsigned uValue,unsigned uNode)
 		sprintf(gcQuery,"UPDATE tProperty SET cValue='%u',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uProperty=%s",
 			uValue,guLoginClient,field[0]);
         	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+			logfileLine("SetNodePropUnsigned",gcQuery,0);
 	}
 	else
 	{
@@ -474,5 +499,7 @@ void SetNodePropUnsigned(char const *cName,unsigned uValue,unsigned uNode)
 					uNode,
 					cName,uValue,guLoginClient,guLoginClient);
         	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+			logfileLine("SetNodePropUnsigned",gcQuery,0);
 	}
 }//void SetNodePropUnsigned(char const *cName,unsigned uValue,unsigned uNode);
