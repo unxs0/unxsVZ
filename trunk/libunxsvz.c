@@ -123,7 +123,8 @@ unsigned uCheckMaxContainers(unsigned uNode)
 		MYSQL_RES *res;
 		MYSQL_ROW field;
 		char cBuffer2[128]={""};
-		sprintf(cBuffer2,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uStatus=1",uNode);
+		sprintf(cBuffer2,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u"
+			" AND uStatus!=11 AND uStatus!=3 and uStatus!=7",uNode);
 		mysql_query(&gMysql,cBuffer2);
 		if(mysql_errno(&gMysql))
 			ErrorMsg(mysql_error(&gMysql));

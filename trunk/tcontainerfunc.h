@@ -8424,9 +8424,10 @@ void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 	unsigned uSetNode=0;
 
 	if(uNode==0)
-		sprintf(gcQuery,"SELECT COUNT(uContainer),uNode FROM tContainer WHERE uStatus=1 GROUP BY uNode");
+		sprintf(gcQuery,"SELECT COUNT(uContainer),uNode FROM tContainer WHERE uStatus!=3 AND uStatus!=7 AND uStatus!=11 GROUP BY uNode");
 	else
-		sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u AND uStatus=1",uNode);
+		sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uNode=%u"
+				" AND uStatus!=3 AND uStatus!=7 AND uStatus!=11",uNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
