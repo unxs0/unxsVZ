@@ -1,7 +1,7 @@
 /*
 FILE
 	openvz.c
-	$Id: openvz.c 2074 2012-09-02 02:38:13Z Colin $
+	$Id$
 PURPOSE
 	Collection of OpenVZ container information.
 	Initially to reconcile unxsVZ container data with actual deployed
@@ -82,7 +82,7 @@ int main(int iArgc, char *cArgv[])
 			}
 			if(!strcmp(cArgv[i],"--version"))
 			{
-				printf("version: %s $Id: openvz.c 2074 2012-09-02 02:38:13Z Colin $\n",cArgv[0]);
+				printf("version: %s $Id$\n",cArgv[0]);
 				exit(0);
 			}
 			if(!strcmp(cArgv[i],"--ContainerCheck"))
