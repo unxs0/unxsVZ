@@ -266,6 +266,8 @@ void ExttLogMonthListSelect(void)
 		strcat(gcQuery," ORDER BY uLog");
         }
 
+	tLogMonth(gcQuery);
+
 }//void ExttLogMonthListSelect(void)
 
 
