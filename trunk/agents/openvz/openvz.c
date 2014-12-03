@@ -53,7 +53,7 @@ void logfileLine(const char *cFunction,const char *cLogline,const unsigned uCont
 		tmTime=localtime(&luClock);
 		strftime(cTime,31,"%b %d %T",tmTime);
 
-		fprintf(gLfp,"%s unxsOVZ.%s[%u]: %s. %u.\n",cTime,cFunction,pidThis,cLogline,uContainer);
+		fprintf(gLfp,"%s %u unxsOVZ.%s: %s. %u.\n",cTime,pidThis,cFunction,cLogline,uContainer);
 		fflush(gLfp);
 	}
 
@@ -67,7 +67,7 @@ int main(int iArgc, char *cArgv[])
 
 	void Usage(void)
 	{
-		printf("usage: %s [--help] [--version] [--ContainerCheck]\n",cArgv[0]);
+		printf("usage: %s [--help] [--version] [--ContainerCheck] [--IPCheck]\n",cArgv[0]);
 		exit(0);
 	}
 
@@ -88,6 +88,10 @@ int main(int iArgc, char *cArgv[])
 			if(!strcmp(cArgv[i],"--ContainerCheck"))
 			{
 				uContainerCheck=1;
+			}
+			if(!strcmp(cArgv[i],"--IPCheck"))
+			{
+				uIPCheck=1;
 			}
 		}
 	}
@@ -135,10 +139,8 @@ int main(int iArgc, char *cArgv[])
 #endif
 
 	SetNodeInfo();//Sets global data and MySQL connection
-	if(uContainerCheck)
-		ContainerCheck();
-	else if(uIPCheck)
-		IPCheck();
+	if(uContainerCheck) ContainerCheck();
+	if(uIPCheck) IPCheck();
 
 #ifdef ReqLockFile
 	if(rmdir(cLockfile))
@@ -228,9 +230,13 @@ void IPCheck(void)
 	char cLine[256];
 	FILE *fp;
 
+	logfileLine("IPCheck","start",0);
+
 	sprintf(cCommand,"/usr/sbin/vzlist -H -a -o veid,ip,hostname 2> /dev/null");
 	if((fp=popen(cCommand,"r")))
 	{
+		unsigned uCount=0;
+
 		while(fgets(cLine,255,fp)!=NULL)
 		{
         		MYSQL_RES *res;
@@ -242,12 +248,15 @@ void IPCheck(void)
 			if(sscanf(cLine,"%u %u.%u.%u.%u %s",&uVEID,&uA,&uB,&uC,&uD,cHostname)!=6)
 			{
 				logfileLine("IPCheck","sscanf item count error",uVEID);
+				continue;
 			}
+
+			uCount++;
 
 			char cIP[32]={""};
 			sprintf(cIP,"%u.%u.%u.%u",uA,uB,uC,uD);
-			//debug only
-			//printf("%u %s\n",uVEID,cIP);
+			if(guDebugLevel>4)
+				printf("%u %s\n",uVEID,cIP);
 	
 			//Compare against unxsVZ data
 			//If VEID exists
@@ -290,7 +299,8 @@ void IPCheck(void)
 				if(mysql_errno(&gMysql))
 				{
 					//debug only
-					printf("%s\n",mysql_error(&gMysql));
+					if(guDebugLevel>3)
+						printf("%s\n",mysql_error(&gMysql));
 					logfileLine("IPCheck",mysql_error(&gMysql),uVEID);
 					mysql_close(&gMysql);
 					exit(2);
@@ -328,12 +338,15 @@ void IPCheck(void)
 			}
 			mysql_free_result(res);
 		}//while lines from vzlist
+		logfileLine("IPCheck","uCount",uCount);
 		pclose(fp);
 	}
 	else
 	{
 		logfileLine("IPCheck","popen() failed",0);
 	}
+
+	logfileLine("IPCheck","end",0);
 
 }//void IPCheck(void)
 
@@ -343,6 +356,8 @@ void ContainerCheck(void)
 	char cCommand[64];
 	char cLine[256];
 	FILE *fp;
+
+	logfileLine("ContainerCheck","start",0);
 
 	unsigned uActiveCount=0;
 	sprintf(cCommand,"/usr/sbin/vzlist -H -o veid 2> /dev/null | /usr/bin/wc -l 2> /dev/null");
@@ -467,6 +482,8 @@ void ContainerCheck(void)
 		logfileLine("ContainerCheck","BackupContainers",uSystemBackupCount);
 		logfileLine("ContainerCheck","ActiveContainers",uSystemActiveCount);
 	}
+
+	logfileLine("ContainerCheck","end",0);
 
 }//void ContainerCheck(Void)
 
