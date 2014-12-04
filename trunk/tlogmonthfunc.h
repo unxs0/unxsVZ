@@ -203,7 +203,12 @@ void ExttLogMonthListSelect(void)
 {
 	char cCat[512];
 
-	ExtListSelect("tLogMonth",VAR_LIST_tLogMonth);
+	if(guPermLevel<12)
+		return;
+
+	sprintf(gcQuery,"SELECT %s FROM tLogMonth",
+				VAR_LIST_tLogMonth);
+
 	
 	//Changes here must be reflected below in ExttLogMonthListFilter()
         if(!strcmp(gcFilter,"uLog"))
@@ -251,14 +256,6 @@ void ExttLogMonthListSelect(void)
 		sprintf(cCat,"tLogMonth.uTablePK=%s ORDER BY cTableName,uTablePK,uLog",gcCommand);
 		strcat(gcQuery,cCat);
         }
-        else if(!strcmp(gcFilter,"uZone"))
-        {
-		unsigned uZone=0;
-
-                sscanf(gcCommand,"%u",&uZone);
-		sprintf(cCat,",tResource WHERE tLogMonth.uTablePK=tResource.uResource AND cTableName='tResource' AND tResource.uZone=%u",uZone);
-		strcat(gcQuery,cCat);
-        }
         else if(1)
         {
                 //None NO FILTER
@@ -266,7 +263,7 @@ void ExttLogMonthListSelect(void)
 		strcat(gcQuery," ORDER BY uLog");
         }
 
-	tLogMonth(gcQuery);
+	//tLogMonth(gcQuery);
 
 }//void ExttLogMonthListSelect(void)
 
@@ -304,10 +301,6 @@ void ExttLogMonthListFilter(void)
                 printf("<option>uTablePK</option>");
         else
                 printf("<option selected>uTablePK</option>");
-        if(strcmp(gcFilter,"uZone"))
-                printf("<option>uZone</option>");
-        else
-                printf("<option selected>uZone</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else

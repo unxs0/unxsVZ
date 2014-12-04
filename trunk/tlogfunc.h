@@ -152,16 +152,6 @@ void ExttLogListSelect(void)
 		sprintf(cCat,"tLog.uTablePK=%s ORDER BY cTableName,uTablePK,uLog",gcCommand);
 		strcat(gcQuery,cCat);
         }
-        else if(!strcmp(gcFilter,"uZone"))
-        {
-		unsigned uZone=0;
-
-                sscanf(gcCommand,"%u",&uZone);
-		strcat(gcQuery," WHERE ");
-		sprintf(cCat,",tResource WHERE tLog.uTablePK=tResource.uResource AND cTableName='tResource'"
-				" AND tResource.uZone=%u",uZone);
-		strcat(gcQuery,cCat);
-        }
         else if(1)
         {
                 //None NO FILTER
@@ -205,10 +195,6 @@ void ExttLogListFilter(void)
                 printf("<option>uTablePK</option>");
         else
                 printf("<option selected>uTablePK</option>");
-        if(strcmp(gcFilter,"uZone"))
-                printf("<option>uZone</option>");
-        else
-                printf("<option selected>uZone</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
