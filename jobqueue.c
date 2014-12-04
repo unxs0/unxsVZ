@@ -57,6 +57,7 @@ void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 void GetContainerPropUBC(const unsigned uContainer,const char *cName,char *cValue);
 void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
+void UpdateContainerUBCDown(unsigned uJob,unsigned uContainer,const char *cJobData);
 void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData);
 void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData);
 void ActionScripts(unsigned uJob,unsigned uContainer);
@@ -507,6 +508,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		else if(!strcmp(cJobName,"DestroyContainer"))
 		{
 			DestroyContainer(uJob,uContainer);
+		}
+		else if(!strcmp(cJobName,"UpdateContainerUBCDownJob"))
+		{
+			UpdateContainerUBCDown(uJob,uContainer,cJobData);
 		}
 		else if(!strcmp(cJobName,"UpdateContainerUBCJob"))
 		{
@@ -1956,9 +1961,6 @@ void MigrateContainer(unsigned uJob,unsigned uContainer,char *cJobData)
 }//void MigrateContainer(...)
 
 
-
-
-
 void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 {
 
@@ -2086,7 +2088,137 @@ void UpdateContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)
 CommonExit:
 	return;
 
-}//void UpdateContainerUBC(...)
+}//void UpdateContainerUBC()
+
+
+void UpdateContainerUBCDown(unsigned uJob,unsigned uContainer,const char *cJobData)
+{
+
+	float luBar=0,luLimit=0;
+	char cBuf[256]={""};
+	char cResource[256]={""};
+	char cApplyConfigPath[100]={""};
+	char cContainerPath[100]={""};
+	char cUBC[64]={""};
+	char *cp;
+
+	sscanf(cJobData,"cResource=%32s;",cResource);
+	if((cp=strchr(cResource,';')))
+		*cp=0;
+	if(!cResource[0])
+	{
+		logfileLine("UpdateContainerUBCDown","Could not determine cResource");
+		tJobErrorUpdate(uJob,"cResource[0]==0");
+		goto CommonExit;
+	}
+
+	sprintf(cUBC,"%.32s.luBarrier",cResource);
+	GetContainerPropUBC(uContainer,cUBC,cBuf);
+	sscanf(cBuf,"%f",&luBar);
+
+	sprintf(cUBC,"%.32s.luLimit",cResource);
+	GetContainerPropUBC(uContainer,cUBC,cBuf);
+	sscanf(cBuf,"%f",&luLimit);
+
+	//No PID control yet. 10% decrease
+	//No resource based rules
+	//No node resources based adjustments
+	//No expert per resource rules applied
+	luBar = luBar - (luBar * 0.1);
+	luLimit = luLimit - (luLimit * 0.1);
+
+	if(uNotValidSystemCallArg(cResource))
+	{
+		logfileLine("UpdateContainerUBCDown","security alert");
+		tJobErrorUpdate(uJob,"failed sec alert!");
+		goto CommonExit;
+	}
+
+	//1-.
+	sprintf(gcQuery,"/usr/sbin/vzctl set %u --%s %.0f:%.0f --save",
+		uContainer,cResource,luBar,luLimit);
+	if(system(gcQuery))
+	{
+		logfileLine("UpdateContainerUBCDown",gcQuery);
+		tJobErrorUpdate(uJob,"vzctl set failed");
+		goto CommonExit;
+	}
+
+	//2-. validate and/or repair conf file
+	sprintf(gcQuery,"/usr/sbin/vzcfgvalidate -r /etc/vz/conf/%u.conf > "
+			" /tmp/UpdateContainerUBCDown.vzcfgcheck.output 2>&1",uContainer);
+	if(system(gcQuery))
+	{
+		logfileLine("UpdateContainerUBCDown",gcQuery);
+		tJobErrorUpdate(uJob,"vzcfgvalidate failed");
+		goto CommonExit;
+	}
+
+	//2a-. See if vzcfgvalidate -r changed anything if so report in log and then use
+	// changed conf file for updates
+	FILE *fp;
+	unsigned uChange=0;
+	if((fp=fopen("/tmp/UpdateContainerUBCDown.vzcfgcheck.output","r")))
+	{
+		while(fgets(cBuf,255,fp)!=NULL)
+		{
+			if(strncmp(cBuf,"set to ",7))
+				continue;
+			//May have multiple set to lines, the last one is the one we want
+			sscanf(cBuf,"set to %f:%f",&luBar,&luLimit);
+			uChange++;
+		}
+		fclose(fp);
+		unlink("/tmp/UpdateContainerUBCDown.vzcfgcheck.output");
+	}
+
+	if(uChange)
+	{
+		//3-. See 4-.
+		sprintf(cContainerPath,"/etc/vz/conf/%u.conf",uContainer);
+		sprintf(cApplyConfigPath,"/etc/vz/conf/ve-%u.conf-sample",uContainer);
+		if(symlink(cContainerPath,cApplyConfigPath))
+		{
+			logfileLine("UpdateContainerUBCDown","symlink failed");
+			tJobErrorUpdate(uJob,"symlink failed");
+			goto CommonExit;
+		}
+
+		//4-. Apply any changes produced by vzcfgvalidate -r
+		sprintf(gcQuery,"/usr/sbin/vzctl set %u --applyconfig %u --save",
+			uContainer,uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("UpdateContainerUBCDown",gcQuery);
+			tJobErrorUpdate(uJob,"vzctl set 4 failed");
+			goto CommonExit;
+		}
+		unlink(cApplyConfigPath);
+	}
+
+	//5-.
+	sprintf(gcQuery,"INSERT INTO tLog SET"
+		" cLabel='UpdateContainerUBCDown()',"
+		"uLogType=4,uLoginClient=1,"
+		"cLogin='unxsVZ',cMessage='set %u --%s %.0f:%.0f (c=%u)',"
+		"cServer='%s',uOwner=1,uCreatedBy=1,"
+		"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,cResource,luBar,luLimit,uChange,cHostname);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("UpdateContainerUBCDown",gcQuery);
+		tJobErrorUpdate(uJob,"INSERT INTO tLog failed");
+		goto CommonExit;
+	}
+
+	//Everything ok
+	tJobDoneUpdate(uJob);
+
+CommonExit:
+	return;
+
+}//void UpdateContainerUBCDown()
 
 
 void SetContainerUBC(unsigned uJob,unsigned uContainer,const char *cJobData)

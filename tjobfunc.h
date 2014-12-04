@@ -154,6 +154,120 @@ void ExttJobCommands(pentry entries[], int x)
 			}
                 }
 
+		//Rollback UBC Wizard
+		else if(!strcmp(gcCommand,"Rollback UBC Wizard"))
+                {
+			if(guPermLevel>=12)
+			{
+	                        ProcesstJobVars(entries,x);
+                        	guMode=8001;
+	                        tJob("Rollback UBC jobs wizard step 1");
+			}
+			else
+			{
+				tJob("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
+		else if(!strcmp(gcCommand,"Select UBC Datacenter/Org"))
+                {
+			if(guPermLevel>=12)
+			{
+	                        ProcesstJobVars(entries,x);
+                        	guMode=8001;
+				if(!uDatacenter)
+					tJob("<blink>Error:</blink> Must select a datacenter.");
+				if(!uForClient)
+					tJob("<blink>Error:</blink> Must select an organization"
+							" (company, NGO or similar.)");
+                        	guMode=8002;
+	                        tJob("Rollback UBC jobs wizard step 2");
+			}
+			else
+			{
+				tJob("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
+		else if(!strcmp(gcCommand,"Confirm UBC List"))
+                {
+			if(guPermLevel>=12)
+			{
+
+                        	ProcesstJobVars(entries,x);
+                        	guMode=8002;
+				if(!uDatacenter)
+					tJob("<blink>Error:</blink> Must select a datacenter.");
+				if(!uForClient)
+					tJob("<blink>Error:</blink> Must select an organization"
+							" (company, NGO or similar.)");
+				if(uContainer && !uNode)
+					tJob("<blink>Unexpected error:</blink> Must select a node if selecting container!");
+				if(uNode)
+				{
+					unsigned uNodeDatacenter=0;
+
+					sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
+					if(uDatacenter!=uNodeDatacenter)
+					{
+						uNode=0;
+						tJob("<blink>Unexpected error:</blink> The specified node does not "
+							"belong to the specified datacenter!");
+					}
+				}
+				if(uNode && uContainer)
+				{
+					unsigned uNodeContainer=0;
+
+					sscanf(ForeignKey("tContainer","uNode",uContainer),"%u",&uNodeContainer);
+					if(uNode!=uNodeContainer)
+					{
+						uNode=0;
+						uContainer=0;
+						tJob("<blink>Error:</blink> The specified container does not "
+							"belong to the specified node.");
+					}
+				}
+
+                        	guMode=8002;
+	                        tJob("Rollback UBC jobs wizard step 2");
+			}
+		}
+		else if(!strcmp(gcCommand,"Create UBC Rollback"))
+                {
+			if(guPermLevel>=12)
+			{
+
+                        	ProcesstJobVars(entries,x);
+                        	guMode=8003;
+				if(!uDatacenter)
+					tJob("<blink>Error:</blink> Must select a datacenter.");
+				if(!uForClient)
+					tJob("<blink>Error:</blink> Must select an organization"
+							" (company, NGO or similar.)");
+				if(uContainer && !uNode)
+					tJob("<blink>Unexpected error:</blink> Must select a node if selecting container!");
+				if(uNode)
+				{
+					unsigned uNodeDatacenter=0;
+
+					sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
+					if(uDatacenter!=uNodeDatacenter)
+						tJob("<blink>Unexpected error:</blink> The specified node does not "
+							"belong to the specified datacenter!");
+				}
+				if(uNode && uContainer)
+				{
+					unsigned uNodeContainer=0;
+
+					sscanf(ForeignKey("tContainer","uNode",uContainer),"%u",&uNodeContainer);
+					if(uNode!=uNodeContainer)
+						tJob("<blink>Error:</blink> The specified container does not "
+							"belong to the specified node.");
+				}
+
+	                	tJob("UBC Rollback jobs created");
+			}
+		}
+
 		//Recurring Job Wizard
 		else if(!strcmp(gcCommand,"Recurring Job Wizard"))
                 {
@@ -388,6 +502,36 @@ void ExttJobButtons(void)
 	OpenFieldSet("tJob Aux Panel",100);
 	switch(guMode)
         {
+                case 8001:
+			printf("<u>Rollback UBC jobs step 1</u><br>");
+			printf("Select the datacenter and the company/organization (owner) of the job"
+				" to be created.<p>");
+			printf("<input type=submit class=largeButton title='Select datacenter and organization'"
+				" name=gcCommand value='Select UBC Datacenter/Org'>\n");
+			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
+				" name=gcCommand value='Cancel'>\n");
+                break;
+
+                case 8002:
+			printf("<u>Rollback UBC jobs step 2</u><br>");
+			printf("<input type=submit class=largeButton title='Select range of rollback'"
+				" name=gcCommand value='Confirm UBC List'>\n");
+			printf("<p><input type=submit class=largeButton title='Create rollback jobs'"
+				" name=gcCommand value='Create UBC Rollback'>\n");
+			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
+				" name=gcCommand value='Cancel'>\n");
+                break;
+
+                case 8003:
+			printf("<u>Rollback UBC jobs step 3</u><br>");
+			printf("<input type=submit class=largeButton title='Select range of rollback'"
+				" name=gcCommand value='Confirm UBC List'>\n");
+			printf("<p><input type=submit class=largeButton title='Create rollback jobs'"
+				" name=gcCommand value='Create UBC Rollback'>\n");
+			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
+				" name=gcCommand value='Cancel'>\n");
+                break;
+
                 case 9001:
 			printf("<u>Recurring Job Datacenter and Owner</u><br>");
 			printf("Select the datacenter and the company/organization (owner) of the job"
@@ -436,6 +580,10 @@ void ExttJobButtons(void)
 			printf("<p><input title='Create a recurring job for containers, nodes or datacenters.'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Recurring Job Wizard'>\n");
+			if(guPermLevel>=12)
+			printf("<p><input title='Rollback UpdateContainerUBCJob changes for a single job or a group of jobs'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Rollback UBC Wizard'>\n");
 			printf("<p><u>Record Context Info</u><br>");
 			if(uJob)
 				tJobNavList();

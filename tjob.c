@@ -75,6 +75,8 @@ void ExttJobSelectRow(void);
 void ExttJobListSelect(void);
 void ExttJobListFilter(void);
 void ExttJobAuxTable(void);
+void SelectedUBCJobs(unsigned uCreateJobs);
+
 
 #include "tjobfunc.h"
 
@@ -284,7 +286,8 @@ void tJob(const char *cResult)
 	//
 	OpenFieldSet("tJob Record Data",100);
 
-	//Custom right panel for new containers
+	//Custom right panel
+	//repeating jobs wizard
 	if(guMode==9001)
 		tJobNewStep(1);
 	else if(guMode==9002)
@@ -293,6 +296,14 @@ void tJob(const char *cResult)
 		tJobNewStep(3);
 	else if(guMode==9004)
 		tJobNewStep(4);
+	//UBC wizard
+	if(guMode==8001)
+		tJobNewStep(10);
+	else if(guMode==8002)
+		tJobNewStep(11);
+	else if(guMode==8003)
+		tJobNewStep(12);
+	//Normal
 	else if(guMode==2000 || guMode==2002)
 		tJobInput(1);
 	else
@@ -310,10 +321,155 @@ void tJob(const char *cResult)
 }//end of tJob();
 
 
+void SelectedUBCJobs(unsigned uCreateJobs)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	if(uNode && uContainer)
+	{
+		sprintf(gcQuery,"SELECT tJob.cJobName,tJob.uJob,tContainer.cLabel,tNode.cLabel,"
+				"FROM_UNIXTIME(tJob.uCreatedDate),"
+				"tJob.cJobData,tJob.uDatacenter,tJob.uNode,tJob.uContainer"
+			" FROM tJob,tNode,tContainer"
+			" WHERE tJob.uDatacenter=%u"
+			" AND tJob.cJobName='UpdateContainerUBCJob'"
+			" AND tJob.uNode=tNode.uNode"
+			" AND tJob.uContainer=tContainer.uContainer"
+			" AND tJob.uNode=%u"
+			" AND tJob.uContainer=%u",uDatacenter,uNode,uContainer);
+	}
+	else if(uNode)
+	{
+		sprintf(gcQuery,"SELECT tJob.cJobName,tJob.uJob,tContainer.cLabel,tNode.cLabel,"
+				"FROM_UNIXTIME(tJob.uCreatedDate),"
+				"tJob.cJobData,tJob.uDatacenter,tJob.uNode,tJob.uContainer"
+			" FROM tJob,tNode,tContainer"
+			" WHERE tJob.uDatacenter=%u"
+			" AND tJob.cJobName='UpdateContainerUBCJob'"
+			" AND tJob.uNode=tNode.uNode"
+			" AND tJob.uContainer=tContainer.uContainer"
+			" AND tJob.uNode=%u",uDatacenter,uNode);
+	}
+	else if(1)
+	{
+		sprintf(gcQuery,"SELECT tJob.cJobName,tJob.uJob,tContainer.cLabel,tNode.cLabel,"
+				"FROM_UNIXTIME(tJob.uCreatedDate),"
+				"tJob.cJobData,tJob.uDatacenter,tJob.uNode,tJob.uContainer"
+			" FROM tJob,tNode,tContainer"
+			" WHERE tJob.uDatacenter=%u"
+			" AND tJob.cJobName='UpdateContainerUBCJob'"
+			" AND tJob.uNode=tNode.uNode"
+			" AND tJob.uContainer=tContainer.uContainer",uDatacenter);
+	}
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("%s %s %s %s %s %s<br>\n",field[0],field[1],field[2],field[3],field[5],field[4]);
+		if(uCreateJobs)
+		{
+			sprintf(gcQuery,"INSERT INTO tJob SET"
+				" cLabel='UpdateContainerUBCDownJob',"
+				" cJobName='UpdateContainerUBCDownJob',"
+				" cJobData='%s',"
+				" uDatacenter=%s,uNode=%s,uContainer=%s,"
+				" uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uJobDate=UNIX_TIMESTAMP(NOW())+300,uOwner=%u,uJobStatus=%u"
+						,field[5],
+						field[6],field[7],field[8],
+						guLoginClient,guCompany,uWAITING);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		}
+	}
+	mysql_free_result(res);
+
+}//void SelectedUBCJobs()
+
+
 void tJobNewStep(unsigned uStep)
 {
 
-	if(uStep==1)
+	//rollback UBC wizard
+	if(uStep==10)
+	{
+		OpenRow("Select an available datacenter","black");
+		tTablePullDownActiveColorCoded("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
+
+		OpenRow("Select an organization","black");
+		tTablePullDownResellers(uForClient,0);
+	}
+	else if(uStep==11)
+	{
+		OpenRow("Selected datacenter","black");
+		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+
+		OpenRow("Selected organization","black");
+		tTablePullDown("tClient;cuClientPullDown","cLabel","cLabel",uForClient,0);
+
+		if(!uNode)
+		{
+			OpenRow("Optionally restrict to node","black");
+			tTablePullDownDatacenter("tNode;cuNodePullDown","cLabel","cLabel",uNode,1,
+				cuDatacenterPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+		}
+		else
+		{
+			OpenRow("Selected node","black");
+			tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
+		}
+
+		if(uNode && uContainer)
+		{
+			OpenRow("Selected container","black");
+			tTablePullDown("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,0);
+		}
+		else if(uNode)
+		{
+			OpenRow("Optionally restrict to node container","black");
+			tTablePullDownDatacenter("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,1,
+				cuContainerPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+		}
+		else if(uContainer==0)
+		{
+			OpenRow("Optionally restrict to container","black");
+			tTablePullDownDatacenter("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,1,
+				cuContainerPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+		}
+
+		OpenRow("Selected jobs","black");
+		SelectedUBCJobs(0);
+
+	}
+	else if(uStep==12)
+	{
+		OpenRow("Selected datacenter","black");
+		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
+
+		OpenRow("Selected organization","black");
+		tTablePullDown("tClient;cuClientPullDown","cLabel","cLabel",uForClient,0);
+
+		if(uNode)
+		{
+			OpenRow("Selected node","black");
+			tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
+		}
+
+		if(uNode && uContainer)
+		{
+			OpenRow("Selected container","black");
+			tTablePullDown("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,0);
+		}
+
+		OpenRow("Selected jobs","black");
+		SelectedUBCJobs(1);
+	}
+
+	//recurring job wizard
+	else if(uStep==1)
 	{
 		OpenRow("Select an available datacenter","black");
 		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
