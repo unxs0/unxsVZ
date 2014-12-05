@@ -334,6 +334,7 @@ void SelectedUBCJobs(unsigned uCreateJobs)
 			" FROM tJob,tNode,tContainer"
 			" WHERE tJob.uDatacenter=%u"
 			" AND tJob.cJobName='UpdateContainerUBCJob'"
+			" AND tJob.cRemoteMsg NOT LIKE 'Rollback job%%'"
 			" AND tJob.uNode=tNode.uNode"
 			" AND tJob.uContainer=tContainer.uContainer"
 			" AND tJob.uNode=%u"
@@ -347,6 +348,7 @@ void SelectedUBCJobs(unsigned uCreateJobs)
 			" FROM tJob,tNode,tContainer"
 			" WHERE tJob.uDatacenter=%u"
 			" AND tJob.cJobName='UpdateContainerUBCJob'"
+			" AND tJob.cRemoteMsg NOT LIKE 'Rollback job%%'"
 			" AND tJob.uNode=tNode.uNode"
 			" AND tJob.uContainer=tContainer.uContainer"
 			" AND tJob.uNode=%u",uDatacenter,uNode);
@@ -359,6 +361,7 @@ void SelectedUBCJobs(unsigned uCreateJobs)
 			" FROM tJob,tNode,tContainer"
 			" WHERE tJob.uDatacenter=%u"
 			" AND tJob.cJobName='UpdateContainerUBCJob'"
+			" AND tJob.cRemoteMsg NOT LIKE 'Rollback job%%'"
 			" AND tJob.uNode=tNode.uNode"
 			" AND tJob.uContainer=tContainer.uContainer",uDatacenter);
 	}
@@ -366,9 +369,14 @@ void SelectedUBCJobs(unsigned uCreateJobs)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
+	char *cJobMsg;
+	unsigned uNewJob=0;
+	unsigned uJob=0;
 	while((field=mysql_fetch_row(res)))
 	{
-		printf("%s %s %s %s %s %s<br>\n",field[0],field[1],field[2],field[3],field[5],field[4]);
+		cJobMsg="";
+		uNewJob=0;
+		sscanf(field[1],"%u",&uJob);
 		if(uCreateJobs)
 		{
 			sprintf(gcQuery,"INSERT INTO tJob SET"
@@ -376,10 +384,31 @@ void SelectedUBCJobs(unsigned uCreateJobs)
 				" cJobName='UpdateContainerUBCDownJob',"
 				" cJobData='%s',"
 				" uDatacenter=%s,uNode=%s,uContainer=%s,"
-				" uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uJobDate=UNIX_TIMESTAMP(NOW())+300,uOwner=%u,uJobStatus=%u"
+				" uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uJobDate=UNIX_TIMESTAMP(NOW()),uOwner=%u,uJobStatus=%u"
 						,field[5],
 						field[6],field[7],field[8],
 						guLoginClient,guCompany,uWAITING);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				htmlPlainTextError(mysql_error(&gMysql));
+			}
+			else
+			{
+				cJobMsg="job created";
+				uNewJob=mysql_insert_id(&gMysql);
+			}
+		}
+		printf("%s %u %s %s %s %s %s<br>\n",field[0],uJob,field[2],field[3],field[5],field[4],cJobMsg);
+
+		//only allow one rollback for now
+		if(uNewJob)
+		{
+			sprintf(gcQuery,"UPDATE tJob SET"
+				" cRemoteMsg='Rollback job(%u)',"
+				" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJob=%u",
+						uNewJob,
+						guLoginClient,uJob);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
