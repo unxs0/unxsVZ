@@ -1,4 +1,4 @@
-USE snort;
+USE unxsvz;
 
 DROP TABLE IF EXISTS tGeoIPFromCSV;
 CREATE TABLE tGeoIPFromCSV (
@@ -31,7 +31,9 @@ LOAD DATA INFILE '/home/unxs/GeoIPCountryWhois.csv'
         LINES TERMINATED BY '\n' STARTING BY '' 
         ;
 
-INSERT INTO tGeoIPCountryCode SELECT DISTINCT NULL,cCountryCode,cCountryName FROM tGeoIPFromCSV;
+/* INSERT INTO tGeoIPCountryCode SELECT DISTINCT NULL,cCountryCode,cCountryName FROM tGeoIPFromCSV; */
+SET @uCount=0;
+INSERT INTO tGeoIPCountryCode SELECT DISTINCT (@uCount:=@uCount+1),cCountryCode,cCountryName FROM tGeoIPFromCSV;
 
 INSERT INTO tGeoIP SELECT uStartIP,uEndIP,uGeoIPCountryCode FROM tGeoIPFromCSV NATURAL JOIN tGeoIPCountryCode;
 
