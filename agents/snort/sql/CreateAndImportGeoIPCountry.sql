@@ -1,4 +1,5 @@
-USE unxsvz;
+/* USE unxsvz; */
+USE snort;
 
 DROP TABLE IF EXISTS tGeoIPFromCSV;
 CREATE TABLE tGeoIPFromCSV (
