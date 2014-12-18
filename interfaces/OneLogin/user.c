@@ -198,9 +198,9 @@ void UserCommands(pentry entries[], int x)
 
 void htmlUser(void)
 {
-	htmlHeader("OneLogin","Header");
+	htmlHeader("OneLogin","UserHeader");
 	htmlUserPage("OneLogin","User.Body");
-	htmlFooter("Footer");
+	htmlFooter("UserFooter");
 
 }//void htmlUser(void)
 
