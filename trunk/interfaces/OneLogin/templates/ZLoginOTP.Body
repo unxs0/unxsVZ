@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="unxsVZ OneLogin web console">
     <meta name="author" content="Unixservice, LLC.">
-    <link rel="icon" href="/favicon.ico">
+    <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico>
 
     <title>OneLogin Signin</title>
 
@@ -22,14 +22,17 @@
 
     <div class="container">
 
-      <form class="form-signin" role="form">
-        <h2 class="form-signin-heading">Please sign in</h2>
+      <form class="form-signin" role="form" method="post" action="{{cCGI}}">
+        <h2 class="form-signin-heading">unxsVZ OneLogin</h2>
         <label for="inputEmail" class="sr-only">Login</label>
-        <input type="email" id="inputEmail" class="form-control" placeholder="Login" required autofocus>
+        <input maxlength="31" title='Input your login'
+		 type="login" id="inputEmail" class="form-control" placeholder="Login" name="gcLogin" required autofocus>
         <label for="inputPassword" class="sr-only">Password</label>
-        <input type="password" id="inputPassword" class="form-control" placeholder="Password" required>
+        <input maxlength="31" title='Input your password'
+		 type="password" id="inputPassword" class="form-control" placeholder="Password" name="gcPasswd" required>
 	<label for="inputCode" class="sr-only">One time passcode</label>
-        <input type="code" id="inputCode" class="form-control" placeholder="Code" required>
+        <input maxlength="6" title='Input your one time passcode -it is a six digit number'
+		 type="code" id="inputCode" class="form-control" placeholder="Code" name="gcOTP" required>
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Sign in</button>
       </form>
 
