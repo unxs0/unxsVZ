@@ -17,16 +17,6 @@ CFLAGS=-Wall
 //LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
 LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -loath
 
-help:
-	@echo "These are the main make options available"
-	@echo "make install"
-	@echo "make install-test"
-	@echo "make install-bootstrap"
-
-install-bootstrap: 
-	cp -i css/*.css /var/www/unxs/html/bs/css/
-	cp -i js/*.js /var/www/unxs/html/bs/js/
-	cp -i fonts/* /var/www/unxs/html/bs/fonts/
 
 interface.cgi: main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o
 	cc main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o -o interface.cgi $(LIBS)
@@ -74,3 +64,14 @@ install: interface.cgi ./templates/Footer ./templates/ZLogin.Body
 
 ./templates/ZLogin.Body: ./templates/ZLogin.Body.default
 	@ if [ ! -f ./templates/ZLogin.Body ];then cp -i ./templates/ZLogin.Body.default ./templates/ZLogin.Body; fi
+
+help:
+	@echo "These are the main make options available"
+	@echo "make install"
+	@echo "make install-test"
+	@echo "make install-bootstrap"
+
+install-bootstrap: 
+	cp -i css/*.css /var/www/unxs/html/bs/css/
+	cp -i js/*.js /var/www/unxs/html/bs/js/
+	cp -i fonts/* /var/www/unxs/html/bs/fonts/
