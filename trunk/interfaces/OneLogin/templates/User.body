@@ -1,0 +1,171 @@
+<body marginwidth="0" marginheight="0">
+<div align="center" class="standard2colnee">
+<table cellspacing="0" cellpadding="0" border="0" width=1200>
+<tr valign="top">
+<td class="padb20">
+	<img border=0 src=/images/unxslogo.gif>
+</td>
+<td align="right">
+<!-- one row, one cell table to span the page-->
+<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">
+<tr>
+<!-- Navigation -->
+<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr>
+
+<td class="wpsSelectedPlace" nowrap height="100%">
+	<a title='User settings page' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=User'><b class ="font10pt">User</b></a>
+</td>
+<td class="wpsUnSelectedPlace" nowrap height="100%">
+	<a title='Container management page' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=Container&guContainer={{guContainer}}'><b class ="font10pt">Container</b></a>
+</td>
+
+</tr>
+</table>
+
+</td>
+</tr>
+<tr>
+<td valign=top align=right class=notice>
+{{gcName}} of {{gcOrgName}} is logged in from {{gcHost}} [{{cUserLevel}}]
+	<a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+
+
+<form method=post action={{cCGI}} style="margin:0px;">
+<input type=hidden name="gcPage" value="User">
+<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
+<input type=hidden name="guContainer" value="{{guContainer}}">
+<table width=1200  border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td>
+
+{{gcMessage}}
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
+<tr>
+<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
+<td class="hdrtout padlt8" width="33%">
+	<h6 class="modhdr">User Tab</h6>
+</td>
+<td valign="top" width="9" class="hdrtout padlt8"></td>
+<td width="10"> </td>
+<td valign="top" width="9" class="hdrtout padlt8"></td>
+<td class="hdrtout padlt8">
+	<h6 class="modhdr">Login settings for {{gcLogin}}</h6>
+</td>
+<td valign="top" width="9" class="hdrtout padlt8"></td>
+</tr>
+<tr>
+<td ><img src="/images/clear.gif" width="9" height="9" /></td>
+<td valign="top">
+
+<!-- User settings panel content -->
+<table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
+	{{funcMOTD}}
+	<tr>
+		<td valign="top">
+			<strong><u>Usage</u></strong>
+		</td>
+		<td>
+			<br>Here you can change your own password 24x7.
+			<br>Your password will be checked to make sure it is strong enough.
+			It should contain upper and lower case letters and numbers, and be at least 6 chars long.
+			It should not be related to your login, your job, your organization, your kids, your pets or any hobby you may have.
+			You should not use the same password you use for online banking or for non work related sites, like
+			mail or social networks.
+		</td>
+	</tr>
+			
+</table>
+
+<!-- Master table 3 separator -->
+</td>
+<td ><img src="/images/clear.gif" width="9" height="9" /></td>
+<td> </td>
+<td ><img src="/images/clear.gif" width="9" height="9" /></td>
+<td valign="top">
+	
+<!-- Login settings panel content -->
+<table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
+	<tr>
+		<td>
+			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Login')"><strong>Login</strong></a>
+		</td>
+		<td>
+			<input type=text name=cLogin value='{{gcLogin}}' size=40 maxlength=99 disabled class="type_fields_off">
+			<input type=hidden name=cLogin value='{{gcLogin}}'>
+		</td>
+	</tr>
+
+	<tr>
+		<td>
+			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Current Password</strong></a>
+		</td>
+		<td>
+			<input type=password name=cCurPasswd autocomplete=off size=40 maxlength=32 class="type_fields">
+		</td>
+	</tr>
+
+	<tr>
+		<td>
+			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Password</strong></a>
+		</td>
+		<td>
+			<input type=password name=cPasswd value='{{cPasswd}}' size=40 maxlength=32 class="type_fields">
+		</td>
+	</tr>
+
+	<tr>
+		<td>
+			<a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Password Again</strong></a>
+		</td>
+		<td>
+			<input type=password name=cPasswd2 value='{{cPasswd2}}' size=40 maxlength=32 class="type_fields">
+		</td>
+	</tr>
+
+	<tr>
+		<td> </td>
+		<td colspan=2>
+			<input type=submit title='Change your password' class=largeButton name=gcFunction value='Change Password'>
+		</td>
+	</tr>
+</table>
+	
+	
+</td>
+<td ><img src="/images/clear.gif" width="9" height="9" /></td>
+</tr>
+<tr>
+<td></td>
+<td ><img src="/images/clear.gif" width="9" height="9" /></td>
+<td></td>
+<td><img src="/images/clear.gif" width="9" height="9" /></td>
+<td></td>
+<td ><img src="/images/clear.gif" width="9" height="9" /></td>
+<td></td>
+</tr>
+</table>
+
+<br />
+</td>
+<td ><img src="/images/clear.gif" width="9" height="9" /></td>
+</tr>
+<tr>
+<td></td>
+<td ><img src="/images/clear.gif" width="9" height="9" /></td>
+<td></td>
+</tr>
+</table>
+
+</td>
+ </tr>
+</table>
+</form>
