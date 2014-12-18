@@ -72,6 +72,6 @@ help:
 	@echo "make install-bootstrap"
 
 install-bootstrap: 
-	cp -i css/*.css /var/www/unxs/html/bs/css/
-	cp -i js/*.js /var/www/unxs/html/bs/js/
-	cp -i fonts/* /var/www/unxs/html/bs/fonts/
+	cp css/*.css /var/www/unxs/html/bs/css/
+	cp js/*.js /var/www/unxs/html/bs/js/
+	cp fonts/* /var/www/unxs/html/bs/fonts/
