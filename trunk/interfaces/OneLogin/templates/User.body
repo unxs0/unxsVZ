@@ -8,7 +8,7 @@
     <meta name="author" content="">
     <link rel="icon" href="../../favicon.ico">
 
-    <title>Off Canvas Template for Bootstrap</title>
+    <title>unxsVZ OneLogin</title>
 
     <!-- Bootstrap core CSS -->
     <link href="/bs/css/bootstrap.min.css" rel="stylesheet">
@@ -33,9 +33,8 @@
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li><a href="#search">Search</a></li>
-            <li><a href="#search">Dashboard</a></li>
-            <li class="active"><a href="#">Logout</a></li>
+            <li><a href="{{cCGI}}?gcPage=Container&guContainer={{guContainer}}">Container</a></li>
+            <li class="active"><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
@@ -53,12 +52,9 @@
           </p>
 
           <div class="jumbotron">
-		<h2>Your PBX list</h2>
-		 <select>
-			<option value="1" selected>voicecarrier.callingcloud.net</option>
-			<option value="2">acme.callingcloud.net</option>
-			<option value="3">factory.callingcloud.net</option>
-		</select> 
+		<table>
+		{{funcMOTD}}
+		</table>
           </div><!-- "jumbotron" -->
 
 
@@ -66,14 +62,63 @@
 
         <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar" role="navigation">
           <div class="list-group">
-            <a href="#" class="list-group-item active">FreePBX Info</a>
-            <a href="#" class="list-group-item">Usage</a>
-            <a href="#" class="list-group-item">New PBX</a>
-            <a href="#" class="list-group-item">New DID</a>
-            <a href="#" class="list-group-item">Remove DID</a>
-            <a href="#" class="list-group-item">Mod PBX</a>
-          </div>
+            <a href="#" class="list-group-item active">Login settings for {{gcLogin}}</a>
+		<form method=post action={{cCGI}} style="margin:0px;">
+		<input type=hidden name="gcPage" value="User">
+		<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
+		<input type=hidden name="guContainer" value="{{guContainer}}">
+<table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Login')"><strong>Login</strong></a>
+                </td>
+                <td>
+                        <input type=text name=cLogin value='{{gcLogin}}' size=40 maxlength=99 disabled class="type_fields_off">
+                        <input type=hidden name=cLogin value='{{gcLogin}}'>
+                </td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Current Password</strong></a>
+                </td>
+                <td>
+                        <input type=password name=cCurPasswd autocomplete=off size=40 maxlength=32 class="type_fields">
+                </td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Password</strong></a>
+                </td>
+                <td>
+                        <input type=password name=cPasswd value='{{cPasswd}}' size=40 maxlength=32 class="type_fields">
+                </td>
+        </tr>
+
+        <tr>
+                <td>
+                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Password Again</strong></a>
+                </td>
+                <td>
+                        <input type=password name=cPasswd2 value='{{cPasswd2}}' size=40 maxlength=32 class="type_fields">
+                </td>
+        </tr>
+
+        <tr>
+                <td> </td>
+                <td colspan=2>
+                        <input type=submit title='Change your password' class=largeButton name=gcFunction value='Change Password'>
+                </td>
+        </tr>
+</table>		
+</form>
+
+
+	  </div> 
+	</div>
         </div><!--/.sidebar-offcanvas-->
+            <a href="#" class="list-group-item">Mod PBX</a>
       </div><!--/row-->
 
 <!-- start jquery collapse -->
