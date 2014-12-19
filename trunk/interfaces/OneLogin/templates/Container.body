@@ -1,152 +1,142 @@
-<body marginwidth="0" marginheight="0">
-<div align="center" class="standard2colnee">
-<table cellspacing="0" cellpadding="0" border="0" width=1200>
-<tr valign="top">
-<td class="padb20">
-	<img border=0 src=/images/unxslogo.gif>
-</td>
-<td align="right">
-<!-- one row, one cell table to span the page-->
-<table border="0" class="wpsPlaceBar" cellspacing="0" cellpadding="0" width="608">
-<tr>
-<!-- Navigation -->
-<td align="left" background="/images/bgrd_topnav.gif" valign="bottom" nowrap>
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-<tr>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="unxsVZ OneLogin user tab">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2015">
+    <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico>
 
-<td class="wpsUnSelectedPlace" nowrap height="100%">
-	<a title='User management page' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=User&guContainer={{guContainer}}'><b class ="font10pt">User</b></a>
-</td>
-<td class="wpsSelectedPlace" nowrap height="100%">
-	<a title='Container settings page' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=Container&guContainer={{guContainer}}'><b class ="font10pt">Container</b></a>
-</td>
+    <title>unxsVZ OneLogin</title>
 
-</tr>
-</table>
+    <!-- Bootstrap core CSS -->
+    <link href="/bs/css/bootstrap.min.css" rel="stylesheet">
 
-</td>
-</tr>
-<tr>
-<td valign=top align=right class=notice>
-"{{gcName}}" of {{gcOrgName}} is logged in from {{gcHost}} [{{cUserLevel}}]
-	<a title='Erase login cookies' href={{cCGI}}?gcFunction=Logout>Logout</a>
-</td>
-</tr>
-</table>
-</td>
-</tr>
-</table>
+    <!-- Custom styles for this template -->
+    <link href="/bs/css/offcanvas.css" rel="stylesheet">
+    <link href="/bs/css/collapse.css" rel="stylesheet">
 
+  </head>
 
+  <body>
+    <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">unxsVZ OneLogin</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="{{cCGI}}?gcPage=User&guContainer={{guContainer}}">User</a></li>
+            <li class="active"><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div><!-- /.nav-collapse -->
+      </div><!-- /.container -->
+    </nav><!-- /.navbar -->
 
-<form method=post action={{cCGI}} style="margin:0px;">
-<input type=hidden name="gcPage" value="Container">
-<input type=hidden name="guContainer" value="{{guContainer}}">
-<table width=1200  border="0" cellspacing="0" cellpadding="0">
-<tr>
-<td>
-{{gcMessage}}
-<table border="0" cellspacing="0" cellpadding="0" width="100%" style='border: solid gray 1px'>
-<tr>
-<td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
-<td class="hdrtout padlt8" width="33%">
-	<h6 class="modhdr">Container Tab</h6>
-</td>
-<td valign="top" width="9" class="hdrtout padlt8"></td>
-<td width="10"> </td>
-<td valign="top" width="9" class="hdrtout padlt8"></td>
-<td class="hdrtout padlt8">
-	<h6 class="modhdr"><a href="https://{{gcCtHostname}}{{gcAdminPort}}/admin" style="text-decoration : none">{{gcCtHostname}}</a>
-		Container settings</h6>
-</td>
-<td valign="top" width="9" class="hdrtout padlt8"></td>
-</tr>
-<tr>
-<td ><img src="/images/clear.gif" width="9" height="9" /></td>
-<td valign="top">
+    <div class="container">
 
-<!-- Container tab panel content -->
-<table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
-	<tr>
-		<td valign="top">
-			<strong><u>Container</u></strong>
-		</td>
-		<td>
-			<fieldset><legend>Select</legend>
-			{{funcSelectContainer}}
-			<p>
-			<input type=text class=type_fields 
-			title='Enter first letter(s), or you can use SQL "%" and "_" pattern matching chars'
-			name=gcSearch value='{{gcSearch}}' size=16 maxlength=32 onChange='submit()'>
-			&nbsp;Filter
-			</fieldset>
-		</td>
-	</tr>
+      <div class="row row-offcanvas row-offcanvas-right">
 
-	<!-- menu for loaded container operations -->
-	{{funcContainer}}
+        <div class="col-xs-12 col-sm-9">
+          <p class="pull-right visible-xs">
+            <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">...</button>
+          </p>
+
+          <div class="jumbotron">
+		{{funcSelectContainer}}
+          </div><!-- "jumbotron" -->
 
 
-	<!-- role based additional sections -->
-	{{funcNewContainer}}
+        </div><!--/.col-xs-12.col-sm-9-->
 
-	<tr>
-		<td valign="top">
-			<strong><u>Usage</u></strong>
-		</td>
-		<td>
-			<br>Here you can search for a container and find specific information about it.
-			<p>Once you have loaded a container you will be able to view it's settings
-			and depending on your account role other operations may be available, such as adding a DID.
-		</td>
-	</tr>
-</table>
+        <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar" role="navigation">
+          <div class="list-group">
+        	<h3 class="form-signin-heading">Change your password</h3>
 
-<!-- Master table 3 separator -->
-</td>
-<td ><img src="/images/clear.gif" width="9" height="9" /></td>
-<td> </td>
-<td ><img src="/images/clear.gif" width="9" height="9" /></td>
-<td valign="top">
-	
-<!-- Container settings panel content -->
-<table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
-	<tr>
-	<td> </td>
-	<td>{{funcContainerImageTag}}</td>
-	</tr>
-	{{funcContainerInfo}}
-	</td>
-	</tr>
-</table>
-	
-	
-</td>
-<td ><img src="/images/clear.gif" width="9" height="9" /></td>
-</tr>
-<tr>
-<td></td>
-<td ><img src="/images/clear.gif" width="9" height="9" /></td>
-<td></td>
-<td><img src="/images/clear.gif" width="9" height="9" /></td>
-<td></td>
-<td ><img src="/images/clear.gif" width="9" height="9" /></td>
-<td></td>
-</tr>
-</table>
+      		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
 
-<br />
-</td>
-<td ><img src="/images/clear.gif" width="9" height="9" /></td>
-</tr>
-<tr>
-<td></td>
-<td ><img src="/images/clear.gif" width="9" height="9" /></td>
-<td></td>
-</tr>
-</table>
+		<input type=hidden name="gcPage" value="User">
+		<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
+		<input type=hidden name="guContainer" value="{{guContainer}}">
 
-</td>
- </tr>
-</table>
-</form>
+        	<label for="inputEmail" class="sr-only">Login</label>
+        	<input maxlength="31" title='Input your login'
+			type="login" id="inputEmail" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" required>
+		<input type=hidden name=cLogin value='{{gcLogin}}'>
+
+       		<label for="inputPassword" class="sr-only">Current Password</label>
+       		<input maxlength="31" title='Input your current password'
+			type="password" id="inputPassword1" class="form-control" placeholder="Current Password" name="cCurPasswd" required>
+
+       		<label for="inputPassword" class="sr-only">New Password</label>
+       		<input maxlength="31" title='Input your password again'
+			type="password" id="inputPassword2" class="form-control" placeholder="New Password" name="cPasswd" required autofocus>
+
+       		<label for="inputPassword" class="sr-only">New Password Again</label>
+       		<input maxlength="31" title='Input your password again'
+			type="password" id="inputPassword3" class="form-control" placeholder="New Password Again" name="cPasswd2" required>
+
+		<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Change Password'>Change Password</button>
+	</form>
+
+
+	  </div> 
+	</div>
+        </div><!--/.sidebar-offcanvas-->
+      </div><!--/row-->
+
+
+<!-- start jquery collapse Login History-->
+<div class="panel panel-default" id="panel3">
+	<div class="panel-heading">
+		<h3 class="panel-title">
+			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">Login History</a>
+		</h3>
+	</div><!-- "panel-heading" -->
+	<div id="collapseThree" class="panel-collapse collapse">
+	<div class="panel-body">{{funcLoginHistory}}</div>
+	</div><!-- "panel-body" -->
+	</div><!-- "collapseThree" -->
+</div><!-- "panel panel-default" -->
+<!-- end jquery collapse -->
+
+<!-- start jquery collapse Operation History-->
+<div class="panel panel-default" id="panel4">
+	<div class="panel-heading">
+		<h3 class="panel-title">
+			<a data-toggle="collapse" data-target="#collapseFour" href="#collapseFour" class="collapsed">Operation History</a>
+		</h3>
+	</div><!-- "panel-heading" -->
+	<div id="collapseFour" class="panel-collapse collapse">
+	<div class="panel-body">{{funcOperationHistory}}</div>
+	</div><!-- "panel-body" -->
+	</div><!-- "collapseFour" -->
+</div><!-- "panel panel-default" -->
+<!-- end jquery collapse -->
+      <hr>
+
+      <footer>
+        <p>&copy; Unixservice, LLC. 2014-2015</p>
+      </footer>
+
+    </div><!--/.container-->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="/bs/js/bootstrap.min.js"></script>
+
+    <script src="/bs/js/offcanvas.js"></script>
+  </body>
+</html>
