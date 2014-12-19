@@ -1446,11 +1446,13 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"data error");
 						break;
 					}
+					/* this is not useful
 					if(uDatacenter!=41)
 					{
 						sprintf(cResult,"wrong datacenter");
 						break;
 					}
+					*/
 					if(uAvailable==1)
 					{
 						sprintf(cResult,"must not be available");
@@ -1601,7 +1603,9 @@ while((field=mysql_fetch_row(res)))
 					MYSQL_RES *res;
 					MYSQL_ROW field;
 					char cIP[16]={""};
+					unsigned uCountryCode=0;
 					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
+					sscanf(ForeignKey("tIP","uCountryCode",uCtIP),"%u",&uCountryCode);
 					if(!cIP[0])
 					{
 						sprintf(cResult,"data error");
@@ -1625,7 +1629,7 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cCommentUpdated,"%.255s",ForeignKey("tIP","cComment",uCtIP));
 						unsigned uGeoIPCountryCode=0;
 						sscanf(field[2],"%u",&uGeoIPCountryCode);
-						if(!strstr(cCommentUpdated," CN="))
+						if(uGeoIPCountryCode != uCountryCode)
 						{
 							sprintf(gcQuery,"UPDATE tIP"
 								" SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
