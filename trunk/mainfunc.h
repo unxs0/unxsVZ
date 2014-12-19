@@ -2211,7 +2211,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
 
 	if(!uTemplateSet)
 	{
-		printf("Could not find tTemplateSet.clabel=%s\n",cTemplateSet);
+		printf("Could not find tTemplateSet.cLabel=%s\n",cTemplateSet);
 		exit(1);
 	}
 
@@ -2230,7 +2230,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
 
 	if(!uTemplateType)
 	{
-		printf("Could not find tTemplateType.clabel=%s\n",cTemplateSet);
+		printf("Could not find tTemplateType.cLabel=%s\n",cTemplateType);
 		exit(1);
 	}
 
