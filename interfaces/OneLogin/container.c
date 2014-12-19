@@ -2008,11 +2008,11 @@ void ContainerCommands(pentry entries[], int x)
 
 void htmlContainer(void)
 {
-	htmlHeader("OneLogin","Header");
+	htmlHeader("OneLogin","ContainerHeader");
 	if(guContainer)
 		SelectContainer();
 	htmlContainerPage("OneLogin","Container.Body");
-	htmlFooter("Footer");
+	htmlFooter("ContainerFooter");
 
 }//void htmlContainer(void)
 
