@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="icon" href="../../favicon.ico">
+    <meta name="description" content="unxsVZ OneLogin user tab">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2015">
+    <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico>
 
     <title>unxsVZ OneLogin</title>
 
@@ -52,9 +52,7 @@
           </p>
 
           <div class="jumbotron">
-		<table>
 		{{funcMOTD}}
-		</table>
           </div><!-- "jumbotron" -->
 
 
@@ -62,76 +60,66 @@
 
         <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar" role="navigation">
           <div class="list-group">
-            <a href="#" class="list-group-item active">Login settings for {{gcLogin}}</a>
-		<form method=post action={{cCGI}} style="margin:0px;">
+        	<h3 class="form-signin-heading">Change your password</h3>
+
+      		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
+
 		<input type=hidden name="gcPage" value="User">
 		<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
 		<input type=hidden name="guContainer" value="{{guContainer}}">
-<table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">
-        <tr>
-                <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Login')"><strong>Login</strong></a>
-                </td>
-                <td>
-                        <input type=text name=cLogin value='{{gcLogin}}' size=40 maxlength=99 disabled class="type_fields_off">
-                        <input type=hidden name=cLogin value='{{gcLogin}}'>
-                </td>
-        </tr>
 
-        <tr>
-                <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Current Password</strong></a>
-                </td>
-                <td>
-                        <input type=password name=cCurPasswd autocomplete=off size=40 maxlength=32 class="type_fields">
-                </td>
-        </tr>
+        	<label for="inputEmail" class="sr-only">Login</label>
+        	<input maxlength="31" title='Input your login'
+			type="login" id="inputEmail" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" required>
+		<input type=hidden name=cLogin value='{{gcLogin}}'>
 
-        <tr>
-                <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Password</strong></a>
-                </td>
-                <td>
-                        <input type=password name=cPasswd value='{{cPasswd}}' size=40 maxlength=32 class="type_fields">
-                </td>
-        </tr>
+       		<label for="inputPassword" class="sr-only">Current Password</label>
+       		<input maxlength="31" title='Input your current password'
+			type="password" id="inputPassword1" class="form-control" placeholder="Current Password" name="cCurPasswd" required>
 
-        <tr>
-                <td>
-                        <a class=inputLink href="#" onClick="open_popup('{{iCGI}}?gcPage=Glossary&cLabel=Password')"><strong>Password Again</strong></a>
-                </td>
-                <td>
-                        <input type=password name=cPasswd2 value='{{cPasswd2}}' size=40 maxlength=32 class="type_fields">
-                </td>
-        </tr>
+       		<label for="inputPassword" class="sr-only">New Password</label>
+       		<input maxlength="31" title='Input your password again'
+			type="password" id="inputPassword2" class="form-control" placeholder="New Password" name="cPasswd" required autofocus>
 
-        <tr>
-                <td> </td>
-                <td colspan=2>
-                        <input type=submit title='Change your password' class=largeButton name=gcFunction value='Change Password'>
-                </td>
-        </tr>
-</table>		
-</form>
+       		<label for="inputPassword" class="sr-only">New Password Again</label>
+       		<input maxlength="31" title='Input your password again'
+			type="password" id="inputPassword3" class="form-control" placeholder="New Password Again" name="cPasswd2" required>
+
+		<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Change Password'>Change Password</button>
+	</form>
 
 
 	  </div> 
 	</div>
         </div><!--/.sidebar-offcanvas-->
-            <a href="#" class="list-group-item">Mod PBX</a>
       </div><!--/row-->
 
-<!-- start jquery collapse -->
+
+<!-- start jquery collapse Login History-->
 <div class="panel panel-default" id="panel3">
 	<div class="panel-heading">
-		<h4 class="panel-title">
-			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">Collapsible Group Item</a>
-		</h4>
+		<h3 class="panel-title">
+			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">Login History</a>
+		</h3>
 	</div><!-- "panel-heading" -->
 	<div id="collapseThree" class="panel-collapse collapse">
-	<div class="panel-body">offee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.</div>
+	<div class="panel-body">{{funcLoginHistory}}</div>
 	</div><!-- "panel-body" -->
 	</div><!-- "collapseThree" -->
+</div><!-- "panel panel-default" -->
+<!-- end jquery collapse -->
+
+<!-- start jquery collapse Operation History-->
+<div class="panel panel-default" id="panel4">
+	<div class="panel-heading">
+		<h3 class="panel-title">
+			<a data-toggle="collapse" data-target="#collapseFour" href="#collapseFour" class="collapsed">Operation History</a>
+		</h3>
+	</div><!-- "panel-heading" -->
+	<div id="collapseFour" class="panel-collapse collapse">
+	<div class="panel-body">{{funcOperationHistory}}</div>
+	</div><!-- "panel-body" -->
+	</div><!-- "collapseFour" -->
 </div><!-- "panel panel-default" -->
 <!-- end jquery collapse -->
       <hr>
