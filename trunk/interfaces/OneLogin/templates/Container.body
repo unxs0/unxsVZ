@@ -52,6 +52,16 @@
           </p>
 
           <div class="jumbotron">
+            <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">                                               
+            <tr>                                                                                                                        
+                <td> </td>                                                                                                                  
+                <td>{{funcContainerImageTag}}</td>                                                                                          
+                </tr>                                                                                                                       
+                {{funcContainerInfo}}                                                                                                       
+              </td>                                                                                                                       
+             </tr>                                                                                                                       
+            </table>  
+            
           </div><!-- "jumbotron" -->
 
 
