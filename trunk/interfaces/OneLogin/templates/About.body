@@ -32,9 +32,9 @@
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li><a href="{{cCGI}}?gcPage=User&guContainer={{guContainer}}">User</a></li>
-            <li class="active"><a href="{{cCGI}}?gcPage=Container&guContainer={{guContainer}}">Container</a></li>
+            <li><a href="{{cCGI}}?gcPage=Container&guContainer={{guContainer}}">Container</a></li>
             <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
-            <li><a href="{{cCGI}}?gcPage=About&guContainer={{guContainer}}">About</a></li>
+            <li class="active"><a href="{{cCGI}}?gcPage=About&guContainer={{guContainer}}">About</a></li>
             <li><a href="{{cCGI}}?gcPage=Contact&guContainer={{guContainer}}">Contact</a></li>
           </ul>
         </div><!-- /.nav-collapse -->
@@ -51,12 +51,7 @@
           </p>
 
           <div class="jumbotron">
-          {{funcContainerImageTag}}
-            <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">                                               
-                {{funcContainerInfo}}                                                                                                       
-              </td>                                                                                                                       
-            </table>  
-            
+          	<h3>About</h3>  
           </div><!-- "jumbotron" -->
 
 
@@ -64,21 +59,6 @@
 
         <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar" role="navigation">
           <div class="list-group">
-        	<h3 class="form-signin-heading">Container Search</h3>
-
-                <form method=post action={{cCGI}} style="margin:0px;">
-		      <input type=hidden name="gcPage" value="Container">
-		      <input type=hidden name="guContainer" value="{{guContainer}}">
-
-		{{funcSelectContainer}}
-		<p>
-		<input type="login" 
-			title='Enter first letter(s), or you can use SQL "%" and "_" pattern matching chars'
-			name="gcSearch" value='{{gcSearch}}' size=16 maxlength=32 onChange='submit()'>
-
-		  </form>
-    
-
 
 
 	  </div> 

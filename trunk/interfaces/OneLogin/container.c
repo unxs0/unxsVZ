@@ -84,6 +84,9 @@ void GetSIPProxyList(char *cSIPProxyList,unsigned guDatacenter,unsigned guNode,u
 unsigned unxsBindRemoveContainer(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
 	unsigned uOwner,unsigned uCreatedBy);
 
+void htmlAuxPage(char *cTitle, char *cTemplateName);
+void htmlAbout(void);
+void htmlContact(void);
 
 unsigned uPower10(unsigned uI)
 {
@@ -138,7 +141,7 @@ void ProcessContainerVars(pentry entries[], int x)
 			sprintf(gcNewLogin,"%.31s",CustomerName(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcNewPasswd"))
 			sprintf(gcNewPasswd,"%.31s",CustomerName(entries[i].val));
-		if(!strcmp(entries[i].name,"gcBulkData"))
+		else if(!strcmp(entries[i].name,"gcBulkData"))
 			gcBulkData=entries[i].val;
 	}
 
@@ -174,7 +177,19 @@ void ContainerGetHook(entry gentries[],int x)
 
 void ContainerCommands(pentry entries[], int x)
 {
-	if(!strcmp(gcPage,"Container"))
+	if(!strcmp(gcPage,"About"))
+	{
+		x=1;//this needs to be debugged
+		ProcessContainerVars(entries,x);
+		htmlAbout();
+	}
+	else if(!strcmp(gcPage,"Contact"))
+	{
+		x=1;
+		ProcessContainerVars(entries,x);
+		htmlContact();
+	}
+	else if(!strcmp(gcPage,"Container"))
 	{
 		unsigned uLen=0;
         	MYSQL_RES *res;
@@ -2006,6 +2021,24 @@ void ContainerCommands(pentry entries[], int x)
 }//void ContainerCommands(pentry entries[], int x)
 
 
+void htmlAbout(void)
+{
+	htmlHeader("OneLogin","ContainerHeader");
+	htmlAuxPage("OneLogin","About.Body");
+	htmlFooter("ContainerFooter");
+
+}//void htmlAbout(void)
+
+
+void htmlContact(void)
+{
+	htmlHeader("OneLogin","ContainerHeader");
+	htmlAuxPage("OneLogin","Contact.Body");
+	htmlFooter("ContainerFooter");
+
+}//void htmlContact(void)
+
+
 void htmlContainer(void)
 {
 	htmlHeader("OneLogin","ContainerHeader");
@@ -2024,6 +2057,88 @@ void htmlContainerList(void)
 	htmlFooter("Footer");
 
 }//void htmlContainerList(void)
+
+
+void htmlAuxPage(char *cTitle, char *cTemplateName)
+{
+	if(cTemplateName[0])
+	{
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+		unsigned uNoShow=0;
+
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uOneLogin);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			struct t_template template;
+
+			template.cpName[0]="cTitle";
+			template.cpValue[0]=cTitle;
+			
+			template.cpName[1]="cCGI";
+			template.cpValue[1]="OneLogin.cgi";
+			
+			template.cpName[2]="gcLogin";
+			template.cpValue[2]=gcUser;
+
+			template.cpName[3]="gcName";
+			template.cpValue[3]=gcName;
+
+			template.cpName[4]="gcOrgName";
+			template.cpValue[4]=gcOrgName;
+
+			template.cpName[5]="cUserLevel";
+			template.cpValue[5]=(char *)cUserLevel(guPermLevel);//Safe?
+
+			template.cpName[6]="gcHost";
+			template.cpValue[6]=gcHost;
+
+			template.cpName[7]="gcMessage";
+			template.cpValue[7]=gcMessage;
+
+			template.cpName[8]="gcCtHostname";
+			//template.cpValue[8]=gcCtHostname;
+			if(!uNoShow)
+				template.cpValue[8]=(char *)cGetHostname(guContainer) ;
+			else
+				template.cpValue[8]="no container selected";
+
+			template.cpName[9]="gcSearch";
+			template.cpValue[9]=gcSearch;
+
+			template.cpName[10]="guContainer";
+			char cguContainer[16];
+			sprintf(cguContainer,"%u",guContainer);
+			template.cpValue[10]=cguContainer;
+
+			template.cpName[11]="gcLabel";
+			template.cpValue[11]=gcLabel;
+
+			template.cpName[12]="cDisabled";
+			if(guContainer)
+				template.cpValue[12]="";
+			else
+				template.cpValue[12]="disabled";
+
+			template.cpName[13]="gcSearchAux";
+			template.cpValue[13]=gcSearchAux;
+
+			template.cpName[14]="";
+
+			printf("\n<!-- Start htmlContainerPage(%s) -->\n",cTemplateName); 
+			Template(field[0],&template,stdout);
+			printf("\n<!-- End htmlContainerPage(%s) -->\n",cTemplateName); 
+		}
+		else
+		{
+			printf("<hr>");
+			printf("<center><font size=1>%s</font>\n",cTemplateName);
+		}
+		mysql_free_result(res);
+	}
+
+}//void htmlAuxPage()
 
 
 void htmlContainerBulk(void)
