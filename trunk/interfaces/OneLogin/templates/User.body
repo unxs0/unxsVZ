@@ -28,7 +28,7 @@
             <span class="icon-bar"></span>
           </button>
           <a class="navbar-brand" href="{{cCGI}}?gcPage=User&guContainer={{guContainer}}">unxsVZ OneLogin</a>
-        </div>
+        </div><!--/navbar-header-->
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="{{cCGI}}?gcPage=User&guContainer={{guContainer}}">User</a></li>
@@ -51,9 +51,39 @@
           </p>
 
           <div class="jumbotron">
-		{{funcMOTD}}
+        	<h3 class="form-signin-heading">Info</h3>
+		<h4 class="form-signin-heading">
+			{{funcMOTD}}
+		</h4>
           </div><!-- "jumbotron" -->
 
+<!-- start jquery collapse Login History-->
+<div class="panel panel-default" id="panel3">
+	<div class="panel-heading">
+		<h4 class="form-signin-heading">
+			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">Login History</a>
+		</h4>
+	</div><!-- "panel-heading" -->
+	<div id="collapseThree" class="panel-collapse collapse">
+	<div class="panel-body">{{funcLoginHistory}}
+	</div><!-- "panel-body" -->
+	</div><!-- "collapseThree" -->
+</div><!-- "panel panel-default" -->
+<!-- end jquery collapse -->
+
+<!-- start jquery collapse Operation History-->
+<div class="panel panel-default" id="panel4">
+	<div class="panel-heading">
+		<h4 class="form-signin-heading">
+			<a data-toggle="collapse" data-target="#collapseFour" href="#collapseFour" class="collapsed">Operation History</a>
+		</h4>
+	</div><!-- "panel-heading" -->
+	<div id="collapseFour" class="panel-collapse collapse">
+	<div class="panel-body">{{funcOperationHistory}}
+	</div><!-- "panel-body" -->
+	</div><!-- "collapseFour" -->
+</div><!-- "panel panel-default" -->
+<!-- end jquery collapse -->
 
         </div><!--/.col-xs-12.col-sm-9-->
 
@@ -78,57 +108,27 @@
 
        		<label for="inputPassword" class="sr-only">New Password</label>
        		<input maxlength="31" title='Input your password again'
-			type="password" id="inputPassword2" class="form-control" placeholder="New Password" name="cPasswd" required autofocus>
+			type="password" id="inputPassword2" class="form-control" placeholder="New Password" name="cPasswd" required>
 
        		<label for="inputPassword" class="sr-only">New Password Again</label>
        		<input maxlength="31" title='Input your password again'
 			type="password" id="inputPassword3" class="form-control" placeholder="New Password Again" name="cPasswd2" required>
 
 		<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Change Password'>Change Password</button>
-	</form>
+		</form>
+	  </div><!--/list-group-->
+	</div><!--sidebar-->
+        </div><!--/row-->
+      </div><!--/container-->
 
 
-	  </div> 
-	</div>
-        </div><!--/.sidebar-offcanvas-->
-      </div><!--/row-->
 
 
-<!-- start jquery collapse Login History-->
-<div class="panel panel-default" id="panel3">
-	<div class="panel-heading">
-		<h3 class="panel-title">
-			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">Login History</a>
-		</h3>
-	</div><!-- "panel-heading" -->
-	<div id="collapseThree" class="panel-collapse collapse">
-	<div class="panel-body">{{funcLoginHistory}}</div>
-	</div><!-- "panel-body" -->
-	</div><!-- "collapseThree" -->
-</div><!-- "panel panel-default" -->
-<!-- end jquery collapse -->
-
-<!-- start jquery collapse Operation History-->
-<div class="panel panel-default" id="panel4">
-	<div class="panel-heading">
-		<h3 class="panel-title">
-			<a data-toggle="collapse" data-target="#collapseFour" href="#collapseFour" class="collapsed">Operation History</a>
-		</h3>
-	</div><!-- "panel-heading" -->
-	<div id="collapseFour" class="panel-collapse collapse">
-	<div class="panel-body">{{funcOperationHistory}}</div>
-	</div><!-- "panel-body" -->
-	</div><!-- "collapseFour" -->
-</div><!-- "panel panel-default" -->
-<!-- end jquery collapse -->
       <hr>
 
       <footer>
         <p>&copy; Unixservice, LLC. 2014-2015</p>
       </footer>
-
-    </div><!--/.container-->
-
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
