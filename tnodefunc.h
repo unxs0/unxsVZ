@@ -322,6 +322,34 @@ void ExttNodeCommands(pentry entries[], int x)
 				tNode("<blink>Error</blink>: Denied by permissions settings");
 			}
 		}
+                else if(!strcmp(gcCommand,"Node Online"))
+                {
+                        ProcesstNodeVars(entries,x);
+			if(uStatus==uOFFLINE && uAllowMod(uOwner,uCreatedBy) && guPermLevel>11)
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+				
+				sprintf(gcQuery,"UPDATE tNode SET uStatus=%u WHERE uNode=%u",
+						uACTIVE,uNode);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+                				htmlPlainTextError(mysql_error(&gMysql));
+				uStatus=uACTIVE;
+				ModtNode();
+			}
+			else if(uAllowMod(uOwner,uCreatedBy))
+			{
+				tNode("<blink>Error</blink>: Denied by node status");
+			}
+			else
+			{
+				tNode("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
                 else if(!strcmp(gcCommand,"Node Container Report"))
                 {
                         ProcesstNodeVars(entries,x);
@@ -735,6 +763,9 @@ void ExttNodeButtons(void)
 				if(guPermLevel>11 && uStatus!=uOFFLINE)
 					printf("<input type=submit class=lwarnButton title='Change node status to offline.'"
 					" name=gcCommand value='Node Offline'><br>");
+				else if(guPermLevel>11 && uStatus==uOFFLINE)
+					printf("<input type=submit class=lwarnButton title='Change node status to online.'"
+					" name=gcCommand value='Node Online'><br>");
 			}
 	}
 	CloseFieldSet();
