@@ -2288,7 +2288,7 @@ void funcContainerImageTag(FILE *fp)
 	if(guStatus && guStatus!=uREMOTEAPPLIANCE && guStatus!=uAWAITACT)
 		//fprintf(fp,"<a href=https://%s%s/admin ><img src=%s/traffic/%u.png border=0 onerror=\"this.src='/images/noimage.jpg'\"></a>",
 		//	cGetHostname(guContainer),gcAdminPort,cGetImageHost(guContainer),guContainer);
-		fprintf(fp,"<a href=https://%s%s/admin ><img src=/traffic/%u.png border=0 onerror=\"this.src='/images/noimage.jpg'\"></a>",
+		fprintf(fp,"<a href=https://%s%s/admin ><img width=260 src=/traffic/%u.png border=0 onerror=\"this.src='/images/noimage.jpg'\"></a>",
 			cGetHostname(guContainer),gcAdminPort,guContainer);
 
 }//void funcContainerImageTag(FILE *fp)
@@ -2508,7 +2508,7 @@ void funcContainerInfo(FILE *fp)
 	if((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=uDatacenter')\">"
-			" <strong>Datacenter</strong></a></td><td><input type=text name='cDatacenter' value='%s' size=80 maxlength=32"
+			" <strong>Datacenter</strong></a></td><td><input type=text name='cDatacenter' value='%.32s' size=32 maxlength=32"
 			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 	mysql_free_result(res);
@@ -2524,7 +2524,7 @@ void funcContainerInfo(FILE *fp)
 	if((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=uNode')\">"
-			" <strong>Node</strong></a></td><td><input type=text name='cNode' value='%s' size=80 maxlength=32"
+			" <strong>Node</strong></a></td><td><input type=text name='cNode' value='%.32s' size=32 maxlength=32"
 			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 		if(!strncmp(field[0],"appliance",9))
 			uAppliance=1;
@@ -2541,7 +2541,7 @@ void funcContainerInfo(FILE *fp)
 	if((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=uStatus')\">"
-			" <strong>Status</strong></a></td><td><input type=text name='cStatus' value='%s' size=80 maxlength=32"
+			" <strong>Status</strong></a></td><td><input type=text name='cStatus' value='%.32s' size=32 maxlength=32"
 			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 	mysql_free_result(res);
@@ -2556,7 +2556,7 @@ void funcContainerInfo(FILE *fp)
 	if((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=uOSTemplate')\">"
-			" <strong>OSTemplate</strong></a></td><td><input type=text name='uOSTemplate' value='%s' size=80 maxlength=32"
+			" <strong>OSTemplate</strong></a></td><td><input type=text name='uOSTemplate' value='%.32s' size=32 maxlength=32"
 			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 	mysql_free_result(res);
@@ -2570,7 +2570,7 @@ void funcContainerInfo(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=uIPv4')\">"
-			" <strong>IPv4</strong></a></td><td><input type=text name='cIPv4' value='%s' size=80 maxlength=32"
+			" <strong>IPv4</strong></a></td><td><input type=text name='cIPv4' value='%.32s' size=32 maxlength=32"
 			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 	mysql_free_result(res);
@@ -2586,7 +2586,7 @@ void funcContainerInfo(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=Group')\">"
-			" <strong>Group</strong></a></td><td><input type=text name='cGroup' value='%s' size=80 maxlength=32"
+			" <strong>Group</strong></a></td><td><input type=text name='cGroup' value='%.32s' size=32 maxlength=32"
 			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 	mysql_free_result(res);
@@ -2602,7 +2602,7 @@ void funcContainerInfo(FILE *fp)
 	if((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=uOwner')\">"
-			" <strong>Owner</strong></a></td><td><input type=text name='cOwner' value='%s' size=80 maxlength=32"
+			" <strong>Owner</strong></a></td><td><input type=text name='cOwner' value='%.32s' size=32 maxlength=32"
 			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 */
@@ -2617,7 +2617,7 @@ void funcContainerInfo(FILE *fp)
 	if((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=uCreatedBy')\">"
-			" <strong>Created By</strong></a></td><td><input type=text name='cCreatedBy' value='%s' size=80 maxlength=32"
+			" <strong>Created By</strong></a></td><td><input type=text name='cCreatedBy' value='%.32s' size=32 maxlength=32"
 			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 
@@ -2630,7 +2630,7 @@ void funcContainerInfo(FILE *fp)
 	if((field=mysql_fetch_row(res)))
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=uCreatedDate')\">"
-			" <strong>Date Created</strong></a></td><td><input type=text name='cCreatedDate' value='%s'" " size=80 maxlength=32"
+			" <strong>Date Created</strong></a></td><td><input type=text name='cCreatedDate' value='%.32s'" " size=32 maxlength=32"
 			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 	}
 
@@ -2648,16 +2648,16 @@ void funcContainerInfo(FILE *fp)
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=uBackupDate')\">"
-			" <strong>Backup Date</strong></a></td><td><input type=text name='cBackupDate' value='%s (%s/%s)'"
-			" size=80 maxlength=32"
-			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0],field[1],field[2]);
+			" <strong>Backup Date</strong></a></td><td><input type=text name='cBackupDate' value='%.32s'"
+			" size=32 maxlength=32"
+			" disabled class=\"type_fields_off\"> </td></tr>\n",field[0]);
 		}
 	}
 	else
 	{
 		printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=uBackupDate')\">"
 			" <strong>Backup Date</strong></a></td><td><input type=text name='cBackupDate' value='!No backup available!'"
-			" size=80 maxlength=32"
+			" size=32 maxlength=32"
 			" disabled class=\"type_fields_off\"> </td></tr>\n");
 	}
 
@@ -2672,10 +2672,10 @@ void funcContainerInfo(FILE *fp)
 	printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=uModBy')\">"
 			" <strong>Modified By</strong></a></td><td><input type=text name='cModBy'");
 	if((field=mysql_fetch_row(res)))
-		printf(" value='%s'",field[0]);
+		printf(" value='%.32s'",field[0]);
 	else
 		printf(" value='---'");
-	printf(" disabled size=80 maxlength=32 class=\"type_fields_off\"> </td></tr>\n");
+	printf(" disabled size=32 maxlength=32 class=\"type_fields_off\"> </td></tr>\n");
 	mysql_free_result(res);
 */
 
@@ -2690,7 +2690,7 @@ void funcContainerInfo(FILE *fp)
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=%s')\">"
-			" <strong>SSH Passwd</strong></a></td><td><input type=text name='%s' value='%s' size=80 maxlength=32"
+			" <strong>SSH Passwd</strong></a></td><td><input type=text name='%s' value='%.32s' size=32 maxlength=32"
 			" class=\"type_fields_off\"> </td></tr>\n",field[0],field[0],field[1]);
 		}
 		mysql_free_result(res);
@@ -2704,18 +2704,25 @@ void funcContainerInfo(FILE *fp)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
+	char cName[32]={""};
 	while((field=mysql_fetch_row(res)))
 	{
-			 if( 
-				(strncmp(field[0],"FreePBXEngPasswd",16) || guPermLevel>=10 || guPermLevel==2) &&
-				(strncmp(field[0],"FreePBXOperatorPasswd",21) || guPermLevel>=1) &&
-				(strncmp(field[0],"MySQLAsteriskPasswd",19) || guPermLevel>=6 || guPermLevel==2) &&
-				(strncmp(field[0],"SSHPort",7) || guPermLevel>=6 || guPermLevel==2) &&
-				(strncmp(field[0],"FreePBXAdminPasswd",18) || guPermLevel>=5 || guPermLevel==2)
-			)
+			
+		if(!strncmp(field[0],"FreePBX",7))
+			sprintf(cName,"%31s",field[0]+7);
+		else
+			sprintf(cName,"%31s",field[0]);
+		if( 
+			(strncmp(field[0],"FreePBXEngPasswd",16) || guPermLevel>=10 || guPermLevel==2) &&
+			(strncmp(field[0],"FreePBXOperatorPasswd",21) || guPermLevel>=1) &&
+			(strncmp(field[0],"MySQLAsteriskPasswd",19) || guPermLevel>=6 || guPermLevel==2) &&
+			(strncmp(field[0],"SSHPort",7) || guPermLevel>=6 || guPermLevel==2) &&
+			(strncmp(field[0],"FreePBXAdminPasswd",18) || guPermLevel>=5 || guPermLevel==2)
+		)
+		
 			printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=%s')\">"
-			" <strong>%s</strong></a></td><td><input type=text name='%s' value='%s' size=80 maxlength=32"
-			" class=\"type_fields_off\"> </td></tr>\n",field[0],field[0],field[0],field[1]);
+			" <strong>%s</strong></a></td><td><input type=text name='%s' value='%.32s' size=32 maxlength=32"
+			" class=\"type_fields_off\"> </td></tr>\n",field[0],cName,field[0],field[1]);
 	}
 	mysql_free_result(res);
 
@@ -2737,7 +2744,7 @@ void funcContainerInfo(FILE *fp)
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("<tr><td><a class=inputLink href=\"#\" onClick=\"open_popup('OneLogin.cgi?gcPage=Glossary&cLabel=%s')\">"
-			" <strong>%s</strong></a></td><td><input type=text name='%s' value='%s' size=80 maxlength=32"
+			" <strong>%s</strong></a></td><td><input type=text name='%s' value='%.32s' size=32 maxlength=32"
 			" class=\"type_fields_off\"> </td></tr>\n",field[0],field[0],field[0],field[1]);
 		}
 		mysql_free_result(res);

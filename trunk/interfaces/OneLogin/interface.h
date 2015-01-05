@@ -118,6 +118,8 @@ void UserCommands(pentry entries[], int x);
 void htmlUser(void);
 void htmlUserPage(char *cTitle, char *cTemplateName);
 void funcMOTD(FILE *fp);
+void funcOperationHistory(FILE *fp);
+void funcLoginHistory(FILE *fp);
 
 //glossary.c
 void GlossaryGetHook(entry gentries[],int x);

@@ -292,3 +292,53 @@ void funcMOTD(FILE *fp)
 	fprintf(fp,"<!-- funcMOTD(fp) End -->\n");
 
 }//void funcMOTD(FILE *fp)
+
+
+void funcOperationHistory(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	fprintf(fp,"<!-- funcOperationHistory(fp) Start -->\n");
+
+	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer FROM tLog WHERE uLogType!=8 AND"
+			" (uCreatedBy=%u OR uCreatedBy=%u OR uOwner=%u) ORDER BY uCreatedDate DESC LIMIT 10",guLoginClient,guLoginClient,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"mysql error<br>");
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+		fprintf(fp,"%s %s %s %s<br>",field[1],field[0],field[2],field[3]);
+	mysql_free_result(res);
+
+	fprintf(fp,"<!-- funcOperationHistory(fp) End -->\n");
+
+}//void funcOperationHistory(FILE *fp)
+
+
+void funcLoginHistory(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	fprintf(fp,"<!-- funcLoginHistory(fp) Start -->\n");
+
+	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer FROM tLog WHERE uLoginClient=%u"
+			" AND uLogType=8 ORDER BY uCreatedDate DESC LIMIT 10",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"mysql error<br>");
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+		fprintf(fp,"%s %s %s %s<br>",field[1],field[0],field[2],field[3]);
+	mysql_free_result(res);
+
+	fprintf(fp,"<!-- funcLoginHistory(fp) End -->\n");
+
+}//void funcLoginHistory(FILE *fp)
