@@ -17,6 +17,13 @@ CFLAGS=-Wall
 //LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
 LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -loath
 
+help:
+	@echo "These are the main make options available"
+	@echo "make interface.cgi"
+	@echo "make install"
+	@echo "make install-test"
+	@echo "make install-bootstrap"
+	@echo "the template.default dir contents is initially copied to your local working directory ./templates"
 
 interface.cgi: main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o
 	cc main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o -o interface.cgi $(LIBS)
@@ -51,25 +58,16 @@ cgi.o: ../../cgi.c  ../../cgi.h
 clean:
 	rm -f *.o *.cgi
 	
-install-test: interface.cgi ./templates/Footer ./templates/ZLogin.Body
+install-test: interface.cgi ./templates/Footer 
 	install -m 510 -g apache -s interface.cgi /var/www/unxs/html/test/$(CGINAME)
 	rm -f interface.cgi
 
-install: interface.cgi ./templates/Footer ./templates/ZLogin.Body
+install: interface.cgi ./templates/Footer
 	install -m 510 -g apache -s interface.cgi /var/www/unxs/html/$(CGINAME)
 	rm -f interface.cgi
 
-./templates/Footer: ./templates/Footer.default
-	@ if [ ! -f ./templates/Footer ];then cp -i ./templates/Footer.default ./templates/Footer; fi
-
-./templates/ZLogin.Body: ./templates/ZLogin.Body.default
-	@ if [ ! -f ./templates/ZLogin.Body ];then cp -i ./templates/ZLogin.Body.default ./templates/ZLogin.Body; fi
-
-help:
-	@echo "These are the main make options available"
-	@echo "make install"
-	@echo "make install-test"
-	@echo "make install-bootstrap"
+./templates/Footer: ./templates.default/Footer
+	@ cp -ai ./templates.default/* ./templates/;
 
 install-bootstrap: 
 	cp css/*.css /var/www/unxs/html/bs/css/

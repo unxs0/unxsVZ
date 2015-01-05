@@ -420,6 +420,10 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcContainerQOS(fp);
 	else if(!strcmp(cFunction,"funcContainerBulk"))
 		funcContainerBulk(fp);
+	else if(!strcmp(cFunction,"funcOperationHistory"))
+		funcOperationHistory(fp);
+	else if(!strcmp(cFunction,"funcLoginHistory"))
+		funcLoginHistory(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
