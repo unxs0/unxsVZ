@@ -23,7 +23,9 @@ help:
 	@echo "make install"
 	@echo "make install-test"
 	@echo "make install-bootstrap"
-	@echo "the template.default dir contents is initially copied to your local working directory ./templates"
+	@echo "Note! The template.default dir contents is initially copied to your local working directory ./templates."
+	@echo " This means that if you are developing templates you should edit template.default files and then"
+	@echo " use the new ./importDefaultTemplates.sh script"
 
 interface.cgi: main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o
 	cc main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o -o interface.cgi $(LIBS)
@@ -67,6 +69,7 @@ install: interface.cgi ./templates/Footer
 	rm -f interface.cgi
 
 ./templates/Footer: ./templates.default/Footer
+	@ mkdir -p ./templates
 	@ cp -ai ./templates.default/* ./templates/;
 
 install-bootstrap: 
