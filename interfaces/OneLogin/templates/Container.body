@@ -49,26 +49,31 @@
             <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">...</button>
           </p>
           <div class="jumbotron">
+	<h4>{{gcCtHostname}}</h4>
           {{funcContainerImageTag}}
-            <table border="0" cellspacing="5" cellpadding="0" width="100%" class="table_content">                                               
+	    <font size=1>
+            <table border="0" cellspacing="5" cellpadding="0" width="50%" class="table_content">
                 {{funcContainerInfo}}                                                                                                       
               </td>                                                                                                                       
-            </table>  
+            </table>
+	    </font>
             
           </div><!--/jumbotron-->
-<!-- start jquery collapse More Info-->
+
+<!-- start jquery collapse More Info
 <div class="panel panel-default" id="panel3">
 	<div class="panel-heading">
 		<h4 class="form-signin-heading">
 			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">More Info</a>
 		</h4>
-	</div><!-- "panel-heading" -->
+	</div>
 	<div id="collapseThree" class="panel-collapse collapse">
 	<div class="panel-body">{{funcMoreInfo}}
-	</div><!-- "panel-body" -->
-	</div><!-- "collapseThree" -->
-</div><!-- "panel panel-default" -->
+	</div>
+	</div>
+</div> -->
 <!-- end jquery collapse -->
+
         </div><!--/col-xs-12.col-sm-9-->
 
         <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar" role="navigation">
@@ -87,6 +92,11 @@
 
 		  </form>
 	  </div><!--/list-group-->
+          <div class="list-group">
+
+    	  {{funcNewContainer}}
+	  </div><!--/list-group-->
+
 	</div><!--/sidebar-offcanvas-->
 
       </div><!--/row-->
