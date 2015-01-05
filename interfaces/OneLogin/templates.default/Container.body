@@ -92,9 +92,9 @@
 
 		  </form>
 	  </div><!--/list-group-->
-          <div class="list-group">
 
-    	  {{funcNewContainer}}
+          <div class="list-group">
+	    {{funcNewContainer}}<!-- DID and customer Search, Customer accounts creation and assignation and Repupose-->
 	  </div><!--/list-group-->
 
 	</div><!--/sidebar-offcanvas-->
