@@ -250,7 +250,13 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[9]="guContainer";
 			template.cpValue[9]=cguContainer;
 
-			template.cpName[10]="";
+			template.cpName[10]="gcBrand";
+			template.cpValue[10]=INTERFACE_HEADER_TITLE;
+
+			template.cpName[11]="gcCopyright";
+			template.cpValue[11]=LOCALCOPYRIGHT;
+
+			template.cpName[12]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");
