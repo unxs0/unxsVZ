@@ -124,6 +124,10 @@ int main(int argc, char *argv[])
 				UserGetHook(gentries,i);
 			else if(!strcmp(gcPage,"Container"))
 				ContainerGetHook(gentries,i);
+			else if(!strcmp(gcPage,"About"))
+				ContainerGetHook(gentries,i);
+			else if(!strcmp(gcPage,"Contact"))
+				ContainerGetHook(gentries,i);
 		}
 	}
 	else

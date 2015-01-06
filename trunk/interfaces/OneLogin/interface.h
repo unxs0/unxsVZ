@@ -79,7 +79,6 @@ extern char gcUser[];
 extern char gcName[];
 extern char gcOrgName[];
 extern char gcHost[];
-extern char gcBrand[];
 extern unsigned guBrowserFirefox;
 
 //Cgi form commands and major area function

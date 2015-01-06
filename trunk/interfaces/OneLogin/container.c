@@ -170,6 +170,10 @@ void ContainerGetHook(entry gentries[],int x)
 		htmlContainerQOS();
 	}
 
+	if(!strcmp(gcPage,"About"))
+		htmlAbout();
+	else if(!strcmp(gcPage,"Contact"))
+		htmlContact();
 	htmlContainer();
 
 }//void ContainerGetHook(entry gentries[],int x)
@@ -177,19 +181,7 @@ void ContainerGetHook(entry gentries[],int x)
 
 void ContainerCommands(pentry entries[], int x)
 {
-	if(!strcmp(gcPage,"About"))
-	{
-		x=1;//this needs to be debugged
-		ProcessContainerVars(entries,x);
-		htmlAbout();
-	}
-	else if(!strcmp(gcPage,"Contact"))
-	{
-		x=1;
-		ProcessContainerVars(entries,x);
-		htmlContact();
-	}
-	else if(!strcmp(gcPage,"Container"))
+	if(!strcmp(gcPage,"Container"))
 	{
 		unsigned uLen=0;
         	MYSQL_RES *res;
