@@ -2251,7 +2251,13 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 			template.cpName[14]="gcAdminPort";
 			template.cpValue[14]=gcAdminPort;
 
-			template.cpName[15]="";
+			template.cpName[15]="gcBrand";
+			template.cpValue[15]=INTERFACE_HEADER_TITLE;
+
+			template.cpName[16]="gcCopyright";
+			template.cpValue[16]=LOCALCOPYRIGHT;
+
+			template.cpName[17]="";
 
 			printf("\n<!-- Start htmlContainerPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
