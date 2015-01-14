@@ -85,10 +85,9 @@
 		      <input type=hidden name="guContainer" value="{{guContainer}}">
 
 		{{funcSelectContainer}}
-		<p>
-		<input type="login" 
-			title='Enter first letter(s), or you can use SQL "%" and "_" pattern matching chars'
-			name="gcSearch" value='{{gcSearch}}' size=16 maxlength=32 onChange='submit()'>
+		<input type="hostname" class="form-control" id="searchContainer"
+			title='Enter first letter(s), or you can use the SQL wildcard "%" and the single place "_" pattern matching chars'
+			name="gcSearch" value='{{gcSearch}}' placeholder="search pattern (also % _)" size=32 maxlength=32 onChange='submit()'>
 
 		  </form>
 	  </div><!--/list-group-->

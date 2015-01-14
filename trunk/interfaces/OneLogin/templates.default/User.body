@@ -97,20 +97,16 @@
 		<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
 		<input type=hidden name="guContainer" value="{{guContainer}}">
 
-        	<label for="inputEmail" class="sr-only">Login</label>
         	<input maxlength="31" title='Input your login'
 			type="login" id="inputEmail" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" required>
 		<input type=hidden name=cLogin value='{{gcLogin}}'>
 
-       		<label for="inputPassword" class="sr-only">Current Password</label>
        		<input maxlength="31" title='Input your current password'
 			type="password" id="inputPassword1" class="form-control" placeholder="Current Password" name="cCurPasswd" required>
 
-       		<label for="inputPassword" class="sr-only">New Password</label>
        		<input maxlength="31" title='Input your password again'
 			type="password" id="inputPassword2" class="form-control" placeholder="New Password" name="cPasswd" required>
 
-       		<label for="inputPassword" class="sr-only">New Password Again</label>
        		<input maxlength="31" title='Input your password again'
 			type="password" id="inputPassword3" class="form-control" placeholder="New Password Again" name="cPasswd2" required>
 

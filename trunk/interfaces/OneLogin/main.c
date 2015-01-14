@@ -284,7 +284,14 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 			template.cpName[2]="cMessage";
 			template.cpValue[2]=gcMessage;
 
-			template.cpName[3]="";
+			template.cpName[3]="gcBrand";
+			template.cpValue[3]=INTERFACE_HEADER_TITLE;
+
+			template.cpName[4]="gcLogin";
+			if(!gcLogin[0]) sprintf(gcLogin,"Login id");
+			template.cpValue[4]=gcLogin;
+
+			template.cpName[5]="";
 
 			printf("\n<!-- Start htmlLoginPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
