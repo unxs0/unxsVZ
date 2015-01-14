@@ -23,10 +23,10 @@
     <div class="container">
 
       <form class="form-signin" role="form" method="post" action="{{cCGI}}">
-        <h2 class="form-signin-heading">unxsVZ OneLogin</h2>
+        <h3 class="form-signin-heading">{{gcBrand}} OneLogin</h3>
         <label for="inputEmail" class="sr-only">Login</label>
         <input maxlength="31" title='Input your login'
-		 type="login" id="inputEmail" class="form-control" placeholder="Login" name="gcLogin" required autofocus>
+		 type="login" id="inputEmail" class="form-control" placeholder="Login id" value="{{gcLogin}}" name="gcLogin" required autofocus>
         <label for="inputPassword" class="sr-only">Password</label>
         <input maxlength="31" title='Input your password'
 		 type="password" id="inputPassword" class="form-control" placeholder="Password" name="gcPasswd" required>

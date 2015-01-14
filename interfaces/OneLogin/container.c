@@ -2401,8 +2401,8 @@ void funcSelectContainer(FILE *fp)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
-	fprintf(fp,"<select class=type_textarea title='Select the container you want to load with this dropdown'"
-			" name=guContainer onChange='submit()'>\n");
+	fprintf(fp,"<select type='hostnameSelect' id='SelectContainer' class='form-control' title='Select the container you want to load with this dropdown'"
+			" name='guContainer' onChange='submit()'>\n");
 	fprintf(fp,"<option>---</option>");
 	while((field=mysql_fetch_row(res)))
 	{
@@ -2799,6 +2799,7 @@ char *cGetImageHost(unsigned uContainer)
 
 void funcNewContainer(FILE *fp)
 {
+	return;
 	if(guPermLevel<6)
 		return;
 
