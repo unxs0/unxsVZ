@@ -2116,11 +2116,17 @@ void htmlAuxPage(char *cTitle, char *cTemplateName)
 			template.cpName[13]="gcSearchAux";
 			template.cpValue[13]=gcSearchAux;
 
-			template.cpName[14]="";
+			template.cpName[14]="gcCopyright";
+			template.cpValue[14]=LOCALCOPYRIGHT;
 
-			printf("\n<!-- Start htmlContainerPage(%s) -->\n",cTemplateName); 
+			template.cpName[15]="gcBrand";
+			template.cpValue[15]=INTERFACE_HEADER_TITLE;
+
+			template.cpName[16]="";
+
+			printf("\n<!-- Start htmlAuxPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
-			printf("\n<!-- End htmlContainerPage(%s) -->\n",cTemplateName); 
+			printf("\n<!-- End htmlAuxPage(%s) -->\n",cTemplateName); 
 		}
 		else
 		{

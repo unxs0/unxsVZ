@@ -8,7 +8,7 @@
     <meta name="author" content="(C) Unixservice, LLC. 2014-2015">
     <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico>
 
-    <title>unxsVZ OneLogin</title>
+    <title>{{gcBrand}} OneLogin</title>
 
     <!-- Bootstrap core CSS -->
     <link href="/bs/css/bootstrap.min.css" rel="stylesheet">
@@ -27,15 +27,15 @@
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{{cCGI}}?gcPage=Container&guContainer={{guContainer}}">unxsVZ OneLogin</a>
+          <a class="navbar-brand" href="{{cCGI}}?gcPage=Container&guContainer={{guContainer}}">{{gcBrand}} OneLogin</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li><a href="{{cCGI}}?gcPage=User&guContainer={{guContainer}}">User</a></li>
             <li><a href="{{cCGI}}?gcPage=Container&guContainer={{guContainer}}">Container</a></li>
-            <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
             <li class="active"><a href="{{cCGI}}?gcPage=About&guContainer={{guContainer}}">About</a></li>
             <li><a href="{{cCGI}}?gcPage=Contact&guContainer={{guContainer}}">Contact</a></li>
+            <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
           </ul>
         </div><!-- /.nav-collapse -->
       </div><!-- /.container -->
@@ -62,7 +62,7 @@
       <hr>
 
       <footer>
-        <p>&copy; Unixservice, LLC. 2014-2015</p>
+        <p>{{gcCopyright}}</p>
       </footer>
 
     </div><!--/.container-->
