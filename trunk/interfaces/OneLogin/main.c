@@ -1078,14 +1078,14 @@ char *FQDomainName(char *cInput)
 }//char *FQDomainName(char *cInput)
 
 
-void unxsvzLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
+void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost)
 {
         char cQuery[512];
 
 	//uLogType==2 is this org interface
         sprintf(cQuery,"INSERT INTO tLog SET cLabel='%.63s',uLogType=2,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',"
 			"cHost='%.99s',uTablePK=%u,cTableName='%.31s',"
-			"cHash=MD5(CONCAT('%s','%u','%u','%s','%s','%u','%s','%s')),uOwner=1,uCreatedBy=1,"
+			"cHash=MD5(CONCAT('%s','%u','%u','%s','%s','%u','%s','%s')),uOwner=%u,uCreatedBy=%u,"
 			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cLogEntry,
 			guPermLevel,
@@ -1101,11 +1101,10 @@ void unxsvzLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
 			gcHost,
 			uTablePK,
 			cTableName,
-			cLogKey);
-
+			cLogKey,guOrg,guLoginClient);
         mysql_query(&gMysql,cQuery);
 
-}//void unxsvzLog(unsigned uTablePK, char *cTableName, char *cLogEntry)
+}//void unxsvzLog()
 
 
 void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)

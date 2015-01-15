@@ -27,9 +27,10 @@ unsigned uNoLower(const char *cPasswd);
 unsigned uChangePassword(const char *cPasswd);
 void EncryptPasswdWithSalt(char *pw, char *salt);
 char *cGetPasswd(char *gcLogin);
-unsigned uValidLoginPasswd(const char *cPasswd);
 extern unsigned guContainer;
-
+unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient);
+//extern
+void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
 
 void ProcessUserVars(pentry entries[], int x)
 {
@@ -94,10 +95,28 @@ unsigned uNoDigit(const char *cPasswd)
 }//unsigned uNoDigit(const char *cPasswd)
 
 
+//Passwd stuff
+static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
+        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+void to64(s, v, n)
+  register char *s;
+  register long v;
+  register int n;
+{
+    while (--n >= 0) {
+        *s++ = itoa64[v&0x3f];
+        v >>= 6;
+    }
+}//void to64(s, v, n)
+
+
 unsigned uChangePassword(const char *cPasswd)
 {
 	char cBuffer[100]={""};
 	char cSalt[16]={"$1$23abc123$"};//TODO set to random salt;
+	(void)srand((int)time((time_t *)NULL));
+	to64(&cSalt[3],rand(),8);
 
 	sprintf(cBuffer,"%.99s",cPasswd);
 	EncryptPasswdWithSalt(cBuffer,cSalt);
@@ -109,33 +128,9 @@ unsigned uChangePassword(const char *cPasswd)
 		return(1);
 	if(mysql_affected_rows(&gMysql)<1)
 		return(1);
+	unxsvzLog(0,"tAuthorize","Password Changed",guPermLevel,guLoginClient,gcLogin,gcHost);
 	return(0);
 }//unsigned uChangePassword(const char *cPasswd)
-
-
-unsigned uValidLoginPasswd(const char *cPasswd)
-{
-	char cSalt[16]={""};
-	char cPassword[100]={""};
-	char cBuffer[100]={""};
-
-	sprintf(cPassword,"%.99s",cGetPasswd(gcLogin));
-	sprintf(cBuffer,"%.99s",cPasswd);
-	if(cPassword[0])
-	{
-		//MD5 vs DES salt determination
-		if(cPassword[0]=='$' && cPassword[2]=='$')
-			sprintf(cSalt,"%.12s",cPassword);
-		else
-			sprintf(cSalt,"%.2s",cPassword);
-		EncryptPasswdWithSalt(cBuffer,cSalt);
-		if(!strcmp(cBuffer,cPassword))
-				return 1;
-	}
-
-	return 0;
-
-}//unsigned uValidLoginPasswd(const char *cPasswd)
 
 
 void UserCommands(pentry entries[], int x)
@@ -148,6 +143,11 @@ void UserCommands(pentry entries[], int x)
 			if(!cCurPasswd[0])
 			{
 				gcMessage="<blink>Error</blink>: Must enter 'Current Password'";
+				htmlUser();
+			}
+			if(!uValidPasswd(cCurPasswd,guLoginClient))
+			{
+				gcMessage="<blink>Error</blink>: Invalid current password entered";
 				htmlUser();
 			}
 			if(!cPasswd[0] || !cPasswd2[0] || strcmp(cPasswd,cPasswd2))
@@ -176,11 +176,6 @@ void UserCommands(pentry entries[], int x)
 			{
 				gcMessage="<blink>Error</blink>: New 'Password' must have some upper and lower case letters,"
 						" and at least one number";
-				htmlUser();
-			}
-			if(!uValidLoginPasswd(cCurPasswd))
-			{
-				gcMessage="<blink>Error</blink>: Current Password is not correct";
 				htmlUser();
 			}
 			if(uChangePassword(cPasswd))
@@ -308,7 +303,7 @@ void funcOperationHistory(FILE *fp)
 	fprintf(fp,"<!-- funcOperationHistory(fp) Start -->\n");
 
 	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer FROM tLog WHERE uLogType!=8 AND"
-			" (uCreatedBy=%u OR uCreatedBy=%u OR uOwner=%u) ORDER BY uCreatedDate DESC LIMIT 10",guLoginClient,guLoginClient,guLoginClient);
+			" (uCreatedBy=%u OR uLoginClient=%u OR uOwner=%u) ORDER BY uCreatedDate DESC LIMIT 10",guLoginClient,guLoginClient,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -348,3 +343,38 @@ void funcLoginHistory(FILE *fp)
 	fprintf(fp,"<!-- funcLoginHistory(fp) End -->\n");
 
 }//void funcLoginHistory(FILE *fp)
+
+
+unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient)
+{
+	char cSalt[16]={""};
+	char cPassword[100]={""};
+	char gcPasswd[100]={""};
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cPasswd FROM tAuthorize WHERE uCertClient=%u",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return(0);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cPassword,"%.99s",field[0]);
+	mysql_free_result(res);
+
+	sprintf(gcPasswd,"%.99s",cPasswd);
+	if(cPassword[0])
+	{
+		//MD5 vs DES salt determination
+		if(cPassword[0]=='$' && cPassword[2]=='$')
+			sprintf(cSalt,"%.12s",cPassword);
+		else
+			sprintf(cSalt,"%.2s",cPassword);
+		EncryptPasswdWithSalt(gcPasswd,cSalt);
+		if(!strcmp(gcPasswd,cPassword))
+			return(1);
+		else
+			return(0);
+	}
+	return(0);
+}//unsigned uValidPasswd(char *cPasswd)
