@@ -33,9 +33,9 @@
           <ul class="nav navbar-nav">
             <li class="active"><a href="{{cCGI}}?gcPage=User&guContainer={{guContainer}}">User</a></li>
             <li><a href="{{cCGI}}?gcPage=Container&guContainer={{guContainer}}">Container</a></li>
-            <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
             <li><a href="{{cCGI}}?gcPage=About&guContainer={{guContainer}}">About</a></li>
             <li><a href="{{cCGI}}?gcPage=Contact&guContainer={{guContainer}}">Contact</a></li>
+            <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
           </ul>
         </div><!-- /.nav-collapse -->
       </div><!-- /.container -->
