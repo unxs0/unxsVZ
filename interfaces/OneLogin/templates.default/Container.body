@@ -79,15 +79,22 @@
         <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar" role="navigation">
           <div class="list-group">
         	<h3 class="form-signin-heading">Container Search</h3>
-
+		<h5>{{gcMessage}}</h5>
                 <form method=post action={{cCGI}} style="margin:0px;">
 		      <input type=hidden name="gcPage" value="Container">
 		      <input type=hidden name="guContainer" value="{{guContainer}}">
 
 		{{funcSelectContainer}}
 		<input type="hostname" class="form-control" id="searchContainer"
-			title='Enter first letter(s), or you can use the SQL wildcard "%" and the single place "_" pattern matching chars'
-			name="gcSearch" value='{{gcSearch}}' placeholder="search pattern (also % _)" size=32 maxlength=32 onChange='submit()'>
+		title='Enter first letter(s) of container hostname, or you can use the SQL wildcard "%" and the single place "_" pattern matching chars'
+			name="gcSearch" value='{{gcSearch}}' placeholder="Hostname search pattern" size=32 maxlength=32 onChange='submit()'>
+
+		<br><br>
+		<input type="hostname" class="form-control" id="searchContainerAux"
+			title='Enter DID or customer name pattern you can use "%" and "_" pattern matching chars'
+			name="gcSearchAux" value='{{gcSearchAux}}' placeholder="DID or customer name pattern" size=32 maxlength=32 >
+        	<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Search Customer' title='Search by customer name pattern or by DID pattern. Examples: "313%234%" "%acme%".'>Search</button>
+
 
 		  </form>
 	  </div><!--/list-group-->

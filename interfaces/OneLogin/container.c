@@ -87,6 +87,10 @@ unsigned unxsBindRemoveContainer(unsigned uDatacenter,unsigned uNode,unsigned uC
 void htmlAuxPage(char *cTitle, char *cTemplateName);
 void htmlAbout(void);
 void htmlContact(void);
+unsigned uGetSearchGroup(const char *gcUser,unsigned uGroupType);
+void UpdateSearchSet(unsigned guContainer);
+unsigned uGetContainerFromSearchGroup(unsigned uSearchGroup);
+void SetContainerFromSearchSet(void);
 
 unsigned uPower10(unsigned uI)
 {
@@ -108,7 +112,10 @@ void ProcessContainerVars(pentry entries[], int x)
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(entries[i].name,"guContainer"))
+		{
 			sscanf(entries[i].val,"%u",&guContainer);
+			UpdateSearchSet(guContainer);
+		}
 		else if(!strcmp(entries[i].name,"gcCtHostname"))
 			sprintf(gcCtHostname,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gcSearch"))
@@ -155,7 +162,10 @@ void ContainerGetHook(entry gentries[],int x)
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(gentries[i].name,"guContainer"))
+		{
 			sscanf(gentries[i].val,"%u",&guContainer);
+			UpdateSearchSet(guContainer);
+		}
 		else if(!strcmp(gentries[i].name,"gcFunction"))
 			sprintf(gcFunction,"%.99s",gentries[i].val);
 	}
@@ -1697,10 +1707,11 @@ void ContainerCommands(pentry entries[], int x)
 			unsigned uNumRows=0;
 
 			gcSearchName="cOrg_CustomerName";
-			sprintf(gcQuery,"SELECT uKey FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
-					" (uStatus=1 OR uStatus=3 OR uStatus=101) AND"
-					" cValue LIKE '%.31s%%' AND"
-					" cName='%s' AND uType=3 GROUP BY tContainer.cHostname LIMIT 2",gcSearchAux,gcSearchName);
+			sprintf(gcQuery,"SELECT tProperty.uKey FROM tProperty,tContainer WHERE tProperty.uKey=tContainer.uContainer AND"
+					" (tContainer.uStatus=1 OR tContainer.uStatus=3 OR tContainer.uStatus=101) AND"
+					" ((cValue LIKE '%.31s' AND cName='cOrg_CustomerName') OR"
+					" (cValue LIKE '%.31s' AND cName='cOrg_OpenSIPS_DID')) AND"
+					" tProperty.uType=3 GROUP BY tContainer.cHostname LIMIT 2",gcSearchAux,gcSearchAux);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -2031,8 +2042,22 @@ void htmlContact(void)
 }//void htmlContact(void)
 
 
+void SetContainerFromSearchSet(void)
+{
+	unsigned uSearchGroup=0;
+	if((uSearchGroup=uGetSearchGroup(gcUser,2)))
+	{
+		guContainer=uGetContainerFromSearchGroup(uSearchGroup);
+	}
+}//void SetContainerFromSearchSet(void)
+
+
 void htmlContainer(void)
 {
+	//container search memory
+	if(!guContainer)
+		SetContainerFromSearchSet();
+
 	htmlHeader("OneLogin","ContainerHeader");
 	if(guContainer)
 		SelectContainer();
@@ -2107,22 +2132,19 @@ void htmlAuxPage(char *cTitle, char *cTemplateName)
 			template.cpName[11]="gcLabel";
 			template.cpValue[11]=gcLabel;
 
-			template.cpName[12]="cDisabled";
-			if(guContainer)
-				template.cpValue[12]="";
-			else
-				template.cpValue[12]="disabled";
+			template.cpName[12]="gcCopyright";
+			template.cpValue[12]=LOCALCOPYRIGHT;
 
-			template.cpName[13]="gcSearchAux";
-			template.cpValue[13]=gcSearchAux;
+			template.cpName[13]="gcBrand";
+			template.cpValue[13]=INTERFACE_HEADER_TITLE;
 
-			template.cpName[14]="gcCopyright";
-			template.cpValue[14]=LOCALCOPYRIGHT;
+			char cContactEmail[256]={""};
+			sprintf(cContactEmail,"support@unixservice.com");
+			GetConfiguration("cOrg_ContactEmail",cContactEmail,0,0,0,0);
+			template.cpName[14]="cContactEmail";
+			template.cpValue[14]=cContactEmail;
 
-			template.cpName[15]="gcBrand";
-			template.cpValue[15]=INTERFACE_HEADER_TITLE;
-
-			template.cpName[16]="";
+			template.cpName[15]="";
 
 			printf("\n<!-- Start htmlAuxPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
@@ -3191,12 +3213,13 @@ void funcContainerList(FILE *fp)
 
 	fprintf(fp,"<!-- funcContainerList(fp) Start -->\n");
 
-	if(!gcSearchAux[0] || !gcSearchName[0]) return;
+	if(!gcSearchAux[0]) return;
 
 	sprintf(gcQuery,"SELECT uKey,tContainer.cHostname FROM tProperty,tContainer WHERE uKey=tContainer.uContainer AND"
 				" (uStatus=1 OR uStatus=3 OR uStatus=101) AND"
-				" cValue LIKE '%.31s%%' AND"
-				" cName='%.32s' AND uType=3 GROUP BY tContainer.cHostname LIMIT 33",gcSearchAux,gcSearchName);
+				" ((cValue LIKE '%.31s%%' AND cName='cOrg_OpenSIPS_DID') OR"
+				" (cValue LIKE '%.31s%%' AND cName='cOrg_CustomerName'))"
+				" AND uType=3 GROUP BY tContainer.cHostname LIMIT 33",gcSearchAux,gcSearchAux);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -3205,12 +3228,12 @@ void funcContainerList(FILE *fp)
 	{
 		if(++uCount>32)
 		{
-			printf("<tr><td>Search returned more than 32 records. Refine search pattern.</td></tr>\n");
+			printf("<br>(Search returned more than 32 items, refine pattern.)\n");
 			break;
 		}
 		else
 		{
-			printf("<tr><td><a class=inputLink href=OneLogin.cgi?gcPage=Container&guContainer=%s>%s</a></td></tr>\n",
+			printf("<a href=OneLogin.cgi?gcPage=Container&guContainer=%s>%s</a><br>\n",
 					field[0],field[1]);
 		}
 	}
@@ -4240,3 +4263,85 @@ void GetSIPProxyList(char *cSIPProxyList,unsigned guDatacenter,unsigned guNode,u
 	}
 
 }//void GetSIPProxyList(char *cSIPProxyList,unsigned guDatacenter,unsigned guNode,unsigned guContainer)
+
+
+unsigned uGetSearchGroup(const char *gcUser,unsigned uGroupType)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uGroup=0;
+
+	sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%s' AND uGroupType=%u",gcUser,uGroupType);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		return(0);
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		if(field[0]!=NULL)
+			sscanf(field[0],"%u",&uGroup);
+	}
+	mysql_free_result(res);
+
+	return(uGroup);
+
+}//unsigned uGetSearchGroup()
+
+
+unsigned uGetContainerFromSearchGroup(unsigned uSearchGroup)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uContainer=0;
+
+	sprintf(gcQuery,"SELECT uContainer FROM tGroupGlue WHERE uGroup=%u LIMIT 1",uSearchGroup);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		if(field[0]!=NULL)
+			sscanf(field[0],"%u",&uContainer);
+	}
+	mysql_free_result(res);
+
+	return(uContainer);
+
+}//unsigned uGetContainerFromSearchGroup(unsigned uSearchGroup)
+
+
+void UpdateSearchSet(unsigned guContainer)
+{
+	if(!guContainer) return;
+
+	unsigned uSearchGroup=0;
+	//If search group exists check to see if a container exists
+	if((uSearchGroup=uGetSearchGroup(gcUser,2)))
+	{
+		unsigned guContainerFromGroup=0;
+		guContainerFromGroup=uGetContainerFromSearchGroup(uSearchGroup);
+		if(guContainerFromGroup==guContainer) return;
+		sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u",uSearchGroup);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			return;
+	}
+	//else create the initial search group
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=2"//2 is search group
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcUser,guOrg,guLoginClient);//2=search set type TODO
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			return;
+		if((uSearchGroup=mysql_insert_id(&gMysql))==0)
+			return;
+	}
+	sprintf(gcQuery,"INSERT INTO tGroupGlue SET uGroup=%u,uContainer=%u",uSearchGroup,guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return;
+
+}//void UpdateSearchSet(unsigned guContainer)
