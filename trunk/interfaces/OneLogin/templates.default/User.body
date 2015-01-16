@@ -52,9 +52,12 @@
 
           <div class="jumbotron">
         	<h3 class="form-signin-heading">Info</h3>
-		<h4 class="form-signin-heading">
-			{{funcMOTD}}
-		</h4>
+		<h5>{{funcMOTD}}</h5>
+		<h3>Saved Session Data</h3>
+		<h5>
+		Container hostname: {{gcCtHostname}}<br>
+		Container VEID: {{guContainer}}<br>
+		</h5>
           </div><!-- "jumbotron" -->
 
 <!-- start jquery collapse Login History-->

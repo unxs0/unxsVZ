@@ -51,6 +51,21 @@
 
 		<h3>About</h3>            
 		This is a very beta version of a mobile first responsive OneLogin webconsole interface.
+
+		<h3>User Info</h3>            
+
+		<h5>
+		cTitle: {{cTitle}}<br>
+		gcLogin: {{gcLogin}}<br>
+		gcName: {{gcName}}<br>
+		gcOrgName: {{gcOrgName}}<br>
+		cUserLevel: {{cUserLevel}}<br>
+		gcCtHostname: {{gcCtHostname}}<br>
+		gcSearch: {{gcSearch}}<br>
+		guContainer: {{guContainer}}<br>
+		gcLabel: {{gcLabel}}<br>
+		</h5>
+
           </div><!-- "jumbotron" -->
 
 

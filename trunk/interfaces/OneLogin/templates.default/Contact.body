@@ -50,7 +50,7 @@
           <div class="jumbotron">
 
 		<h3>Contact</h3>            
-		Please contact support@unixservice.com.
+		Please send all inquiries and bug reports to {{cContactEmail}}.
           </div><!-- "jumbotron" -->
 
 

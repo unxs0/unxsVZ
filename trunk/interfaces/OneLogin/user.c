@@ -31,6 +31,8 @@ extern unsigned guContainer;
 unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient);
 //extern
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
+void SetContainerFromSearchSet(void);
+char *cGetHostname(unsigned uContainer);
 
 void ProcessUserVars(pentry entries[], int x)
 {
@@ -193,6 +195,9 @@ void UserCommands(pentry entries[], int x)
 
 void htmlUser(void)
 {
+	if(!guContainer)
+		SetContainerFromSearchSet();
+
 	htmlHeader("OneLogin","UserHeader");
 	htmlUserPage("OneLogin","User.Body");
 	htmlFooter("UserFooter");
@@ -238,6 +243,8 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpValue[7]=gcMessage;
 
 			template.cpName[8]="gcCtHostname";
+			if(guContainer)
+				sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
 			template.cpValue[8]=gcCtHostname;
 
 			char cguContainer[16];
@@ -287,7 +294,7 @@ void funcMOTD(FILE *fp)
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		fprintf(fp,"<tr><td valign=top ><strong><u>Message of the Day</u></strong></td><td><br>%s</td></tr>",field[0]);
+		fprintf(fp,"%s",field[0]);
 	mysql_free_result(res);
 
 	fprintf(fp,"<!-- funcMOTD(fp) End -->\n");
