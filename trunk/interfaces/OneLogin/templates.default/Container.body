@@ -51,12 +51,9 @@
           <div class="jumbotron">
 	<h4>{{gcCtHostname}}</h4>
           {{funcContainerImageTag}}
-	    <font size=1>
-            <table border="0" cellspacing="5" cellpadding="0" width="50%" class="table_content">
-                {{funcContainerInfo}}                                                                                                       
-              </td>                                                                                                                       
-            </table>
-	    </font>
+          <ul class="list-group">
+         	 {{funcContainerInfo}}
+	  </ul>
             
           </div><!--/jumbotron-->
 
