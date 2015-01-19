@@ -16,6 +16,7 @@
     <!-- Custom styles for this template -->
     <link href="/bs/css/offcanvas.css" rel="stylesheet">
     <link href="/bs/css/collapse.css" rel="stylesheet">
+    <link href="/bs/css/badge.css" rel="stylesheet">    
   </head>
 
   <body>
@@ -57,18 +58,18 @@
             
           </div><!--/jumbotron-->
 
-<!-- start jquery collapse More Info
+<!-- start jquery collapse More Info -->
 <div class="panel panel-default" id="panel3">
 	<div class="panel-heading">
 		<h4 class="form-signin-heading">
-			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">More Info</a>
+			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">DID Info</a>
 		</h4>
 	</div>
 	<div id="collapseThree" class="panel-collapse collapse">
-	<div class="panel-body">{{funcMoreInfo}}
+	<div class="panel-body">
 	</div>
 	</div>
-</div> -->
+</div>
 <!-- end jquery collapse -->
 
         </div><!--/col-xs-12.col-sm-9-->
@@ -120,5 +121,8 @@
     <script src="/bs/js/bootstrap.min.js"></script>
 
     <script src="/bs/js/offcanvas.js"></script>
+    <script>
+	$("#collapseThree").load("{{cCGI}}?gcPage=Container&gcFunction=DIDInfo");
+    </script>
   </body>
 </html>
