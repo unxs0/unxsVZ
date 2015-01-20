@@ -1944,6 +1944,8 @@ void ExttResourceAuxTable(void)
 				" type=submit class=lwarnButton name=gcCommand value='Group Change RRType'>\n");
 			printf("<input disabled title='Change TTL of selected resource records.'"
 				" type=submit class=lwarnButton name=gcCommand value='Group Change TTL'>\n");
+			printf("<input title='Change owner via select'"
+				" type=submit class=lwarnButton name=gcCommand value='Group Change Owner'>\n");
 			printf("<input disabled title='Add a string to the end of selected resource record cName.'"
 				" type=submit class=lwarnButton name=gcCommand value='Group Append cName'>\n");
 			printf("<input title='Delete selected resource records from tResource -no undo available'"
@@ -1955,6 +1957,7 @@ void ExttResourceAuxTable(void)
 			sprintf(gcQuery,"Search Set Contents");
 			OpenFieldSet(gcQuery,100);
 			uGroup=uGetSearchGroup(gcUser);
+			//we need to use left joins here to allow for null uClient
 			sprintf(gcQuery,"SELECT"
 					" tResource.uResource,"
 					" tZone.cZone,"
@@ -1968,12 +1971,14 @@ void ExttResourceAuxTable(void)
 					" tResource.cParam4,"
 					" tResource.cComment,"
 					" FROM_UNIXTIME(tResource.uCreatedDate,'%%a %%b %%d %%T %%Y'),"
-					" tClient.cLabel,"
+					//" tClient.cLabel,"
+					" '',"
 					" tNSSet.cLabel,"
 					" tZone.uZone"
-					" FROM tResource,tZone,tRRType,tClient,tView,tNSSet"
+					//" FROM tResource,tZone,tRRType,tClient,tView,tNSSet"
+					" FROM tResource,tZone,tRRType,tView,tNSSet"
 					" WHERE tResource.uRRType=tRRType.uRRType"
-					" AND tResource.uOwner=tClient.uClient"
+					//" AND tResource.uOwner=tClient.uClient"
 					" AND tResource.uZone=tZone.uZone"
 					" AND tZone.uView=tView.uView"
 					" AND tZone.uNSSet=tNSSet.uNSSet"
@@ -2044,6 +2049,30 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Unexpected non deletion");
 					break;
 				}//Delete Checked
+
+				else if(!strcmp(gcCommand,"Group Change Owner"))
+				{
+					if(uForClient)
+					{
+						sprintf(gcQuery,"UPDATE tResource SET uOwner=%u WHERE uResource=%u",uForClient,uCtResource);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							sprintf(cResult,mysql_error(&gMysql));
+							break;
+						}
+	
+						if(mysql_affected_rows(&gMysql)>0)
+							sprintf(cResult,"Owner changed");
+						else
+							sprintf(cResult,"Owner not changed");
+					}
+					else
+					{
+						sprintf(cResult,"No client selected");
+					}
+					break;
+				}//Group Change Owner
 
 				else if(!strcmp(gcCommand,"Group Delete"))
 				{
