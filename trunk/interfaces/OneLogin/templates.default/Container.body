@@ -16,7 +16,6 @@
     <!-- Custom styles for this template -->
     <link href="/bs/css/offcanvas.css" rel="stylesheet">
     <link href="/bs/css/collapse.css" rel="stylesheet">
-    <link href="/bs/css/badge.css" rel="stylesheet">    
   </head>
 
   <body>
@@ -122,7 +121,9 @@
 
     <script src="/bs/js/offcanvas.js"></script>
     <script>
-	$("#collapseThree").load("{{cCGI}}?gcPage=Container&gcFunction=DIDInfo");
+	$('#collapseThree').on('shown.bs.collapse', function () {
+		$("#collapseThree").load("{{cCGI}}?gcPage=Container&gcFunction=DIDInfo&guContainer={{guContainer}}");
+	});
     </script>
   </body>
 </html>

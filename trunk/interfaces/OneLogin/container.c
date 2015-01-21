@@ -87,6 +87,7 @@ unsigned unxsBindRemoveContainer(unsigned uDatacenter,unsigned uNode,unsigned uC
 void htmlAuxPage(char *cTitle, char *cTemplateName);
 void htmlAbout(void);
 void htmlContact(void);
+void htmlDIDInfo(void);
 unsigned uGetSearchGroup(const char *gcUser,unsigned uGroupType);
 void UpdateSearchSet(unsigned guContainer);
 unsigned uGetContainerFromSearchGroup(unsigned uSearchGroup);
@@ -184,6 +185,10 @@ void ContainerGetHook(entry gentries[],int x)
 		htmlAbout();
 	else if(!strcmp(gcPage,"Contact"))
 		htmlContact();
+
+	if(!strcmp(gcFunction,"DIDInfo"))
+		htmlDIDInfo();
+
 	htmlContainer();
 
 }//void ContainerGetHook(entry gentries[],int x)
@@ -2042,6 +2047,28 @@ void htmlContact(void)
 }//void htmlContact(void)
 
 
+void htmlDIDInfo(void)
+{
+
+	htmlHeader("OneLogin","ContainerHeader");
+
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u"
+			" AND (cName='cOrg_Extension' OR cName='cOrg_OpenSIPS_DID' OR cName='cOrg_SIPTrunk') ORDER BY cName",guContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+		printf("%s: %s<br>\n",field[0],field[1]);
+	mysql_free_result(res);
+
+	exit(0);
+
+}//void htmlDIDInfo(void)
+
+
 void SetContainerFromSearchSet(void)
 {
 	unsigned uSearchGroup=0;
@@ -2711,21 +2738,6 @@ void funcContainerInfo(FILE *fp)
 	{
 		fprintf(fp,"<!-- funcContainerInfo(fp) low permissions end-->\n");
 		return;
-	}
-
-	if(gcShowDetails[0])
-	{
-		sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u"
-			" AND (cName='cOrg_Extension' OR cName='cOrg_OpenSIPS_DID' OR cName='cOrg_SIPTrunk') ORDER BY cName",guContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		while((field=mysql_fetch_row(res)))
-		{
-			printf("<li class=list-group-item ><span class=badge >%s</span>%s</li>\n",field[1],field[0]);
-		}
-		mysql_free_result(res);
 	}
 
 	if(uAppliance)
