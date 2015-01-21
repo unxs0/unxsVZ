@@ -88,11 +88,17 @@
 </div><!-- "panel panel-default" -->
 <!-- end jquery collapse -->
 
-        </div><!--/.col-xs-12.col-sm-9-->
+<!-- start jquery collapse Change Passwd -->
+<div class="panel panel-default" id="panel5">
+	<div class="panel-heading">
+		<h4 class="form-signin-heading">
+			<a data-toggle="collapse" data-target="#collapseFive" href="#collapseFive" class="collapsed">Change Your Password</a>
+		</h4>
+	</div><!-- "panel-heading" -->
+	<div id="collapseFive" class="panel-collapse collapse">
+	<div class="panel-body">
 
-        <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar" role="navigation">
           <div class="list-group">
-        	<h3 class="form-signin-heading">Change your password</h3>
 		<h4>{{gcMessage}}</h4>
 
       		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
@@ -121,7 +127,15 @@
 		<button class="btn btn-lg btn-primary btn-block" title="This will change your password and you will need to login again." type="submit" name=gcFunction value='Change Password'>Change Password</button>
 		</form>
 	  </div><!--/list-group-->
-	</div><!--sidebar-->
+
+
+	</div><!-- "panel-body" -->
+	</div><!-- "collapseFive" -->
+</div><!-- "panel panel-default" -->
+<!-- end jquery collapse -->
+
+        </div><!--/.col-xs-12.col-sm-9-->
+
         </div><!--/row-->
       </div><!--/container-->
 
