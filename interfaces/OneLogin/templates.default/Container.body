@@ -52,7 +52,7 @@
 			<a data-toggle="collapse" data-target="#collapseFour" href="#collapseFour" class="collapsed">Search</a>
 		</h4>
 	</div>
-	<div id="collapseFour" class="panel-collapse collapse in">
+	<div id="collapseFour" class="panel-collapse collapse {{gcInCollapseFour}}">
 	<div class="panel-body">
           <div class="list-group">
 		<h5>{{gcMessage}}</h5>
@@ -63,7 +63,7 @@
 		{{funcSelectContainer}}
 		<input type="hostname" class="form-control" id="searchContainer"
 		title='Enter first letter(s) of container hostname, or you can use the SQL wildcard "%" and the single place "_" pattern matching chars'
-			name="gcSearch" value='{{gcSearch}}' placeholder="Hostname search pattern" size=32 maxlength=32 onChange='submit()'>
+			name="gcSearchSubmit" value='{{gcSearch}}' placeholder="Hostname search pattern" size=32 maxlength=32 onChange='submit()'>
 
 		<br><br>
 		<input type="hostname" class="form-control" id="searchContainerAux"
@@ -82,11 +82,9 @@
 	</div>
 </div>
 <!-- end jquery collapse -->
-          <p class="pull-right visible-xs">
-            <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">&lt;&gt;</button>
-          </p>
+
           <div class="jumbotron">
-	<h4>{{gcCtHostname}}</h4>
+	<h4>{{cCtHostnameLink}}</h4>
           {{funcContainerImageTag}}
           <ul class="list-group">
          	 {{funcContainerInfo}}

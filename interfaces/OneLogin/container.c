@@ -40,8 +40,11 @@ static char gcNewPasswd[33]={""};
 static char gcAuthCode[33]={""};
 static char *gcShowDetails="";
 char gcAdminPort[16]=":3321";
+char gcInCollapseFour[16]="in";
 
 unsigned guMode;
+unsigned guContainerSubmit=0;
+unsigned guSearchSubmit=0;
 
 #define uMAX_DIDs_ALLOWED 128
 static char cReply[(33*uMAX_DIDs_ALLOWED)]={""};
@@ -117,8 +120,19 @@ void ProcessContainerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&guContainer);
 			UpdateSearchSet(guContainer);
 		}
+		else if(!strcmp(entries[i].name,"guContainerSubmit"))
+		{
+			sscanf(entries[i].val,"%u",&guContainerSubmit);
+			UpdateSearchSet(guContainerSubmit);
+			if(guContainerSubmit) guContainer=guContainerSubmit;
+		}
 		else if(!strcmp(entries[i].name,"gcCtHostname"))
 			sprintf(gcCtHostname,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"gcSearchSubmit"))
+		{
+			sprintf(gcSearch,"%.99s",entries[i].val);
+			guSearchSubmit=1;
+		}
 		else if(!strcmp(entries[i].name,"gcSearch"))
 			sprintf(gcSearch,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gcSearchAux"))
@@ -166,6 +180,7 @@ void ContainerGetHook(entry gentries[],int x)
 		{
 			sscanf(gentries[i].val,"%u",&guContainer);
 			UpdateSearchSet(guContainer);
+			sprintf(gcInCollapseFour,"out");
 		}
 		else if(!strcmp(gentries[i].name,"gcFunction"))
 			sprintf(gcFunction,"%.99s",gentries[i].val);
@@ -1704,6 +1719,7 @@ void ContainerCommands(pentry entries[], int x)
 				}
 			}
 			mysql_free_result(res);
+			sprintf(gcInCollapseFour,"out");
 			gcMessage="Found single container based on DID pattern.";
 		}//Search DID
 		else if(!strcmp(gcFunction,"Search Customer") && gcSearchAux[0] && guPermLevel>5)
@@ -1741,6 +1757,7 @@ void ContainerCommands(pentry entries[], int x)
 				}
 			}
 			mysql_free_result(res);
+			sprintf(gcInCollapseFour,"out");
 			gcMessage="Found single container based on customer pattern.";
 		}//Search Customer
 		else if(!strcmp(gcFunction,"DID Report") && guPermLevel>=10)
@@ -2171,7 +2188,12 @@ void htmlAuxPage(char *cTitle, char *cTemplateName)
 			template.cpName[14]="cContactEmail";
 			template.cpValue[14]=cContactEmail;
 
-			template.cpName[15]="";
+			char cCtHostnameLink[128]={"no container selected"};
+			sprintf(cCtHostnameLink,"<a href=https://%s%s/admin >%s</a>",template.cpValue[8],gcAdminPort,template.cpValue[8]);
+			template.cpName[15]="cCtHostnameLink";
+			template.cpValue[15]=cCtHostnameLink;
+
+			template.cpName[16]="";
 
 			printf("\n<!-- Start htmlAuxPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
@@ -2304,7 +2326,16 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 			template.cpName[16]="gcCopyright";
 			template.cpValue[16]=LOCALCOPYRIGHT;
 
-			template.cpName[17]="";
+			template.cpName[17]="gcInCollapseFour";
+			//if(!guContainerSubmit && guContainer) sprintf(gcInCollapseFour,"out");
+			template.cpValue[17]=gcInCollapseFour;
+
+			char cCtHostnameLink[128]={"no container selected"};
+			sprintf(cCtHostnameLink,"<a href=https://%s%s/admin >%s</a>",template.cpValue[8],gcAdminPort,template.cpValue[8]);
+			template.cpName[18]="cCtHostnameLink";
+			template.cpValue[18]=cCtHostnameLink;
+
+			template.cpName[19]="";
 
 			printf("\n<!-- Start htmlContainerPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
@@ -2457,8 +2488,8 @@ void funcSelectContainer(FILE *fp)
 		htmlPlainTextError(mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	fprintf(fp,"<select type='hostnameSelect' id='SelectContainer' class='form-control' title='Select the container you want to load with this dropdown'"
-			" name='guContainer' onChange='submit()'>\n");
-	fprintf(fp,"<option>---</option>");
+			" name='guContainerSubmit' onChange='submit()'>\n");
+	fprintf(fp,"<option value=0>---</option>");
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uContainer);

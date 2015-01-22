@@ -83,9 +83,6 @@
 	</div>
 </div>
 <!-- end jquery collapse -->
-          <p class="pull-right visible-xs">
-            <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">&lt;&gt;</button>
-          </p>
           <div class="jumbotron">
 	<h4>Search results</h4>
 	<h5>
