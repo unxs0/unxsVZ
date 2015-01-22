@@ -95,6 +95,8 @@ unsigned uGetSearchGroup(const char *gcUser,unsigned uGroupType);
 void UpdateSearchSet(unsigned guContainer);
 unsigned uGetContainerFromSearchGroup(unsigned uSearchGroup);
 void SetContainerFromSearchSet(void);
+void htmlRepurpose(void);
+void htmlRepurposePage(char *cTitle, char *cTemplateName);
 
 unsigned uPower10(unsigned uI)
 {
@@ -200,6 +202,8 @@ void ContainerGetHook(entry gentries[],int x)
 		htmlAbout();
 	else if(!strcmp(gcPage,"Contact"))
 		htmlContact();
+	else if(!strcmp(gcPage,"Repurpose"))
+		htmlRepurpose();
 
 	if(!strcmp(gcFunction,"DIDInfo"))
 		htmlDIDInfo();
@@ -2064,6 +2068,15 @@ void htmlContact(void)
 }//void htmlContact(void)
 
 
+void htmlRepurpose(void)
+{
+	htmlHeader("OneLogin","ContainerHeader");
+	htmlRepurposePage("OneLogin","Repurpose.Body");
+	htmlFooter("ContainerFooter");
+
+}//void htmlRepurpose(void)
+
+
 void htmlDIDInfo(void)
 {
 
@@ -2193,7 +2206,14 @@ void htmlAuxPage(char *cTitle, char *cTemplateName)
 			template.cpName[15]="cCtHostnameLink";
 			template.cpValue[15]=cCtHostnameLink;
 
-			template.cpName[16]="";
+			char cPrivilegedContainerMenu[128]={""};
+			template.cpName[16]="cPrivilegedContainerMenu";
+			if(guPermLevel>=6)
+				sprintf(cPrivilegedContainerMenu,
+					"<li><a href=\"%.32s?gcPage=Repurpose&guContainer=%u\">Repurpose</a></li>",template.cpValue[1],guContainer);
+			template.cpValue[16]=cPrivilegedContainerMenu;
+
+			template.cpName[17]="";
 
 			printf("\n<!-- Start htmlAuxPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
@@ -2335,7 +2355,14 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 			template.cpName[18]="cCtHostnameLink";
 			template.cpValue[18]=cCtHostnameLink;
 
-			template.cpName[19]="";
+			char cPrivilegedContainerMenu[128]={""};
+			template.cpName[19]="cPrivilegedContainerMenu";
+			if(guPermLevel>=6)
+				sprintf(cPrivilegedContainerMenu,
+					"<li><a href=\"%.32s?gcPage=Repurpose&guContainer=%u\">Repurpose</a></li>",template.cpValue[1],guContainer);
+			template.cpValue[19]=cPrivilegedContainerMenu;
+
+			template.cpName[20]="";
 
 			printf("\n<!-- Start htmlContainerPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
@@ -4339,3 +4366,182 @@ void UpdateSearchSet(unsigned guContainer)
 		return;
 
 }//void UpdateSearchSet(unsigned guContainer)
+
+
+void htmlRepurposePage(char *cTitle, char *cTemplateName)
+{
+	if(cTemplateName[0])
+	{
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+		unsigned uNoShow=0;
+
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uOneLogin);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			struct t_template template;
+
+			template.cpName[0]="cTitle";
+			template.cpValue[0]=cTitle;
+			
+			template.cpName[1]="cCGI";
+			template.cpValue[1]="OneLogin.cgi";
+			
+			template.cpName[2]="gcLogin";
+			template.cpValue[2]=gcUser;
+
+			template.cpName[3]="gcName";
+			template.cpValue[3]=gcName;
+
+			template.cpName[4]="gcOrgName";
+			template.cpValue[4]=gcOrgName;
+
+			template.cpName[5]="cUserLevel";
+			template.cpValue[5]=(char *)cUserLevel(guPermLevel);//Safe?
+
+			template.cpName[6]="gcHost";
+			template.cpValue[6]=gcHost;
+
+			template.cpName[7]="gcMessage";
+			template.cpValue[7]=gcMessage;
+
+			template.cpName[8]="gcCtHostname";
+			//template.cpValue[8]=gcCtHostname;
+			if(!uNoShow)
+				template.cpValue[8]=(char *)cGetHostname(guContainer) ;
+			else
+				template.cpValue[8]="no container selected";
+
+			template.cpName[9]="gcSearch";
+			template.cpValue[9]=gcSearch;
+
+			template.cpName[10]="guContainer";
+			char cguContainer[16];
+			sprintf(cguContainer,"%u",guContainer);
+			template.cpValue[10]=cguContainer;
+
+			template.cpName[11]="gcLabel";
+			template.cpValue[11]=gcLabel;
+
+			template.cpName[12]="gcCopyright";
+			template.cpValue[12]=LOCALCOPYRIGHT;
+
+			template.cpName[13]="gcBrand";
+			template.cpValue[13]=INTERFACE_HEADER_TITLE;
+
+			char cPrivilegedContainerMenu[128]={""};
+			template.cpName[14]="cPrivilegedContainerMenu";
+			if(guPermLevel>=6)
+				sprintf(cPrivilegedContainerMenu,
+					"<li class=\"active\"><a href=\"%.32s?gcPage=Repurpose&guContainer=%u\">Repurpose</a></li>",
+						template.cpValue[1],guContainer);
+			template.cpValue[14]=cPrivilegedContainerMenu;
+
+			template.cpName[15]="";
+
+			printf("\n<!-- Start htmlRepurposePage(%s) -->\n",cTemplateName); 
+			Template(field[0],&template,stdout);
+			printf("\n<!-- End htmlRepurposePage(%s) -->\n",cTemplateName); 
+		}
+		else
+		{
+			printf("<hr>");
+			printf("<center><font size=1>%s</font>\n",cTemplateName);
+		}
+		mysql_free_result(res);
+	}
+
+}//void htmlRepurposePage()
+
+
+void funcRepurposeForm(FILE *fp)
+{
+	if(guPermLevel<6)
+		return;
+
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uCount=1;
+	unsigned uContainer=0;
+	char cOrg_NewGroupLabel[33]={"Pre-Spinned"};
+
+	fprintf(fp,"<!-- funcRepurposeForm(fp) Start -->\n");
+
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uDatacenter=0"
+			" AND uContainer=0 AND uNode=0 AND cLabel='cOrg_NewGroupLabel'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		htmlPlainTextError(mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cOrg_NewGroupLabel,"%.32s",field[0]);
+
+	sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tGroupGlue,tGroup WHERE "
+			"tContainer.uContainer=tGroupGlue.uContainer AND "
+			"tGroupGlue.uGroup=tGroup.uGroup AND tGroup.cLabel='%s' AND "
+			"tContainer.uStatus=1 AND "
+			"tContainer.uOwner=%u AND tContainer.uSource=0 "
+			"ORDER BY tContainer.cHostname LIMIT 301",
+			//"ORDER BY LENGTH(tContainer.cHostname),tContainer.cHostname LIMIT 301",
+				cOrg_NewGroupLabel,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		htmlPlainTextError(mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	fprintf(fp,"<select type='hostnameSelect' id='SelectContainer' class='form-control'"
+			" title='Select the container you want to repurpose with this dropdown'"
+			" name='guNewContainer'>\n");
+	fprintf(fp,"<option value=0>---</option>\n");
+	uCount=0;
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uContainer);
+		fprintf(fp,"<option value=%s",field[0]);
+		if(guNewContainer==uContainer)
+			fprintf(fp," selected");
+		if((uCount++)<=32)
+		{
+			fprintf(fp,">%s</option>\n",field[1]);
+		}
+		else
+		{
+			fprintf(fp,">Limit reached. Contact your sysadmin ASAP!</option>\n");
+			break;
+		}
+	}
+	mysql_free_result(res);
+	fprintf(fp,"</select>\n");
+
+	//Time zone
+	sprintf(gcQuery,"SELECT cValue,cComment FROM tConfiguration WHERE cLabel='cTimeZone' ORDER BY uConfiguration");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		htmlPlainTextError(mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	fprintf(fp,"<select type='tzSelect' id='SelectTZ' class='form-control'"
+			" title='Select the time zone you want to use for the repurposed container'"
+			" name='gcNewContainerTZ'>\n");
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"<option value=%s",field[0]);
+		if(!strcmp(gcNewContainerTZ,field[0]))
+			fprintf(fp," selected");
+		fprintf(fp,">%s</option>\n",field[1]);
+	}
+	mysql_free_result(res);
+	fprintf(fp,"</select>\n");
+
+	fprintf(fp,"<!-- funcRepurposeForm(fp) End -->\n");
+
+}//void funcRepurposeForm(FILE *fp)
+
