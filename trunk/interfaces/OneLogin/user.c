@@ -258,7 +258,14 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[11]="gcCopyright";
 			template.cpValue[11]=LOCALCOPYRIGHT;
 
-			template.cpName[12]="";
+			char cPrivilegedContainerMenu[128]={""};
+			template.cpName[12]="cPrivilegedContainerMenu";
+			if(guPermLevel>=6)
+				sprintf(cPrivilegedContainerMenu,
+					"<li><a href=\"%.32s?gcPage=Repurpose&guContainer=%u\">Repurpose</a></li>",template.cpValue[1],guContainer);
+			template.cpValue[12]=cPrivilegedContainerMenu;
+
+			template.cpName[13]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");
