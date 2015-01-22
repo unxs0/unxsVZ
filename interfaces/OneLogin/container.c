@@ -215,7 +215,7 @@ void ContainerGetHook(entry gentries[],int x)
 
 void ContainerCommands(pentry entries[], int x)
 {
-	if(!strcmp(gcPage,"Container"))
+	if(!strcmp(gcPage,"Container") || !strcmp(gcPage,"Repurpose"))
 	{
 		unsigned uLen=0;
         	MYSQL_RES *res;
@@ -226,27 +226,31 @@ void ContainerCommands(pentry entries[], int x)
 		ProcessContainerVars(entries,x);
 		if(!strcmp(gcFunction,"Repurpose Container") && guPermLevel>5)
 		{
+
+			//gcMessage="debug step 1";
+			//htmlRepurpose();
+
 			//Validate target container
 			if(!guNewContainer)
 			{
 				gcMessage="Must select a container.";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			//1-. Validate gcNewHostname
 			if(strstr(gcNewHostname,"."))
 			{
 				gcMessage="New container name can not have anymore \"stops\" (periods.)";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			if((uLen=strlen(gcNewHostname))<2)
 			{
 				gcMessage="New container name must have at least two chars.";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			if(uLen>32)
 			{
 				gcMessage="New container name must have at most 32 chars.";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			//Check uniqueness
 			sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",gcNewHostname);
@@ -254,13 +258,13 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select uContainer/cLabel error, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if(mysql_num_rows(res)>0)
 			{
 				gcMessage="New container name must not be already in use.";
-				htmlContainer();
+				htmlRepurpose();
 			}
 
 			//Check job queue
@@ -272,13 +276,13 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select uJob error, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if(mysql_num_rows(res)>0)
 			{
 				gcMessage="Selected container is being used by another process. Please try another or wait.";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			//uContainer must still exist
 			sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u",guNewContainer);
@@ -286,13 +290,13 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select uContainer error, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if(mysql_num_rows(res)!=1)
 			{
 				gcMessage="Selected container does not exist. Please try another.";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			//uStatus must still be active
 			char cPrevHostname[100]={""};
@@ -302,7 +306,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select uNode error, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -314,12 +318,12 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_num_rows(res)<1)
 			{
 				gcMessage="Selected container is not active. Please try another.";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			if(!guNode || !guDatacenter)
 			{
 				gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 
 			//Check for configuration problems
@@ -333,7 +337,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select cunxsBindARecordJobZone failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -341,7 +345,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(strlen(cunxsBindARecordJobZone)<2)
 			{
 				gcMessage="Configuration error contact your sysadmin: cunxsBindARecordJobZone.";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			char cunxsBindARecordJobView[65]={""};
 			sprintf(gcQuery,"SELECT cValue FROM tConfiguration"
@@ -351,7 +355,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select cunxsBindARecordJobView failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -359,7 +363,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(strlen(cunxsBindARecordJobView)<2)
 			{
 				gcMessage="Configuration error contact your sysadmin: cunxsBindARecordJobView.";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			char cIPv4[32]={""};
 			sprintf(gcQuery,"SELECT cValue FROM tProperty"
@@ -368,7 +372,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select uProperty failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -381,7 +385,7 @@ void ContainerCommands(pentry entries[], int x)
 				if(mysql_errno(&gMysql))
 				{
 					gcMessage="Select cIPv4 failed, contact sysadmin!";
-					htmlContainer();
+					htmlRepurpose();
 				}
 				res=mysql_store_result(&gMysql);
 				if((field=mysql_fetch_row(res)))
@@ -390,13 +394,13 @@ void ContainerCommands(pentry entries[], int x)
 			if(strlen(cIPv4)<7)
 			{
 				gcMessage="Configuration error contact your sysadmin: cIPv4.";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			//debug only
 			//char cDebugMsg[32]={"d1"};
 			//sprintf(cDebugMsg,"%s",cIPv4);
 			//gcMessage=cDebugMsg;
-			//htmlContainer();
+			//htmlRepurpose();
 
 			unsigned uProperty=0;
 			unsigned uOrgPropMaxLength=0;
@@ -414,7 +418,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select cComment failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -442,14 +446,14 @@ void ContainerCommands(pentry entries[], int x)
 			{
 				sprintf(cMessage,"%s must be at least %u characters long",cOrgPropName,uOrgPropMinLength);
 				gcMessage=cMessage;
-				htmlContainer();
+				htmlRepurpose();
 			}
 			//Max
 			if(strlen(gcNewHostParam0)>uOrgPropMaxLength)
 			{
 				sprintf(cMessage,"%s can only be %u characters long",cOrgPropName,uOrgPropMaxLength);
 				gcMessage=cMessage;
-				htmlContainer();
+				htmlRepurpose();
 			}
 			//Check value if prop type is unsigned
 			if(!strcmp(cOrgPropType,"unsigned"))
@@ -465,7 +469,7 @@ void ContainerCommands(pentry entries[], int x)
 					sprintf(cMessage,"%s does not appear to be a valid number or is larger than %u",
 						cOrgPropName,ugcNewHostParam0Max);
 					gcMessage=cMessage;
-					htmlContainer();
+					htmlRepurpose();
 				}
 			}
 
@@ -475,7 +479,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select uProperty failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -488,7 +492,7 @@ void ContainerCommands(pentry entries[], int x)
 				if(mysql_errno(&gMysql))
 				{
 					gcMessage="Update tProperty failed, contact sysadmin!";
-					htmlContainer();
+					htmlRepurpose();
 				}
 			}
 			else
@@ -500,7 +504,7 @@ void ContainerCommands(pentry entries[], int x)
 				if(mysql_errno(&gMysql))
 				{
 					gcMessage="Update tProperty failed, contact sysadmin!";
-					htmlContainer();
+					htmlRepurpose();
 				}
 			}
 
@@ -514,7 +518,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select cComment failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -536,14 +540,14 @@ void ContainerCommands(pentry entries[], int x)
 			{
 				sprintf(cMessage,"%s must be at least %u characters long",cOrgPropName,uOrgPropMinLength);
 				gcMessage=cMessage;
-				htmlContainer();
+				htmlRepurpose();
 			}
 			//Max
 			if(strlen(gcNewHostParam1)>uOrgPropMaxLength)
 			{
 				sprintf(cMessage,"%s can only be %u characters long",cOrgPropName,uOrgPropMaxLength);
 				gcMessage=cMessage;
-				htmlContainer();
+				htmlRepurpose();
 			}
 
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty"
@@ -552,7 +556,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select uProperty failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -565,7 +569,7 @@ void ContainerCommands(pentry entries[], int x)
 				if(mysql_errno(&gMysql))
 				{
 					gcMessage="Update tProperty failed, contact sysadmin!";
-					htmlContainer();
+					htmlRepurpose();
 				}
 			}
 			else
@@ -577,7 +581,7 @@ void ContainerCommands(pentry entries[], int x)
 				if(mysql_errno(&gMysql))
 				{
 					gcMessage="Update tProperty failed, contact sysadmin!";
-					htmlContainer();
+					htmlRepurpose();
 				}
 			}
 		
@@ -588,7 +592,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select uProperty failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -601,7 +605,7 @@ void ContainerCommands(pentry entries[], int x)
 				if(mysql_errno(&gMysql))
 				{
 					gcMessage="Update tProperty failed, contact sysadmin!";
-					htmlContainer();
+					htmlRepurpose();
 				}
 			}
 			else
@@ -613,13 +617,13 @@ void ContainerCommands(pentry entries[], int x)
 				if(mysql_errno(&gMysql))
 				{
 					gcMessage="Update tProperty failed, contact sysadmin!";
-					htmlContainer();
+					htmlRepurpose();
 				}
 			}
 
-			//debug only
-			//gcMessage="Test mode";
-			//htmlContainer();
+			//gcMessage="This function is not enabled yet";
+			//htmlRepurpose();
+
 
 			//Change the target container's names
 			//Special created by non standard usage
@@ -634,7 +638,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="UPDATE tContainer failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 
 			//Change hostname job
@@ -653,7 +657,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="ChangeHostnameContainer insert failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			SetContainerStatus(guNewContainer,61);
 
@@ -689,7 +693,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select remote backup failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -721,7 +725,7 @@ void ContainerCommands(pentry entries[], int x)
 						if(mysql_errno(&gMysql))
 						{
 							gcMessage="ChangeHostnameContainer insert failed, contact sysadmin!";
-							htmlContainer();
+							htmlRepurpose();
 						}
 						SetContainerStatus(uRemoteBackupContainer,61);
 					}
@@ -739,7 +743,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select local clone failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -770,7 +774,7 @@ void ContainerCommands(pentry entries[], int x)
 						if(mysql_errno(&gMysql))
 						{
 							gcMessage="ChangeHostnameContainer insert failed, contact sysadmin!";
-							htmlContainer();
+							htmlRepurpose();
 						}
 						SetContainerStatus(uLocalCloneContainer,61);
 					}
@@ -788,7 +792,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select cOrg_NewGroupLabel failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -799,7 +803,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select cOrg_AfterNewGroupLabel failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -811,7 +815,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Select cOrg_AfterNewGroupLabel failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 			res=mysql_store_result(&gMysql);
 			if((field=mysql_fetch_row(res)))
@@ -820,7 +824,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(!uGroup || !cOrg_AfterNewGroupLabel[0] || !cOrg_NewGroupLabel[0])
 			{
 				gcMessage="Group configuration problem-1, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 
 			sprintf(gcQuery,"UPDATE tGroupGlue SET uGroup=(SELECT uGroup FROM tGroup WHERE cLabel='%s' LIMIT 1)"
@@ -829,7 +833,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_errno(&gMysql))
 			{
 				gcMessage="Update tGroupGlue failed, contact sysadmin!";
-				htmlContainer();
+				htmlRepurpose();
 			}
 
 			//Attempt to change clone groups also.
@@ -865,7 +869,7 @@ void ContainerCommands(pentry entries[], int x)
 			mysql_free_result(res);
 
 			guContainer=guNewContainer;
-			htmlContainer();
+			htmlRepurpose();
 		}//Repurpose Container ~480 lines
 		else if((!strcmp(gcFunction,"Container Report")||!strcmp(gcFunction,"Show Containers"))&&guPermLevel>5)
 		{
@@ -4438,7 +4442,16 @@ void htmlRepurposePage(char *cTitle, char *cTemplateName)
 						template.cpValue[1],guContainer);
 			template.cpValue[14]=cPrivilegedContainerMenu;
 
-			template.cpName[15]="";
+			template.cpName[15]="gcNewHostname";
+			template.cpValue[15]=gcNewHostname;
+
+			template.cpName[16]="gcNewHostParam0";
+			template.cpValue[16]=gcNewHostParam0;
+
+			template.cpName[17]="gcNewHostParam1";
+			template.cpValue[17]=gcNewHostParam1;
+
+			template.cpName[18]="";
 
 			printf("\n<!-- Start htmlRepurposePage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
