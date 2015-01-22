@@ -58,17 +58,20 @@
 	        {{funcRepurposeForm}}
 
         	<input maxlength="3" title='The maximum number of simultaneous in and outbound calls'
-			type="login" id="inputLines" class="form-control" placeholder="Number of lines" name="gcNewHostParam0" required>
+			type="login" id="inputLines" class="form-control" placeholder="Number of lines"
+			name="gcNewHostParam0" value="{{gcNewHostParam0}}" required>
 
        		<input maxlength="31" title='Customer first and last name or company name'
-			type="login" id="inputCustomerName" class="form-control" placeholder="Customer name" name="gcNewHostParam1" required>
+			type="login" id="inputCustomerName" class="form-control" placeholder="Customer name"
+			name="gcNewHostParam1" value="{{gcNewHostParam1}}" required>
 
        		<input maxlength="31" title='New label name of container'
-			type="login" id="inputContainerLabel" class="form-control" placeholder="New container label" name="gcNewHostname" required>
+			type="login" id="inputContainerLabel" class="form-control" placeholder="New container label"
+			name="gcNewHostname" value="{{gcNewHostname}}" required>
 
 		<button class="btn btn-lg btn-primary btn-block" 
 			title="This will create unxsVZ system jobs that will change the selected container. No undo available!"
-			 type="submit" name=gcFunction value='Repurpose Container'>Repurpose Container</button>
+			type="submit" name=gcFunction value='Repurpose Container'>Repurpose Container</button>
 		</form>
 	  </div><!--/list-group-->
 
