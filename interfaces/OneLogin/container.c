@@ -868,6 +868,8 @@ void ContainerCommands(pentry entries[], int x)
 			//for all the above
 			mysql_free_result(res);
 
+			unxsvzLog(0,"tContainer","Repurpose Container",guPermLevel,guLoginClient,gcLogin,gcHost);
+
 			guContainer=guNewContainer;
 			htmlRepurpose();
 		}//Repurpose Container ~480 lines

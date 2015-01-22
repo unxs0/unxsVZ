@@ -121,6 +121,8 @@ void htmlUserPage(char *cTitle, char *cTemplateName);
 void funcMOTD(FILE *fp);
 void funcOperationHistory(FILE *fp);
 void funcLoginHistory(FILE *fp);
+void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
+
 
 //glossary.c
 void GlossaryGetHook(entry gentries[],int x);

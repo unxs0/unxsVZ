@@ -295,7 +295,7 @@ void funcMOTD(FILE *fp)
 	fprintf(fp,"<!-- funcMOTD(fp) Start -->\n");
 
 	sprintf(gcQuery,"SELECT cComment FROM tConfiguration WHERE uDatacenter=0 AND uNode=0 AND uContainer=0"
-			" AND cLabel='cOrg_MOTD' LIMIT 1");
+			" AND cLabel='cOrg_NewMOTD' LIMIT 1");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
