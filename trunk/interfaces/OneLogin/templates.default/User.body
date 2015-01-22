@@ -46,9 +46,6 @@
       <div class="row row-offcanvas row-offcanvas-right">
 
         <div class="col-xs-12 col-sm-9">
-          <p class="pull-right visible-xs">
-            <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">&lt;&gt;</button>
-          </p>
 
           <div class="jumbotron">
         	<h3 class="form-signin-heading">Info</h3>
@@ -99,10 +96,8 @@
 	<div class="panel-body">
 
           <div class="list-group">
-		<h4>{{gcMessage}}</h4>
-
+		<h5>{{gcMessage}}</h5>
       		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
-
 		<input type=hidden name="gcPage" value="User">
 		<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
 		<input type=hidden name="guContainer" value="{{guContainer}}">
