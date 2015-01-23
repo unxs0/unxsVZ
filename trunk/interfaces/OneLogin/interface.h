@@ -111,6 +111,7 @@ void funcContainerList(FILE *fp);
 void funcContainerQOS(FILE *fp);
 void funcContainerBulk(FILE *fp);
 void funcRepurposeForm(FILE *fp);
+void funcResellerForm(FILE *fp);
 
 //user.c
 void ProcessUserVars(pentry entries[], int x);

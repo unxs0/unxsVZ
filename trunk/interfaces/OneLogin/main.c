@@ -130,6 +130,8 @@ int main(int argc, char *argv[])
 				ContainerGetHook(gentries,i);
 			else if(!strcmp(gcPage,"Repurpose"))
 				ContainerGetHook(gentries,i);
+			else if(!strcmp(gcPage,"Reseller"))
+				ContainerGetHook(gentries,i);
 		}
 	}
 	else
@@ -439,6 +441,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcLoginHistory(fp);
 	else if(!strcmp(cFunction,"funcRepurposeForm"))
 		funcRepurposeForm(fp);
+	else if(!strcmp(cFunction,"funcResellerForm"))
+		funcResellerForm(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
