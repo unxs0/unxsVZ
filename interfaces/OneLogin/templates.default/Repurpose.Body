@@ -68,7 +68,7 @@
        		<input maxlength="31" title='New label name of container'
 			type="login" id="inputContainerLabel" class="form-control" placeholder="New container label"
 			name="gcNewHostname" value="{{gcNewHostname}}" required>
-
+		<br>
 		<button class="btn btn-lg btn-primary btn-block" 
 			title="This will create unxsVZ system jobs that will change the selected container. No undo available!"
 			type="submit" name=gcFunction value='Repurpose Container'>Repurpose Container</button>

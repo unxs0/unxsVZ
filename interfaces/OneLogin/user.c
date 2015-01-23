@@ -258,11 +258,13 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[11]="gcCopyright";
 			template.cpValue[11]=LOCALCOPYRIGHT;
 
-			char cPrivilegedContainerMenu[128]={""};
+			char cPrivilegedContainerMenu[256]={""};
 			template.cpName[12]="cPrivilegedContainerMenu";
 			if(guPermLevel>=6)
 				sprintf(cPrivilegedContainerMenu,
-					"<li><a href=\"%.32s?gcPage=Repurpose&guContainer=%u\">Repurpose</a></li>",template.cpValue[1],guContainer);
+					"<li><a href=\"%1$.32s?gcPage=Repurpose&guContainer=%2$u\">Repurpose</a></li>"
+					"<li><a href=\"%1$.32s?gcPage=Reseller&guContainer=%2$u\">Reseller</a></li>"
+						,template.cpValue[1],guContainer);
 			template.cpValue[12]=cPrivilegedContainerMenu;
 
 			template.cpName[13]="";
