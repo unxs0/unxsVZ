@@ -91,7 +91,9 @@ extern char gcDelStep[];
 extern char gcInputStatus[];
 extern unsigned guZone;
 extern unsigned guView;
+extern unsigned guRequireOTPLogin;
 extern char gcOTPSecret[];
+extern char gcOTPInfo[];
 
 //Menu
 //

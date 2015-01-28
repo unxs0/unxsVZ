@@ -36,6 +36,7 @@ static char *gcBulkData={""};
 static char gcCustomerName[33]={""};
 static char gcCustomerLimit[16]={""};
 static char gcNewLogin[33]={"John Doe"};
+static char gcNewEmail[65]={""};
 static char gcNewPasswd[33]={""};
 static char gcAuthCode[33]={""};
 static char *gcShowDetails="";
@@ -62,6 +63,7 @@ char *cGetImageHost(unsigned uContainer);
 void SelectContainer(void);
 char *CustomerName(char *cInput);
 char *NameToLower(char *cInput);
+char *CustomerEmail(char *cInput);
 char *cNumbersOnly(char *cInput);
 void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void funcContainerList(FILE *fp);
@@ -170,6 +172,8 @@ void ProcessContainerVars(pentry entries[], int x)
 			sprintf(gcNewPasswd,"%.31s",CustomerName(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcBulkData"))
 			gcBulkData=entries[i].val;
+		else if(!strcmp(entries[i].name,"gcNewEmail"))
+			sprintf(gcNewEmail,"%.99s",CustomerEmail(entries[i].val));
 	}
 
 }//void ProcessContainerVars(pentry entries[], int x)
@@ -229,67 +233,7 @@ void ContainerCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"Container"))
 	{
 		ProcessContainerVars(entries,x);
-		if((!strcmp(gcFunction,"Container Report")||!strcmp(gcFunction,"Show Containers"))&&guPermLevel>5)
-		{
-
-			printf("Content-type: text/plain\n\n");
-			printf("uContainer,cLabel,cHostname,cDatacenter,cNode,cGroup,cTemplate,cStatus\n");
-
-			if(guReseller)
-			sprintf(gcQuery,"SELECT tContainer.uContainer,"
-					" tContainer.cLabel,"
-					" tContainer.cHostname,"
-					" tDatacenter.cLabel,"
-					" tNode.cLabel,"
-					" tOSTemplate.cLabel,"
-					" tStatus.cLabel"
-					" FROM tContainer,tDatacenter,tNode,tOSTemplate,tStatus"
-					" WHERE tContainer.uDatacenter=tDatacenter.uDatacenter AND"
-					" tContainer.uNode=tNode.uNode AND"
-					" tContainer.uStatus=tStatus.uStatus AND"
-					" tOSTemplate.uOSTemplate=tContainer.uOSTemplate AND"
-					" tContainer.uSource=0 AND tContainer.uCreatedBy=%u",guReseller);
-			else
-			sprintf(gcQuery,"SELECT tContainer.uContainer,"
-					" tContainer.cLabel,"
-					" tContainer.cHostname,"
-					" tDatacenter.cLabel,"
-					" tNode.cLabel,"
-					" tOSTemplate.cLabel,"
-					" tStatus.cLabel"
-					" FROM tContainer,tDatacenter,tNode,tOSTemplate,tStatus"
-					" WHERE tContainer.uDatacenter=tDatacenter.uDatacenter AND"
-					" tContainer.uNode=tNode.uNode AND"
-					" tContainer.uStatus=tStatus.uStatus AND"
-					" tOSTemplate.uOSTemplate=tContainer.uOSTemplate AND"
-					" tContainer.uSource=0");
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			res=mysql_store_result(&gMysql);
-			while((field=mysql_fetch_row(res)))
-			{
-				char cGroup[33]={"NoGroup"};
-
-				sprintf(gcQuery,"SELECT tGroup.cLabel"
-					" FROM tGroup,tGroupGlue"
-					" WHERE tGroup.uGroup=tGroupGlue.uGroup"
-					" AND tGroupGlue.uContainer=%.15s",field[0]);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-					htmlPlainTextError(mysql_error(&gMysql));
-				res2=mysql_store_result(&gMysql);
-				if((field2=mysql_fetch_row(res2)))
-					sprintf(cGroup,"%.32s",field2[0]);
-				mysql_free_result(res2);
-
-				printf("%s,%s,%s,%s,%s,%s,%s,%s\n",
-					field[0],field[1],field[2],field[3],field[4],cGroup,field[5],field[6]);
-			}
-			mysql_free_result(res);
-			exit(0);
-		}
-		else if(!strcmp(gcFunction,"Upgrade Container") && guPermLevel>5)
+		if(!strcmp(gcFunction,"Upgrade Container") && guPermLevel>5)
 		{
 			char cAuthCode[32]={"PsW3jGd"};
 			char cTag[32]={""};
@@ -2064,10 +2008,80 @@ void ContainerCommands(pentry entries[], int x)
 	else if(!strcmp(gcPage,"Reseller"))
 	{
 		ProcessContainerVars(entries,x);
-		if(gcFunction[0])
+		if(!gcFunction[0])
 		{
-			gcMessage="This function is not available yet.";
+			gcMessage="No function called.";
 		}
+		//else if((!strcmp(gcFunction,"Container Report")||!strcmp(gcFunction,"Show Containers"))&&guPermLevel>5)
+		else if(!strcmp(gcFunction,"Container Report"))
+		{
+
+			printf("Content-type: text/plain\n\n");
+			printf("uContainer,cLabel,cHostname,cDatacenter,cNode,cGroup,cTemplate,cStatus\n");
+
+			if(guReseller)
+			sprintf(gcQuery,"SELECT tContainer.uContainer,"
+					" tContainer.cLabel,"
+					" tContainer.cHostname,"
+					" tDatacenter.cLabel,"
+					" tNode.cLabel,"
+					" tOSTemplate.cLabel,"
+					" tStatus.cLabel"
+					" FROM tContainer,tDatacenter,tNode,tOSTemplate,tStatus"
+					" WHERE tContainer.uDatacenter=tDatacenter.uDatacenter AND"
+					" tContainer.uNode=tNode.uNode AND"
+					" tContainer.uStatus=tStatus.uStatus AND"
+					" tOSTemplate.uOSTemplate=tContainer.uOSTemplate AND"
+					" tContainer.uSource=0 AND tContainer.uCreatedBy=%u",guReseller);
+			//extra protection critical enterprise data
+			else if(gcOTPSecret[0])
+			sprintf(gcQuery,"SELECT tContainer.uContainer,"
+					" tContainer.cLabel,"
+					" tContainer.cHostname,"
+					" tDatacenter.cLabel,"
+					" tNode.cLabel,"
+					" tOSTemplate.cLabel,"
+					" tStatus.cLabel"
+					" FROM tContainer,tDatacenter,tNode,tOSTemplate,tStatus"
+					" WHERE tContainer.uDatacenter=tDatacenter.uDatacenter AND"
+					" tContainer.uNode=tNode.uNode AND"
+					" tContainer.uStatus=tStatus.uStatus AND"
+					" tOSTemplate.uOSTemplate=tContainer.uOSTemplate AND"
+					" tContainer.uSource=0");
+			else if(1)
+			{
+				printf("Request credentials upgrade to access this information\n");
+				exit(0);
+			}
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			while((field=mysql_fetch_row(res)))
+			{
+				char cGroup[33]={"NoGroup"};
+
+				sprintf(gcQuery,"SELECT tGroup.cLabel"
+					" FROM tGroup,tGroupGlue"
+					" WHERE tGroup.uGroup=tGroupGlue.uGroup"
+					" AND tGroupGlue.uContainer=%.15s",field[0]);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+					sprintf(cGroup,"%.32s",field2[0]);
+				mysql_free_result(res2);
+
+				printf("%s,%s,%s,%s,%s,%s,%s,%s\n",
+					field[0],field[1],field[2],field[3],field[4],cGroup,field[5],field[6]);
+			}
+			mysql_free_result(res);
+			exit(0);
+		}
+
+		//catchall
+		gcMessage=gcFunction;
 		htmlReseller();
 	}
 
@@ -2248,7 +2262,13 @@ void htmlAuxPage(char *cTitle, char *cTemplateName)
 						,template.cpValue[1],guContainer);
 			template.cpValue[16]=cPrivilegedContainerMenu;
 
-			template.cpName[17]="";
+			template.cpName[17]="gcOTPSecretExists";
+			char cExists[16]={"No"};
+			if(gcOTPSecret[0])
+				sprintf(cExists,"Yes");
+			template.cpValue[17]=cExists;
+
+			template.cpName[18]="";
 
 			printf("\n<!-- Start htmlAuxPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
@@ -3164,7 +3184,7 @@ char *NameToLower(char *cInput)
 	for(i=0;cInput[i];i++)
 	{
 	
-		if(!isalnum(cInput[i]) && cInput[i]!='-' ) break;
+		if(!isalnum(cInput[i]) && cInput[i]!='-') break;
 		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
 	}
 	cInput[i]=0;
@@ -3172,6 +3192,23 @@ char *NameToLower(char *cInput)
 	return(cInput);
 
 }//char *NameToLower(char *cInput)
+
+
+char *CustomerEmail(char *cInput)
+{
+	register int i;
+
+	for(i=0;cInput[i];i++)
+	{
+	
+		if(!isalnum(cInput[i]) && cInput[i]!='-' && cInput[i]!='.' && cInput[i]!='@') break;
+		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
+	}
+	cInput[i]=0;
+
+	return(cInput);
+
+}//char *CustomerEmail(char *cInput)
 
 
 char *cNumbersOnly(char *cInput)
@@ -4664,7 +4701,13 @@ void htmlResellerPage(char *cTitle, char *cTemplateName)
 						,template.cpValue[1],guContainer);
 			template.cpValue[14]=cPrivilegedContainerMenu;
 
-			template.cpName[15]="";
+			template.cpName[15]="gcNewEmail";
+			template.cpValue[15]=gcNewEmail;
+
+			template.cpName[16]="gcNewHostParam1";
+			template.cpValue[16]=gcNewHostParam1;
+
+			template.cpName[17]="";
 
 			printf("\n<!-- Start htmlResellerPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
