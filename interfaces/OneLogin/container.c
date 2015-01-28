@@ -2132,7 +2132,7 @@ void htmlDIDInfo(void)
         MYSQL_RES *res;
 	MYSQL_ROW field;
 	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u"
-			" AND (cName='cOrg_Extension' OR cName='cOrg_OpenSIPS_DID' OR cName='cOrg_SIPTrunk') ORDER BY cName",guContainer);
+			" AND (cName='cOrg_Extension' OR cName='cOrg_OpenSIPS_DID' OR cName='cOrg_SIPTrunk' OR cName LIKE 'cOrg_Kamailio%%' ) ORDER BY cName",guContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -2822,7 +2822,7 @@ void funcContainerInfo(FILE *fp)
 
 	//SUBSTR based on 5 char cOrg_ prefix
 	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName LIKE 'cOrg_%%'"
-			" AND cName!='cOrg_Extension' AND cName!='cOrg_OpenSIPS_DID' AND cName!='cOrg_SIPTrunk'"
+			" AND cName!='cOrg_Extension' AND cName!='cOrg_OpenSIPS_DID' AND cName!='cOrg_SIPTrunk' AND cName NOT LIKE 'cOrg_Kamailio%%'"
 			" AND cName NOT LIKE 'cOrg_MCS%%' AND cName NOT LIKE 'cOrg_QOS%%' ORDER BY cName",guContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
