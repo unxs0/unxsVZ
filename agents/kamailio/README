@@ -7,7 +7,7 @@ name/value pairs for:
 DIDs (carrierroute.scan_prefix)
 PBXs (carrierroute.rewrite_host)
 PBX info/attrs (carrierroute.description)
-Number of lines contracted (?)
+Number of lines contracted (htable: call_limit.key_value, call_limit.key_name is PBX IP)
 
 cOrg_LinesContracted	6
 cOrg_OpenSIPS_Attrs	7013142880|6
@@ -113,4 +113,42 @@ Real data for analyzing dOpenSource carrierroute:
 |  142 |       1 |      1 | 2134800011  |     0 |    0 |    1 |     0 | 1stop.pbxhosting.net               |                |                | Vitelity | LSAN DA 10                        |
 | 9666 |       1 |      1 | 12014195900 |     0 |    0 |    1 |     0 | 2013273100.pbxhosting.net          |                |                | BW.LI.051914.lovettsilverman                 |
 +------+---------+--------+-------------+-------+------+------+-------+--------------------------------------+----------------+----------------+----------------------------------------------+
+
+[root@Kamailio-Server-A unxs]# mysql -e "select * from call_limit limit 10" kamailio
++----+---------------------+----------+------------+-----------------+-----------+
+| id | client_account_code | key_type | value_type | key_name        | key_value |
++----+---------------------+----------+------------+-----------------+-----------+
+|  1 |                1000 |        0 |          1 | 174.121.136.45  | 50
+      |
+|  2 |                1000 |        0 |          1 | 67.210.248.169  | 50
+      |
+|  3 |                1000 |        0 |          1 | 67.210.243.9    | 50
+      |
+|  4 |                1000 |        0 |          1 | 65.49.53.135    | 50
+      |
+|  5 |                1000 |        0 |          1 | 199.200.101.117 | 50
+      |
+|  6 |                1000 |        0 |          1 | 192.252.221.23  | 50
+      |
+|  7 |                1000 |        0 |          1 | 174.121.136.48  | 50
+      |
+|  8 |                1000 |        0 |          1 | 174.121.136.72  | 50
+      |
+|  9 |                1000 |        0 |          1 | 199.200.101.103 | 50
+      |
+| 10 |                1000 |        0 |          1 | 65.49.53.112    | 50
+      |
++----+---------------------+----------+------------+-----------------+-----------+
+[root@Kamailio-Server-A unxs]# mysql -e "describe call_limit;" kamailio
++---------------------+-------------+------+-----+---------+----------------+
+| Field               | Type        | Null | Key | Default | Extra          |
++---------------------+-------------+------+-----+---------+----------------+
+| id                  | int(11)     | NO   | PRI | NULL    | auto_increment |
+| client_account_code | int(11)     | NO   | MUL | NULL    |                |
+| key_type            | int(11)     | YES  |     | NULL    |                |
+| value_type          | int(11)     | YES  |     | NULL    |                |
+| key_name            | varchar(45) | YES  |     | NULL    |                |
+| key_value           | varchar(45) | YES  |     | NULL    |                |
++---------------------+-------------+------+-----+---------+----------------+
+
 
