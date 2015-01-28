@@ -3,63 +3,12 @@ FILE
 	sips.c
 	$Id$
 PURPOSE
-	Collection of diverse VZ operating parameters and other system vars.
+	Kamailio agent for PBX provisioning and data scraping.
 AUTHOR
-	Gary Wallis for Unxiservice, LLC. (C) 2011.
+	(C) 2011-2015 Gary Wallis for Unxiservice, LLC.
 	GPLv2 License applies. See LICENSE file.
 NOTES
-
-OpenSIPS 1.8 Changes
-
-mysql> describe dr_gateways;
-+-------------+------------------+------+-----+---------+----------------+
-| Field       | Type             | Null | Key | Default | Extra          |
-+-------------+------------------+------+-----+---------+----------------+
-| gwid        | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
-| type        | int(11) unsigned | NO   |     | 0       |                |
-| address     | char(128)        | NO   |     | NULL    |                |
-| strip       | int(11) unsigned | NO   |     | 0       |                |
-| pri_prefix  | char(16)         | YES  |     | NULL    |                |
-| attrs       | char(255)        | YES  |     | NULL    |                |
-| probe_mode  | int(11) unsigned | NO   |     | 0       |                |
-| description | char(128)        | NO   |     |         |                |
-| rating_plan | int(11)          | NO   |     | 1       |                |
-+-------------+------------------+------+-----+---------+----------------+
-9 rows in set (0.00 sec)
-
-mysql> describe dr_gateways_1_8;
-+-------------+------------------+------+-----+---------+-------+
-| Field       | Type             | Null | Key | Default | Extra |
-+-------------+------------------+------+-----+---------+-------+
-| id          | int(10) unsigned | NO   |     | 0       |       |
-| gwid        | varchar(64)      | NO   |     |         |       |
-| type        | int(11) unsigned | NO   |     | 0       |       |
-| address     | char(128)        | NO   |     | NULL    |       |
-| strip       | int(11) unsigned | NO   |     | 0       |       |
-| pri_prefix  | char(16)         | YES  |     | NULL    |       |
-| attrs       | char(255)        | YES  |     | NULL    |       |
-| probe_mode  | int(11) unsigned | NO   |     | 0       |       |
-| description | char(128)        | NO   |     |         |       |
-| rating_plan | int(11)          | NO   |     | 1       |       |
-+-------------+------------------+------+-----+---------+-------+
-10 rows in set (0.00 sec)
-
-No changes here:
-mysql> describe dr_rules;
-+-------------+------------------+------+-----+---------+----------------+
-| Field       | Type             | Null | Key | Default | Extra          |
-+-------------+------------------+------+-----+---------+----------------+
-| ruleid      | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
-| groupid     | char(255)        | NO   |     | NULL    |                |
-| prefix      | char(64)         | NO   |     | NULL    |                |
-| timerec     | char(255)        | NO   |     | NULL    |                |
-| priority    | int(11)          | NO   |     | 0       |                |
-| routeid     | char(255)        | NO   |     | NULL    |                |
-| gwlist      | char(255)        | NO   |     | NULL    |                |
-| attrs       | char(255)        | YES  |     | NULL    |                |
-| description | char(128)        | NO   |     |         |                |
-+-------------+------------------+------+-----+---------+----------------+
-
+	This version is same as opensips agent for now.
 
 */
 

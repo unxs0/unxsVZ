@@ -1,0 +1,116 @@
+This directory contains code for the collection and setting of Kamailio
+data to be used with PBX containers that use carrierroute dynamic routing by dOpenSource.
+
+Initially we will add to the "big table" tProperties cOrg_ prefixed
+name/value pairs for:
+
+DIDs (carrierroute.scan_prefix)
+PBXs (carrierroute.rewrite_host)
+PBX info/attrs (carrierroute.description)
+Number of lines contracted (?)
+
+cOrg_LinesContracted	6
+cOrg_OpenSIPS_Attrs	7013142880|6
+cOrg_OpenSIPS_DID	17013142883
+
+===
+NOTES 
+
+Real data for analyzing dOpenSource carrierroute:
+
+[root@Kamailio-Server-A unxs]# mysql -e "describe carrierroute;" kamailio
++----------------+------------------+------+-----+---------+----------------+
+| Field          | Type             | Null | Key | Default | Extra          |
++----------------+------------------+------+-----+---------+----------------+
+| id             | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| carrier        | int(10) unsigned | NO   |     | 0       |                |
+| domain         | int(10) unsigned | NO   |     | 0       |                |
+| scan_prefix    | varchar(64)      | NO   |     |         |                |
+| flags          | int(11) unsigned | NO   |     | 0       |                |
+| mask           | int(11) unsigned | NO   |     | 0       |                |
+| prob           | float            | NO   |     | 0       |                |
+| strip          | int(11) unsigned | NO   |     | 0       |                |
+| rewrite_host   | varchar(128)     | NO   |     |         |                |
+| rewrite_prefix | varchar(64)      | NO   |     |         |                |
+| rewrite_suffix | varchar(64)      | NO   |     |         |                |
+| description    | varchar(255)     | YES  |     | NULL    |                |
++----------------+------------------+------+-----+---------+----------------+
+[root@Kamailio-Server-A unxs]# mysql -e "select count(*) from carrierroute order by rewrite_host limit 10" kamailio
++----------+
+| count(*) |
++----------+
+|    11735 |
++----------+
+[root@Kamailio-Server-A unxs]# mysql -e "select * from carrierroute order by rewrite_host limit 10" kamailio
++------+---------+--------+-------------+-------+------+------+-------+--------------------------------------+----------------+----------------+----------------------------------------------------------------+
+| id   | carrier | domain | scan_prefix | flags | mask | prob | strip | rewrite_host                         | rewrite_prefix | rewrite_suffix | description                                                    |
++------+---------+--------+-------------+-------+------+------+-------+--------------------------------------+----------------+----------------+----------------------------------------------------------------+
+| 4995 |       1 |      1 | 12127380913 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | 1010Talk | Bandwidth                                           |
+| 4087 |       1 |      1 | 5164693745  |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | 1010Talk | Broadvox                                            |
+| 4888 |       1 |      1 | 5164693050  |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | 1010Talk | Broadvox                                            |
+| 7071 |       1 |      1 | 17183719871 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | BW.1010talkresidential LI Ported Ext 1010 Wilbert Espiritu     |
+| 7070 |       1 |      1 | 17183719870 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | BW.1010talkresidential ELS Ported Ext 1009 Wilbert Espiritu    |
+| 6173 |       1 |      1 | 12127389008 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | BW.1010talk                                                    |
+| 6958 |       1 |      1 | 19254641010 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | BW.1010talkresidential                                         |
+| 5792 |       1 |      1 | 17187617482 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | 1010 Talk The Kalmans Res ELS Ported Bandwidth                 |
+| 5799 |       1 |      1 | 18669831333 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | 1010 Talk Mariam Kalman Bullies to Buddies TF Ported Bandwidth |
+| 6985 |       1 |      1 | 12127174451 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | BW.1010talkresidential ELS Ported                              |
++------+---------+--------+-------------+-------+------+------+-------+--------------------------------------+----------------+----------------+----------------------------------------------------------------+
+[root@Kamailio-Server-A unxs]# mysql -e "select * from carrierroute order by rewrite_host limit 10" kamailio
++------+---------+--------+-------------+-------+------+------+-------+--------------------------------------+----------------+----------------+----------------------------------------------------------------+
+| id   | carrier | domain | scan_prefix | flags | mask | prob | strip | rewrite_host                         | rewrite_prefix | rewrite_suffix | description                                                    |
++------+---------+--------+-------------+-------+------+------+-------+--------------------------------------+----------------+----------------+----------------------------------------------------------------+
+| 4995 |       1 |      1 | 12127380913 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | 1010Talk | Bandwidth                                           |
+| 4087 |       1 |      1 | 5164693745  |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | 1010Talk | Broadvox                                            |
+| 4888 |       1 |      1 | 5164693050  |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | 1010Talk | Broadvox                                            |
+| 7071 |       1 |      1 | 17183719871 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | BW.1010talkresidential LI Ported Ext 1010 Wilbert Espiritu     |
+| 7070 |       1 |      1 | 17183719870 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | BW.1010talkresidential ELS Ported Ext 1009 Wilbert Espiritu    |
+| 6173 |       1 |      1 | 12127389008 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | BW.1010talk                                                    |
+| 6958 |       1 |      1 | 19254641010 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | BW.1010talkresidential                                         |
+| 5792 |       1 |      1 | 17187617482 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | 1010 Talk The Kalmans Res ELS Ported Bandwidth                 |
+| 5799 |       1 |      1 | 18669831333 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | 1010 Talk Mariam Kalman Bullies to Buddies TF Ported Bandwidth |
+| 6985 |       1 |      1 | 12127174451 |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | BW.1010talkresidential ELS Ported                              |
++------+---------+--------+-------------+-------+------+------+-------+--------------------------------------+----------------+----------------+----------------------------------------------------------------+
+[root@Kamailio-Server-A unxs]# mysql -e "select * from carrierroute order by scan_prefix limit 10" kamailio
++-------+---------+--------+-------------+-------+------+------+-------+----------------------------------+----------------+----------------+--------------------------------------------------+
+| id    | carrier | domain | scan_prefix | flags | mask | prob | strip | rewrite_host                     | rewrite_prefix | rewrite_suffix | description                                      |
++-------+---------+--------+-------------+-------+------+------+-------+----------------------------------+----------------+----------------+--------------------------------------------------+
+|  6088 |       1 |      1 | 011         |     0 |    0 |    1 |     0 | 127.0.0.10:5060                  |                |                | INTL TIME BLOCK                                  |
+|  6096 |       1 |      1 | 011686      |     0 |    0 |    1 |     0 | 127.0.0.10:5060                  |                |                | KIRIBATI                                         |
+| 11725 |       1 |      1 | 1           |     0 |    0 |    1 |     0 | 67.231.4.195                     |                |                | Bandwidth Outbound                               |
+|  2727 |       1 |      1 | 12012052440 |     0 |    0 |    1 |     0 | 24hrlocksmith.pbxhosting.net   |                |                | 24 Hour Locksmith | Bandwidth                    |
+| 11356 |       1 |      1 | 12012125140 |     0 |    0 |    1 |     0 | sipreseller.pbxhosting.net     |                |                | BW.DEMO.080714.sipreseller                       |
+|  5684 |       1 |      1 | 12012826179 |     0 |    0 |    1 |     0 | gebbshealthcare.pbxhosting.net |                |                | GeBBs LI TN Ported Bandwidth                     |
+|  5685 |       1 |      1 | 12012826185 |     0 |    0 |    1 |     0 | gebbshealthcare.pbxhosting.net |                |                | GeBBs LI TN Ported Bandwidth                     |
+|  5686 |       1 |      1 | 12012826188 |     0 |    0 |    1 |     0 | gebbshealthcare.pbxhosting.net |                |                | GeBBs LI TN Ported Bandwidth                     |
+|  5683 |       1 |      1 | 12012826194 |     0 |    0 |    1 |     0 | gebbshealthcare.pbxhosting.net |                |                | GeBBs LI TN Ported Bandwidth                     |
+| 10373 |       1 |      1 | 12013270593 |     0 |    0 |    1 |     0 | 2013273100.pbxhosting.net      |                |                | BW.LI.PORTED.062014.LovetteSilvermanConstruction |
++-------+---------+--------+-------------+-------+------+------+-------+----------------------------------+----------------+----------------+--------------------------------------------------+
+[root@Kamailio-Server-A unxs]# mysql -e "select * from carrierroute group by carrier limit 10" kamailio
++----+---------+--------+-------------+-------+------+------+-------+---------------+----------------+----------------+---------------------------+
+| id | carrier | domain | scan_prefix | flags | mask | prob | strip | rewrite_host  | rewrite_prefix | rewrite_suffix | description               |
++----+---------+--------+-------------+-------+------+------+-------+---------------+----------------+----------------+---------------------------+
+|  1 |       1 |      1 | 6506441814  |     0 |    0 |    1 |     0 | 204.11.229.70 |                |                | SIPTRUNK887204.11.224.253 |
++----+---------+--------+-------------+-------+------+------+-------+---------------+----------------+----------------+---------------------------+
+[root@Kamailio-Server-A unxs]# mysql -e "select * from carrierroute group by domain limit 10" kamailio
++----+---------+--------+-------------+-------+------+------+-------+---------------+----------------+----------------+---------------------------+
+| id | carrier | domain | scan_prefix | flags | mask | prob | strip | rewrite_host  | rewrite_prefix | rewrite_suffix | description               |
++----+---------+--------+-------------+-------+------+------+-------+---------------+----------------+----------------+---------------------------+
+|  1 |       1 |      1 | 6506441814  |     0 |    0 |    1 |     0 | 204.11.229.70 |                |                | SIPTRUNK887204.11.224.253 |
++----+---------+--------+-------------+-------+------+------+-------+---------------+----------------+----------------+---------------------------+
+[root@Kamailio-Server-A unxs]# mysql -e "select * from carrierroute group by rewrite_host limit 10" kamailio
++------+---------+--------+-------------+-------+------+------+-------+--------------------------------------+----------------+----------------+----------------------------------------------+
+| id   | carrier | domain | scan_prefix | flags | mask | prob | strip | rewrite_host                         | rewrite_prefix | rewrite_suffix | description                                  |
++------+---------+--------+-------------+-------+------+------+-------+--------------------------------------+----------------+----------------+----------------------------------------------+
+| 4087 |       1 |      1 | 5164693745  |     0 |    0 |    1 |     0 | 1010talkresidential.pbxhosting.net |                |                | 1010Talk | Broadvox                          |
+| 9977 |       1 |      1 | 17089487006 |     0 |    0 |    1 |     0 | 107.181.171.161                      |                |                | BW.LI.PORTED.060314.RiverForestMedicalCenter |
+| 6088 |       1 |      1 | 011         |     0 |    0 |    1 |     0 | 127.0.0.10:5060                      |                |                | INTL TIME BLOCK                              |
+| 2327 |       1 |      1 | 19044042020 |     0 |    0 |    1 |     0 | 1800flowers.pbxhosting.net         |                |                | 1800 Flowers TEMP | Bandwidth                |
+| 7571 |       1 |      1 | 18004678825 |     0 |    0 |    1 |     0 | 1800imstuck.pbxhosting.net         |                |                | BW.1800imstuck TF Ported                     |
+| 3686 |       1 |      1 | 2628720789  |     0 |    0 |    1 |     0 | 1stalliance.pbxhosting.net         |                |                | 1stalliance.pbxhosting.net                 |
+| 4825 |       1 |      1 | 2029994527  |     0 |    0 |    1 |     0 | 1stamericansystems.pbxhosting.net  |                |                | 1st American Systems | Broadvox              |
+| 5717 |       1 |      1 | 18562670500 |     0 |    0 |    1 |     0 | 1stmontgo-sip.pbxhosting.net       |                |                | First Montgomery Group LI New Bandwidth      |
+|  142 |       1 |      1 | 2134800011  |     0 |    0 |    1 |     0 | 1stop.pbxhosting.net               |                |                | Vitelity | LSAN DA 10                        |
+| 9666 |       1 |      1 | 12014195900 |     0 |    0 |    1 |     0 | 2013273100.pbxhosting.net          |                |                | BW.LI.051914.lovettsilverman                 |
++------+---------+--------+-------------+-------+------+------+-------+--------------------------------------+----------------+----------------+----------------------------------------------+
+
