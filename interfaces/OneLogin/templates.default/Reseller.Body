@@ -48,7 +48,7 @@
         <div class="col-xs-12 col-sm-9">
 
           <div class="jumbotron">
-	    <h4>Assign/deassign a container for a reseller</h4>
+	    <h4>Assign/deassign a container for a given reseller</h4>
           <div class="list-group">
 		<h5>{{gcMessage}}</h5>
       		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
@@ -63,7 +63,25 @@
 			type="submit" name=gcFunction value='Assign Container'>Assign Container</button>
 		<button class="btn btn-lg btn-primary btn-block" 
 			title="Select a reseller or a customer. Select a container. Then use this button to deassign or remove the container."
-			type="submit" name=gcFunction value='Assign Container'>Deassign Container</button>
+			type="submit" name=gcFunction value='Deassign Container'>Deassign Container</button>
+		<button class="btn btn-lg btn-primary btn-block" 
+			title="Select a reseller or a customer. Then use this button to generate a direct to browser CSV report."
+			type="submit" name=gcFunction value='Container Report'>Container Report</button>
+		</form>
+		<br>
+      		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
+		<input type=hidden name="gcPage" value="Reseller">
+		<input type=hidden name="guContainer" value="{{guContainer}}">
+
+       		<input maxlength="31" title='Reseller first and last name or company name'
+			type="login" id="inputCustomerName" class="form-control" placeholder="Reseller name"
+			name="gcNewHostParam1" value="{{gcNewHostParam1}}" required>
+       		<input maxlength="31" title='Customer first and last name or company name'
+			type="email" id="inputEmail" class="form-control" placeholder="Reseller email"
+			name="gcNewEmail" value="{{gcNewEmail}}" required>
+		<button class="btn btn-lg btn-primary btn-block" 
+			title="Input reseller name and email then use this button to create a reseller account"
+			type="submit" name=gcFunction value='Create Reseller'>Create Reseller</button>
 		</form>
 	  </div><!--/list-group-->
 

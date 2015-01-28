@@ -65,6 +65,7 @@
 		gcSearch: {{gcSearch}}<br>
 		guContainer: {{guContainer}}<br>
 		gcLabel: {{gcLabel}}<br>
+		gcOTPSecret: {{gcOTPSecretExists}}<br>
 		</h5>
 
           </div><!-- "jumbotron" -->

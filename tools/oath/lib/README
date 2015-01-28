@@ -1,0 +1,9 @@
+Linux x86_64 oath lib 2.2
+
+cd to this dir
+
+mkdir /usr/lib/oath
+cp -i ./liboath.a /usr/lib/oath/liboath.a
+mkdir /usr/include/liboath
+cp -i ./oath.h /usr/include/liboath/oath.h
+
