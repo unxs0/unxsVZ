@@ -8,7 +8,6 @@ AUTHOR
 	(C) 2011-2015 Gary Wallis for Unxiservice, LLC.
 	GPLv2 License applies. See LICENSE file.
 NOTES
-	This version is same as opensips agent for now.
 
 */
 
@@ -31,7 +30,7 @@ void SIPTextConnectDb(void);
 //local protos
 void ProcessDR(void);
 void unxsVZJobs(char const *cServer);
-void TextConnectOpenSIPSDb(void);
+void TextConnectKamailioDb(void);
 void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage);
 void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName,char *cServer, unsigned *uCustomerLimit);
 void Report(void);
@@ -134,7 +133,7 @@ void unxsVZJobs(char const *cServer)
 
 	//Uses login data from local.h
 	SIPTextConnectDb();
-	TextConnectOpenSIPSDb();
+	TextConnectKamailioDb();
 	guLoginClient=1;//Root user
 
 	//SIPlogfileLine("unxsVZJobs cServer",cServer,0);
@@ -325,7 +324,7 @@ void unxsVZJobs(char const *cServer)
 					uDRReload=uJob;
 
 					//Rename pending DID
-					sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_OpenSIPS_DID',uModBy=1,"
+					sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_KamailioDID',uModBy=1,"
 							"uModDate=UNIX_TIMESTAMP(NOW()) WHERE cName='cOrg_Pending_DID'"
 							" AND cValue='%s'"
 							" AND uKey=%u"
@@ -568,12 +567,12 @@ void unxsVZJobs(char const *cServer)
 					uDRReload=uJob;
 					//Update unxsVZ OpenSIPS_Attrs
 					if(cCustomerName[0])
-						sprintf(gcQuery,"UPDATE tProperty SET cValue='%.12s|%u' WHERE cName='cOrg_OpenSIPS_Attrs'"
+						sprintf(gcQuery,"UPDATE tProperty SET cValue='%.12s|%u' WHERE cName='cOrg_KamailioAttrs'"
 							" AND uKey=%u"
 							" AND uType=3",cCustomerName,uCustomerLimit,uContainer);
 					else
 						sprintf(gcQuery,"UPDATE tProperty SET cValue=CONCAT(SUBSTR(cValue,1,LOCATE('|',cValue)-1),'|%u')"
-							" WHERE cName='cOrg_OpenSIPS_Attrs'"
+							" WHERE cName='cOrg_KamailioAttrs'"
 							" AND uKey=%u"
 							" AND uType=3",uCustomerLimit,uContainer);
 					mysql_query(&gMysql,gcQuery);
@@ -687,6 +686,8 @@ void ProcessDR(void)
 {
         MYSQL_RES *res2;
         MYSQL_ROW field2;
+        MYSQL_RES *res3;
+        MYSQL_ROW field3;
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uContainer=0;
@@ -699,14 +700,16 @@ void ProcessDR(void)
 
 	//Uses login data from local.h
 	SIPTextConnectDb();
-	TextConnectOpenSIPSDb();
+	TextConnectKamailioDb();
 	guLoginClient=1;//Root user
 
-	sprintf(gcQuery,"SELECT tContainer.cHostname,tContainer.uContainer,tContainer.uOwner FROM tContainer,tGroupGlue,tGroup"
+	sprintf(gcQuery,"SELECT tContainer.cHostname,tContainer.uContainer,tContainer.uOwner,tIP.cLabel FROM tContainer,tGroupGlue,tGroup,tIP"
 			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
+			" AND tIP.uIP=tContainer.uIPv4"
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
 			" AND tGroup.cLabel LIKE '%%PBX%%'"
-			" AND tContainer.uSource=0");
+			//" AND tContainer.uSource=0");
+			" AND tContainer.uSource=0 LIMIT 2");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -726,12 +729,12 @@ void ProcessDR(void)
 		sscanf(field[2],"%u",&uOwner);
 
 		//debug only
-		//printf("%s %u\n",field[0],uContainer);
+		printf("%s %u %s\n",field[0],uContainer,field[3]);
 		uSelects++;
 
 		//Wish the OPenSIPS guys would use modern SQL var naming conventions
 		//like we do ;)
-		sprintf(gcQuery,"SELECT gwid,attrs,description FROM dr_gateways WHERE type=1 AND address='%s'",field[0]);
+		sprintf(gcQuery,"SELECT id,scan_prefix,description FROM carrierroute WHERE rewrite_host='%s'",field[0]);
 		mysql_query(&gMysqlExt,gcQuery);
 		if(mysql_errno(&gMysqlExt))
 		{
@@ -741,16 +744,11 @@ void ProcessDR(void)
 			exit(2);
 		}
 		res2=mysql_store_result(&gMysqlExt);
-		if((field2=mysql_fetch_row(res2)))
+		if(mysql_num_rows(res2)>0)
 		{
-			sscanf(field2[0],"%u",&uGwid);
-			//sprintf(cAttrs,"%.255s",field2[1]);
-			//debug only
-			//printf("gwid=%s attrs=%s\n",field2[0],field2[1]);
-
-			//Clean out
-			sprintf(gcQuery,"DELETE FROM tProperty WHERE (cName='cOrg_OpenSIPS_DID' OR"
-					" cName='cOrg_OpenSIPS_Attrs' OR cName='cOrg_CustomerName')"
+			//Clean out for given container only once at top but only if this server has data
+			sprintf(gcQuery,"DELETE FROM tProperty WHERE (cName='cOrg_KamailioDID' OR"
+					" cName='cOrg_KamailioDesc' OR cName='cOrg_KamailioLimit')"
 					" AND uType=3 AND uKey=%u",uContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -760,8 +758,16 @@ void ProcessDR(void)
 				mysql_close(&gMysqlExt);
 				exit(2);
 			}
+		}
+		unsigned uOnlyOnce=1;
+		while((field2=mysql_fetch_row(res2)))
+		{
+			sscanf(field2[0],"%u",&uGwid);
+			//debug only
+			printf("id=%s scan_prefix=%s description=%s\n",field2[0],field2[1],field2[2]);
 
-			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_OpenSIPS_Attrs',cValue='%s'"
+
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_KamailioDID',cValue='%s'"
 					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
 						field2[1],uContainer,uOwner);
 			mysql_query(&gMysql,gcQuery);
@@ -774,9 +780,9 @@ void ProcessDR(void)
 			}
 			uInserts++;
 
-			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_CustomerName',cValue='%s'"
+			sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_KamailioDesc',cValue='%s %s'"
 					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
-						field2[2],uContainer,uOwner);
+						field2[1],field2[2],uContainer,uOwner);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -786,43 +792,46 @@ void ProcessDR(void)
 				exit(2);
 			}
 			uInserts++;
-		}
-		mysql_free_result(res2);
 
-		if(uGwid)
-		{
-			sprintf(gcQuery,"SELECT prefix FROM dr_rules WHERE gwlist='%u'",uGwid);
-			mysql_query(&gMysqlExt,gcQuery);
-			if(mysql_errno(&gMysqlExt))
+			//lookup value via IP number only once
+			if(uOnlyOnce)
 			{
-				SIPlogfileLine("ProcessDR",mysql_error(&gMysqlExt),uContainer);
-				mysql_close(&gMysql);
-				mysql_close(&gMysqlExt);
-				exit(2);
-			}
-			res2=mysql_store_result(&gMysqlExt);
-			while((field2=mysql_fetch_row(res2)))
-			{
-				sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_OpenSIPS_DID',cValue='%s'"
-					",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
-						field2[0],uContainer,uOwner);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
+				sprintf(gcQuery,"SELECT key_value FROM call_limit WHERE key_name='%s'",field[3]);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
 				{
-					SIPlogfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
+					SIPlogfileLine("ProcessDR",mysql_error(&gMysqlExt),uContainer);
 					mysql_close(&gMysql);
 					mysql_close(&gMysqlExt);
 					exit(2);
 				}
-				//debug only
-				//printf("\tprefix=%s\n",field2[0]);
-				uInserts++;
-	
-			}
-			mysql_free_result(res2);
-		}
-		
-	}
+				res3=mysql_store_result(&gMysqlExt);
+				if((field3=mysql_fetch_row(res3)))
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET cName='cOrg_KamailioLimit',cValue='%s'"
+						",uType=3,uKey=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=1",
+							field3[0],uContainer,uOwner);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						SIPlogfileLine("ProcessDR",mysql_error(&gMysql),uContainer);
+						mysql_close(&gMysql);
+						mysql_close(&gMysqlExt);
+						exit(2);
+					}
+					uInserts++;
+				}
+				else
+				{
+					SIPlogfileLine("ProcessDR","No call_limit data",uContainer);
+					SIPlogfileLine("ProcessDR",field[3],uContainer);
+				}
+				mysql_free_result(res3);
+				uOnlyOnce=0;
+			}//uOnlyOnce
+		}//while container in  carrierroute
+		mysql_free_result(res2);
+	}//while container
 	mysql_free_result(res);
 
 	mysql_close(&gMysql);
@@ -834,19 +843,19 @@ void ProcessDR(void)
 }//void ProcessDR(void)
 
 
-void TextConnectOpenSIPSDb(void)
+void TextConnectKamailioDb(void)
 {
 
 #include "local.h"
 
         mysql_init(&gMysqlExt);
-        if (!mysql_real_connect(&gMysqlExt,NULL,"opensips",OPENSIPSPWD,"opensips",0,NULL,0))
+        if (!mysql_real_connect(&gMysqlExt,NULL,KAMAILIO_USER,KAMAILIO_PWD,"kamailio",0,NULL,0))
 	{
-		SIPlogfileLine("TextConnectOpenSIPSDb","mysql_real_connect()",0);
+		SIPlogfileLine("TextConnectKamailioDb","mysql_real_connect()",0);
 		exit(3);
 	}
 
-}//TextConnectOpenSIPSDb()
+}//TextConnectKamailioDb()
 
 
 void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage)
@@ -930,7 +939,7 @@ void Report(void)
 
 	//Uses login data from local.h
 	SIPTextConnectDb();
-	TextConnectOpenSIPSDb();
+	TextConnectKamailioDb();
 	guLoginClient=1;//Root user
 
 	//Here we need to limit this to PBX containers that have been assigned via tConfiguration or tProperty

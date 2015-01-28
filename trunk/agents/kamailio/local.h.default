@@ -1,2 +1,3 @@
 
-#define OPENSIPSPWD "ultrasecret"
+#define KAMAILIO_PWD "ultrasecret"
+#define KAMAILIO_USER "kamailio"
