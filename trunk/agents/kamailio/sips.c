@@ -34,6 +34,7 @@ void TextConnectKamailioDb(void);
 void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage);
 void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName,char *cServer, unsigned *uCustomerLimit);
 void Report(void);
+void ProvisionDR(void);
 
 static FILE *gSIPLfp=NULL;
 void SIPlogfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -98,9 +99,14 @@ int main(int iArgc, char *cArgv[])
 			ProcessDR();
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"ProvisionDR",11))
+		{
+			ProvisionDR();
+			goto CommonExit;
+		}
 		else if(!strncmp(cArgv[1],"Report",9))
 		{
-			Report();
+			//Report();
 			goto CommonExit;
 		}
 	}
@@ -108,12 +114,12 @@ int main(int iArgc, char *cArgv[])
 	{
 		if(!strncmp(cArgv[1],"unxsVZJobs",10))
 		{
-			unxsVZJobs(cArgv[2]);
+			//unxsVZJobs(cArgv[2]);
 			goto CommonExit;
 		}
 	}
 
-	printf("Usage: %s ProcessDR|unxsVZJobs|Report <cServer>\n",gcProgram);
+	printf("Usage: %s ProcessDR|ProvisionDR\n",gcProgram);
 
 CommonExit:
 	fclose(gSIPLfp);
@@ -709,7 +715,7 @@ void ProcessDR(void)
 			" AND tGroup.uGroup=tGroupGlue.uGroup"
 			" AND tGroup.cLabel LIKE '%%PBX%%'"
 			//" AND tContainer.uSource=0");
-			" AND tContainer.uSource=0 LIMIT 2");
+			" AND tContainer.uSource=0 LIMIT 4");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -986,3 +992,108 @@ void Report(void)
 	exit(2);
 
 }//void Report(void)
+
+
+//Provision from OpenSIPS data in backend. Merge only.
+void ProvisionDR(void)
+{
+        MYSQL_RES *res2;
+        MYSQL_ROW field2;
+        MYSQL_RES *res3;
+        //MYSQL_ROW field3;
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uContainer=0;
+	unsigned uInserts=0;
+
+	//Uses login data from local.h
+	SIPTextConnectDb();
+	TextConnectKamailioDb();
+	guLoginClient=1;//Root user
+
+	sprintf(gcQuery,"SELECT tContainer.cHostname,tContainer.uContainer,tIP.cLabel FROM tContainer,tGroupGlue,tGroup,tIP"
+			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
+			" AND tIP.uIP=tContainer.uIPv4"
+			" AND tGroup.uGroup=tGroupGlue.uGroup"
+			" AND tGroup.cLabel LIKE '%%PBX%%'"
+			" AND tContainer.uSource=0");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		SIPlogfileLine("ProvisionDR",mysql_error(&gMysql),uContainer);
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	//debug only
+	//if((field=mysql_fetch_row(res)))
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uContainer);
+
+		//debug only
+		printf("%s %u %s\n",field[0],uContainer,field[2]);
+
+		//Provision DIDs.
+		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE cName='cOrg_OpenSIPS_DID' AND uType=3 AND uKey=%u",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			SIPlogfileLine("ProvisionDR",mysql_error(&gMysql),uContainer);
+			mysql_close(&gMysql);
+			mysql_close(&gMysqlExt);
+			exit(2);
+		}
+		res2=mysql_store_result(&gMysql);
+		while((field2=mysql_fetch_row(res2)))
+		{
+
+
+			sprintf(gcQuery,"SELECT id,scan_prefix,description FROM carrierroute"
+					" WHERE rewrite_host='%s' AND scan_prefix='%s'",
+						field[0],field2[0]);
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res3=mysql_store_result(&gMysqlExt);
+			if(mysql_num_rows(res3)==0)
+			{
+				//not sure if the carrier and domain is being used or if we need to set it.
+				sprintf(gcQuery,"INSERT INTO carrierroute"
+						" SET scan_prefix='%s',rewrite_host='%s',description='%s',carrier=1,domain=1",
+								field2[0],field[0],"cOrg_OpenSIPS_DID");
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				uInserts++;
+				//debug only
+				printf("\t%s added\n",field2[0]);
+			}
+			else
+			{
+				//debug only
+				printf("\t%s already there\n",field2[0]);
+			}
+			mysql_free_result(res3);
+		}//while DID for given container
+		mysql_free_result(res2);
+	}//while container
+	mysql_free_result(res);
+
+	mysql_close(&gMysql);
+	mysql_close(&gMysqlExt);
+	printf("uInserts=%u\n",uInserts);
+	exit(0);
+
+}//void ProvisionDR(void)
+
