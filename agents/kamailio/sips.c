@@ -1068,21 +1068,21 @@ void ProvisionDR(void)
 					printf("\tStripNonNumericChars() (%s)\n",field2[0]);
 				if(field2[0][0])
 				{
-				//not sure if the carrier and domain is being used or if we need to set it.
-				sprintf(gcQuery,"INSERT INTO carrierroute"
-						" SET scan_prefix='%s',rewrite_host='%s',description='%s',carrier=1,domain=1",
-								field2[0],field[0],"cOrg_OpenSIPS_DID");
-				mysql_query(&gMysqlExt,gcQuery);
-				if(mysql_errno(&gMysqlExt))
-				{
-					SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-				uInserts++;
-				//debug only
-				printf("\t%s added\n",field2[0]);
+					//not sure if the carrier and domain is being used or if we need to set it.
+					sprintf(gcQuery,"INSERT INTO carrierroute"
+							" SET scan_prefix='%s',rewrite_host='%s',description='%s',carrier=1,domain=1",
+									field2[0],field[0],"cOrg_OpenSIPS_DID");
+					mysql_query(&gMysqlExt,gcQuery);
+					if(mysql_errno(&gMysqlExt))
+					{
+						SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
+						mysql_close(&gMysql);
+						mysql_close(&gMysqlExt);
+						exit(2);
+					}
+					uInserts++;
+					//debug only
+					printf("\t%s added\n",field2[0]);
 				}
 			}
 			else
