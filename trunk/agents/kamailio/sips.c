@@ -35,6 +35,7 @@ void UpdateJob(unsigned uStatus,unsigned uContainer,unsigned uJob,char *cMessage
 void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerName,char *cServer, unsigned *uCustomerLimit);
 void Report(void);
 void ProvisionDR(void);
+unsigned StripNonNumericChars(char *cInput);
 
 static FILE *gSIPLfp=NULL;
 void SIPlogfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -1063,6 +1064,10 @@ void ProvisionDR(void)
 			res3=mysql_store_result(&gMysqlExt);
 			if(mysql_num_rows(res3)==0)
 			{
+				if(StripNonNumericChars(field2[0]))
+					printf("\tStripNonNumericChars() (%s)\n",field2[0]);
+				if(field2[0][0])
+				{
 				//not sure if the carrier and domain is being used or if we need to set it.
 				sprintf(gcQuery,"INSERT INTO carrierroute"
 						" SET scan_prefix='%s',rewrite_host='%s',description='%s',carrier=1,domain=1",
@@ -1078,6 +1083,7 @@ void ProvisionDR(void)
 				uInserts++;
 				//debug only
 				printf("\t%s added\n",field2[0]);
+				}
 			}
 			else
 			{
@@ -1097,3 +1103,19 @@ void ProvisionDR(void)
 
 }//void ProvisionDR(void)
 
+#include <ctype.h>
+unsigned StripNonNumericChars(char *cInput)
+{
+	register unsigned i;
+	unsigned uStrip=0;
+	for(i=0;cInput[i];i++)
+	{
+		if(!isdigit(cInput[i]))
+		{
+			uStrip++;
+			break;
+		}
+	}
+	cInput[i]=0;
+	return(uStrip);
+}//void StripNonNumericChars(char *cInput)
