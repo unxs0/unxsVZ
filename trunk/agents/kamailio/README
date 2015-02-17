@@ -152,3 +152,63 @@ Real data for analyzing dOpenSource carrierroute:
 +---------------------+-------------+------+-----+---------+----------------+
 
 
+address table notes:
+
+We need to populate this table with the PBX IP numbers.
+
+mysql> describe address;
++---------+----------------------+------+-----+---------+----------------+
+| Field   | Type                 | Null | Key | Default | Extra          |
++---------+----------------------+------+-----+---------+----------------+
+| id      | int(10) unsigned     | NO   | PRI | NULL    | auto_increment |
+| grp     | int(11) unsigned     | NO   |     | 1       |                |
+| ip_addr | varchar(50)          | NO   |     | NULL    |                |
+| mask    | int(11)              | NO   |     | 32      |                |
+| port    | smallint(5) unsigned | NO   |     | 0       |                |
+| tag     | varchar(64)          | YES  |     | NULL    |                |
++---------+----------------------+------+-----+---------+----------------+
+6 rows in set (0.00 sec)
+
+mysql> select count(*) from address;
++----------+
+| count(*) |
++----------+
+|     1392 |
++----------+
+1 row in set (0.00 sec)
+
+mysql> select * from address limit 10;
++----+-----+-----------------+------+------+------+
+| id | grp | ip_addr         | mask | port | tag  |
++----+-----+-----------------+------+------+------+
+|  1 |   1 | 154.121.136.45  |   32 |    0 | NULL |
+|  2 |   1 | 65.210.248.169  |   32 |    0 | NULL |
+|  3 |   1 | 65.210.243.9    |   32 |    0 | NULL |
+|  4 |   1 | 60.49.53.135    |   32 |    0 | NULL |
+|  5 |   1 | 179.200.101.117 |   32 |    0 | NULL |
+|  6 |   1 | 172.252.221.23  |   32 |    0 | NULL |
+|  7 |   1 | 154.121.136.48  |   32 |    0 | NULL |
+|  8 |   1 | 154.121.136.72  |   32 |    0 | NULL |
+|  9 |   1 | 159.200.101.103 |   32 |    0 | NULL |
+| 10 |   1 | 67.49.53.112    |   32 |    0 | NULL |
++----+-----+-----------------+------+------+------+
+10 rows in set (0.00 sec)
+
+mysql> select * from address where grp!=1 limit 10;
+Empty set (0.00 sec)
+
+mysql> select * from address where mask!=32 limit 10;
++------+-----+-------------+------+------+------+
+| id   | grp | ip_addr     | mask | port | tag  |
++------+-----+-------------+------+------+------+
+| 1387 |   1 | 65.56.142.0 |   24 |    0 | NULL |
++------+-----+-------------+------+------+------+
+1 row in set (0.00 sec)
+
+mysql> select * from address where port!=0 limit 10;
+Empty set (0.00 sec)
+
+mysql> select * from address where tag is not null limit 10;
+Empty set (0.00 sec)
+
+
