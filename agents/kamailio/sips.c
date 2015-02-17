@@ -36,6 +36,7 @@ void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerNa
 void Report(void);
 void ProvisionDR(void);
 unsigned StripNonNumericChars(char *cInput);
+unsigned StripNonIPv4Chars(char *cInput);
 
 static FILE *gSIPLfp=NULL;
 void SIPlogfileLine(const char *cFunction,const char *cLogline,const unsigned uContainer)
@@ -131,560 +132,6 @@ CommonExit:
 
 void unxsVZJobs(char const *cServer)
 {
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-        MYSQL_RES *res2;
-        MYSQL_ROW field2;
-	unsigned uDRReload=0;
-	unsigned uContainer;
-
-	//Uses login data from local.h
-	SIPTextConnectDb();
-	TextConnectKamailioDb();
-	guLoginClient=1;//Root user
-
-	//SIPlogfileLine("unxsVZJobs cServer",cServer,0);
-
-	sprintf(gcQuery,"SELECT uJob,uDatacenter,uNode,uContainer,uOwner,cJobName,cJobData FROM tJob"
-			" WHERE uJobStatus=10"
-			" AND cJobName LIKE 'unxsSIPS%%'"
-			" AND cJobData LIKE '%%cServer=%s;%%'"
-			" AND uJobDate<=UNIX_TIMESTAMP(NOW()) LIMIT 100",cServer);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		SIPlogfileLine("unxsVZJobs",mysql_error(&gMysql),0);
-		mysql_close(&gMysql);
-		exit(2);
-	}
-        res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		char cDID[16]={""};
-		char cHostname[64]={""};
-		char cJobName[33]={""};
-		char cCustomerName[33]={""};
-		char cJobServer[32]={""};
-		char cMessage[128]={""};
-		unsigned uJob=0;
-		unsigned uDatacenter=0;
-		unsigned uNode=0;
-		unsigned uCustomerLimit=0;
-		uContainer=0;
-		unsigned uOwner=0;
-		unsigned uGwid=0;//OpenSIPS schema
-
-		sscanf(field[0],"%u",&uJob);
-		sscanf(field[1],"%u",&uDatacenter);
-		sscanf(field[2],"%u",&uNode);
-		sscanf(field[3],"%u",&uContainer);
-		sscanf(field[4],"%u",&uOwner);
-		sprintf(cJobName,"%.32s",field[5]);
-
-		//We only run jobs for us. Since the tJob queue was designed for
-		//for nodes only we added the cServer to the cJobData.
-		ParseDIDJobData(field[6],cDID,cHostname,cCustomerName,cJobServer,&uCustomerLimit);
-		//debug only
-		SIPlogfileLine("unxsVZJobs cJobServer",cJobServer,0);
-		SIPlogfileLine("unxsVZJobs cDID",cDID,uJob);
-		if(strcmp(cJobServer,cServer))
-			continue;
-
-		if(!strncmp(cJobName,"unxsSIPSNewDID",14))
-		{
-			//Update tJob running
-			UpdateJob(2,uContainer,uJob,"");
-
-			//Make sure PBX is registered
-			//OpenSIPS v ok.
-			sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
-			mysql_query(&gMysqlExt,gcQuery);
-			if(mysql_errno(&gMysqlExt))
-			{
-				//Update tJob error
-				UpdateJob(14,uContainer,uJob,"SELECT gwid,attrs FROM dr_gateways ERROR");
-				SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
-				mysql_close(&gMysql);
-				mysql_close(&gMysqlExt);
-				exit(2);
-			}
-			res2=mysql_store_result(&gMysqlExt);
-			if((field2=mysql_fetch_row(res2)))
-				sscanf(field2[0],"%u",&uGwid);
-			mysql_free_result(res2);
-
-			//If unxsVZ.tProperty cOrg_LinesContracted exists we can safely register and get a new uGwid
-			if(!uGwid)
-			{
-        			MYSQL_RES *res;
-			        MYSQL_ROW field;
-				unsigned uLinesContracted=0;
-				char cCustomerName[64]={""};
-
-				sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cOrg_LinesContracted'",
-					uContainer);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					//Update tJob error
-					UpdateJob(14,uContainer,uJob,"SELECT cValue FROM tProperty w/cOrg_LinesContracted ERROR");
-					SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysql),0);
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-			        res=mysql_store_result(&gMysql);
-				if((field=mysql_fetch_row(res)))
-					sscanf(field[0],"%u",&uLinesContracted);
-				mysql_free_result(res);
-
-				sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='cOrg_CustomerName'",
-					uContainer);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					//Update tJob error
-					UpdateJob(14,uContainer,uJob,"SELECT cValue FROM tProperty w/cOrg_CustomerName ERROR");
-					SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysql),0);
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-			        res=mysql_store_result(&gMysql);
-				if((field=mysql_fetch_row(res)))
-					sprintf(cCustomerName,"%.63s",field[0]);
-				mysql_free_result(res);
-
-				if(!cCustomerName[0])
-					sprintf(cCustomerName,"%.63s",cHostname);
-				
-				if(uLinesContracted)
-				{
-					//gwid    type    address strip   pri_prefix      attrs   probe_mode      description
-					sprintf(gcQuery,"INSERT INTO dr_gateways SET"
-							" type=1,"
-							" address='%s',"
-							" attrs='%.12s|%u',"
-							" description='%s'"
-									,cHostname,cHostname,uLinesContracted,cCustomerName);
-					mysql_query(&gMysqlExt,gcQuery);
-					if(mysql_errno(&gMysqlExt))
-					{
-						//Update tJob error
-						UpdateJob(14,uContainer,uJob,"INSERT INTO dr_gateways ERROR");
-						SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
-						mysql_close(&gMysql);
-						mysql_close(&gMysqlExt);
-						exit(2);
-					}
-					SIPlogfileLine("unxsSIPSNewDID","dr_gateways record added",uContainer);
-					uGwid=mysql_insert_id(&gMysqlExt);
-				}
-				else
-				{
-					SIPlogfileLine("unxsSIPSNewDID","No uLinesContracted job ignored",uContainer);
-					sprintf(cMessage,"Done");
-				}
-			}
-
-			if(uGwid)
-			{
-				//Add new DID only if not already in table
-				sprintf(gcQuery,"SELECT prefix FROM dr_rules WHERE gwlist='%u' AND prefix='%s'",
-								uGwid,cDID);
-				mysql_query(&gMysqlExt,gcQuery);
-				if(mysql_errno(&gMysqlExt))
-				{
-					//Update tJob error
-					UpdateJob(14,uContainer,uJob,"SELECT prefix FROM dr_rules ERROR");
-					SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-				res2=mysql_store_result(&gMysqlExt);
-				if(mysql_num_rows(res2)==0)
-				{
-					sprintf(gcQuery,"INSERT INTO dr_rules SET"
-							" groupid=1,"//Magic number TODO! 1 is for PBX, 2 is the id for trunks.
-							" prefix='%s',"
-							" gwlist='%u',"
-							" description='%s'",
-								cDID,uGwid,cHostname);
-					//debug only
-					//printf("%s\n",gcQuery);
-					mysql_query(&gMysqlExt,gcQuery);
-					if(mysql_errno(&gMysqlExt))
-					{
-						//Update tJob error
-						UpdateJob(14,uContainer,uJob,"INSERT INTO dr_rules ERROR");
-						SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysqlExt),uContainer);
-						mysql_close(&gMysql);
-						mysql_close(&gMysqlExt);
-						exit(2);
-					}
-
-					sprintf(cMessage,"Added %.11s for %.32s",cDID,cHostname);
-					//debug only
-					//printf("%s\n",cMessage);
-
-					uDRReload=uJob;
-
-					//Rename pending DID
-					sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_KamailioDID',uModBy=1,"
-							"uModDate=UNIX_TIMESTAMP(NOW()) WHERE cName='cOrg_Pending_DID'"
-							" AND cValue='%s'"
-							" AND uKey=%u"
-							" AND uType=3",cDID,uContainer);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-					{
-						//Update tJob error
-						SIPlogfileLine("unxsSIPSNewDID",mysql_error(&gMysql),uContainer);
-						UpdateJob(14,uContainer,uJob,"UPDATE tProperty ERROR 1");
-						mysql_close(&gMysql);
-						mysql_close(&gMysqlExt);
-						exit(2);
-					}
-				}
-				else
-				{
-					sprintf(cMessage,"%.11s for %.32s in dr_rules",cDID,cHostname);
-					//debug only
-					//printf("%s\n",cMessage);
-				}
-			}
-			else
-			{
-				sprintf(cMessage,"%.32s not in dr_gateways",cHostname);
-				//debug only
-				//printf("%s\n",cMessage);
-			}
-
-			//Update tJob OK
-			UpdateJob(3,uContainer,uJob,cMessage);
-			SIPlogfileLine("unxsSIPSNewDID",cMessage,uContainer);
-
-		}//unxsSIPSNewDID
-		else if(!strncmp(cJobName,"unxsSIPSRemoveDID",17))
-		{
-			//Update tJob running
-			UpdateJob(2,uContainer,uJob,"");
-
-			//Make sure PBX is registered
-			sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
-			mysql_query(&gMysqlExt,gcQuery);
-			if(mysql_errno(&gMysqlExt))
-			{
-				//Update tJob error
-				UpdateJob(14,uContainer,uJob,"SELECT gwid,attrs FROM dr_gateways ERROR");
-				SIPlogfileLine("unxsSIPSRemoveDID",mysql_error(&gMysqlExt),uContainer);
-				mysql_close(&gMysql);
-				mysql_close(&gMysqlExt);
-				exit(2);
-			}
-			res2=mysql_store_result(&gMysqlExt);
-			if((field2=mysql_fetch_row(res2)))
-				sscanf(field2[0],"%u",&uGwid);
-			mysql_free_result(res2);
-
-			if(uGwid)
-			{
-				//Remove DID
-				sprintf(gcQuery,"DELETE FROM dr_rules WHERE gwlist='%u' AND prefix='%s'",
-								uGwid,cDID);
-				mysql_query(&gMysqlExt,gcQuery);
-				if(mysql_errno(&gMysqlExt))
-				{
-					//Update tJob error
-					UpdateJob(14,uContainer,uJob,"DELETE FROM dr_rules ERROR");
-					SIPlogfileLine("unxsSIPSRemoveDID",mysql_error(&gMysqlExt),uContainer);
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-
-				sprintf(cMessage,"Removed %.11s for %.32s",cDID,cHostname);
-				//debug only
-				//printf("%s\n",cMessage);
-
-				uDRReload=uJob;
-
-				//Remove from unxsVZ
-				sprintf(gcQuery,"DELETE FROM tProperty WHERE cName='cOrg_Remove_DID'"
-							" AND cValue='%s'"
-							" AND uKey=%u"
-							" AND uType=3",cDID,uContainer);
-					mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					//Update tJob error
-					UpdateJob(14,uContainer,uJob,"DELETE FROM tProperty ERROR");
-					SIPlogfileLine("unxsSIPSRemoveDID",mysql_error(&gMysql),uContainer);
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-			}
-			else
-			{
-				sprintf(cMessage,"%.32s not in dr_gateways",cHostname);
-				//debug only
-				//printf("%s\n",cMessage);
-			}
-
-			//Update tJob OK
-			UpdateJob(3,uContainer,uJob,cMessage);
-			SIPlogfileLine("unxsSIPSRemoveDID",cMessage,uContainer);
-
-		}//unxsSIPSRemoveDID
-		else if(!strncmp(cJobName,"unxsSIPSRemoveFromProxy",23))
-		{
-			//Update tJob running
-			UpdateJob(2,uContainer,uJob,"");
-
-			//Make sure PBX is registered
-			sprintf(gcQuery,"SELECT gwid,attrs FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
-			mysql_query(&gMysqlExt,gcQuery);
-			if(mysql_errno(&gMysqlExt))
-			{
-				//Update tJob error
-				UpdateJob(14,uContainer,uJob,"SELECT gwid,attrs FROM dr_gateways ERROR");
-				SIPlogfileLine("unxsSIPSRemoveFromProxy",mysql_error(&gMysqlExt),uContainer);
-				mysql_close(&gMysql);
-				mysql_close(&gMysqlExt);
-				exit(2);
-			}
-			res2=mysql_store_result(&gMysqlExt);
-			if((field2=mysql_fetch_row(res2)))
-				sscanf(field2[0],"%u",&uGwid);
-			mysql_free_result(res2);
-
-			if(uGwid)
-			{
-				//Remove ALL DIDs
-				sprintf(gcQuery,"DELETE FROM dr_rules WHERE gwlist='%u'",uGwid);
-				mysql_query(&gMysqlExt,gcQuery);
-				if(mysql_errno(&gMysqlExt))
-				{
-					//Update tJob error
-					UpdateJob(14,uContainer,uJob,"DELETE FROM dr_rules ERROR");
-					SIPlogfileLine("unxsSIPSRemoveFromProxy",mysql_error(&gMysqlExt),uContainer);
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-
-				sprintf(cMessage,"Removed all DIDs from %.32s",cHostname);
-				//debug only
-				//printf("%s\n",cMessage);
-
-				//Remove GW
-				sprintf(gcQuery,"DELETE FROM dr_gateways WHERE gwid='%u'",uGwid);
-				mysql_query(&gMysqlExt,gcQuery);
-				if(mysql_errno(&gMysqlExt))
-				{
-					//Update tJob error
-					UpdateJob(14,uContainer,uJob,"DELETE FROM dr_gateways ERROR");
-					SIPlogfileLine("unxsSIPSRemoveFromProxy",mysql_error(&gMysqlExt),uContainer);
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-
-				sprintf(cMessage,"Removed %.32s",cHostname);
-				//debug only
-				//printf("%s\n",cMessage);
-
-				uDRReload=uJob;
-
-			}
-			else
-			{
-				sprintf(cMessage,"%.32s not in dr_gateways",cHostname);
-				//debug only
-				//printf("%s\n",cMessage);
-			}
-
-			//Update tJob OK
-			UpdateJob(3,uContainer,uJob,cMessage);
-			SIPlogfileLine("unxsSIPSRemoveFromProxy",cMessage,uContainer);
-
-		}//unxsSIPSRemoveFromProxy
-		else if(!strncmp(cJobName,"unxsSIPSModCustomerName",22))
-		{
-			//Update tJob running
-			UpdateJob(2,uContainer,uJob,"");
-
-			//Make sure PBX is registered
-			sprintf(gcQuery,"SELECT gwid FROM dr_gateways WHERE type=1 AND address='%s'",cHostname);
-			mysql_query(&gMysqlExt,gcQuery);
-			if(mysql_errno(&gMysqlExt))
-			{
-				//Update tJob error
-				UpdateJob(14,uContainer,uJob,"SELECT gwid FROM dr_gateways");
-				SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
-				mysql_close(&gMysql);
-				mysql_close(&gMysqlExt);
-				exit(2);
-			}
-			res2=mysql_store_result(&gMysqlExt);
-			if((field2=mysql_fetch_row(res2)))
-				sscanf(field2[0],"%u",&uGwid);
-			mysql_free_result(res2);
-
-			if(uGwid)
-			{
-
-				if(cCustomerName[0])
-				{
-					//Update description
-					sprintf(gcQuery,"UPDATE dr_gateways SET description='%s' WHERE gwid='%u'",cCustomerName,uGwid);
-					mysql_query(&gMysqlExt,gcQuery);
-					if(mysql_errno(&gMysqlExt))
-					{
-						//Update tJob error
-						SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
-						UpdateJob(14,uContainer,uJob,"UPDATE dr_gateways ERROR1");
-						mysql_close(&gMysql);
-						mysql_close(&gMysqlExt);
-						exit(2);
-					}
-				}
-
-				if(uCustomerLimit)
-				{
-					//Update attrs
-					if(cCustomerName[0])
-						sprintf(gcQuery,"UPDATE dr_gateways SET attrs='%.12s|%u'"
-									" WHERE gwid='%u'",cCustomerName,uCustomerLimit,uGwid);
-					else
-						sprintf(gcQuery,"UPDATE dr_gateways SET attrs=CONCAT(SUBSTR(attrs,1,LOCATE('|',attrs)-1),'|%u')"
-									" WHERE gwid='%u'",uCustomerLimit,uGwid);
-					mysql_query(&gMysqlExt,gcQuery);
-					if(mysql_errno(&gMysqlExt))
-					{
-						//Update tJob error
-						SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysqlExt),uContainer);
-						UpdateJob(14,uContainer,uJob,"UPDATE dr_gateways ERROR2");
-						mysql_close(&gMysql);
-						mysql_close(&gMysqlExt);
-						exit(2);
-					}
-					uDRReload=uJob;
-					//Update unxsVZ OpenSIPS_Attrs
-					if(cCustomerName[0])
-						sprintf(gcQuery,"UPDATE tProperty SET cValue='%.12s|%u' WHERE cName='cOrg_KamailioAttrs'"
-							" AND uKey=%u"
-							" AND uType=3",cCustomerName,uCustomerLimit,uContainer);
-					else
-						sprintf(gcQuery,"UPDATE tProperty SET cValue=CONCAT(SUBSTR(cValue,1,LOCATE('|',cValue)-1),'|%u')"
-							" WHERE cName='cOrg_KamailioAttrs'"
-							" AND uKey=%u"
-							" AND uType=3",uCustomerLimit,uContainer);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-					{
-						//Update tJob error
-						UpdateJob(14,uContainer,uJob,"UPDATE tProperty ERROR");
-						SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
-						mysql_close(&gMysql);
-						mysql_close(&gMysqlExt);
-						exit(2);
-					}
-				}
-
-				//Delete previous
-				sprintf(gcQuery,"DELETE FROM tProperty"
-						" WHERE cName='cOrg_CustomerName'"
-						" AND uKey=%u"
-						" AND uType=3",uContainer);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					//Update tJob error
-					SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
-					UpdateJob(14,uContainer,uJob,"DELETE FROM tProperty ERROR");
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-
-
-				//Rename pending name change
-				if(cCustomerName[0])
-					sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_CustomerName',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()),cValue='%s'"
-						" WHERE cName='cOrg_CustomerMod'"
-						" AND uKey=%u"
-						" AND uType=3",cCustomerName,uContainer);
-				else
-					sprintf(gcQuery,"UPDATE tProperty SET cName='cOrg_CustomerName',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
-						" WHERE cName='cOrg_CustomerMod'"
-						" AND uKey=%u"
-						" AND uType=3",uContainer);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					//Update tJob error
-					SIPlogfileLine("unxsSIPSModCustomerName",mysql_error(&gMysql),uContainer);
-					UpdateJob(14,uContainer,uJob,"UPDATE tProperty ERROR 2");
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-
-				sprintf(cMessage,"Updated %.11s for %.32s/%u",cCustomerName,cHostname,uCustomerLimit);
-				//debug only
-				//printf("%s\n",cMessage);
-			}
-			else
-			{
-				sprintf(cMessage,"%.32s not in dr_gateways",cHostname);
-				//debug only
-				//printf("%s\n",cMessage);
-			}
-
-			//Update tJob OK
-			UpdateJob(3,uContainer,uJob,cMessage);
-			SIPlogfileLine("unxsSIPSModCustomerName",cMessage,uContainer);
-
-		}//unxsSIPSModCustomerName
-		else if(!strncmp(cJobName,"unxsSIPSReload",14))
-		{
-			SIPlogfileLine("unxsSIPSReload","done",0);
-			UpdateJob(3,0,uJob,"unxsSIPSReload initiated");
-			uDRReload=uJob;
-		}
-	}
-	mysql_free_result(res);
-
-	if(uDRReload)
-	{
-		//debug only
-		//printf("Reloading DR rules...\n");
-		//sprintf(gcQuery,"/usr/sbin/opensipsctl fifo dr_reload");	
-		//SIPlogfileLine("unxsVZJobs","opensipsctl fifo dr_reload has been turned off",uContainer);
-		sprintf(gcQuery,"/usr/sbin/dr_reload.py");	
-		if(system(gcQuery))
-		{
-			SIPlogfileLine("unxsVZJobs",gcQuery,uContainer);
-			//debug only
-			//printf("Failed!\n");
-			//At least mark the last one (uDRReload=tJob.uJob) as error to notify operator
-			UpdateJob(14,0,uDRReload,gcQuery);
-		}
-		else
-		{
-			SIPlogfileLine("unxsVZJobs","DR rules reloaded ok",uContainer);
-			//debug only
-			//printf("Done\n");
-		}
-	}
-
-	mysql_close(&gMysql);
-	mysql_close(&gMysqlExt);
-	exit(0);
-
 
 }//void unxsVZJobs()
 
@@ -939,58 +386,6 @@ void ParseDIDJobData(char *cJobData,char *cDID,char *cHostname,char *cCustomerNa
 
 void Report(void)
 {
-        MYSQL_RES *res2;
-        MYSQL_ROW field2;
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	//Uses login data from local.h
-	SIPTextConnectDb();
-	TextConnectKamailioDb();
-	guLoginClient=1;//Root user
-
-	//Here we need to limit this to PBX containers that have been assigned via tConfiguration or tProperty
-	//to use the SIP server this is run on via hostname cHostname.
-	sprintf(gcQuery,"SELECT tContainer.cHostname FROM tContainer,tGroupGlue,tGroup"
-			" WHERE tGroupGlue.uContainer=tContainer.uContainer"
-			" AND tGroup.uGroup=tGroupGlue.uGroup"
-			" AND tGroup.cLabel LIKE '%%PBX%%'"
-			" AND tContainer.uSource=0"
-			" AND tContainer.uStatus=%u ORDER BY tContainer.cHostname",uACTIVE);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		SIPlogfileLine("Report",mysql_error(&gMysql),0);
-		mysql_close(&gMysql);
-		exit(2);
-	}
-        res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		printf("%s",field[0]);
-
-		sprintf(gcQuery,"SELECT gwid,attrs,description FROM dr_gateways WHERE type=1 AND address='%s'",field[0]);
-		mysql_query(&gMysqlExt,gcQuery);
-		if(mysql_errno(&gMysqlExt))
-		{
-			SIPlogfileLine("Report",mysql_error(&gMysqlExt),0);
-			mysql_close(&gMysql);
-			mysql_close(&gMysqlExt);
-			exit(2);
-		}
-		res2=mysql_store_result(&gMysqlExt);
-		if((field2=mysql_fetch_row(res2)))
-		{
-			printf(" gwid:%s attrs:%s description:%s\n",field2[0],field2[1],field2[2]);
-		}
-		else
-		{
-			printf(" not found\n");
-		}
-	}
-	mysql_close(&gMysql);
-	mysql_close(&gMysqlExt);
-	exit(2);
 
 }//void Report(void)
 
@@ -1035,6 +430,48 @@ void ProvisionDR(void)
 		//debug only
 		printf("%s %u %s\n",field[0],uContainer,field[2]);
 
+		//Provision IPs that are allowed to use this SIP proxy
+		sprintf(gcQuery,"SELECT id FROM address"
+					" WHERE ip_addr='%s' AND grp=1 AND mask=32 AND port=0",
+						field[2]);
+		mysql_query(&gMysqlExt,gcQuery);
+		if(mysql_errno(&gMysqlExt))
+		{
+			SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
+			mysql_close(&gMysql);
+			mysql_close(&gMysqlExt);
+			exit(2);
+		}
+		res3=mysql_store_result(&gMysqlExt);
+		if(mysql_num_rows(res3)==0)
+		{
+			if(StripNonIPv4Chars(field[2]))
+					printf("\tStripNonIPv4Chars(0) (%s)\n",field[2]);
+			if(field[2][0])
+			{
+				sprintf(gcQuery,"INSERT INTO address"
+							" SET ip_addr='%s',grp=1,mask=32,port=0",field[2]);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				uInserts++;
+				//debug only
+				printf("\t%s added\n",field[2]);
+			}
+		}
+		else
+		{
+			//debug only
+			printf("\t%s already there\n",field[2]);
+		}
+
+
+		//Next in main loop
 		//Provision DIDs.
 		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE cName='cOrg_OpenSIPS_DID' AND uType=3 AND uKey=%u",uContainer);
 		mysql_query(&gMysql,gcQuery);
@@ -1065,10 +502,9 @@ void ProvisionDR(void)
 			if(mysql_num_rows(res3)==0)
 			{
 				if(StripNonNumericChars(field2[0]))
-					printf("\tStripNonNumericChars() (%s)\n",field2[0]);
+					printf("\tStripNonNumericChars(1) (%s)\n",field2[0]);
 				if(field2[0][0])
 				{
-					//not sure if the carrier and domain is being used or if we need to set it.
 					sprintf(gcQuery,"INSERT INTO carrierroute"
 							" SET scan_prefix='%s',rewrite_host='%s',description='%s',carrier=1,domain=1",
 									field2[0],field[0],"cOrg_OpenSIPS_DID");
@@ -1090,9 +526,7 @@ void ProvisionDR(void)
 				//debug only
 				printf("\t%s already there\n",field2[0]);
 			}
-			mysql_free_result(res3);
 		}//while DID for given container
-		mysql_free_result(res2);
 	}//while container
 	mysql_free_result(res);
 
@@ -1119,3 +553,20 @@ unsigned StripNonNumericChars(char *cInput)
 	cInput[i]=0;
 	return(uStrip);
 }//void StripNonNumericChars(char *cInput)
+
+
+unsigned StripNonIPv4Chars(char *cInput)
+{
+	register unsigned i;
+	unsigned uStrip=0;
+	for(i=0;cInput[i];i++)
+	{
+		if(!isdigit(cInput[i]) && cInput[i]!='.')
+		{
+			uStrip++;
+			break;
+		}
+	}
+	cInput[i]=0;
+	return(uStrip);
+}//void StripNonIPv4Chars(char *cInput)
