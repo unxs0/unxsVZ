@@ -430,6 +430,50 @@ void ProvisionDR(void)
 		//debug only
 		printf("%s %u %s\n",field[0],uContainer,field[2]);
 
+		//call_limit table
+		//key_type | value_type
+		//Provision concurrent i/o call limit per IP
+		sprintf(gcQuery,"SELECT id,key_value FROM call_limit"
+					" WHERE key_name='%s' AND key_type=0 AND value_type=1",
+						field[2]);
+		mysql_query(&gMysqlExt,gcQuery);
+		if(mysql_errno(&gMysqlExt))
+		{
+			SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
+			mysql_close(&gMysql);
+			mysql_close(&gMysqlExt);
+			exit(2);
+		}
+		res3=mysql_store_result(&gMysqlExt);
+		if(mysql_num_rows(res3)==0)
+		{
+			if(StripNonIPv4Chars(field[2]))
+					printf("\tStripNonIPv4Chars(0) (%s)\n",field[2]);
+			if(field[2][0])
+			{
+				sprintf(gcQuery,"INSERT INTO call_limit"
+							" SET key_name='%s',key_type=0,value_type=1,key_value='50'",field[2]);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				uInserts++;
+				//debug only
+				printf("\tcall_limit %s added\n",field[2]);
+			}
+		}
+		else
+		{
+			//next we will update if key_value is different from what we have in the backend.
+			//debug only
+			printf("\tcall_limit %s already there\n",field[2]);
+		}
+
+		//address table
 		//Provision IPs that are allowed to use this SIP proxy
 		sprintf(gcQuery,"SELECT id FROM address"
 					" WHERE ip_addr='%s' AND grp=1 AND mask=32 AND port=0",
