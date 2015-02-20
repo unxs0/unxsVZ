@@ -494,7 +494,7 @@ void ProvisionDR(void)
 			if(field[2][0])
 			{
 				sprintf(gcQuery,"INSERT INTO address"
-							" SET ip_addr='%s',grp=1,mask=32,port=0",field[2]);
+							" SET ip_addr='%s',grp=1,mask=32,port=0,tag='unxsSIPS %.54s'",field[2],field[0]);
 				mysql_query(&gMysqlExt,gcQuery);
 				if(mysql_errno(&gMysqlExt))
 				{
@@ -550,7 +550,7 @@ void ProvisionDR(void)
 				if(field2[0][0])
 				{
 					sprintf(gcQuery,"INSERT INTO carrierroute"
-							" SET scan_prefix='%s',rewrite_host='%s',description='%s',carrier=1,domain=1",
+							" SET scan_prefix='%s',rewrite_host='%s',description='%s',carrier=1,domain=1,prob=1",
 									field2[0],field[0],"cOrg_OpenSIPS_DID");
 					mysql_query(&gMysqlExt,gcQuery);
 					if(mysql_errno(&gMysqlExt))
