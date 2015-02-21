@@ -2583,7 +2583,7 @@ void funcContainerInfo(FILE *fp)
 
 	//SUBSTR based on 5 char cOrg_ prefix
 	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName LIKE 'cOrg_%%'"
-			" AND cName!='cOrg_Extension' AND cName!='cOrg_OpenSIPS_DID' AND cName!='cOrg_SIPTrunk'"
+			" AND cName!='cOrg_Extension' AND cName!='cOrg_OpenSIPS_DID' AND cName!='cOrg_SIPTrunk' AND cName NOT LIKE 'cOrg_Kamailio%%'"
 			" AND cName NOT LIKE 'cOrg_MCS%%' AND cName NOT LIKE 'cOrg_QOS%%' ORDER BY cName",guContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
