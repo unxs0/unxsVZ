@@ -1,7 +1,7 @@
 Summary: unxsadmin provides the http shared content and httpd conf.d file for all unxsVZ web admins
 Name: unxsadmin
 Version: 1.7
-Release: 2
+Release: 3
 License: GPL
 Group: System Environment/Applications
 Source: http://unixservice.com/source/unxsadmin-1.7.tar.gz
