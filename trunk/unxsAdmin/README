@@ -27,19 +27,34 @@ would add at least:
 ---
 Notes on quick package building
 
-cd unxsVZ
-tar czvf unxsAdmin.tar.gz unxsAdmin/ --exclude .svn
-mv unxsAdmin.tar.gz ../rpm-staging/
-cd ../rpm-staging
-tar xzf unxsAdmin.tar.gz
-rm unxsAdmin.tar.gz
-mv unxsAdmin unxsadmin-1.0
-tar czvf unxsadmin-1.0.tar.gz unxsadmin-1.0/
-cp unxsadmin-1.0.tar.gz /usr/src/redhat/SOURCES
-cp unxsadmin-1.0/unxsadmin-1.0-1.spec /usr/src/redhat/SPECS
-rm -r unxsadmin-1.0
-cd /usr/src/redhat/SPECS
-rpmbuild -ba unxsadmin-1.0-1.spec
+yum install rpm-build,rpm-utils
+su unxs
+$ mkdir -p ~/rpm/{BUILD,RPMS,SOURCES,SRPMS,SPECS,tmp}
+$ mkdir ~/rpm/RPMS/{i386,i586,i686,noarch}
+$ vi ~/.rpmmacros
 
-sftp the src and binary rpms to the publication server
-sftp the unxsadmin-1.0.tar.gz to the source server as specified in the spec file
+file content:
+%_topdir	/home/unxs/rpm
+%_tmppath	/home/unxs/rpm/tmp
+
+
+tweak the spec file
+make sure it uses
+
+BuildRoot: %{_builddir}/${name}-root
+
+add all dirs and files to:
+
+/home/unxs/rpm/BUILD/unxsadmin-root/
+
+then
+
+$ rpmbuild -bb unxsadmin.spec
+
+check with
+ 
+$ rpm -qlp /home/unxs/rpm/RPMS/noarch/unxsadmin-V.n-m.noarch.rpm
+
+then if on yum server install
+
+$ sudo /usr/bin/createrepo /var/www/html/rpm
