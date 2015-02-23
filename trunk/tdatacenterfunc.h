@@ -375,9 +375,12 @@ void ExttDatacenterButtons(void)
 					" name=gcCommand value='Activate Firewalls'><br>");
 			}
 			//tGroupNavList();
-			tNodeNavList(uDatacenter);
-			tDatacenterNavList();
-			tDatacenterHealth();
+			if(uDatacenter)
+			{
+				tNodeNavList(uDatacenter);
+				tDatacenterNavList();
+				tDatacenterHealth();
+			}
 	}
 	CloseFieldSet();
 
