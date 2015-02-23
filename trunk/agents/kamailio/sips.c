@@ -54,7 +54,10 @@ void SIPlogfileLine(const char *cFunction,const char *cLogline,const unsigned uC
 		tmTime=localtime(&luClock);
 		strftime(cTime,31,"%b %d %T",tmTime);
 
-		fprintf(gSIPLfp,"%s unxsSIPS::%s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
+		if(uContainer)
+			fprintf(gSIPLfp,"%s unxsSIPS::%s[%u]: %s. uContainer=%u\n",cTime,cFunction,pidThis,cLogline,uContainer);
+		else
+			fprintf(gSIPLfp,"%s unxsSIPS::%s[%u]: %s.\n",cTime,cFunction,pidThis,cLogline);
 		fflush(gSIPLfp);
 	}
 	else
@@ -401,6 +404,9 @@ void ProvisionDR(void)
         MYSQL_ROW field;
 	unsigned uContainer=0;
 	unsigned uInserts=0;
+	char cLog[128];
+
+	SIPlogfileLine("ProvisionDR","start",0);
 
 	//Uses login data from local.h
 	SIPTextConnectDb();
@@ -428,112 +434,21 @@ void ProvisionDR(void)
 		sscanf(field[1],"%u",&uContainer);
 
 		//debug only
-		printf("%s %u %s\n",field[0],uContainer,field[2]);
+		//printf("%s %u %s\n",field[0],uContainer,field[2]);
 
 		//call_limit table
 		//key_type | value_type
 		//Provision concurrent i/o call limit per IP
-		sprintf(gcQuery,"SELECT id,key_value FROM call_limit"
+		if(StripNonIPv4Chars(field[2]))
+		{
+			sprintf(cLog,"StripNonIPv4Chars(0) (%s)",field[2]);
+			SIPlogfileLine("ProvisionDR",cLog,uContainer);
+		}
+		if(field[2][0])
+		{
+			sprintf(gcQuery,"SELECT id,key_value FROM call_limit"
 					" WHERE key_name='%s' AND key_type=0 AND value_type=1",
 						field[2]);
-		mysql_query(&gMysqlExt,gcQuery);
-		if(mysql_errno(&gMysqlExt))
-		{
-			SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
-			mysql_close(&gMysql);
-			mysql_close(&gMysqlExt);
-			exit(2);
-		}
-		res3=mysql_store_result(&gMysqlExt);
-		if(mysql_num_rows(res3)==0)
-		{
-			if(StripNonIPv4Chars(field[2]))
-					printf("\tStripNonIPv4Chars(0) (%s)\n",field[2]);
-			if(field[2][0])
-			{
-				sprintf(gcQuery,"INSERT INTO call_limit"
-							" SET key_name='%s',key_type=0,value_type=1,key_value='50'",field[2]);
-				mysql_query(&gMysqlExt,gcQuery);
-				if(mysql_errno(&gMysqlExt))
-				{
-					SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-				uInserts++;
-				//debug only
-				printf("\tcall_limit %s added\n",field[2]);
-			}
-		}
-		else
-		{
-			//next we will update if key_value is different from what we have in the backend.
-			//debug only
-			printf("\tcall_limit %s already there\n",field[2]);
-		}
-
-		//address table
-		//Provision IPs that are allowed to use this SIP proxy
-		sprintf(gcQuery,"SELECT id FROM address"
-					" WHERE ip_addr='%s' AND grp=1 AND mask=32 AND port=0",
-						field[2]);
-		mysql_query(&gMysqlExt,gcQuery);
-		if(mysql_errno(&gMysqlExt))
-		{
-			SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
-			mysql_close(&gMysql);
-			mysql_close(&gMysqlExt);
-			exit(2);
-		}
-		res3=mysql_store_result(&gMysqlExt);
-		if(mysql_num_rows(res3)==0)
-		{
-			if(StripNonIPv4Chars(field[2]))
-					printf("\tStripNonIPv4Chars(0) (%s)\n",field[2]);
-			if(field[2][0])
-			{
-				sprintf(gcQuery,"INSERT INTO address"
-							" SET ip_addr='%s',grp=1,mask=32,port=0,tag='unxsSIPS %.54s'",field[2],field[0]);
-				mysql_query(&gMysqlExt,gcQuery);
-				if(mysql_errno(&gMysqlExt))
-				{
-					SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
-					mysql_close(&gMysql);
-					mysql_close(&gMysqlExt);
-					exit(2);
-				}
-				uInserts++;
-				//debug only
-				printf("\t%s added\n",field[2]);
-			}
-		}
-		else
-		{
-			//debug only
-			printf("\t%s already there\n",field[2]);
-		}
-
-
-		//Next in main loop
-		//Provision DIDs.
-		sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE cName='cOrg_OpenSIPS_DID' AND uType=3 AND uKey=%u",uContainer);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			SIPlogfileLine("ProvisionDR",mysql_error(&gMysql),uContainer);
-			mysql_close(&gMysql);
-			mysql_close(&gMysqlExt);
-			exit(2);
-		}
-		res2=mysql_store_result(&gMysql);
-		while((field2=mysql_fetch_row(res2)))
-		{
-
-
-			sprintf(gcQuery,"SELECT id,scan_prefix,description FROM carrierroute"
-					" WHERE rewrite_host='%s' AND scan_prefix='%s'",
-						field[0],field2[0]);
 			mysql_query(&gMysqlExt,gcQuery);
 			if(mysql_errno(&gMysqlExt))
 			{
@@ -545,9 +460,111 @@ void ProvisionDR(void)
 			res3=mysql_store_result(&gMysqlExt);
 			if(mysql_num_rows(res3)==0)
 			{
-				if(StripNonNumericChars(field2[0]))
-					printf("\tStripNonNumericChars(1) (%s)\n",field2[0]);
-				if(field2[0][0])
+				if(field[2][0])
+				{
+					sprintf(gcQuery,"INSERT INTO call_limit"
+								" SET key_name='%s',key_type=0,value_type=1,key_value='50'",field[2]);
+					mysql_query(&gMysqlExt,gcQuery);
+					if(mysql_errno(&gMysqlExt))
+					{
+						SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
+						mysql_close(&gMysql);
+						mysql_close(&gMysqlExt);
+						exit(2);
+					}
+					uInserts++;
+					sprintf(cLog,"call_limit %.32s added",field[2]);
+					SIPlogfileLine("ProvisionDR",cLog,uContainer);
+				}
+			}
+			else
+			{
+				//next we will update if key_value is different from what we have in the backend.
+				//debug only
+				//printf("\tcall_limit %s already there\n",field[2]);
+				;//nop
+			}
+
+			//address table
+			//Provision IPs that are allowed to use this SIP proxy
+			sprintf(gcQuery,"SELECT id FROM address"
+						" WHERE ip_addr='%s' AND grp=1 AND mask=32 AND port=0",
+							field[2]);
+			mysql_query(&gMysqlExt,gcQuery);
+			if(mysql_errno(&gMysqlExt))
+			{
+				SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
+				mysql_close(&gMysql);
+				mysql_close(&gMysqlExt);
+				exit(2);
+			}
+			res3=mysql_store_result(&gMysqlExt);
+			if(mysql_num_rows(res3)==0)
+			{
+				if(field[2][0])
+				{
+					sprintf(gcQuery,"INSERT INTO address"
+								" SET ip_addr='%s',grp=1,mask=32,port=0,tag='unxsSIPS %.54s'",field[2],field[0]);
+					mysql_query(&gMysqlExt,gcQuery);
+					if(mysql_errno(&gMysqlExt))
+					{
+						SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
+						mysql_close(&gMysql);
+						mysql_close(&gMysqlExt);
+						exit(2);
+					}
+					uInserts++;
+					//debug only
+					sprintf(cLog,"%.32s added",field[2]);
+					SIPlogfileLine("ProvisionDR",cLog,uContainer);
+				}
+			}
+			else
+			{
+				//debug only
+				//printf("\t%s already there\n",field[2]);
+				;//nop
+			}
+
+		}//non empty IP field[2][0]
+
+		//Next in main loop
+		//Provision DIDs.
+		sprintf(gcQuery,"SELECT TRIM(cValue) FROM tProperty WHERE cName='cOrg_OpenSIPS_DID' AND uType=3 AND uKey=%u",uContainer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			SIPlogfileLine("ProvisionDR",mysql_error(&gMysql),uContainer);
+			mysql_close(&gMysql);
+			mysql_close(&gMysqlExt);
+			exit(2);
+		}
+		res2=mysql_store_result(&gMysql);
+		while((field2=mysql_fetch_row(res2)))
+		{
+			char cDID[32]={""};
+			sprintf(cDID,"%.31s",field2[0]);
+			if(StripNonNumericChars(field2[0]))
+			{
+				sprintf(cLog,"StripNonNumericChars(1) (%.32s/%.32s)",cDID,field2[0]);
+				SIPlogfileLine("ProvisionDR",cLog,uContainer);
+			}
+
+			if(field2[0][0])
+			{
+				sprintf(gcQuery,"SELECT id,scan_prefix,description FROM carrierroute"
+					" WHERE rewrite_host='%s' AND scan_prefix='%s'",
+						field[0],field2[0]);
+				mysql_query(&gMysqlExt,gcQuery);
+				if(mysql_errno(&gMysqlExt))
+				{
+					SIPlogfileLine("ProvisionDR",mysql_error(&gMysqlExt),uContainer);
+					mysql_close(&gMysql);
+					mysql_close(&gMysqlExt);
+					exit(2);
+				}
+				res3=mysql_store_result(&gMysqlExt);
+				if(mysql_num_rows(res3)==0)
 				{
 					sprintf(gcQuery,"INSERT INTO carrierroute"
 							" SET scan_prefix='%s',rewrite_host='%s',description='%s',carrier=1,domain=1,prob=1",
@@ -561,22 +578,26 @@ void ProvisionDR(void)
 						exit(2);
 					}
 					uInserts++;
-					//debug only
-					printf("\t%s added\n",field2[0]);
+					sprintf(cLog,"%.32s added",field2[0]);
+					SIPlogfileLine("ProvisionDR",cLog,uContainer);
 				}
-			}
-			else
-			{
-				//debug only
-				printf("\t%s already there\n",field2[0]);
-			}
+				else
+				{
+					//debug only
+					//printf("\t%s already there\n",field2[0]);
+					;//nop
+				}
+			}//if non empty DID
 		}//while DID for given container
 	}//while container
 	mysql_free_result(res);
 
 	mysql_close(&gMysql);
 	mysql_close(&gMysqlExt);
-	printf("uInserts=%u\n",uInserts);
+	sprintf(cLog,"uInserts=%u",uInserts);
+	SIPlogfileLine("ProvisionDR",cLog,uContainer);
+
+	SIPlogfileLine("ProvisionDR","end",0);
 	exit(0);
 
 }//void ProvisionDR(void)
