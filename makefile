@@ -11,7 +11,7 @@
 #
 
 CFLAGS=-Wall
-LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate -loath -lunxsvz
+LIBS=-L/usr/lib/mysql -L/usr/lib64/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate -loath -lunxsvz
 CGIDIR=cgi-bin
 #CGIDIR=cgi-bin/alpha
 

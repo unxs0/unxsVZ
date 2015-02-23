@@ -557,7 +557,7 @@ void Header_ism3(const char *title, int iJs)
 	}
 	StyleSheet();
 	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
-	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/unxsvz.ico>\n");
+	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/unxsvz.ico?v=2>\n");
 	printf("</head><body><form name=formMain action=unxsVZ.cgi method=post><blockquote>\n");
 	printf("<img src=/images/unxslogo.gif>&nbsp;&nbsp;\n");
 
