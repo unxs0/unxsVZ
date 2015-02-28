@@ -579,7 +579,7 @@ void tDatacenterHealth(void)
 		printf("<p>ConnectToOptionalUBCDb() error<p>");
 		return;
 	}
-	if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
+	if(strcmp(gcUBCDBIP0,DBIP0) || strcmp(gcUBCDBIP1,DBIP1))
         	printf("<p><u>tDatacenterHealth Distributed UBC</u><br>\n");
 
 	//1-. Disk space usage/soft limit ratio
