@@ -77,6 +77,7 @@ void ExttJobListFilter(void);
 void ExttJobAuxTable(void);
 void SelectedUBCJobs(unsigned uCreateJobs);
 
+void tTablePullDownActiveColorCoded(char *cuDatacenterPullDown,char *cLabel,char *cLabel2,unsigned uDatacenter,unsigned uMode);
 
 #include "tjobfunc.h"
 
