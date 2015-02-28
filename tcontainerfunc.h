@@ -6088,7 +6088,7 @@ while((field=mysql_fetch_row(res)))
 				printf("<p>ConnectToOptionalUBCDb() error<p>");
 				return;
 			}
-			if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
+			if(strcmp(gcUBCDBIP0,DBIP0) || strcmp(gcUBCDBIP1,DBIP1))
 			{
 				sprintf(gcQuery,"Distributed UBC %s Property Panel",cLabel);
 				OpenFieldSet(gcQuery,100);
@@ -7042,7 +7042,7 @@ void htmlHealth(unsigned uElement,unsigned uDatacenter,unsigned uType)
 			return;
 		}
 
-		if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
+		if(strcmp(gcUBCDBIP0,DBIP0) || strcmp(gcUBCDBIP1,DBIP1))
 			sprintf(cTitleExtra," (external UBC)");
 	}
 

@@ -796,7 +796,7 @@ void ExttNodeAuxTable(void)
 				printf("<p>ConnectToOptionalUBCDb() error<p>");
 				return;
 			}
-			if(gcUBCDBIP0==DBIP0 && gcUBCDBIP1==DBIP1)
+			if(strcmp(gcUBCDBIP0,DBIP0) || strcmp(gcUBCDBIP1,DBIP1))
 				gMysqlUBC=gMysql;
 
 				sprintf(gcQuery,"Distributed UBC %s Property Panel",cLabel);
@@ -1077,7 +1077,7 @@ void ExttNodeAuxTable(void)
 				printf("<p>ConnectToOptionalUBCDb() error<p>");
 				return;
 			}
-			if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
+			if(strcmp(gcUBCDBIP0,DBIP0) || strcmp(gcUBCDBIP1,DBIP1))
 			{
 				sprintf(gcQuery,"Distributed UBC %s Property Panel",cLabel);
 				OpenFieldSet(gcQuery,100);
@@ -1894,7 +1894,7 @@ void tNodeHealth(void)
 		printf("<p>ConnectToOptionalUBCDb() error<p>");
 		return;
 	}
-	if(gcUBCDBIP0!=DBIP0 || gcUBCDBIP1!=DBIP1)
+	if(strcmp(gcUBCDBIP0,DBIP0) || strcmp(gcUBCDBIP1,DBIP1))
         	printf("<p><u>tNodeHealth Distributed UBC</u><br>\n");
 
 	//1-. Disk space usage/soft limit ratio
