@@ -1,10 +1,10 @@
 Summary: unxsadmin provides the http shared content and httpd conf.d file for all unxsVZ web admins
 Name: unxsadmin
 Version: 1.7
-Release: 3
+Release: 5
 License: GPL
 Group: System Environment/Applications
-Source: http://unixservice.com/source/unxsadmin-1.7.tar.gz
+Source: http://unixservice.com/rpm/src/unxsadmin-1.7.tar.gz
 URL: http://unixservice.com
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
@@ -20,6 +20,9 @@ It provides the dir layout in /var/www/unxs and all the shared css, js and image
 content needed by unxsVZ family of web administration interfaces like
 unxsMail, unxsApache, unxsVZ, unxsBind and unxsISP.
 It also provides some common binary utilities like lastmonth.
+It does not provide advanced interface web admin, images, css and js.
+For example the new OneLogin, mobile first, responsive, bootstrap based JQuery 
+interface, requires that you install files in the /var/www/unxs directory structure.
 
 %prep
 exit 0
