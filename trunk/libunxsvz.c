@@ -265,17 +265,45 @@ unsigned GetConfiguration(const char *cName,char *cValue,
 
 }//unsigned GetConfiguration(...)
 
-
+#include "local.h"
 unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
+	unsigned uA=0,uB=0,uC=0,uD=0;
+	char *cScan={"%*u.%*u.%*u.%*u Public %u.%u.%u.%u"};
+	if(uPrivate) cScan="%u.%u.%u.%u";
 
 	if(!uDatacenter) return(2);
 
+	logfileLine("unxsVZ:ConnectToOptionalUBCDb","start");
 	//If no deal use main db as default
-	gcUBCDBIP0=DBIP0;
-	gcUBCDBIP1=DBIP1;
+	if(DBIP0==NULL)
+	{
+		gcUBCDBIP0=NULL;
+	}
+	else if(DBIP0[0])
+	{
+		if(sscanf(DBIP0,"%u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
+			gcUBCDBIP0=gcUBCDBIP0Buffer;
+			logfileLine("unxsVZ:ConnectToOptionalUBCDb default0",gcUBCDBIP0Buffer);
+		}
+	}
+	if(DBIP1==NULL)
+	{
+		gcUBCDBIP1=NULL;
+	}
+	else if(DBIP1[0])
+	{
+		if(sscanf(DBIP1,"%u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			sprintf(gcUBCDBIP1Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
+			gcUBCDBIP1=gcUBCDBIP1Buffer;
+			logfileLine("unxsVZ:ConnectToOptionalUBCDb default1",gcUBCDBIP1Buffer);
+		}
+	}
 
 	//UBC MySQL server per datacenter option. Get db IPs
 	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u"
@@ -291,9 +319,6 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		unsigned uA=0,uB=0,uC=0,uD=0;
-		char *cScan={"%*u.%*u.%*u.%*u Public %u.%u.%u.%u"};
-		if(uPrivate) cScan="%u.%u.%u.%u";
 		if(sscanf(field[0],cScan,&uA,&uB,&uC,&uD)==4)
 		{
 			sprintf(gcUBCDBIP0Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
@@ -314,9 +339,6 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		unsigned uA=0,uB=0,uC=0,uD=0;
-		char *cScan={"%*u.%*u.%*u.%*u Public %u.%u.%u.%u"};
-		if(uPrivate) cScan="%u.%u.%u.%u";
 		if(sscanf(field[0],cScan,&uA,&uB,&uC,&uD)==4)
 		{
 			sprintf(gcUBCDBIP1Buffer,"%u.%u.%u.%u",uA,uB,uC,uD);
