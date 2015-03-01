@@ -579,6 +579,9 @@ void tDatacenterHealth(void)
 		printf("<p>ConnectToOptionalUBCDb() error<p>");
 		return;
 	}
+        //printf("<p><u>tDatacenterHealth Debug</u><br>\n");
+	//printf("gcUBCDBIP0=%s gcUBCDBIP1=%s",gcUBCDBIP0,gcUBCDBIP1);
+	//return;
 	if(strcmp(gcUBCDBIP0,DBIP0) || strcmp(gcUBCDBIP1,DBIP1))
         	printf("<p><u>tDatacenterHealth Distributed UBC</u><br>\n");
 
