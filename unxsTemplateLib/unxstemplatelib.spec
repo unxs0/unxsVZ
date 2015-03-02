@@ -1,15 +1,23 @@
+%define name unxstemplatelib
+%define version 2.0
+%define release 1
+
+
 Summary: A small static library for unxsVZ templates
-Name: unxstemplatelib
-Version: 1.0
-Release: 2
+Name: %{name}
+Version: %{version}
+Release: %{release}
 License: LGPL
 Group: System Environment/Libraries
-Source: http://unixservice.com/source/libs/unxstemplatelib-1.0.tar.gz
+Source: http://unixservice.com/rpm/src/%{name}-%{version}.tar.gz
 URL: http://unixservice.com
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
 Obsoletes: unxstemplate
+BuildArch: x86_64
+Provides: %{name}
+
 
 %description
 A library used by many unxsVZ C cgi programs for file and stream
@@ -22,21 +30,23 @@ This package deprecates libtemplate. This new library provides
 support for template sets (skins) and template types (interface types.)
 
 %prep
-%setup -q
+exit 0
 
 %build
-make
+exit 0
 
 %install
-make install
+exit 0
 
 %clean
+exit 0
 
 %files
-%doc README LICENSE
+%defattr(-,root,root)
 /usr/lib/openisp/libtemplate.a
 /usr/include/openisp/template.h
 
+
 %changelog
-* Fri Apr 20 2010 Gary Wallis <support@unixservice.com>
-- Initial RPM release (of renamed and upgraded template.)
+* Sun Mar 1 2015 Gary Wallis <support@unixservice.com>
+- First alpha version of 2.x series.
