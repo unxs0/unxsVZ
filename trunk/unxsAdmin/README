@@ -27,10 +27,10 @@ would add at least:
 ---
 Notes on quick package building
 
-yum install rpm-build,rpm-utils
+yum install rpm-build rpmlint
 su unxs
 $ mkdir -p ~/rpm/{BUILD,RPMS,SOURCES,SRPMS,SPECS,tmp}
-$ mkdir ~/rpm/RPMS/{i386,i586,i686,noarch}
+$ mkdir ~/rpm/RPMS/{i386,i586,i686,x86_64,noarch}
 $ vi ~/.rpmmacros
 
 file content:

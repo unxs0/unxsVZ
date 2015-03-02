@@ -1,15 +1,23 @@
-Summary: A small static library for IPv4 CIDR operations.
-Name: unxscidrlib
-Version: 1.0
-Release: 1
+%define name unxscidrlib
+%define version 2.0
+%define release 1
+
+
+Summary: A small static library for unxsVZ IPv4 CIDR operations.
+Name: %{name}
+Version: %{version}
+Release: %{release}
 License: LGPL
 Group: System Environment/Libraries
-Source: http://unixservice.com/source/libs/unxscidrlib-1.0.tar.gz
+Source: http://unixservice.com/rpm/src/%{name}-%{version}.tar.gz
 URL: http://unixservice.com
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Obsoletes: ucidr
+Obsoletes: unxstemplate
+BuildArch: x86_64
+Provides: %{name}
+
 
 %description
 The unxscidrlib library provides functions for determining
@@ -25,21 +33,24 @@ unsigned uInCIDR4Format(const char *cCIDR4,unsigned *uIPv4,unsigned *uCIDR4Mask)
 unsigned uInIpv4Format(const char *cIPv4,unsigned *uIPv4);
 
 %prep
-%setup -q
+exit 0
 
 %build
-make
+exit 0
 
 %install
-make install
+exit 0
 
 %clean
+exit 0
 
 %files
+%defattr(-,root,root)
 %doc README LICENSE
 /usr/lib/openisp/libucidr.a
 /usr/include/openisp/ucidr.h
 
+
 %changelog
-* Tue Apr 20 2010 Gary Wallis <support@unixservice.com> 
-- Initial RPM release (of renamed package, was ucidr.)
+* Sun Mar 1 2015 Gary Wallis <support@unixservice.com>
+- First alpha version of 2.x series.
