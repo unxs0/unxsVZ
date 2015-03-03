@@ -27,17 +27,14 @@ Post Install
 
 3-. Customizing allnodescp.sh.
 
-4-. Making sure your LVM2 disk setup is correct.
+4-. Installing /vz/template/cache, /etc/vz/conf/ contents. And adding them to tConfig and tOSTemplate.
 
-5-. Installing /vz/template/cache, /etc/vz/conf/ contents. And adding them to tConfig and tOSTemplate.
+5-. Configuring unxsVZ via the web interface.
 
-6-. Configuring unxsVZ via the web interface.
+6-. Creating test containers and exercizing them for automonics, live migration etc.
 
-7-. Creating test containers and exercizing them for automonics, live migration etc.
+7-. Optionally change /var/www/unxs/html/images/unxslogo.png to your own logo.
 
-8-. Optionally change /var/www/unxs/html/traffic/unxslogo.png to your own logo.
-
-9-. Optionally setup tools/removespikes or learn how to use.
 
 ---
 If you repackage an rpm for FreeBSD, OpenSolaris, OpenBSD etc...please let us know and we will add it to the 
