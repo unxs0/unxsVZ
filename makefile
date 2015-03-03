@@ -3,10 +3,10 @@
 #	unxsVZ/makefile
 #	$Id$
 #AUTHOR/LEGAL
-#	(C) 2001-2009 Gary Wallis for Unixservice. GPLv2 license applies.
+#	(C) 2001-2015 Gary Wallis for Unixservice, LLC. GPLv2 license applies.
 #
 #NOTES
-#	We only develop and test on Linux CentOS-5 and distribute via yum and rpm.
+#	We only develop and test on Linux CentOS-6 and distribute via yum and rpm.
 #	Feel free to repackage for your OS and let us know.
 #
 
@@ -15,7 +15,12 @@ LIBS=-L/usr/lib/mysql -L/usr/lib64/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmy
 CGIDIR=cgi-bin
 #CGIDIR=cgi-bin/alpha
 
-all: unxsVZ.cgi
+help:
+	@echo "main make options available"
+	@echo "	install-libunxsvz (required for unxsVZ and cgi)"
+	@echo "	install-unxsVZ (standalone job queue processor)"
+	@echo "	install (unxsVZ.cgi)"
+	@echo "	install-all (unxsVZ and unxsVZ.cgi)"
 
 unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tperm.o tostemplate.o tnameserver.o \
 	tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \

@@ -12,7 +12,7 @@
 #FILE
 #	
 #INSTALL AS
-#	/etc/init.d/autossh
+#	/etc/init.d/unxsautossh
 #PURPOSE
 #	Start autossh for mysql tunnel.
 #DEPENDS ON
@@ -20,10 +20,13 @@
 #
 
 #configure these
-cSSHPort="12345";
-cLocalIPAndPort="10.10.10.10:3306";
-cRemoteIPAndPort="127.0.0.1:3306";
-cSSHUser="dbuser@db.yourisp.net";
+cLocalIPAndPort="127.0.0.1:3306";#IP and port for local server connection.
+cRemoteIPAndPort="10.0.0.1:3306";#The remote MySQL server IP and port.
+cSSHUser="root@10.0.0.1";#The remote MySQL server user and IP/server must have ssh cert authentication working
+cSSHPort="22";#The remote MySQL server ssh port for cSSHUser connection.
+
+#local connect example with defaults above: mysql -h127.0.0.1 -ppasswd -uuser dbname
+#this will work as long as user is allowed to connect from the IP configured above.
 
 cListen="$cLocalIPAndPort:$cRemoteIPAndPort";
 function start {

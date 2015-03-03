@@ -287,7 +287,7 @@ POSSIBILITY OF SUCH DAMAGES.
 unxsVZ is an OpenVZ container management system for deploying complex 
 multi-datacenter multi-node critical internet infrastructure services.
 
-Copyright (C) 2001-2010 Gary Wallis for Unixservice, LLC.
+Copyright (C) 2001-2015 Gary Wallis for Unixservice, LLC.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
