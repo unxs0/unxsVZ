@@ -1,0 +1,10 @@
+## generate per container png graphs and veid.html file for unxsVZ backend containers
+#7 * * * * root nice ionice -c2 -n5 /usr/local/sbin/vz_week_graphs.sh >> /var/log/unxsvz_graphs_log 2>&1;
+#7 5,17 * * * root nice ionice -c2 -n5 /usr/local/sbin/vz_month_graphs.sh >> /var/log/unxsvz_graphs_log 2>&1;
+#7 4 * * * root nice ionice -c2 -n5 /usr/local/sbin/vz_year_graphs.sh >> /var/log/unxsvz_graphs_log 2>&1;
+## these create/update rrd's
+#*/5 * * * * root /usr/local/sbin/vz_traffic_log.sh >> /var/log/unxsvz_graphs_log 2>&1;
+#*/5 * * * * root /usr/local/sbin/node_traffic_log.sh  >> /var/log/unxsvz_graphs_log 2>&1;
+## we now only move customer graphs every half hour and slowly
+#*/30 * * * * root sleep $[($RANDOM\%300)+310]; /usr/sbin/unxsvzCopyCustomerGraphs.sh >> /var/log/unxsvz_graphs_log 2>&1;
+

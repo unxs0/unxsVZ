@@ -1,0 +1,2 @@
+##restart asterisk every sunday early am 4:07 + random delay 0-5mins
+#7 4 * * 7 root sleep $[($RANDOM\%300)+1];/usr/sbin/unxsvzExecEachPBXContainer.sh 'asterisk -rx "core restart when convenient"' > /tmp/unxsvz_asteriskrestart.cron.log 2>&1

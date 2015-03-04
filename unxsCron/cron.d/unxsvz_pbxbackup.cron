@@ -1,0 +1,2 @@
+##Gather FreePBX data every eve
+#0 3 * * * root sleep $[ ( $RANDOM \% 600 )  + 1 ]; nice ionice -c2 -n5 /usr/sbin/BackupPBXConfiguration.sh run setup > /tmp/BackupPBXConfiguration.sh.log 2>&1;
