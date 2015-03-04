@@ -18,6 +18,10 @@ if [ "$1" != "run" ];then
 fi
 
 cMySQLConnect="";
+
+#this should go in /etc/unxsvz/mysql.local.sh
+cMySQLConnectInternal="/usr/bin/mysql -uuser -ppasswd asterisk -N -e";
+
 if [ -f "/etc/unxsvz/mysql.local.sh" ];then
 	source /etc/unxsvz/mysql.local.sh;
 else
@@ -52,8 +56,6 @@ fi
 fLog "Start for $cNode/$uNode";
 
 
-#echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGroupGlue,tOSTemplate WHERE $cGroupStatement AND tGroup.uGroup=tGroupGlue.uGroup AND tContainer.uContainer=tGroupGlue.uContainer AND tOSTemplate.uOSTemplate=tContainer.uOSTemplate AND (tOSTemplate.uOSTemplate<751 OR tOSTemplate.cLabel LIKE 'vcpbx1%') AND tContainer.uNode=$uNode AND tContainer.uStatus=1";
-
 for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGroupGlue,tOSTemplate WHERE $cGroupStatement AND tGroup.uGroup=tGroupGlue.uGroup AND tContainer.uContainer=tGroupGlue.uContainer AND tOSTemplate.uOSTemplate=tContainer.uOSTemplate AND tOSTemplate.cLabel LIKE 'vcpbx1%' AND tContainer.uNode=$uNode AND tContainer.uStatus=1"|$cMySQLConnect -B -N`;do
 
 	#single veid option
@@ -71,7 +73,7 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 	if [ $? != 0 ];then
 		echo "mysql command 1 failed";
 	fi
-        for cResult in `/usr/sbin/vzctl exec2 $uContainer "/usr/bin/mysql -u vcxrfv -ppK69rLuvC0 asterisk -N -e 'select distinct concat(t.name,'\'':'\'',e.priority,'\'':'\'',e.context) from trunks t left join extensions e on e.args=concat('\''dialout-trunk,'\'',t.trunkid,'\'',\\${EXTEN},'\'') WHERE t.name='\''KAM1-SIP'\'' or t.trunkid=1;'"`;do
+        for cResult in `/usr/sbin/vzctl exec2 $uContainer "$cMySQLConnectInternal 'select distinct concat(t.name,'\'':'\'',e.priority,'\'':'\'',e.context) from trunks t left join extensions e on e.args=concat('\''dialout-trunk,'\'',t.trunkid,'\'',\\${EXTEN},'\'') WHERE t.name='\''KAM1-SIP'\'' or t.trunkid=1;'"`;do
 		echo $cResult;
 		echo "INSERT INTO tProperty SET cName='cPBXTrunkSeqAndRoute',cValue='$cResult',uKey=$uContainer,uType=3,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
 		if [ $? != 0 ];then
