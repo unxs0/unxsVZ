@@ -1,0 +1,2 @@
+##Gather FreePBX data every eve
+#23 23 * * * root /usr/sbin/PBXGatherIncoming.sh run > /tmp/PBXGatherIncoming.sh.log 2>&1;

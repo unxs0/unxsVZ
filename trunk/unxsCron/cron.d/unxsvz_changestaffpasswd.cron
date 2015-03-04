@@ -1,0 +1,4 @@
+##Change hardware node passwd daily
+#6 6 * * * root sleep $[($RANDOM\%60)+1];/usr/sbin/unxsvzChangeStaffPasswd.sh changepasswd edcujm > /tmp/unxsvzChangeStaffPasswd.sh.log 2>&1;
+#7 6 * * * root sleep $[($RANDOM\%60)+1];/usr/sbin/unxsvzChangeStaffPasswd.sh changepasswd rfvujm >> /tmp/unxsvzChangeStaffPasswd.sh.log 2>&1;
+#

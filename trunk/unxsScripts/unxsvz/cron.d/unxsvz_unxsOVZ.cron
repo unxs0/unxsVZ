@@ -1,2 +1,0 @@
-##Update container stats every 4 hours. spread 5 minutes random
-22 */4 * * * root sleep $[ ( $RANDOM \% 300 )  + 1 ];/usr/sbin/unxsOVZ --ContainerCheck;

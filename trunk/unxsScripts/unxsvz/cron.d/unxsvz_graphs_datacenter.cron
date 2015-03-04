@@ -1,3 +1,0 @@
-#
-# in only one server per datacenter -special log file for debug
-*/5 * * * * root  /usr/sbin/DatacenterGraphFromRRDs.sh create >> /var/log/datacenter_traffic_log 2>&1;
