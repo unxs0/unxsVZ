@@ -869,7 +869,7 @@ void SetLogin(void)
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
 		//tLogType.cLabel='org login'->uLogType=8
-		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login2 ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"
 				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
@@ -941,7 +941,7 @@ else
 		GetPLAndClientLDAP(gcUser,gcOrgName);
 		guSSLCookieLogin=1;
 		//tLogType.cLabel='org login'->uLogType=8
-		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login2 ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"
 				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);

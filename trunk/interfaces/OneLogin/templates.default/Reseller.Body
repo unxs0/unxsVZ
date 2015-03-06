@@ -48,7 +48,7 @@
         <div class="col-xs-12 col-sm-9">
 
           <div class="jumbotron">
-	    <h4>Assign/deassign a container for a given reseller</h4>
+	    <h4>Assign/deassign a container for a given reseller. Create a reseller account.</h4>
           <div class="list-group">
 		<h5>{{gcMessage}}</h5>
       		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
@@ -59,13 +59,16 @@
 
 		<br>
 		<button class="btn btn-lg btn-primary btn-block" 
-			title="Select a reseller or a customer. Select a container. Then use this button to assign the container."
+			title="Select a reseller or a customer. Select a container. Then use this button to assign the container.  Please note that if this container already has been assigned to another reseller it will be removed without notice."
 			type="submit" name=gcFunction value='Assign Container'>Assign Container</button>
 		<button class="btn btn-lg btn-primary btn-block" 
 			title="Select a reseller or a customer. Select a container. Then use this button to deassign or remove the container."
 			type="submit" name=gcFunction value='Deassign Container'>Deassign Container</button>
 		<button class="btn btn-lg btn-primary btn-block" 
-			title="Select a reseller or a customer. Then use this button to generate a direct to browser CSV report."
+			title="Select a reseller or a customer. Then use this button to generate a direct to browser CSV report of containers per reseller."
+			type="submit" name=gcFunction value='Reseller Report'>Reseller Report</button>
+		<button class="btn btn-lg btn-primary btn-block" 
+			title="Select a container. Then use this button to generate a direct to browser CSV report of the owners of the given container."
 			type="submit" name=gcFunction value='Container Report'>Container Report</button>
 		</form>
 		<br>
@@ -75,7 +78,10 @@
 
        		<input maxlength="31" title='Reseller first and last name or company name'
 			type="login" id="inputCustomerName" class="form-control" placeholder="Reseller name"
-			name="gcNewHostParam1" value="{{gcNewHostParam1}}" required>
+			name="gcNewLogin" value="{{gcNewLogin}}" required>
+        	<input maxlength="31" title='Input new password'
+			type="login" id="inputPassword" class="form-control" placeholder="Password" 
+			name="gcNewPasswd" value="{{gcNewPasswd}}" required>
        		<input maxlength="31" title='Customer first and last name or company name'
 			type="email" id="inputEmail" class="form-control" placeholder="Reseller email"
 			name="gcNewEmail" value="{{gcNewEmail}}" required>

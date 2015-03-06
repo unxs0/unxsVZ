@@ -1156,199 +1156,6 @@ void ContainerCommands(pentry entries[], int x)
 		{
 				htmlContainerQOS();
 		}
-		else if(!strcmp(gcFunction,"Add Container") && guPermLevel>5 && guContainer && guReseller)
-		{
-			//uStatus must be active or offline or appliance
-			sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tContainer WHERE uContainer=%u",guContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="Select uNode error, contact sysadmin!";
-				htmlContainer();
-			}
-			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-			{
-				sscanf(field[0],"%u",&guNode);
-				sscanf(field[1],"%u",&guDatacenter);
-			}
-			if(mysql_num_rows(res)<1)
-			{
-				gcMessage="Selected container status is incorrect.";
-				htmlContainer();
-			}
-			if(!guNode || !guDatacenter)
-			{
-				gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
-				htmlContainer();
-			}
-
-			sprintf(gcQuery,"UPDATE tContainer"
-					" SET uCreatedBy=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uContainer=%u",
-						guReseller,guLoginClient,guContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="UPDATE tContainer failed, contact sysadmin!";
-				htmlContainer();
-			}
-
-			gcMessage="Current container added to user account";
-			htmlContainer();
-		}
-		else if(!strcmp(gcFunction,"Del Container") && guPermLevel>5 && guContainer && guReseller)
-		{
-			sprintf(gcQuery,"UPDATE tContainer"
-					" SET uCreatedBy=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uContainer=%u AND uCreatedBy=%u",
-						guLoginClient,guContainer,guReseller);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="UPDATE tContainer failed, contact sysadmin!";
-				htmlContainer();
-			}
-
-			gcMessage="Current container removed from user account";
-			htmlContainer();
-		}
-		else if(!strcmp(gcFunction,"Create Account") && gcNewLogin[0] && gcNewPasswd[0] && guPermLevel>5)
-		{
-			char gcQuery[1024];
-
-			if((uLen=strlen(gcNewLogin))<5 || strchr(gcNewLogin,' ')==NULL || gcNewLogin[strlen(gcNewLogin)-1]==' ')
-			{
-				gcMessage="Customer login name must be at least two words, total min 5 characters long"
-						" and have no trailing spaces.";
-				htmlContainer();
-			}
-			if(uLen>31)
-			{
-				gcMessage="Customer login length exceeded.";
-				htmlContainer();
-			}
-			if((uLen=strlen(gcNewPasswd))<6 || strchr(gcNewPasswd,' ')!=NULL)
-			{
-				gcMessage="Customer password must be at least 6 characters long and have no spaces.";
-				htmlContainer();
-			}
-			if(uLen>31)
-			{
-				gcMessage="Customer password length exceeded.";
-				htmlContainer();
-			}
-
-			sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",gcNewLogin);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="SELECT FROM tClient failed, contact sysadmin!";
-				htmlContainer();
-			}
-			res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res)>0)
-			{
-				gcMessage="Account login already exists choose another";
-				htmlContainer();
-			}
-
-			sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s'",gcNewLogin);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="SELECT FROM tAuthorize failed, contact sysadmin!";
-				htmlContainer();
-			}
-			res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res)>0)
-			{
-				gcMessage="Account login already exists choose another";
-				htmlContainer();
-			}
-
-			sprintf(gcQuery,"INSERT INTO tClient"
-					" SET cLabel='%.31s',cCode='Contact',cInfo='Org interface created',"
-					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						gcNewLogin,guOrg,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="INSERT INTO tClient failed, contact sysadmin!";
-				htmlContainer();
-			}
-
-			unsigned uClient=0;
-			uClient=mysql_insert_id(&gMysql);
-
-			if(!uClient)
-			{
-				gcMessage="No uClient, contact sysadmin!";
-				htmlContainer();
-			}
-
-			char cBuffer[100]={""};
-			char cSalt[16]={"$1$23ABC823$"};//TODO set to random salt;
-
-			sprintf(cBuffer,"%.99s",gcNewPasswd);
-			EncryptPasswdWithSalt(cBuffer,cSalt);
-
-			sprintf(gcQuery,"INSERT INTO tAuthorize"
-					" SET cLabel='%.31s',cIpMask='%.15s',uPerm=1,uCertClient=%u,cPasswd='%s',cClrPasswd='%.31s',"
-					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						gcNewLogin,gcHost,uClient,cBuffer,gcNewPasswd,
-						guOrg,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="INSERT INTO tAuthorize failed, contact sysadmin!";
-				htmlContainer();
-			}
-
-			guReseller=uClient;
-			gcMessage="New account created you can now add containers";
-			htmlContainer();
-		}//Create Account
-		else if(!strcmp(gcFunction,"Remove Account") && guReseller && guPermLevel>=10)
-		{
-			sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient=%u",guReseller);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="SELECT FROM tClient failed, contact sysadmin!";
-				htmlContainer();
-			}
-			res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res)!=1)
-			{
-				gcMessage="Account does not exist!";
-				htmlContainer();
-			}
-
-			sprintf(gcQuery,"UPDATE tContainer SET uCreatedBy=1 WHERE uCreatedBy=%u",guReseller);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="UPDATE tContainer failed, contact sysadmin!";
-				htmlContainer();
-			}
-			sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%u",guReseller);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="DELETE FROM tClient failed, contact sysadmin!";
-				htmlContainer();
-			}
-			sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient=%u",guReseller);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				gcMessage="DELETE FROM tAuthorized failed, contact sysadmin!";
-				htmlContainer();
-			}
-
-			guReseller=0;
-			gcMessage="Account removed!";
-			htmlContainer();
-		}//Remove Account
 
 		htmlContainer();
 	}
@@ -2012,11 +1819,35 @@ void ContainerCommands(pentry entries[], int x)
 		{
 			gcMessage="No function called.";
 		}
-		//else if((!strcmp(gcFunction,"Container Report")||!strcmp(gcFunction,"Show Containers"))&&guPermLevel>5)
-		else if(!strcmp(gcFunction,"Container Report"))
+		else if(!strcmp(gcFunction,"Container Report") && guNewContainer)
 		{
 
 			printf("Content-type: text/plain\n\n");
+			printf("tContainer.cHostname,tContainer.uOwner,tContainer.uCreatedBy\n");
+
+			sprintf(gcQuery,"SELECT tContainer.cHostname,tContainer.uOwner,tContainer.uCreatedBy"
+					" FROM tContainer WHERE uContainer=%u",guNewContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				unsigned uOwner=0;
+				unsigned uCreatedBy=0;
+				sscanf(field[1],"%u",&uOwner);
+				sscanf(field[2],"%u",&uCreatedBy);
+				printf("%s,%s,%s,%s,%s\n",field[0],field[1],field[2],
+					ForeignKey("tClient","cLabel",uOwner),ForeignKey("tClient","cLabel",uCreatedBy));
+			}
+			mysql_free_result(res);
+			exit(0);
+		}
+		else if(!strcmp(gcFunction,"Reseller Report") && guReseller)
+		{
+
+			printf("Content-type: text/plain\n\n");
+			printf("guReseller=%u,%s\n",guReseller,ForeignKey("tClient","cLabel",guReseller));
 			printf("uContainer,cLabel,cHostname,cDatacenter,cNode,cGroup,cTemplate,cStatus\n");
 
 			if(guReseller)
@@ -2079,6 +1910,200 @@ void ContainerCommands(pentry entries[], int x)
 			mysql_free_result(res);
 			exit(0);
 		}
+		else if(!strcmp(gcFunction,"Assign Container") && guPermLevel>5 && guNewContainer && guReseller)
+		{
+			//uStatus must be active or offline or appliance
+			sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tContainer WHERE uContainer=%u",guNewContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Select uNode error, contact sysadmin!";
+				htmlReseller();
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&guNode);
+				sscanf(field[1],"%u",&guDatacenter);
+			}
+			if(mysql_num_rows(res)<1)
+			{
+				gcMessage="Selected container status is incorrect.";
+				htmlReseller();
+			}
+			if(!guNode || !guDatacenter)
+			{
+				gcMessage="No uNode or no uDatacenter error. Contact your sysadmin!";
+				htmlReseller();
+			}
+
+			sprintf(gcQuery,"UPDATE tContainer"
+					" SET uCreatedBy=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uContainer=%u",
+						guReseller,guLoginClient,guNewContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="UPDATE tContainer failed, contact sysadmin!";
+				htmlReseller();
+			}
+
+			gcMessage="Current container added to selected reseller account";
+			htmlReseller();
+		}
+		else if(!strcmp(gcFunction,"Deassign Container") && guPermLevel>5 && guNewContainer && guReseller)
+		{
+			//this is wierd! pleae fix TODO
+			sprintf(gcQuery,"UPDATE tContainer"
+					" SET uCreatedBy=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uContainer=%u AND uCreatedBy=%u",
+						guLoginClient,guNewContainer,guReseller);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="UPDATE tContainer failed, contact sysadmin!";
+				htmlReseller();
+			}
+
+			gcMessage="Current container removed from reseller account";
+			htmlReseller();
+		}
+		else if(!strcmp(gcFunction,"Create Reseller") && gcNewLogin[0] && gcNewPasswd[0] && guPermLevel>5)
+		{
+			char gcQuery[1024];
+
+			if((uLen=strlen(gcNewLogin))<5 || strchr(gcNewLogin,' ')==NULL || gcNewLogin[strlen(gcNewLogin)-1]==' ')
+			{
+				gcMessage="Customer login name must be at least two words, total min 5 characters long"
+						" and have no trailing spaces.";
+				htmlReseller();
+			}
+			if(uLen>31)
+			{
+				gcMessage="Customer login length exceeded.";
+				htmlReseller();
+			}
+			if((uLen=strlen(gcNewPasswd))<6 || strchr(gcNewPasswd,' ')!=NULL)
+			{
+				gcMessage="Customer password must be at least 6 characters long and have no spaces.";
+				htmlReseller();
+			}
+			if(uLen>31)
+			{
+				gcMessage="Customer password length exceeded.";
+				htmlReseller();
+			}
+
+			sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",gcNewLogin);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="SELECT FROM tClient failed, contact sysadmin!";
+				htmlReseller();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)>0)
+			{
+				gcMessage="Account login already exists choose another";
+				htmlReseller();
+			}
+
+			sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s'",gcNewLogin);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="SELECT FROM tAuthorize failed, contact sysadmin!";
+				htmlReseller();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)>0)
+			{
+				gcMessage="Account login already exists choose another";
+				htmlReseller();
+			}
+
+			sprintf(gcQuery,"INSERT INTO tClient"
+					" SET cLabel='%.31s',cEmail='%s',cCode='Contact',cInfo='OneLogin interface created',"
+					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						gcNewLogin,gcNewEmail,guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="INSERT INTO tClient failed, contact sysadmin!";
+				htmlReseller();
+			}
+
+			unsigned uClient=0;
+			uClient=mysql_insert_id(&gMysql);
+
+			if(!uClient)
+			{
+				gcMessage="No uClient, contact sysadmin!";
+				htmlReseller();
+			}
+
+			char cBuffer[100]={""};
+			char cSalt[16]={"$1$23ABC823$"};//TODO set to random salt;
+
+			sprintf(cBuffer,"%.99s",gcNewPasswd);
+			EncryptPasswdWithSalt(cBuffer,cSalt);
+
+			sprintf(gcQuery,"INSERT INTO tAuthorize"
+					" SET cLabel='%.31s',cIpMask='%.15s',uPerm=1,uCertClient=%u,cPasswd='%s',cClrPasswd='%.31s',"
+					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						gcNewLogin,gcHost,uClient,cBuffer,gcNewPasswd,
+						guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="INSERT INTO tAuthorize failed, contact sysadmin!";
+				htmlReseller();
+			}
+
+			guReseller=uClient;
+			gcMessage="New reseller account created, you can now add containers";
+			htmlReseller();
+		}//Create Account
+		else if(!strcmp(gcFunction,"Remove Reseller") && guReseller && guPermLevel>=10)
+		{
+			sprintf(gcQuery,"SELECT uClient FROM tClient WHERE uClient=%u",guReseller);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="SELECT FROM tClient failed, contact sysadmin!";
+				htmlReseller();
+			}
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)!=1)
+			{
+				gcMessage="Account does not exist!";
+				htmlReseller();
+			}
+
+			sprintf(gcQuery,"UPDATE tContainer SET uCreatedBy=1 WHERE uCreatedBy=%u",guReseller);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="UPDATE tContainer failed, contact sysadmin!";
+				htmlReseller();
+			}
+			sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%u",guReseller);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="DELETE FROM tClient failed, contact sysadmin!";
+				htmlReseller();
+			}
+			sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient=%u",guReseller);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="DELETE FROM tAuthorized failed, contact sysadmin!";
+				htmlReseller();
+			}
+
+			guReseller=0;
+			gcMessage="Reseller account removed!";
+			htmlReseller();
+		}//Remove Account
 
 		//catchall
 		gcMessage=gcFunction;
@@ -4704,10 +4729,13 @@ void htmlResellerPage(char *cTitle, char *cTemplateName)
 			template.cpName[15]="gcNewEmail";
 			template.cpValue[15]=gcNewEmail;
 
-			template.cpName[16]="gcNewHostParam1";
-			template.cpValue[16]=gcNewHostParam1;
+			template.cpName[16]="gcNewLogin";
+			template.cpValue[16]=gcNewLogin;
 
-			template.cpName[17]="";
+			template.cpName[17]="gcNewPasswd";
+			template.cpValue[17]=gcNewPasswd;
+
+			template.cpName[18]="";
 
 			printf("\n<!-- Start htmlResellerPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
