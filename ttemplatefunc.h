@@ -63,7 +63,7 @@ void ExttTemplateCommands(pentry entries[], int x)
                 {
                         ProcesstTemplateVars(entries,x);
 			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
+			if( (guPermLevel=12) || (guPermLevel>=10 && uOwner==guLoginClient)
 				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
 				|| (guPermLevel>7 && guReseller==guLoginClient) )
 			{
@@ -75,7 +75,7 @@ void ExttTemplateCommands(pentry entries[], int x)
                 {
                         ProcesstTemplateVars(entries,x);
 			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
+			if( (guPermLevel=12) || (guPermLevel>=10 && uOwner==guLoginClient)
 				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
 				|| (guPermLevel>7 && guReseller==guLoginClient) )
 			{
@@ -87,7 +87,7 @@ void ExttTemplateCommands(pentry entries[], int x)
                 {
                         ProcesstTemplateVars(entries,x);
 			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
+			if( (guPermLevel=12) || (guPermLevel>=10 && uOwner==guLoginClient)
 				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
 				|| (guPermLevel>7 && guReseller==guLoginClient) )
 			{
@@ -99,7 +99,7 @@ void ExttTemplateCommands(pentry entries[], int x)
                 {
                         ProcesstTemplateVars(entries,x);
 			if(uOwner) GetClientOwner(uOwner,&guReseller);
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
+			if( (guPermLevel=12) || (guPermLevel>=10 && uOwner==guLoginClient)
 				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
 				|| (guPermLevel>7 && guReseller==guLoginClient) )
 			{
@@ -243,12 +243,12 @@ void ExttTemplateNavBar(void)
 	if(guPermLevel>=10 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
+			if( (guPermLevel=12) || (guPermLevel>=10 && uOwner==guLoginClient)
 				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
 				|| (guPermLevel>7 && guReseller==guLoginClient) )
 		printf(LANG_NBB_MODIFY);
 
-			if( (guPermLevel>=10 && uOwner==guLoginClient)
+			if( (guPermLevel=12) || (guPermLevel>=10 && uOwner==guLoginClient)
 				|| (guPermLevel>9 && uOwner!=1 && uOwner!=0)
 				|| (guPermLevel>7 && guReseller==guLoginClient) )
 		printf(LANG_NBB_DELETE);
