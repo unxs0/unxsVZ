@@ -45,13 +45,13 @@ unxsvz.o: unxsvz.c mysqlrad.h local.h
 	cc -c unxsvz.c -o unxsvz.o $(CFLAGS)
 
 #lib
-libunxsvz.a: libunxsvz.o libunxsvz.h
+libunxsvz.a: libunxsvz.o libunxsvz.h mysqlconnect.o local.h
 	ar r libunxsvz.a libunxsvz.o
 
-libunxsvz.o: libunxsvz.c libunxsvz.h
+libunxsvz.o: libunxsvz.c libunxsvz.h mysqlconnect.o local.h
 	cc -c libunxsvz.c -o libunxsvz.o $(CFLAGS)
 
-install-libunxsvz: libunxsvz.a libunxsvz.h
+install-libunxsvz: libunxsvz.a libunxsvz.h local.h
 	mkdir -p /usr/lib/openisp
 	mkdir -p /usr/include/openisp
 	install libunxsvz.a /usr/lib/openisp/libunxsvz.a

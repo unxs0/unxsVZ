@@ -12,7 +12,7 @@ Source: http://unixservice.com/source/%{name}-%{version}.tar.gz
 Distribution: unxsVZ
 Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
-Requires: mysql, mysql-server, mysql-devel, unxsadmin
+Requires: unxsadmin
 BuildArch: x86_64
 Provides: %{name}
 
