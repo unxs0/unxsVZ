@@ -1,6 +1,6 @@
 %define name unxsvz
 %define version 4.0
-%define release 1
+%define release 4
 
 Summary: unxsVZ (CentOS 6 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: %{name}
@@ -14,7 +14,7 @@ Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
 Requires: unxsadmin
 BuildArch: x86_64
-Provides: %{name}
+Provides: Binary programs and config files for unxsVZ hardware compute node.
 
 %description
 unxsVZ is a multiple datacenter, multiple hardware node, OpenVZ
@@ -35,7 +35,7 @@ This binary install uses -uunxsvz -pwsxedc 127.0.0.1:3306 for MySQL db connectio
 Use unxsauthssh for secure ssh tunnel to actual remote database.
 Or compile from sources for local skip-networking local socket connection.
 
-You will most likely need unxsscripts installed also for any real functionality.
+You will most likely need unxsscripts and unxscron installed also for any real functionality.
 
 
 %prep
@@ -61,9 +61,9 @@ exit 0
 #/usr/lib/oath/liboath.a
 /usr/sbin/unxsVZ
 /var/www/unxs/cgi-bin/unxsVZ.cgi
-/usr/local/unxsVZ/setup/INSTALL
-/usr/local/unxsVZ/setup/LICENSE
 
 %changelog
+* Tue Mar 10 2015 Gary Wallis <support@unixservice.com> 
+- Alpha releases
 * Tue Feb 3 2015 Gary Wallis <support@unixservice.com> 
 - Initial RPM release of new CentOS 6 version

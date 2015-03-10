@@ -3,13 +3,11 @@ $Id$
 ---
 Intro
 
-(If you installed via yum you can skip to post install section below)
-
 1-.  RPM and yum based install is now available.
 
 yum setup:
 
-Download http://unixservice.com/rpm/i386/unxsyum-1.0-1.i386.rpm
+# rpm -i http://unixservice.com/rpm/i386/unxsyum-1.0-1.i386.rpm
 
 # rpm -i unxsyum-1.0-1.i386.rpm
 # yum search unxsvz
@@ -19,26 +17,19 @@ rpm's can be used alone and can be found here:
 http://unixservice.com/rpm
 
 ---
-Post Install
+unxsVZ Example
 
-1-. Setting up MySQL replication cluster.
+# yum install unxsvz
 
-2-. Setting up rrdtool datacenter, node and container graphics. Customize the gfx crontab scripts.
+# #setup or get mysql info, perms, and create unxsvz db
 
-3-. Customizing allnodescp.sh.
-
-4-. Installing /vz/template/cache, /etc/vz/conf/ contents. And adding them to tConfig and tOSTemplate.
-
-5-. Configuring unxsVZ via the web interface.
-
-6-. Creating test containers and exercizing them for automonics, live migration etc.
-
-7-. Optionally change /var/www/unxs/html/images/unxslogo.png to your own logo.
-
+# #first time only: install schema and sample data.
+# mysql -hhost -uuser -ppasswd unxsvz < /usr/local/unxsVZ/data/unxsvz.mysqldump
 
 ---
-If you repackage an rpm for FreeBSD, OpenSolaris, OpenBSD etc...please let us know and we will add it to the 
-repo above.
+Post Install
+
+TODO
 
 
 ---
