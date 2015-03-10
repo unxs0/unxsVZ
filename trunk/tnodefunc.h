@@ -1889,6 +1889,8 @@ void tNodeHealth(void)
 		if( (gLfp=fopen(cLogfile,"a"))==NULL)
 			tDatacenter("Could not open logfile");
 	}
+	//printf("<p>ConnectToOptionalUBCDb() error<p>");
+	//return;
 	if(uDatacenter && ConnectToOptionalUBCDb(uDatacenter,0))
 	{
 		printf("<p>ConnectToOptionalUBCDb() error<p>");

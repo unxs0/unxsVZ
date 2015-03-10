@@ -278,9 +278,9 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
 
 	logfileLine("unxsVZ:ConnectToOptionalUBCDb","start");
 	//If no deal use main db as default
-	if(DBIP0==NULL)
+	if(DBIP0==NULL || !DBIP0[0])
 	{
-		gcUBCDBIP0=NULL;
+		gcUBCDBIP0="";
 	}
 	else if(DBIP0[0])
 	{
@@ -291,9 +291,9 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
 			logfileLine("unxsVZ:ConnectToOptionalUBCDb default0",gcUBCDBIP0Buffer);
 		}
 	}
-	if(DBIP1==NULL)
+	if(DBIP1==NULL || !DBIP1[0])
 	{
-		gcUBCDBIP1=NULL;
+		gcUBCDBIP1="";
 	}
 	else if(DBIP1[0])
 	{
