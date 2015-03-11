@@ -225,12 +225,15 @@ void ExttLogNavBar(void)
 void LogSummary(void)
 {
 
-	if(uLog && cLabel[0] && guPermLevel>10 && uTablePK[0] && cTableName[0])
+	if(!uLog || !cLabel[0] || guPermLevel<10)
+		return;
+	//table based summaries
+	if(uTablePK[0] && cTableName[0])
 	{
+		printf("<p><u>LogSummary table based</u><br>\n");
 		unsigned uTPK=0;
 		sscanf(uTablePK,"%u",&uTPK);
 
-		printf("<p><u>LogSummary</u><br>\n");
 		if(!strcmp(cTableName,"tZone"))
 		{
 			printf("tZone<blockquote>\n");
@@ -269,6 +272,44 @@ void LogSummary(void)
 		{
 			printf("No summary available for %s\n",cTableName);
 		}
+	}
+	else if(uLoginClient && !strncmp(cLabel,"login",5))
+	{
+		MYSQL_RES *res;
+		MYSQL_ROW field;
+		
+		sprintf(gcQuery,"SELECT COUNT(uLog),tClient.cLabel FROM tLog,tClient WHERE tClient.uClient=tLog.uLoginClient"
+				" AND tLog.cLabel LIKE 'login%%' AND tLog.uLoginClient>0 AND tLog.uLogType=8"
+				" GROUP BY tLog.uLoginClient ORDER BY COUNT(uLog) DESC");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s",mysql_error(&gMysql));
+			return;
+		}
+        	res=mysql_store_result(&gMysql);
+		unsigned uUniqueLogins=mysql_num_rows(res);
+		printf("<p><u>LogSummary Customer Logins (%u unique)</u><br>\n",uUniqueLogins);
+		while((field=mysql_fetch_row(res)))
+			printf("%s %s<br>\n",field[0],field[1]);
+
+		sprintf(gcQuery,"SELECT COUNT(uLog),tClient.cLabel FROM tLog,tClient WHERE tClient.uClient=tLog.uLoginClient"
+				" AND tLog.cLabel LIKE 'login%%' AND tLog.uLoginClient>0 AND tLog.uLogType=6"
+				" GROUP BY tLog.uLoginClient ORDER BY COUNT(uLog) DESC");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s",mysql_error(&gMysql));
+			return;
+		}
+        	res=mysql_store_result(&gMysql);
+		uUniqueLogins=mysql_num_rows(res);
+		printf("<p><u>LogSummary Backend Logins (%u unique)</u><br>\n",uUniqueLogins);
+		while((field=mysql_fetch_row(res)))
+			printf("%s %s<br>\n",field[0],field[1]);
+		mysql_free_result(res);
+
+		
 	}
 }//void LogSummary(void);
 
