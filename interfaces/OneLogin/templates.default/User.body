@@ -66,7 +66,7 @@
 		</h4>
 	</div><!-- "panel-heading" -->
 	<div id="collapseThree" class="panel-collapse collapse">
-	<div class="panel-body">{{funcLoginHistory}}
+	<div class="panel-body">loading please wait...
 	</div><!-- "panel-body" -->
 	</div><!-- "collapseThree" -->
 </div><!-- "panel panel-default" -->
@@ -80,7 +80,7 @@
 		</h4>
 	</div><!-- "panel-heading" -->
 	<div id="collapseFour" class="panel-collapse collapse">
-	<div class="panel-body">{{funcOperationHistory}}
+	<div class="panel-body">loading please wait...
 	</div><!-- "panel-body" -->
 	</div><!-- "collapseFour" -->
 </div><!-- "panel panel-default" -->
@@ -149,7 +149,14 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="/bs/js/bootstrap.min.js"></script>
-
     <script src="/bs/js/offcanvas.js"></script>
+    <script>
+	$('#collapseThree').on('shown.bs.collapse', function () {
+		$("#collapseThree").load("{{cCGI}}?gcPage=User&gcFunction=LoginInfo");
+	});
+	$('#collapseFour').on('shown.bs.collapse', function () {
+		$("#collapseFour").load("{{cCGI}}?gcPage=User&gcFunction=OperationsInfo");
+	});
+    </script>
   </body>
 </html>

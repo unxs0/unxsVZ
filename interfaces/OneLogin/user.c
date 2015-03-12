@@ -33,6 +33,8 @@ unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient);
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
 void SetContainerFromSearchSet(void);
 char *cGetHostname(unsigned uContainer);
+void htmlOperationsInfo(void);
+void htmlLoginInfo(void);
 
 void ProcessUserVars(pentry entries[], int x)
 {
@@ -64,6 +66,11 @@ void UserGetHook(entry gentries[],int x)
 		if(!strcmp(gentries[i].name,"guContainer"))
 			sscanf(gentries[i].val,"%u",&guContainer);
 	}
+
+	if(!strcmp(gcFunction,"OperationsInfo"))
+		htmlOperationsInfo();
+	if(!strcmp(gcFunction,"LoginInfo"))
+		htmlLoginInfo();
 
 	htmlUser();
 
@@ -394,3 +401,55 @@ unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient)
 	}
 	return(0);
 }//unsigned uValidPasswd(char *cPasswd)
+
+
+void htmlOperationsInfo(void)
+{
+
+	htmlHeader("OneLogin","UserHeader");
+
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer FROM tLog WHERE uLogType!=8 AND"
+			" (uCreatedBy=%u OR uLoginClient=%u OR uOwner=%u) ORDER BY uCreatedDate DESC LIMIT 50",guLoginClient,guLoginClient,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("mysql error<br>");
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+		printf("%s %s %s %s<br>",field[1],field[0],field[2],field[3]);
+	mysql_free_result(res);
+
+
+	exit(0);
+
+}//void htmlOperationsInfo(void)
+
+
+void htmlLoginInfo(void)
+{
+
+	htmlHeader("OneLogin","UserHeader");
+
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer FROM tLog WHERE uLoginClient=%u"
+			" AND uLogType=8 ORDER BY uCreatedDate DESC LIMIT 50",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("mysql error<br>");
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+		printf("%s %s %s %s<br>",field[1],field[0],field[2],field[3]);
+	mysql_free_result(res);
+
+
+	exit(0);
+
+}//void htmlLoginInfo(void)
