@@ -130,7 +130,7 @@ unsigned uChangePassword(const char *cPasswd)
 		return(1);
 	if(mysql_affected_rows(&gMysql)<1)
 		return(1);
-	unxsvzLog(0,"tAuthorize","Password Changed",guPermLevel,guLoginClient,gcLogin,gcHost);
+	unxsvzLog(guLoginClient,"tClient","Password Changed",guPermLevel,guLoginClient,gcLogin,gcHost);
 	return(0);
 }//unsigned uChangePassword(const char *cPasswd)
 
