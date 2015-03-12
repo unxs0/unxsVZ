@@ -1806,9 +1806,8 @@ void ContainerCommands(pentry entries[], int x)
 			//for all the above
 			mysql_free_result(res);
 
-			unxsvzLog(0,"tContainer","Repurpose Container",guPermLevel,guLoginClient,gcLogin,gcHost);
-
 			guContainer=guNewContainer;
+			unxsvzLog(guNewContainer,"tContainer","Repurpose Container",guPermLevel,guLoginClient,gcLogin,gcHost);
 			htmlRepurpose();
 		}//Repurpose Container ~650 lines
 	}
@@ -1841,6 +1840,7 @@ void ContainerCommands(pentry entries[], int x)
 					ForeignKey("tClient","cLabel",uOwner),ForeignKey("tClient","cLabel",uCreatedBy));
 			}
 			mysql_free_result(res);
+			unxsvzLog(guNewContainer,"tContainer","Container Report",guPermLevel,guLoginClient,gcLogin,gcHost);
 			exit(0);
 		}
 		else if(!strcmp(gcFunction,"Reseller Report") && guReseller)
@@ -1908,6 +1908,7 @@ void ContainerCommands(pentry entries[], int x)
 					field[0],field[1],field[2],field[3],field[4],cGroup,field[5],field[6]);
 			}
 			mysql_free_result(res);
+			unxsvzLog(guReseller,"tClient","Reseller Report",guPermLevel,guLoginClient,gcLogin,gcHost);
 			exit(0);
 		}
 		else if(!strcmp(gcFunction,"Assign Container") && guPermLevel>5 && guNewContainer && guReseller)
@@ -1948,6 +1949,7 @@ void ContainerCommands(pentry entries[], int x)
 			}
 
 			gcMessage="Current container added to selected reseller account";
+			unxsvzLog(guNewContainer,"tContainer","Assign Container",guPermLevel,guLoginClient,gcLogin,gcHost);
 			htmlReseller();
 		}
 		else if(!strcmp(gcFunction,"Deassign Container") && guPermLevel>5 && guNewContainer && guReseller)
@@ -1964,6 +1966,7 @@ void ContainerCommands(pentry entries[], int x)
 			}
 
 			gcMessage="Current container removed from reseller account";
+			unxsvzLog(guNewContainer,"tContainer","Deassign Container",guPermLevel,guLoginClient,gcLogin,gcHost);
 			htmlReseller();
 		}
 		else if(!strcmp(gcFunction,"Create Reseller") && gcNewLogin[0] && gcNewPasswd[0] && guPermLevel>5)
@@ -2060,6 +2063,7 @@ void ContainerCommands(pentry entries[], int x)
 
 			guReseller=uClient;
 			gcMessage="New reseller account created, you can now add containers";
+			unxsvzLog(uClient,"tClient","Create Reseller",guPermLevel,guLoginClient,gcLogin,gcHost);
 			htmlReseller();
 		}//Create Account
 		else if(!strcmp(gcFunction,"Remove Reseller") && guReseller && guPermLevel>=10)
@@ -2102,6 +2106,7 @@ void ContainerCommands(pentry entries[], int x)
 
 			guReseller=0;
 			gcMessage="Reseller account removed!";
+			unxsvzLog(guReseller,"tClient","Remove Reseller",guPermLevel,guLoginClient,gcLogin,gcHost);
 			htmlReseller();
 		}//Remove Account
 
@@ -2509,6 +2514,7 @@ void funcSelectContainer(FILE *fp)
 			" tContainer.cHostname LIKE '%s%%'"
 			" AND tContainer.uStatus!=91"
 			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,gcSearch);
+/*
 		else if(guContainer)
 			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
 			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
@@ -2520,6 +2526,7 @@ void funcSelectContainer(FILE *fp)
 			" tContainer.uStatus!=91 AND"
 			" tContainer.uContainer=%u"
 			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,guContainer);
+*/
 		else
 			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
 			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
@@ -2544,6 +2551,7 @@ void funcSelectContainer(FILE *fp)
 			" tContainer.cHostname LIKE '%s%%' AND"
 			" tContainer.uStatus!=91"
 			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient,gcSearch);
+/*
 		else if(guContainer)
 			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
 			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
@@ -2555,6 +2563,7 @@ void funcSelectContainer(FILE *fp)
 			" tContainer.uStatus!=91 AND"
 			" tContainer.uContainer=%u"
 			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient,guContainer);
+*/
 		else
 			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
 			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
@@ -2575,6 +2584,7 @@ void funcSelectContainer(FILE *fp)
 			" tContainer.uCreatedBy=%u AND tContainer.cHostname LIKE '%s%%'"
 			" AND tContainer.uStatus!=91"
 			" ORDER BY tContainer.cHostname LIMIT 301",guLoginClient,gcSearch);
+/*
 		else if(guContainer)
 			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
 			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
@@ -2583,6 +2593,7 @@ void funcSelectContainer(FILE *fp)
 			" tContainer.uStatus!=91 AND"
 			" tContainer.uContainer=%u"
 			" ORDER BY tContainer.cHostname LIMIT 301",guLoginClient,guContainer);
+*/
 		else
 			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
 			" tContainer.uNode=tNode.uNode AND tNode.uStatus=1 AND"
