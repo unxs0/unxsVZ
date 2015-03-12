@@ -2161,6 +2161,7 @@ void htmlDIDInfo(void)
 
         MYSQL_RES *res;
 	MYSQL_ROW field;
+	//This needs further access control
 	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u"
 			" AND (cName='cOrg_Extension' OR cName='cOrg_OpenSIPS_DID' OR cName='cOrg_SIPTrunk' OR cName LIKE 'cOrg_Kamailio%%' ) ORDER BY cName",guContainer);
 	mysql_query(&gMysql,gcQuery);
