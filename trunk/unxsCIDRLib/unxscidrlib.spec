@@ -1,6 +1,6 @@
 %define name unxscidrlib
 %define version 2.0
-%define release 1
+%define release 2
 
 
 Summary: A small static library for unxsVZ IPv4 CIDR operations.
@@ -16,7 +16,7 @@ Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
 Obsoletes: unxstemplate
 BuildArch: x86_64
-Provides: %{name}
+Provides: A small library for unxsVZ CIDR networking math.
 
 
 %description
