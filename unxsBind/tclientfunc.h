@@ -59,6 +59,7 @@ void tClientNavList(void);
 void BasictClientCheck(void);
 void htmlAuthorizeLinksFromClient(unsigned uCertClient);
 void tAuthorizeNavListForLoadedOwner(void);
+void tAuthorizeLink(void);
 
 
 void ExtProcesstClientVars(pentry entries[], int x)
@@ -898,6 +899,9 @@ void ContactsNavList(void)
 	if(guPermLevel<10 || !uClient)
 		return;
 
+	if(uOwner!=1)
+		tAuthorizeLink();
+
 	//Login info
 	if(uOwner!=1 && strcmp(cCode,"Organization") && strncmp(cCode,"COMP",4))
 		tAuthorizeNavListForLoadedOwner();
@@ -1037,7 +1041,7 @@ void tAuthorizeNavListForLoadedOwner(void)
 
 	sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient FROM tAuthorize "
 			" WHERE uOwner=%u OR uOwner IN (SELECT uClient FROM " TCLIENT
-			" WHERE uOwner=%u)",uOwner,uOwner);
+			" WHERE uOwner=%u) ORDER BY cLabel",uOwner,uOwner);
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -1054,13 +1058,44 @@ void tAuthorizeNavListForLoadedOwner(void)
 		{
 			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
 				"%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
-			if((++uCount)>30) break;
+			if((++uCount)>50) break;
 		}
-		if(uCount>30)
-			printf("Only first 30 shown\n");
+		if(uCount>50)
+			printf("Only first 50 shown\n");
 				
 	}
         mysql_free_result(res);
 
 }//void tAuthorizeNavListForLoadedOwner(void)
+
+
+void tAuthorizeLink(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient FROM tAuthorize "
+			" WHERE (uCertClient=%u AND uCertClient!=1) OR cLabel='%s'",uClient,cLabel);
+
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if((mysql_num_rows(res)>0))
+	{
+        	printf("<p><u>tAuthorizeLink()</u><br>\n");
+        	while((field=mysql_fetch_row(res)))
+		{
+			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
+				"%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
+		}
+				
+	}
+        mysql_free_result(res);
+
+}//void tAuthorizeLink(void)
 
