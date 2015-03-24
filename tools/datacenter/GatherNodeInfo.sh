@@ -24,8 +24,8 @@ cMACeth1=`ifconfig eth1 | grep HWaddr | awk -F' ' '{print $5}'`;
 cIPv4eth0=`ifconfig eth0 | grep -w inet | awk -F':' '{print $2}'|cut -f 1 -d' '`;
 cIPv4eth1=`ifconfig eth1 | grep -w inet | awk -F':' '{print $2}'|cut -f 1 -d' '`;
 cKernel=`uname -r`;
-cdmiSytemManufacturer=`/usr/sbin/dmidecode -s system-manufacturer`;
-cdmiSytemProductName=`/usr/sbin/dmidecode -s system-product-name`;
+cdmiSystemManufacturer=`/usr/sbin/dmidecode -s system-manufacturer`;
+cdmiSystemProductName=`/usr/sbin/dmidecode -s system-product-name`;
 
 if [ "$1" != "run" ];then
 	echo "usage: $0 run";
@@ -185,12 +185,12 @@ fi
 #
 
 #
-#cdmiSytemManufacturer
-echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cdmiSytemManufacturer'" | $cMySQLConnect;
+#cdmiSystemManufacturer
+echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cdmiSystemManufacturer'" | $cMySQLConnect;
 if [ $? != 0 ];then
 	echo "mysql command 101 failed";
 fi
-echo "INSERT INTO tProperty SET cName='cdmiSytemManufacturer',cValue='$cdmiSytemManufacturer',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+echo "INSERT INTO tProperty SET cName='cdmiSystemManufacturer',cValue='$cdmiSystemManufacturer',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
 if [ $? != 0 ];then
 	echo "mysql command 102 failed";
 fi
@@ -198,12 +198,12 @@ fi
 #
 
 #
-#cdmiSytemProductName
-echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cdmiSytemProductName'" | $cMySQLConnect;
+#cdmiSystemProductName
+echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cdmiSystemProductName'" | $cMySQLConnect;
 if [ $? != 0 ];then
 	echo "mysql command 103 failed";
 fi
-echo "INSERT INTO tProperty SET cName='cdmiSytemProductName',cValue='$cdmiSytemProductName',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+echo "INSERT INTO tProperty SET cName='cdmiSystemProductName',cValue='$cdmiSystemProductName',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
 if [ $? != 0 ];then
 	echo "mysql command 104 failed";
 fi
