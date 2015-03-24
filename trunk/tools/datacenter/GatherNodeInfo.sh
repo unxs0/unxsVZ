@@ -7,9 +7,7 @@
 
 #
 #user conf section
-cHost="64.71.154.153";
-cPasswd="wsxedc";
-cMySQLConnect="/usr/bin/mysql -h $cHost -u unxsvz -p$cPasswd unxsvz";
+source /etc/unxsvz/mysql.local.sh
 #
 #
 
