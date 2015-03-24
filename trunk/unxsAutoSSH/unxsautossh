@@ -21,20 +21,30 @@
 
 #configure these
 cLocalIPAndPort="127.0.0.1:3306";#IP and port for local server connection.
-cRemoteIPAndPort="10.0.0.1:3306";#The remote MySQL server IP and port.
-cSSHUser="root@10.0.0.1";#The remote MySQL server user and IP/server must have ssh cert authentication working
-cSSHPort="22";#The remote MySQL server ssh port for cSSHUser connection.
+cRemoteIPAndPort="69.61.19.6:3306";#The remote MySQL server IP and port.
+cSSHUser="unxsvz@69.61.19.6";#The remote MySQL server user and IP/server must have ssh cert authentication working
+cSSHPort="22037";#The remote MySQL server ssh port for cSSHUser connection.
 
 #local connect example with defaults above: mysql -h127.0.0.1 -ppasswd -uuser dbname
 #this will work as long as user is allowed to connect from the IP configured above.
 
 cListen="$cLocalIPAndPort:$cRemoteIPAndPort";
 function start {
+	if [ -f /var/lock/subsys/autossh ];then
+		echo "autossh running? (rm /var/lock/subsys/autossh)";
+		return;
+	fi
         echo -n "Starting autossh"
         daemon "/usr/bin/autossh -M 0 -q -f -N -o 'ServerAliveInterval 60' -o 'ServerAliveCountMax 3' -L $cListen -p $cSSHPort $cSSHUser";
 	RETVAL=$?;
 	if [ $? != 0 ];then
 		echo "could not start autossh";
+		return;
+	fi
+	sleep 2;
+	uCount=`ps -ef |grep -v grep|grep -c -w \`pidof autossh\``;
+	if [ "$uCount" != "2" ];then
+		echo "autossh did not spawn ssh";
 		return;
 	fi
 	echo;
@@ -64,7 +74,7 @@ case $1 in
 		start;
 		;;
 	status)
-		status autossh
+		status autossh;
 		;;
 	*)
 		echo "Usage: $0 start|stop|restart|status"
