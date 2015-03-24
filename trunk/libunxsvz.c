@@ -38,6 +38,7 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContainer,
 			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs);
 void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
+void SetDatacenterProp(char const *cName,char const *cValue,unsigned uDatacenter);
 unsigned uGetPrimaryContainerGroup(unsigned uContainer);
 time_t cStartDateToUnixTime(char *cStartDate);
 time_t cStartTimeToUnixTime(char *cStartTime);
@@ -662,6 +663,34 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 	unxsVZLog(uContainer,"tContainer","NodeCommandJob");
 	return(uJob);
 }//unsigned uNodeCommandJob()
+
+
+//UBC safe should not be used for UBCs	
+void SetDatacenterProp(char const *cName,char const *cValue,unsigned uDatacenter)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%u AND uType=1 AND cName='%s'",uDatacenter,cName);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		ErrorMsg(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uProperty=%s",
+			cValue,guLoginClient,field[0]);
+        	mysql_query(&gMysql,gcQuery);
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,cName='%s',cValue='%s',uType=1,uOwner=%u,"
+				"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uDatacenter,
+					cName,cValue,guLoginClient,guLoginClient);
+        	mysql_query(&gMysql,gcQuery);
+	}
+}//void SetDatacenterProp(char const *cName,char const *cValue,unsigned uNode);
 
 
 //UBC safe should not be used for UBCs	
