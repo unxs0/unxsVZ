@@ -7,7 +7,7 @@
 
 #
 #user conf section
-cHost="rc1";
+cHost="64.71.154.153";
 cPasswd="wsxedc";
 cMySQLConnect="/usr/bin/mysql -h $cHost -u unxsvz -p$cPasswd unxsvz";
 #
@@ -24,12 +24,19 @@ cMACeth1=`ifconfig eth1 | grep HWaddr | awk -F' ' '{print $5}'`;
 cIPv4eth0=`ifconfig eth0 | grep -w inet | awk -F':' '{print $2}'|cut -f 1 -d' '`;
 cIPv4eth1=`ifconfig eth1 | grep -w inet | awk -F':' '{print $2}'|cut -f 1 -d' '`;
 cKernel=`uname -r`;
+cdmiSytemManufacturer=`/usr/sbin/dmidecode -s system-manufacturer`;
+cdmiSytemProductName=`/usr/sbin/dmidecode -s system-product-name`;
 
 if [ "$1" != "run" ];then
 	echo "usage: $0 run";
 	exit 0;
 fi
 
+cHostname=`hostname -f`;
+if [ $? != 0 ];then
+	echo "hostname -f failed";
+	exit;
+fi
 cShortHostname=`hostname -s`;
 if [ $? != 0 ];then
 	echo "hostname -s failed";
@@ -37,8 +44,23 @@ if [ $? != 0 ];then
 fi
 uNode=`echo "SELECT uNode FROM tNode WHERE cLabel='$cShortHostname'" | $cMySQLConnect | grep -v uNode`;
 if [ $? != 0 ];then
-	echo "Select node failed";
-	exit;
+	echo "Select node failed $cShortHostname/$cHostname. Trying registration via IP";
+	uDatacenter=`echo "SELECT uDatacenter FROM tIP WHERE cLabel='$cIPv4eth0'" | $cMySQLConnect | grep -v uDatacenter`;
+	if [ $? != 0 ];then
+		echo "Select datacenter failed for $cIPv4eth0";
+		exit;
+	fi
+	echo "Creating new tNode entry with uDatacenter=$uDatacenter";
+	echo "INSERT INTO tNode SET cLabel='$cShortHostname',uOwner=2,uDatacenter=$uDatacenter,uStatus=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+	if [ $? != 0 ];then
+		echo "INSERT INTO tNode failed!";
+		exit;
+	fi
+	uNode=`echo "SELECT uNode FROM tNode WHERE cLabel='$cShortHostname'" | $cMySQLConnect | grep -v uNode`;
+	if [ $? != 0 ];then
+		echo "Select node failed $cShortHostname after trying registration via IP!";
+		exit
+	fi
 fi
 if [ "$uNode" == "" ];then
 	echo "uNode failed";
@@ -158,6 +180,32 @@ fi
 echo "INSERT INTO tProperty SET cName='cKernel',cValue='$cKernel',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
 if [ $? != 0 ];then
 	echo "mysql command 12 failed";
+fi
+#
+#
+
+#
+#cdmiSytemManufacturer
+echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cdmiSytemManufacturer'" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 101 failed";
+fi
+echo "INSERT INTO tProperty SET cName='cdmiSytemManufacturer',cValue='$cdmiSytemManufacturer',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 102 failed";
+fi
+#
+#
+
+#
+#cdmiSytemProductName
+echo "DELETE FROM tProperty WHERE uKey=$uNode AND uType=2 AND cName='cdmiSytemProductName'" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 103 failed";
+fi
+echo "INSERT INTO tProperty SET cName='cdmiSytemProductName',cValue='$cdmiSytemProductName',uKey=$uNode,uType=2,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())" | $cMySQLConnect;
+if [ $? != 0 ];then
+	echo "mysql command 104 failed";
 fi
 #
 #
