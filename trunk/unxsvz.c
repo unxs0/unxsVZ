@@ -72,6 +72,7 @@ void ProcessJobQueue(unsigned uDebug);
 //here
 void ExtMainShell(int argc, char *argv[]);
 void AddHardwareNode(char *cDatacenter);
+void GatherHardwareInfo(unsigned uNode);
 
 static char cRELEASE[64]={"$Id$"};
 
@@ -203,6 +204,141 @@ void AddHardwareNode(char *cDatacenter)
 		SetNodeProp("Hostname",cNode,uNode);
 		SetNodeProp("FailoverStatus","Normal",uNode);
 		printf("Basic hardware node properties for %s added\n",cNode);
+
+		GatherHardwareInfo(uNode);
 	}
 
 }//void AddHardwareNode(char *cDatacenter)
+
+
+void GatherHardwareInfo(unsigned uNode)
+{
+
+	if(!uNode) return;
+
+	FILE *pfp;
+	char cResponse[256]={""};
+
+	sprintf(gcQuery,"grep 'model name' /proc/cpuinfo | head -n 1 | cut -f 2 -d : | tr -d ' ';");
+	if((pfp=popen(gcQuery,"r"))!=NULL)
+	{
+		if(fscanf(pfp,"%255s",cResponse)>0)
+		{
+			SetNodeProp("cProcCPU",cResponse,uNode);
+			printf("cProcCPU=%s added\n",cResponse);
+		}
+		else
+			printf("Error cProcCPU NOT added!\n");
+		pclose(pfp);
+	}
+
+	unsigned uResponse=0;
+	sprintf(gcQuery,"grep -c 'model name' /proc/cpuinfo");
+	if((pfp=popen(gcQuery,"r"))!=NULL)
+	{
+		if(fscanf(pfp,"%u",&uResponse)>0)
+		{
+			sprintf(cResponse,"%u",uResponse);
+			SetNodeProp("uNumCPUs",cResponse,uNode);
+			printf("uNumCPUs=%s added\n",cResponse);
+		}
+		else
+			printf("Error uNumCPUs NOT added!\n");
+		pclose(pfp);
+	}
+
+	long unsigned luResponse=0;
+	sprintf(gcQuery,"free | grep Mem: | awk -F' ' '{ print $2 }'");
+	if((pfp=popen(gcQuery,"r"))!=NULL)
+	{
+		if(fscanf(pfp,"%lu",&luResponse)>0)
+		{
+			sprintf(cResponse,"%lu",luResponse);
+			SetNodeProp("luInstalledRAM",cResponse,uNode);
+			printf("luInstalledRAM=%s added\n",cResponse);
+		}
+		else
+			printf("Error luInstalledRAM NOT added!\n");
+		pclose(pfp);
+	}
+
+	sprintf(gcQuery,"df | grep '/vz' | awk -F' ' '{print $2}'");
+	if((pfp=popen(gcQuery,"r"))!=NULL)
+	{
+		if(fscanf(pfp,"%lu",&luResponse)>0)
+		{
+			sprintf(cResponse,"%lu",luResponse);
+			SetNodeProp("luInstalledDiskSpace",cResponse,uNode);
+			printf("luInstalledDiskSpace=%s added\n",cResponse);
+		}
+		else
+			printf("Error luInstalledDiskSpace NOT added!\n");
+		pclose(pfp);
+	}
+
+	sprintf(gcQuery,"ifconfig eth0 | grep HWaddr | awk -F' ' '{print $5}'");
+	if((pfp=popen(gcQuery,"r"))!=NULL)
+	{
+		if(fscanf(pfp,"%255s",cResponse)>0)
+		{
+			SetNodeProp("cMACeth0",cResponse,uNode);
+			printf("cMACeth0=%s added\n",cResponse);
+		}
+		else
+			printf("Error cMACeth0 NOT added!\n");
+		pclose(pfp);
+	}
+
+	sprintf(gcQuery,"ifconfig eth1 | grep HWaddr | awk -F' ' '{print $5}'");
+	if((pfp=popen(gcQuery,"r"))!=NULL)
+	{
+		if(fscanf(pfp,"%255s",cResponse)>0)
+		{
+			SetNodeProp("cMACeth1",cResponse,uNode);
+			printf("cMACeth1=%s added\n",cResponse);
+		}
+		else
+			printf("Error cMACeth1 NOT added!\n");
+		pclose(pfp);
+	}
+
+	sprintf(gcQuery,"uname -r");
+	if((pfp=popen(gcQuery,"r"))!=NULL)
+	{
+		if(fscanf(pfp,"%255s",cResponse)>0)
+		{
+			SetNodeProp("cKernel",cResponse,uNode);
+			printf("cKernel=%s added\n",cResponse);
+		}
+		else
+			printf("Error cKernel NOT added!\n");
+		pclose(pfp);
+	}
+
+	sprintf(gcQuery,"/usr/sbin/dmidecode -s system-manufacturer");
+	if((pfp=popen(gcQuery,"r"))!=NULL)
+	{
+		if(fscanf(pfp,"%255s",cResponse)>0)
+		{
+			SetNodeProp("cdmiSystemManufacturer",cResponse,uNode);
+			printf("cdmiSystemManufacturer=%s added\n",cResponse);
+		}
+		else
+			printf("Error cdmiSystemManufacturer NOT added!\n");
+		pclose(pfp);
+	}
+
+	sprintf(gcQuery,"/usr/sbin/dmidecode -s system-product-name");
+	if((pfp=popen(gcQuery,"r"))!=NULL)
+	{
+		if(fscanf(pfp,"%255s",cResponse)>0)
+		{
+			SetNodeProp("cdmiSystemProductName",cResponse,uNode);
+			printf("cdmiSystemProductName=%s added\n",cResponse);
+		}
+		else
+			printf("Error cdmiSystemProductName NOT added!\n");
+		pclose(pfp);
+	}
+
+}//void GatherHardwareInfo(unsigned uNode)
