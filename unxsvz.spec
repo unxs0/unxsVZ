@@ -1,6 +1,6 @@
 %define name unxsvz
 %define version 4.0
-%define release 4
+%define release 5
 
 Summary: unxsVZ (CentOS 6 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: %{name}
@@ -63,6 +63,8 @@ exit 0
 /var/www/unxs/cgi-bin/unxsVZ.cgi
 
 %changelog
+* Wed Mar 25 2015 Gary Wallis <support@unixservice.com> 
+- New unxsVZ AddHardwareNode command.
 * Tue Mar 10 2015 Gary Wallis <support@unixservice.com> 
 - Alpha releases
 * Tue Feb 3 2015 Gary Wallis <support@unixservice.com> 

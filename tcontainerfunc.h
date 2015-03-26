@@ -8948,7 +8948,8 @@ void SelectedDatacenterInformation(unsigned uDatacenter,unsigned uHtmlMode)
 
 }//void SelectedDatacenterInformation(unsigned uDatacenter,unsigned uHtmlMode)
 
-
+/*
+ * moved to lib
 //UBC safe
 void SetDatacenterProp(const char *cName,const char *cValue,const unsigned uDatacenter)
 {
@@ -8981,7 +8982,7 @@ void SetDatacenterProp(const char *cName,const char *cValue,const unsigned uData
 	mysql_free_result(res);
 
 }//void SetDatacenterProp()
-
+*/
 
 //Not cloning. Starting a new container from same OSTemplate for use as a clone.
 unsigned CommonNewCloneContainer(
