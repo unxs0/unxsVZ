@@ -73,6 +73,7 @@ void ProcessJobQueue(unsigned uDebug);
 void ExtMainShell(int argc, char *argv[]);
 void AddHardwareNode(char *cDatacenter);
 void GatherHardwareInfo(unsigned uNode);
+void AddContainers(void);
 
 static char cRELEASE[64]={"$Id$"};
 
@@ -90,12 +91,15 @@ void ExtMainShell(int argc, char *argv[])
                 ProcessJobQueue(1);
         else if(argc==3 && !strcmp(argv[1],"AddHardwareNode"))
                 AddHardwareNode(argv[2]);
+        else if(argc==2 && !strcmp(argv[1],"AddContainers"))
+                AddContainers();
         else if(argc==3 && !strcmp(argv[1],"TestJob"))
                 TestJob(argv[2]);
         else
 	{
 		printf("\n%s %s\nMenu\n",argv[0],cRELEASE);
 		printf("\tAddHardwareNode <Datacenter cLabel>\n");
+		printf("\tAddContainers\n");
 		printf("\tProcessJobQueue\n");
 		printf("\tProcessJobQueueDebug\n");
 		printf("\tTestJob <special cJobname>\n");
@@ -342,3 +346,76 @@ void GatherHardwareInfo(unsigned uNode)
 	}
 
 }//void GatherHardwareInfo(unsigned uNode)
+
+
+void AddContainers(void)
+{
+	char cNode[100]={""};
+	if(gethostname(cNode,99)!=0)
+	{
+		printf("gethostname() failed\n");
+		exit(1);
+	}
+
+	if(TextConnectDb())
+		exit(1);
+
+	//Global data
+	guLoginClient=2;//ASP uClient
+
+
+	//Check for node
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uNode=0;
+	sprintf(gcQuery,"SELECT uNode FROM tNode WHERE cLabel=SUBSTRING_INDEX('%s','.',1)",cNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uNode);
+
+	if(!uNode)
+	{
+		printf("Hardware node %s not found. First AddHardwareNode if applicable.\n",cNode);
+		return;
+	}
+
+	FILE *pfp;
+	unsigned uContainer=0;
+	char cBuf[256]={""};
+	char cVal[8][256]={"","","","","","","",""};
+	sprintf(gcQuery,"vzlist -H -o veid,hostname,name,ostemplate,ip,nameserver,searchdomain");
+	if((pfp=popen(gcQuery,"r"))!=NULL)
+	{
+		while(fgets(cBuf,255,pfp)!=NULL)
+		{
+			char *cToken=NULL,*cHostname=NULL,*cName=NULL,*cOSTemplate=NULL,*cIPv4=NULL;
+			register int n=0;
+			cToken=strtok(cBuf," \n");
+			sprintf(cVal[n++],"%.255s",cToken);
+			while((cToken=strtok(NULL," \n"))!=NULL && n<7)
+			{
+				sprintf(cVal[n++],"%.255s",cToken);
+			}
+			cHostname=cVal[1];
+			cName=cVal[2];
+			cOSTemplate=cVal[3];
+			cIPv4=cVal[4];
+
+			sscanf(cVal[0],"%u",&uContainer);
+			if(uContainer && cHostname[0] && cName[0] && cOSTemplate[0] && cIPv4[0])
+			{
+				//debug only
+				printf("veid=%u hostname=\"%s\" name=\"%s\" ostemplate=\"%s\" ip=\"%s\" nameserver=\"%s\" searchdomain=\"%s\"\n",
+					uContainer,cHostname,cName,cOSTemplate,cIPv4,cVal[5],cVal[6]);
+			}
+		}
+		pclose(pfp);
+	}
+
+}//void AddContainers(void)
