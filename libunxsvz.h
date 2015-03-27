@@ -37,6 +37,7 @@ unsigned uNodeCommandJob(unsigned uDatacenter, unsigned uNode, unsigned uContain
 			unsigned uOwner, unsigned uLoginClient, unsigned uConfiguration, char *cArgs);
 void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
 void SetDatacenterProp(char const *cName,char const *cValue,unsigned uDatacenter);
+unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 unsigned uGetPrimaryContainerGroup(unsigned uContainer);
 time_t cStartDateToUnixTime(char *cStartDate);
 time_t cStartTimeToUnixTime(char *cStartTime);
