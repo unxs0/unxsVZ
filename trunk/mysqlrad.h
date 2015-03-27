@@ -199,6 +199,7 @@ void ExtSelectRowPublic(const char *cTable,const char *cVarList,unsigned uRow);
 void CloneReport(const char *cOptionalMsg);
 void SetNodeProp(char const *cName,char const *cValue,unsigned uNode);
 void SetDatacenterProp(char const *cName,char const *cValue,unsigned uDatacenter);
+unsigned SetContainerProperty(const unsigned uContainer,const char *cPropertyName,const  char *cPropertyValue);
 void tTablePullDownResellers(unsigned uSelector,unsigned uBanner);
 unsigned GetConfiguration(const char *cName,char *cValue,
 		unsigned uDatacenter,

@@ -368,7 +368,8 @@ void AddContainers(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	unsigned uNode=0;
-	sprintf(gcQuery,"SELECT uNode FROM tNode WHERE cLabel=SUBSTRING_INDEX('%s','.',1)",cNode);
+	unsigned uDatacenter=0;
+	sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tNode WHERE cLabel=SUBSTRING_INDEX('%s','.',1)",cNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -377,7 +378,10 @@ void AddContainers(void)
 	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
+	{
 		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
+	}
 
 	if(!uNode)
 	{
@@ -394,7 +398,7 @@ void AddContainers(void)
 	{
 		while(fgets(cBuf,255,pfp)!=NULL)
 		{
-			char *cToken=NULL,*cHostname=NULL,*cName=NULL,*cOSTemplate=NULL,*cIPv4=NULL;
+			char *cToken=NULL,*cHostname=NULL,*cName=NULL,*cOSTemplate=NULL,*cIPv4=NULL,*cNameserver=NULL,*cSearchdomain=NULL;
 			register int n=0;
 			cToken=strtok(cBuf," \n");
 			sprintf(cVal[n++],"%.255s",cToken);
@@ -406,13 +410,326 @@ void AddContainers(void)
 			cName=cVal[2];
 			cOSTemplate=cVal[3];
 			cIPv4=cVal[4];
+			cNameserver=cVal[5];
+			cSearchdomain=cVal[6];
 
 			sscanf(cVal[0],"%u",&uContainer);
 			if(uContainer && cHostname[0] && cName[0] && cOSTemplate[0] && cIPv4[0])
 			{
+				//
 				//debug only
-				printf("veid=%u hostname=\"%s\" name=\"%s\" ostemplate=\"%s\" ip=\"%s\" nameserver=\"%s\" searchdomain=\"%s\"\n",
+				printf("Adding veid=%u hostname=\"%s\" name=\"%s\" ostemplate=\"%s\" ip=\"%s\" nameserver=\"%s\" searchdomain=\"%s\"\n",
 					uContainer,cHostname,cName,cOSTemplate,cIPv4,cVal[5],cVal[6]);
+				//
+
+				//
+				//add ip :: must not exist OR be available
+				unsigned uIPv4=0;
+				sprintf(gcQuery,"SELECT uIP FROM tIP WHERE cLabel='%s' AND uDatacenter=%u",
+					cIPv4,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					return;
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uIPv4);
+				if(!uIPv4)
+				{
+					sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uAvailable=0,"
+							"uDatacenter=%u,cComment='AddContainer %s',"
+							"uIPNum=INET_ATON('%s'),uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
+								cIPv4,uDatacenter,cNode,cIPv4,guLoginClient,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						printf("%s\n",mysql_error(&gMysql));
+						return;
+					}
+					uIPv4=mysql_insert_id(&gMysql);
+				}
+				else
+				{
+					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uIP=%u AND uAvailable=0",uIPv4);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						printf("%s\n",mysql_error(&gMysql));
+						return;
+					}
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+					{
+						printf("The IP being used (%s) is not available. Aborting!\n",cIPv4);
+						return;
+					}
+
+					//cComment may grow out of control fix later
+					sprintf(gcQuery,"UPDATE tIP SET"
+							" uAvailable=0,"
+							" uModBy=%u,"
+							" uModDate=UNIX_TIMESTAMP(NOW()),"
+							" cComment=IF(INSTR(cComment,'AddContainer %s'),"
+								"cComment,CONCAT(cComment,' AddContainer %s'))"
+							" WHERE uIP=%u",guLoginClient,cNode,cNode,uIPv4);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						printf("%s\n",mysql_error(&gMysql));
+						return;
+					}
+				}
+				//add ip end
+				//
+
+				//
+				//add template :: add if does not exist
+				unsigned uOSTemplate=0;
+				sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s'",cOSTemplate);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					return;
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uOSTemplate);
+				if(!uOSTemplate)
+				{
+					sprintf(gcQuery,"INSERT INTO tOSTemplate SET"
+							" cLabel='%s',"
+							" uOwner=%u,"
+							" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+							" uCreatedBy=%u"
+									,cOSTemplate,guLoginClient,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						printf("%s\n",mysql_error(&gMysql));
+						return;
+					}
+					uOSTemplate=mysql_insert_id(&gMysql);
+				}
+				//add template end
+				//
+			
+				//	
+				//add nameserver :: if "-" default (the first?) if not add or use existing match
+				unsigned uNameserver=0;
+				if(cNameserver[0]=='-')
+				{
+					sprintf(gcQuery,"SELECT uNameserver FROM tNameserver ORDER BY uNameserver");
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						printf("%s\n",mysql_error(&gMysql));
+						return;
+					}
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+						sscanf(field[0],"%u",&uNameserver);
+					if(!uNameserver)
+					{
+						printf("There is no default Nameserver. Aborting!\n");
+						return;
+					}
+				}
+				else
+				{
+					sprintf(gcQuery,"SELECT uNameserver FROM tNameserver WHERE cLabel='%s'",cNameserver);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						printf("%s\n",mysql_error(&gMysql));
+						return;
+					}
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+						sscanf(field[0],"%u",&uNameserver);
+					if(!uNameserver)
+					{
+						sprintf(gcQuery,"INSERT INTO tNameserver SET"
+								" cLabel='%s',"
+								" uOwner=%u,"
+								" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+								" uCreatedBy=%u"
+											,cNameserver,guLoginClient,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							printf("%s\n",mysql_error(&gMysql));
+							return;
+						}
+						uNameserver=mysql_insert_id(&gMysql);
+					}
+				}
+				//add nameserver end
+				//
+
+				//
+				//default uConfig
+				unsigned uConfig=0;
+				sprintf(gcQuery,"SELECT uConfig FROM tConfig ORDER BY uConfig");
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					return;
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+					sscanf(field[0],"%u",&uConfig);
+				if(!uConfig)
+				{
+					printf("There is no default uConfig. Aborting!\n");
+					return;
+				}
+				//default uConfig end
+				//
+
+				//
+				//add searchdomain :: if "-" default (the first?) if not add or use existing match
+				unsigned uSearchdomain=0;
+				if(cSearchdomain[0]=='-')
+				{
+					sprintf(gcQuery,"SELECT uSearchdomain FROM tSearchdomain ORDER BY uSearchdomain");
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						printf("%s\n",mysql_error(&gMysql));
+						return;
+					}
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+						sscanf(field[0],"%u",&uSearchdomain);
+					if(!uSearchdomain)
+					{
+						printf("There is no default Searchdomain. Aborting!\n");
+						return;
+					}
+				}
+				else
+				{
+					sprintf(gcQuery,"SELECT uSearchdomain FROM tSearchdomain WHERE cLabel='%s'",cSearchdomain);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						printf("%s\n",mysql_error(&gMysql));
+						return;
+					}
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+						sscanf(field[0],"%u",&uSearchdomain);
+					if(!uNameserver)
+					{
+						sprintf(gcQuery,"INSERT INTO tSearchdomain SET"
+								" cLabel='%s',"
+								" uOwner=%u,"
+								" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+								" uCreatedBy=%u"
+											,cSearchdomain,guLoginClient,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							printf("%s\n",mysql_error(&gMysql));
+							return;
+						}
+						uSearchdomain=mysql_insert_id(&gMysql);
+					}
+				}
+				//add searchdomain end
+				//
+				
+				//hostname must not exist
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cHostname='%s'",cHostname);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					return;
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					printf("cHostname %s exists. Aborting!\n",cHostname);
+					return;
+				}
+
+				//name must not exist
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cName);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					return;
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					printf("cName %s exists. Aborting!\n",cName);
+					return;
+				}
+
+				//hostname must be name.something...
+				if(strncmp(cHostname,cName,strlen(cName)))
+				{
+					printf("cHostname %s does not start with cName %s. Aborting!\n",cHostname,cName);
+					return;
+				}
+
+				//veid must not exist
+				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u",uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					return;
+				}
+				res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					printf("uContainer %u exists. Aborting!\n",uContainer);
+					return;
+				}
+
+				//
+				//timezone :: get from container add if does not exist already.
+				char cTimeZone[256]={"CST6CDT"};//default
+				GetConfiguration("cTimeZone",cTimeZone,0,0,0,0);//sys conf default global
+
+
+				//add container
+				sprintf(gcQuery,"INSERT INTO tContainer SET"
+							" uContainer=%u,"
+							" cLabel='%s',"
+							" cHostname='%s',"
+							" uIPv4=%u,"
+							" uOSTemplate=%u,"
+							" uConfig=%u,"
+							" uNameserver=%u,"
+							" uSearchdomain=%u,"
+							" uDatacenter=%u,"
+							" uNode=%u,"
+							" uStatus=%u,"
+							" uOwner=%u,"
+							" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+							" uCreatedBy=%u"
+									,uContainer,cName,cHostname,uIPv4,uOSTemplate,uConfig,uNameserver,uSearchdomain,
+									uDatacenter,uNode,uACTIVE,
+									guLoginClient,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					return;
+				}
+
+				//add properties
+				SetContainerProperty(uContainer,"cOrg_TimeZone",cTimeZone);
+				SetContainerProperty(uContainer,"unxsVZOPNote","Added by unxsVZ AddContainers");
 			}
 		}
 		pclose(pfp);
