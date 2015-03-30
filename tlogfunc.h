@@ -278,22 +278,24 @@ void LogSummary(void)
 		MYSQL_RES *res;
 		MYSQL_ROW field;
 		
-		sprintf(gcQuery,"SELECT COUNT(uLog),tClient.cLabel FROM tLog,tClient WHERE tClient.uClient=tLog.uLoginClient"
+		sprintf(gcQuery,"SELECT COUNT(tLog.uLog),tClient.cLabel,FROM_UNIXTIME(MAX(tLog.uCreatedDate))"
+				" FROM tLog,tClient WHERE tClient.uClient=tLog.uLoginClient"
 				" AND tLog.cLabel LIKE 'login%%' AND tLog.uLoginClient>0 AND tLog.uLogType=8"
 				" GROUP BY tLog.uLoginClient ORDER BY COUNT(uLog) DESC");
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			printf("%s",mysql_error(&gMysql));
+			printf("<p>Error: %s",mysql_error(&gMysql));
 			return;
 		}
         	res=mysql_store_result(&gMysql);
 		unsigned uUniqueLogins=mysql_num_rows(res);
 		printf("<p><u>LogSummary Customer Logins (%u unique)</u><br>\n",uUniqueLogins);
 		while((field=mysql_fetch_row(res)))
-			printf("%s %s<br>\n",field[0],field[1]);
+			printf("%s %s %s<br>\n",field[0],field[1],field[2]);
 
-		sprintf(gcQuery,"SELECT COUNT(uLog),tClient.cLabel FROM tLog,tClient WHERE tClient.uClient=tLog.uLoginClient"
+		sprintf(gcQuery,"SELECT COUNT(uLog),tClient.cLabel,FROM_UNIXTIME(MAX(tLog.uCreatedDate))"
+				" FROM tLog,tClient WHERE tClient.uClient=tLog.uLoginClient"
 				" AND tLog.cLabel LIKE 'login%%' AND tLog.uLoginClient>0 AND tLog.uLogType=6"
 				" GROUP BY tLog.uLoginClient ORDER BY COUNT(uLog) DESC");
 		mysql_query(&gMysql,gcQuery);
@@ -306,7 +308,7 @@ void LogSummary(void)
 		uUniqueLogins=mysql_num_rows(res);
 		printf("<p><u>LogSummary Backend Logins (%u unique)</u><br>\n",uUniqueLogins);
 		while((field=mysql_fetch_row(res)))
-			printf("%s %s<br>\n",field[0],field[1]);
+			printf("%s %s %s<br>\n",field[0],field[1],field[2]);
 		mysql_free_result(res);
 
 		

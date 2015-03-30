@@ -6249,6 +6249,21 @@ void ExttContainerListSelect(void)
 		sprintf(cCat,"tContainer.uOwner=%u ORDER BY uOwner,uContainer",uOwner);
 		strcat(gcQuery,cCat);
         }
+        else if(!strcmp(gcFilter,"uCreatedBy"))
+        {
+		if(guLoginClient==1 && guPermLevel>11)
+			strcat(gcQuery," WHERE ");
+		else
+			strcat(gcQuery," AND ");
+                sscanf(gcCommand,"%u",&uCreatedBy);
+		if(uCreatedBy==0 && gcCommand[0])
+			//Try with text 
+			sprintf(cCat,"tContainer.uCreatedBy IN (SELECT uClient FROM tClient WHERE cLabel LIKE '%s')"
+				" ORDER BY uCreatedBy,uContainer",gcCommand);
+		else
+			sprintf(cCat,"tContainer.uCreatedBy=%u ORDER BY uCreatedBy,uContainer",uCreatedBy);
+		strcat(gcQuery,cCat);
+        }
         else if(!strcmp(gcFilter,"uGroup"))
         {
 		unsigned uGroup=0;
@@ -6309,6 +6324,10 @@ void ExttContainerListFilter(void)
                 printf("<option>uOwner</option>");
         else
                 printf("<option selected>uOwner</option>");
+        if(strcmp(gcFilter,"uCreatedBy"))
+                printf("<option>uCreatedBy</option>");
+        else
+                printf("<option selected>uCreatedBy</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else

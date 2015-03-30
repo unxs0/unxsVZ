@@ -115,7 +115,7 @@ void ExttClientCommands(pentry entries[], int x)
 			if(guPermLevel>=10)
 			{
 				ProcesstClientVars(entries,x);
-				if(guLoginClient!=1 && uMaxClientsReached(guCompany))
+				if(guLoginClient!=1 && guPermLevel!=12 && uMaxClientsReached(guCompany))
 				{
 					guMode=0;
 					tClient("Your reseller maximum of customers has been reached");
@@ -138,7 +138,7 @@ void ExttClientCommands(pentry entries[], int x)
 
 				//Validate
 				guMode=2000;
-				if(guLoginClient!=1 && uMaxClientsReached(guCompany) && !uCreateCompany)
+				if(guLoginClient!=1 && guPermLevel!=12 && uMaxClientsReached(guCompany) && !uCreateCompany)
 				{
 					guMode=0;
 					tClient("Your maximum of customers has been reached");
@@ -1022,8 +1022,8 @@ void htmlListContainers(unsigned uClient)
 	sprintf(gcQuery,"SELECT uContainer,cLabel"
 				" FROM tContainer WHERE"
 			" (uOwner IN (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
-			" cCode='Organization')) OR uOwner=%u) OR (uOwner=%u OR uCreatedBy=%u))"
-				" ORDER BY cLabel LIMIT 64",uClient,uClient,uClient,uClient,uClient);
+			" cCode='Organization')) OR uOwner=%u) OR (uOwner=%u OR uCreatedBy=%u OR uCreatedBy=%u))"
+				" ORDER BY cLabel LIMIT 64",uClient,uClient,uClient,uClient,uClient,uOwner);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -1050,6 +1050,45 @@ void htmlListContainers(unsigned uClient)
 }//void htmlListContainers(unsigned uClient)
 
 
+void htmlListContainers2(unsigned uClient);
+void htmlListContainers2(unsigned uClient)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uClient==1 || uOwner==1) return;
+
+	sprintf(gcQuery,"SELECT uContainer,cLabel"
+				" FROM tContainer WHERE"
+			" (uOwner IN (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
+			" cCode='Organization')) OR uOwner=%u) OR (uOwner=%u OR uCreatedBy=%u))"
+				" ORDER BY cLabel LIMIT 64",uClient,uClient,uClient,uClient,uClient);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	unsigned uCount=0;
+	if((uCount=mysql_num_rows(res)))
+	{
+        	printf("<p><u>Controlled tContainerNavList ");
+		if(uCount==64)
+        		printf("(Only first 64 shown)");
+        	printf("</u><br>\n");
+        	while((field=mysql_fetch_row(res)))
+		{
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>"
+				"%s</a><br>\n",field[0],field[1]);
+		}
+	}
+        mysql_free_result(res);
+
+}//void htmlListContainers2(unsigned uClient)
+
+
 void htmlRecordContext(void)
 {
 	printf("<p><u>Record Context Info</u><br>");
@@ -1059,13 +1098,14 @@ void htmlRecordContext(void)
 			" appears to be a reseller or ASP owned company or organization"
 			" (see <a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>).",
 					uClient,cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
-		htmlListContainers(uClient);
+		htmlListContainers2(uClient);
 	}
 	else if(uOwner>1 && strcmp(cCode,"Organization"))
 	{
 		printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a> appears to be a contact of <a class=darkLink"
 			" href=unxsVZ.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",
 					uClient,cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
+		htmlListContainers(uClient);
 	}
 	else if(uOwner==1 && strcmp(cLabel,"Root"))
 	{
