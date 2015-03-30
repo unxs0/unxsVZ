@@ -2548,10 +2548,10 @@ void funcSelectContainer(FILE *fp)
 			" (tContainer.uOwner IN"
 			" (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
 			" 	cCode='Organization')) OR uOwner=%u)"
-			" OR (tContainer.uOwner=%u OR tContainer.uCreatedBy=%u)) AND"
+			" OR (tContainer.uOwner=%u OR tContainer.uCreatedBy=%u OR tContainer.uCreatedBy=%u)) AND"
 			" tContainer.cHostname LIKE '%s%%' AND"
 			" tContainer.uStatus!=91"
-			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient,gcSearch);
+			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient,guOrg,gcSearch);
 /*
 		else if(guContainer)
 			sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer,tNode WHERE"
@@ -2572,9 +2572,9 @@ void funcSelectContainer(FILE *fp)
 			" (tContainer.uOwner IN"
 			" (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
 			" 	cCode='Organization')) OR uOwner=%u)"
-			" OR (tContainer.uOwner=%u OR tContainer.uCreatedBy=%u)) AND"
+			" OR (tContainer.uOwner=%u OR tContainer.uCreatedBy=%u OR tContainer.uCreatedBy=%u)) AND"
 			" tContainer.uStatus!=91"
-			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient);
+			" ORDER BY tContainer.cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient,guOrg);
 	}
 	else
 	{
