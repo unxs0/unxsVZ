@@ -103,6 +103,24 @@ void htmlReseller(void);
 void htmlResellerPage(char *cTitle, char *cTemplateName);
 void funcResellerForm(FILE *fp);
 
+
+unsigned uGetClientPermLevel(uClient)
+{
+	unsigned uRetVal=0;
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT uPerm FROM tAuthorize WHERE uCertClient=%u",uClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return(uRetVal);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uRetVal);
+	mysql_free_result(res);
+	return(uRetVal);
+}//unsigned uGetClientPermLevel(uClient)
+
+
 unsigned uPower10(unsigned uI)
 {
 	static unsigned uTotal=1;
@@ -1848,7 +1866,10 @@ void ContainerCommands(pentry entries[], int x)
 
 			printf("Content-type: text/plain\n\n");
 			printf("guReseller=%u,%s\n",guReseller,ForeignKey("tClient","cLabel",guReseller));
-			printf("uContainer,cLabel,cHostname,cDatacenter,cNode,cGroup,cTemplate,cStatus\n");
+			unsigned uResellerOrg=0;
+			sscanf(ForeignKey("tClient","uOwner",guReseller),"%u",&uResellerOrg);
+			printf("Reseller Org=%u,%s\n",uResellerOrg,ForeignKey("tClient","cLabel",uResellerOrg));
+			printf("uContainer,cLabel,cHostname,cDatacenter,cNode,cGroup,cTemplate,cStatus,cCreatedBy,cOwner\n");
 
 			if(guReseller)
 			sprintf(gcQuery,"SELECT tContainer.uContainer,"
@@ -1857,13 +1878,19 @@ void ContainerCommands(pentry entries[], int x)
 					" tDatacenter.cLabel,"
 					" tNode.cLabel,"
 					" tOSTemplate.cLabel,"
-					" tStatus.cLabel"
-					" FROM tContainer,tDatacenter,tNode,tOSTemplate,tStatus"
+					" tStatus.cLabel,"
+					" tClient1.cLabel AS cCreatedBy,"
+					" tClient2.cLabel AS cOwner"
+					" FROM tContainer,tDatacenter,tNode,tOSTemplate,tStatus,tClient tClient1,tClient tClient2"
 					" WHERE tContainer.uDatacenter=tDatacenter.uDatacenter AND"
 					" tContainer.uNode=tNode.uNode AND"
 					" tContainer.uStatus=tStatus.uStatus AND"
 					" tOSTemplate.uOSTemplate=tContainer.uOSTemplate AND"
-					" tContainer.uSource=0 AND tContainer.uCreatedBy=%u",guReseller);
+					" tClient1.uClient=tContainer.uCreatedBy AND"
+					" tClient2.uClient=tContainer.uOwner AND"
+					" tContainer.uSource=0 AND"
+					" (tContainer.uCreatedBy=%u OR tContainer.uCreatedBy=(SELECT uOwner FROM tClient WHERE uClient=%u))",
+						guReseller,guReseller);
 			//extra protection critical enterprise data
 			else if(gcOTPSecret[0])
 			sprintf(gcQuery,"SELECT tContainer.uContainer,"
@@ -1872,12 +1899,17 @@ void ContainerCommands(pentry entries[], int x)
 					" tDatacenter.cLabel,"
 					" tNode.cLabel,"
 					" tOSTemplate.cLabel,"
-					" tStatus.cLabel"
-					" FROM tContainer,tDatacenter,tNode,tOSTemplate,tStatus"
+					" tStatus.cLabel,"
+					" tClient.cLabel AS cCreatedBy,"
+					" tClient1.cLabel AS cCreatedBy"
+					" tClient2.cLabel AS cOwner"
+					" FROM tContainer,tDatacenter,tNode,tOSTemplate,tStatus,tClient tClient1,tClient tClient2"
 					" WHERE tContainer.uDatacenter=tDatacenter.uDatacenter AND"
 					" tContainer.uNode=tNode.uNode AND"
 					" tContainer.uStatus=tStatus.uStatus AND"
 					" tOSTemplate.uOSTemplate=tContainer.uOSTemplate AND"
+					" tClient1.uClient=tContainer.uCreatedBy AND"
+					" tClient2.uClient=tContainer.uOwner AND"
 					" tContainer.uSource=0");
 			else if(1)
 			{
@@ -1904,8 +1936,8 @@ void ContainerCommands(pentry entries[], int x)
 					sprintf(cGroup,"%.32s",field2[0]);
 				mysql_free_result(res2);
 
-				printf("%s,%s,%s,%s,%s,%s,%s,%s\n",
-					field[0],field[1],field[2],field[3],field[4],cGroup,field[5],field[6]);
+				printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+					field[0],field[1],field[2],field[3],field[4],cGroup,field[5],field[6],field[7],field[8]);
 			}
 			mysql_free_result(res);
 			unxsvzLog(guReseller,"tClient","Reseller Report",guPermLevel,guLoginClient,gcLogin,gcHost);
@@ -1938,9 +1970,30 @@ void ContainerCommands(pentry entries[], int x)
 				htmlReseller();
 			}
 
-			sprintf(gcQuery,"UPDATE tContainer"
+			gcMessage="Current container added to selected reseller account";
+			if(uGetClientPermLevel(guReseller)==2)
+			{
+				unsigned uResellerOwner=0;
+				sscanf(ForeignKey("tClient","uOwner",guReseller),"%u",&uResellerOwner);
+				if(uResellerOwner)
+				{
+					sprintf(gcQuery,"UPDATE tContainer"
+					" SET uCreatedBy=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uContainer=%u",
+						uResellerOwner,guLoginClient,guNewContainer);
+				}
+				else
+				{
+					gcMessage="UPDATE tContainer for company reseller failed, contact sysadmin!";
+					htmlReseller();
+				}
+				gcMessage="Current container added to selected reseller company account";
+			}
+			else
+			{
+				sprintf(gcQuery,"UPDATE tContainer"
 					" SET uCreatedBy=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uContainer=%u",
 						guReseller,guLoginClient,guNewContainer);
+			}
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -1948,15 +2001,14 @@ void ContainerCommands(pentry entries[], int x)
 				htmlReseller();
 			}
 
-			gcMessage="Current container added to selected reseller account";
 			unxsvzLog(guNewContainer,"tContainer","Assign Container",guPermLevel,guLoginClient,gcLogin,gcHost);
 			htmlReseller();
 		}
 		else if(!strcmp(gcFunction,"Deassign Container") && guPermLevel>5 && guNewContainer && guReseller)
 		{
-			//this is wierd! pleae fix TODO
+			//this is wierd! please fix TODO
 			sprintf(gcQuery,"UPDATE tContainer"
-					" SET uCreatedBy=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uContainer=%u AND uCreatedBy=%u",
+					" SET uCreatedBy=2,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uContainer=%u AND uCreatedBy=%u",
 						guLoginClient,guNewContainer,guReseller);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -4779,7 +4831,7 @@ void funcResellerForm(FILE *fp)
 
 	//reseller select
 	sprintf(gcQuery,"SELECT tClient.uClient,tAuthorize.cLabel FROM tAuthorize,tClient"
-				" WHERE tAuthorize.uPerm=1 AND tClient.uClient=tAuthorize.uCertClient ORDER BY tAuthorize.cLabel LIMIT 501");
+				" WHERE (tAuthorize.uPerm=1 OR tAuthorize.uPerm=2) AND tClient.uClient=tAuthorize.uCertClient ORDER BY tAuthorize.cLabel LIMIT 1001");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		return;
@@ -4795,7 +4847,7 @@ void funcResellerForm(FILE *fp)
 		fprintf(fp,"<option value=%s",field[0]);
 		if(guReseller==uClient)
 			fprintf(fp," selected");
-		if((uCount++)<=500)
+		if((uCount++)<=999)
 		{
 			fprintf(fp,">%s</option>\n",field[1]);
 		}
@@ -4811,9 +4863,10 @@ void funcResellerForm(FILE *fp)
 
 	sprintf(gcQuery,"SELECT tContainer.uContainer,tContainer.cHostname FROM tContainer WHERE "
 			"tContainer.uStatus=1 AND "
-			" (tContainer.uOwner=%u OR tContainer.uCreatedBy=%u OR tContainer.uContainer=%u ) AND tContainer.uSource=0 "
+			" (tContainer.uOwner=%u OR tContainer.uCreatedBy=%u OR tContainer.uCreatedBy=%u OR tContainer.uContainer=%u )"
+			" AND tContainer.uSource=0 "
 			"ORDER BY tContainer.cHostname LIMIT 101"
-				,guReseller,guReseller,guContainer);
+				,guReseller,guReseller,guOrg,guContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
