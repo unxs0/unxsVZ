@@ -8,6 +8,14 @@ AUTHOR/LEGAL
 PURPOSE
 	OneLogin program file.
 	Vitelity DID ordering functions.
+WORK IN PROGRESS
+	Just messing around here. This should be the basis of a cron
+	Vitelity DID Inventory standalone program that feeds
+	a tDIDInventory MySQL that is used by the OneLogin web portal.
+	This will make the system much faster but customer may not
+	be able to order a given DID due to the periodoc nature of the
+	table data. This can happen anyway and we can not have slow portal
+	features.
 */
 
 #include "interface.h"
