@@ -146,13 +146,13 @@ void htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, void *stre
 			if(cpBuffer[i]=='\n' || cpBuffer[i]=='\r')
 			{
 				cpBuffer[i]=0;
-				long unsigned luDID=0;
+				long long unsigned lluDID=0;
 				float fMinRate=0.0,fMonthRate=0.0,fSetup=0.0;
 				char cRatecenter[64]={""};
-				if(5==sscanf(cpLineStart,"%lu,%[A-Z],%f:%f:%f",&luDID,cRatecenter,&fMinRate,&fMonthRate,&fSetup))
+				if(5==sscanf(cpLineStart,"%llu,%[A-Z],%f:%f:%f",&lluDID,cRatecenter,&fMinRate,&fMonthRate,&fSetup))
 				{
-					printf("<option name='%lu'>%lu %s (MinRate=$%2.2f,MonthRate=$%2.2f,Setup=$%2.2f)</option>\n",
-							luDID,luDID,cRatecenter,fMinRate,fMonthRate,fSetup);
+					printf("<option name='%llu'>%llu %s (MinRate=$%2.2f,MonthRate=$%2.2f,Setup=$%2.2f)</option>\n",
+							lluDID,lluDID,cRatecenter,fMinRate,fMonthRate,fSetup);
 				}
 				cpLineStart=cpBuffer+i+1;
 			}
