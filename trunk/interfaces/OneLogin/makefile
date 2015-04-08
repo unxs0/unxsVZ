@@ -15,7 +15,7 @@ CGINAME= OneLogin.cgi
 
 CFLAGS=-Wall
 //LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
-LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -loath
+LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -L/usr/lib/oath -L/usr/lib64 -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -loath -lcurl
 
 help:
 	@echo "These are the main make options available"
@@ -27,8 +27,8 @@ help:
 	@echo " This means that if you are developing templates you should edit template.default files and then"
 	@echo " use the new ./importDefaultTemplates.sh script"
 
-interface.cgi: main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o
-	cc main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o -o interface.cgi $(LIBS)
+interface.cgi: main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o vitelity.o
+	cc main.o glossary.o container.o creatednsjob.o user.o ldap.o ../../cgi.o mysqlconnect.o firewallcontrol.o vitelity.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h ../../local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
@@ -53,6 +53,9 @@ mysqlconnect.o: mysqlconnect.c  ../../local.h interface.h
 
 firewallcontrol.o: firewallcontrol.c  ../../local.h interface.h
 	cc -o firewallcontrol.o -c firewallcontrol.c $(CFLAGS)
+
+vitelity.o: vitelity.c  interface.h
+	cc -o vitelity.o -c vitelity.c $(CFLAGS)
 
 cgi.o: ../../cgi.c  ../../cgi.h
 	cc -o ../../cgi.o -c ../../cgi.c $(CFLAGS)

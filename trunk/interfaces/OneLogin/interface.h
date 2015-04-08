@@ -95,8 +95,22 @@ extern unsigned guRequireOTPLogin;
 extern char gcOTPSecret[];
 extern char gcOTPInfo[];
 
+extern char gcDIDState[];
+extern char gcDIDRatecenter[];
+extern char gcDIDNew[];
 //Menu
 //
+
+//firewallcontrol.c
+void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
+
+//vitelity.c
+void htmlVitelityAvailStatesSelect(void *ptr, size_t size, size_t nmemb, void *stream);
+void GetVitelityAvailStates(void);
+void htmlVitelityAvailRatecenterSelect(void *ptr, size_t size, size_t nmemb, void *stream);
+void GetVitelityAvailRatecentersPerState(char *cState);
+void htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, void *stream);
+void GetVitelityAvailLocalDIDsPerRatecenter(char *cState,char *cRatecenter);
 
 //container.c
 void ProcessContainerVars(pentry entries[], int x);
@@ -114,6 +128,7 @@ void funcContainerQOS(FILE *fp);
 void funcContainerBulk(FILE *fp);
 void funcRepurposeForm(FILE *fp);
 void funcResellerForm(FILE *fp);
+void funcDIDForm(FILE *fp);
 
 //user.c
 void ProcessUserVars(pentry entries[], int x);

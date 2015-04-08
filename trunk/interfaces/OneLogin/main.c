@@ -3,7 +3,7 @@ FILE
 	main.c
 	$Id$
 AUTHOR/LEGAL
-	(C) 2010, 2011 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2015 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.
 PURPOSE
 	OneLogin Interface program file
@@ -131,6 +131,8 @@ int main(int argc, char *argv[])
 			else if(!strcmp(gcPage,"Repurpose"))
 				ContainerGetHook(gentries,i);
 			else if(!strcmp(gcPage,"Reseller"))
+				ContainerGetHook(gentries,i);
+			else if(!strcmp(gcPage,"DID"))
 				ContainerGetHook(gentries,i);
 		}
 	}
@@ -443,6 +445,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcRepurposeForm(fp);
 	else if(!strcmp(cFunction,"funcResellerForm"))
 		funcResellerForm(fp);
+	else if(!strcmp(cFunction,"funcDIDForm"))
+		funcDIDForm(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 

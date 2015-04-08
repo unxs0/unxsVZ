@@ -8,21 +8,13 @@ AUTHOR/LEGAL
 PURPOSE
 	OneLogin program file.
 	Vitelity DID ordering functions.
-WORK IN PROGRESS
-	Just messing around here. This should be the basis of a cron
-	Vitelity DID Inventory standalone program that feeds
-	a tDIDInventory MySQL that is used by the OneLogin web portal.
-	This will make the system much faster but customer may not
-	be able to order a given DID due to the periodoc nature of the
-	table data. This can happen anyway and we can not have slow portal
-	features.
 */
 
 #include "interface.h"
 #include <curl/curl.h>
 
-#define cVitelityPwd "123123"
-#define cVitelityLogin "johndoe"
+static char cVitelityAPILogin[256]={""};
+static char cVitelityAPIPwd[256]={""};
 
 //TOC
 void htmlVitelityAvailStatesSelect(void *ptr, size_t size, size_t nmemb, void *stream);
@@ -38,7 +30,9 @@ void htmlVitelityAvailStateSelect(void *ptr, size_t size, size_t nmemb, void *st
 	//find first [[
 	//then until last [[
 	//line by line STATE 2 letter code
-	printf("<select name=AvailStateSelect >\n");
+	printf("<select type='DIDStateSelect' id='DIDStateSelect' class='form-control'"
+			" title='Select the state to use for DID inventory'"
+			" name='gcDIDState' onChange='submit()'>\n");
 	printf("<option>---</option>");
 	char *cpBuffer;
 	if((cpBuffer=strstr((char *)ptr,"[["))!=NULL)
@@ -52,7 +46,10 @@ void htmlVitelityAvailStateSelect(void *ptr, size_t size, size_t nmemb, void *st
 			if(cpBuffer[i]=='\n' || cpBuffer[i]=='\r')
 			{
 				cpBuffer[i]=0;
-				printf("<option>%s</option>",cpLineStart);
+				printf("<option");
+				if(!strcmp(cpLineStart,gcDIDState))
+					printf(" selected");
+				printf(">%s</option>",cpLineStart);
 				cpLineStart=cpBuffer+i+1;
 			}
 		}
@@ -67,10 +64,17 @@ void GetVitelityAvailStates(void)
 	curl=curl_easy_init();
 	if(curl)
 	{
-		curl_easy_setopt(curl,CURLOPT_URL,"api.vitelity.net/api.php?login="
-					""cVitelityLogin"&pass="cVitelityPwd"&cmd=listavailstates&provider=l3");
-		curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,htmlVitelityAvailStateSelect);
-		curl_easy_perform(curl);
+		if(!cVitelityAPILogin[0]) GetConfiguration("cVitelityAPILogin",cVitelityAPILogin,0,0,0,0);
+		if(!cVitelityAPIPwd[0]) GetConfiguration("cVitelityAPIPwd",cVitelityAPIPwd,0,0,0,0);
+		if(cVitelityAPILogin[0] && cVitelityAPIPwd[0])
+		{
+			char cURL[256]={""};
+			sprintf(cURL,"api.vitelity.net/api.php?login=%s&pass=%s&cmd=listavailstates&provider=l3",
+				cVitelityAPILogin,cVitelityAPIPwd);
+			curl_easy_setopt(curl,CURLOPT_URL,cURL);
+			curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,htmlVitelityAvailStateSelect);
+			curl_easy_perform(curl);
+		}
 		curl_easy_cleanup(curl);
 	}
 }//void GetVitelityAvailStates(void)
@@ -82,7 +86,9 @@ void htmlVitelityAvailRatecenterSelect(void *ptr, size_t size, size_t nmemb, voi
 	//find first [[
 	//then until last [[
 	//line by line STATE 2 letter code
-	printf("<select name=AvailRatecenterSelect >\n");
+	printf("<select type='DIDRatecenterSelect' id='DIDRatecenterSelect' class='form-control'"
+			" title='Select the ratecenter to use for DID inventory'"
+			" name='gcDIDRatecenter' onChange='submit()'>\n");
 	printf("<option>---</option>");
 	char *cpBuffer;
 	if((cpBuffer=strstr((char *)ptr,"[["))!=NULL)
@@ -96,7 +102,10 @@ void htmlVitelityAvailRatecenterSelect(void *ptr, size_t size, size_t nmemb, voi
 			if(cpBuffer[i]=='\n' || cpBuffer[i]=='\r')
 			{
 				cpBuffer[i]=0;
-				printf("<option>%s</option>",cpLineStart);
+				printf("<option");
+				if(!strcmp(cpLineStart,gcDIDRatecenter))
+					printf(" selected");
+				printf(">%s</option>",cpLineStart);
 				cpLineStart=cpBuffer+i+1;
 			}
 		}
@@ -111,28 +120,21 @@ void GetVitelityAvailRatecentersPerState(char *cState)
 	curl=curl_easy_init();
 	if(curl)
 	{
-		char cURL[256]={""};
-		sprintf(cURL,"api.vitelity.net/api.php?login="cVitelityLogin"&pass="cVitelityPwd"&cmd=listavailratecenters&state=%.2s",cState);
-		curl_easy_setopt(curl,CURLOPT_URL,cURL);
-		curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,htmlVitelityAvailRatecenterSelect);
-		curl_easy_perform(curl);
+		if(!cVitelityAPILogin[0]) GetConfiguration("cVitelityAPILogin",cVitelityAPILogin,0,0,0,0);
+		if(!cVitelityAPIPwd[0]) GetConfiguration("cVitelityAPIPwd",cVitelityAPIPwd,0,0,0,0);
+		if(cVitelityAPILogin[0] && cVitelityAPIPwd[0])
+		{
+			char cURL[256]={""};
+			sprintf(cURL,"api.vitelity.net/api.php?login=%s&pass=%s&cmd=listavailratecenters&state=%.2s",
+				cVitelityAPILogin,cVitelityAPIPwd,cState);
+			curl_easy_setopt(curl,CURLOPT_URL,cURL);
+			curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,htmlVitelityAvailRatecenterSelect);
+			curl_easy_perform(curl);
+		}
 		curl_easy_cleanup(curl);
 	}
 }//void GetVitelityAvailRatecentersPerState()
 
-
-//testing
-//gcc -Wall vitelity.c -o vitelity -L/usr/lib64 -lcurl
-int main(void)
-{
-	char cState[3]={"CA"};
-	char cRatecenter[64]={"ALHAMBRA"};
-	//GetVitelityAvailStates();
-	//GetVitelityAvailRatecentersPerState(cState);
-	GetVitelityAvailLocalDIDsPerRatecenter(cState,cRatecenter);
-	return(0);
-
-}//int main(void)
 
 void htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, void *stream)
 {
@@ -140,7 +142,9 @@ void htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, void *stre
 	//find first [[
 	//then until last [[
 	//line by line STATE 2 letter code
-	printf("<select name=AvailLocalDIDs >\n");
+	printf("<select type='DIDNewSelect' id='DIDNewSelect' class='form-control'"
+			" title='Select the state to use for DID inventory'"
+			" name='gcDIDNew' onChange='submit()'>\n");
 	printf("<option>---</option>");
 	char *cpBuffer;
 	if((cpBuffer=strstr((char *)ptr,"[["))!=NULL)
@@ -159,7 +163,10 @@ void htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, void *stre
 				char cRatecenter[64]={""};
 				if(5==sscanf(cpLineStart,"%llu,%[A-Z],%f:%f:%f",&lluDID,cRatecenter,&fMinRate,&fMonthRate,&fSetup))
 				{
-					printf("<option name='%llu'>%llu %s (MinRate=$%2.2f,MonthRate=$%2.2f,Setup=$%2.2f)</option>\n",
+					printf("<option");
+					if(gcDIDNew[0] && !strncmp(cpLineStart,gcDIDNew,strlen(gcDIDNew)))
+						printf(" selected");
+					printf(" value='%llu'>%llu %s (MinRate=$%2.2f,MonthRate=$%2.2f,Setup=$%2.2f)</option>\n",
 							lluDID,lluDID,cRatecenter,fMinRate,fMonthRate,fSetup);
 				}
 				cpLineStart=cpBuffer+i+1;
@@ -176,13 +183,18 @@ void GetVitelityAvailLocalDIDsPerRatecenter(char *cState,char *cRatecenter)
 	curl=curl_easy_init();
 	if(curl)
 	{
-		char cURL[256]={""};
-		sprintf(cURL,"api.vitelity.net/api.php?login="cVitelityLogin"&pass="cVitelityPwd""
+		if(!cVitelityAPILogin[0]) GetConfiguration("cVitelityAPILogin",cVitelityAPILogin,0,0,0,0);
+		if(!cVitelityAPIPwd[0]) GetConfiguration("cVitelityAPIPwd",cVitelityAPIPwd,0,0,0,0);
+		if(cVitelityAPILogin[0] && cVitelityAPIPwd[0])
+		{
+			char cURL[256]={""};
+			sprintf(cURL,"api.vitelity.net/api.php?login=%s&pass=%s"
 				"&cmd=listlocal&state=%.2s&ratecenter=%.99s&withrates=yes",
-				cState,cRatecenter);
-		curl_easy_setopt(curl,CURLOPT_URL,cURL);
-		curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,htmlVitelityAvailLocalDIDs);
-		curl_easy_perform(curl);
+					cVitelityAPILogin,cVitelityAPIPwd,cState,cRatecenter);
+			curl_easy_setopt(curl,CURLOPT_URL,cURL);
+			curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,htmlVitelityAvailLocalDIDs);
+			curl_easy_perform(curl);
+		}
 		curl_easy_cleanup(curl);
 	}
 }//void GetVitelityAvailLocalDIDsPerRatecenter()
