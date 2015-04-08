@@ -3,11 +3,11 @@ FILE
 	container.c
 	$Id$
 AUTHOR/LEGAL
-	(C) 2010, 2011 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2015 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.
 PURPOSE
 	OneLogin program file.
-	Container tab functions.
+	Container and related tab functions.
 */
 
 #include "interface.h"
@@ -46,6 +46,10 @@ char gcInCollapseFour[16]="in";
 unsigned guMode;
 unsigned guContainerSubmit=0;
 unsigned guSearchSubmit=0;
+
+char gcDIDState[8]={""};
+char gcDIDRatecenter[64]={""};
+char gcDIDNew[32]={""};
 
 #define uMAX_DIDs_ALLOWED 128
 static char cReply[(33*uMAX_DIDs_ALLOWED)]={""};
@@ -102,6 +106,9 @@ void htmlRepurposePage(char *cTitle, char *cTemplateName);
 void htmlReseller(void);
 void htmlResellerPage(char *cTitle, char *cTemplateName);
 void funcResellerForm(FILE *fp);
+void funcDIDForm(FILE *fp);
+void htmlDID(void);
+void htmlDIDPage(char *cTitle, char *cTemplateName);
 
 
 unsigned uGetClientPermLevel(uClient)
@@ -192,6 +199,12 @@ void ProcessContainerVars(pentry entries[], int x)
 			gcBulkData=entries[i].val;
 		else if(!strcmp(entries[i].name,"gcNewEmail"))
 			sprintf(gcNewEmail,"%.99s",CustomerEmail(entries[i].val));
+		else if(!strcmp(entries[i].name,"gcDIDState"))
+			sprintf(gcDIDState,"%.7s",entries[i].val);
+		else if(!strcmp(entries[i].name,"gcDIDRatecenter"))
+			sprintf(gcDIDRatecenter,"%.63s",entries[i].val);
+		else if(!strcmp(entries[i].name,"gcDIDNew"))
+			sprintf(gcDIDNew,"%.31s",entries[i].val);
 	}
 
 }//void ProcessContainerVars(pentry entries[], int x)
@@ -231,6 +244,8 @@ void ContainerGetHook(entry gentries[],int x)
 		htmlRepurpose();
 	else if(!strcmp(gcPage,"Reseller"))
 		htmlReseller();
+	else if(!strcmp(gcPage,"DID"))
+		htmlDID();
 
 	if(!strcmp(gcFunction,"DIDInfo"))
 		htmlDIDInfo();
@@ -2166,6 +2181,23 @@ void ContainerCommands(pentry entries[], int x)
 		gcMessage=gcFunction;
 		htmlReseller();
 	}
+	else if(!strcmp(gcPage,"DID"))
+	{
+		ProcessContainerVars(entries,x);
+		if(!strcmp(gcFunction,"Add DID"))
+		{
+			if(!gcDIDNew[0] || gcDIDNew[0]=='-')
+			{
+				gcMessage="Must specify DID";
+				htmlDID();
+			}
+			gcMessage="Add DID function not implemented at this time";
+			htmlDID();
+		}
+
+		//catchall
+		htmlDID();
+	}
 
 }//void ContainerCommands(pentry entries[], int x)
 
@@ -2204,6 +2236,15 @@ void htmlReseller(void)
 	htmlFooter("ContainerFooter");
 
 }//void htmlReseller(void)
+
+
+void htmlDID(void)
+{
+	htmlHeader("OneLogin","ContainerHeader");
+	htmlDIDPage("OneLogin","DID.Body");
+	htmlFooter("ContainerFooter");
+
+}//void htmlDID(void)
 
 
 void htmlDIDInfo(void)
@@ -2394,19 +2435,6 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 	        MYSQL_ROW field;
 		unsigned uNoShow=0;
 
-/*
-		if(guPermLevel<6)
-		{
-			sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uCreatedBy=%u AND uContainer=%u",guLoginClient,guContainer);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			res=mysql_store_result(&gMysql);
-			if(mysql_num_rows(res)<1)
-				uNoShow=1;
-		}
-*/
-
 		TemplateSelectInterface(cTemplateName,uPLAINSET,uOneLogin);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
@@ -2493,16 +2521,34 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 			template.cpName[18]="cCtHostnameLink";
 			template.cpValue[18]=cCtHostnameLink;
 
-			char cPrivilegedContainerMenu[256]={""};
+			char cPrivilegedContainerMenu[512]={""};
 			template.cpName[19]="cPrivilegedContainerMenu";
 			if(guPermLevel>=6)
+			{
 				sprintf(cPrivilegedContainerMenu,
 					"<li><a href=\"%1$.32s?gcPage=Repurpose&guContainer=%2$u\">Repurpose</a></li>"
 					"<li><a href=\"%1$.32s?gcPage=Reseller&guContainer=%2$u\">Reseller</a></li>"
 						,template.cpValue[1],guContainer);
+			}
 			template.cpValue[19]=cPrivilegedContainerMenu;
+			//DID
+			char cDIDMenu[512]={""};
+			template.cpName[20]="cDIDMenu";
+			if(guContainer && (guPermLevel>=6 || guPermLevel==2))
+			{
+				char cDIDInventory[256]={""};
+				GetClientProp(guLoginClient,"cDIDInventory",cDIDInventory);
+				if(guContainer && cDIDInventory[0]=='Y')
+				{
+					sprintf(cDIDInventory,
+							"<li><a href=\"%1$.32s?gcPage=DID&guContainer=%2$u\">DID</a></li>"
+								,template.cpValue[1],guContainer);
+					strcat(cDIDMenu,cDIDInventory);
+				}
+			}
+			template.cpValue[20]=cDIDMenu;
 
-			template.cpName[20]="";
+			template.cpName[21]="";
 
 			printf("\n<!-- Start htmlContainerPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
@@ -4911,3 +4957,138 @@ void funcResellerForm(FILE *fp)
 	fprintf(fp,"<!-- funcResellerForm(fp) End -->\n");
 
 }//void funcResellerForm(FILE *fp)
+
+
+void htmlDIDPage(char *cTitle, char *cTemplateName)
+{
+	if(cTemplateName[0])
+	{
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+		unsigned uNoShow=0;
+
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uOneLogin);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			struct t_template template;
+
+			template.cpName[0]="cTitle";
+			template.cpValue[0]=cTitle;
+			
+			template.cpName[1]="cCGI";
+			template.cpValue[1]="OneLogin.cgi";
+			
+			template.cpName[2]="gcLogin";
+			template.cpValue[2]=gcUser;
+
+			template.cpName[3]="gcName";
+			template.cpValue[3]=gcName;
+
+			template.cpName[4]="gcOrgName";
+			template.cpValue[4]=gcOrgName;
+
+			template.cpName[5]="cUserLevel";
+			template.cpValue[5]=(char *)cUserLevel(guPermLevel);//Safe?
+
+			template.cpName[6]="gcHost";
+			template.cpValue[6]=gcHost;
+
+			template.cpName[7]="gcMessage";
+			template.cpValue[7]=gcMessage;
+
+			template.cpName[8]="gcCtHostname";
+			//template.cpValue[8]=gcCtHostname;
+			if(!uNoShow)
+				template.cpValue[8]=(char *)cGetHostname(guContainer) ;
+			else
+				template.cpValue[8]="no container selected";
+
+			template.cpName[9]="gcSearch";
+			template.cpValue[9]=gcSearch;
+
+			template.cpName[10]="guContainer";
+			char cguContainer[16];
+			sprintf(cguContainer,"%u",guContainer);
+			template.cpValue[10]=cguContainer;
+
+			template.cpName[11]="gcLabel";
+			template.cpValue[11]=gcLabel;
+
+			template.cpName[12]="gcCopyright";
+			template.cpValue[12]=LOCALCOPYRIGHT;
+
+			template.cpName[13]="gcBrand";
+			template.cpValue[13]=INTERFACE_HEADER_TITLE;
+
+			template.cpName[14]="gcDIDState";
+			template.cpValue[14]=gcDIDState;
+
+			template.cpName[15]="gcDIDRatecenter";
+			template.cpValue[15]=gcDIDRatecenter;
+
+			template.cpName[16]="gcDIDNew";
+			template.cpValue[16]=gcDIDNew;
+
+			//Optional menu items
+			char cPrivilegedContainerMenu[512]={""};
+			template.cpName[17]="cPrivilegedContainerMenu";
+			if(guPermLevel>=6)
+			{
+				sprintf(cPrivilegedContainerMenu,
+					"<li><a href=\"%1$.32s?gcPage=Repurpose&guContainer=%2$u\">Repurpose</a></li>"
+					"<li><a href=\"%1$.32s?gcPage=Reseller&guContainer=%2$u\">Reseller</a></li>"
+						,template.cpValue[1],guContainer);
+			}
+			template.cpValue[17]=cPrivilegedContainerMenu;
+			//DID
+			char cDIDMenu[512]={""};
+			template.cpName[18]="cDIDMenu";
+			if(guContainer && (guPermLevel>=6 || guPermLevel==2))
+			{
+				char cDIDInventory[256]={""};
+				GetClientProp(guLoginClient,"cDIDInventory",cDIDInventory);
+				if(guContainer && cDIDInventory[0]=='Y')
+				{
+					sprintf(cDIDInventory,
+							"<li class=\"active\"><a href=\"%1$.32s?gcPage=DID&guContainer=%2$u\">DID</a></li>"
+								,template.cpValue[1],guContainer);
+					strcat(cDIDMenu,cDIDInventory);
+				}
+			}
+			template.cpValue[18]=cDIDMenu;
+
+			template.cpName[19]="";
+
+			printf("\n<!-- Start htmlDIDPage(%s) -->\n",cTemplateName); 
+			Template(field[0],&template,stdout);
+			printf("\n<!-- End htmlDIDPage(%s) -->\n",cTemplateName); 
+		}
+		else
+		{
+			printf("<hr>");
+			printf("<center><font size=1>%s</font>\n",cTemplateName);
+		}
+		mysql_free_result(res);
+	}
+
+}//void htmlDIDPage()
+
+
+void funcDIDForm(FILE *fp)
+{
+	if(guPermLevel<6)
+		return;
+
+	fprintf(fp,"<!-- funcDIDForm(fp) Start -->\n");
+
+	GetVitelityAvailStates();
+	if(gcDIDState[0] && gcDIDState[0]!='-')
+		GetVitelityAvailRatecentersPerState(gcDIDState);
+	if(gcDIDRatecenter[0] && gcDIDRatecenter[0]!='-' && gcDIDState[0] && gcDIDState[0]!='-')
+		GetVitelityAvailLocalDIDsPerRatecenter(gcDIDState,gcDIDRatecenter);
+
+	fprintf(fp,"<!-- funcDIDForm(fp) End -->\n");
+
+}//void funcDIDForm(FILE *fp)
+
