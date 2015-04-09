@@ -104,13 +104,10 @@ extern char gcDIDNew[];
 //firewallcontrol.c
 void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
 
-//vitelity.c
-void htmlVitelityAvailStatesSelect(void *ptr, size_t size, size_t nmemb, void *stream);
-void GetVitelityAvailStates(void);
-void htmlVitelityAvailRatecenterSelect(void *ptr, size_t size, size_t nmemb, void *stream);
-void GetVitelityAvailRatecentersPerState(char *cState);
-void htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, void *stream);
-void GetVitelityAvailLocalDIDsPerRatecenter(char *cState,char *cRatecenter);
+//vitelity.c public functions
+void htmlAvailRatecentersPerState(char *cState);
+void htmlAvailStates(void);
+void htmlAvailLocalDIDs(char *cState,char *cRatecenter);
 
 //container.c
 void ProcessContainerVars(pentry entries[], int x);

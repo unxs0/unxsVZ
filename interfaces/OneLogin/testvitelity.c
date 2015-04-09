@@ -1,35 +1,39 @@
 /*
 FILE 
-	vitelity.c
+	testvitelity.c
 	$Id$
 AUTHOR/LEGAL
 	(C) 2015 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.
 PURPOSE
-	OneLogin program file.
-	Vitelity DID ordering functions.
+	Standalone test Vitelity API.
 */
 
-#include "interface.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <curl/curl.h>
+#include "didapi.h"
 
-static char cVitelityAPILogin[256]={""};
-static char cVitelityAPIPwd[256]={""};
+static char cVitelityAPILogin[256]={cAPILOGIN};
+static char cVitelityAPIPwd[256]={cAPIPWD};
 static CURL *curl=NULL;
 static CURLcode curlRes;
+char gcDIDState[8]={""};
+char gcDIDRatecenter[64]={""};
+char gcDIDNew[32]={""};
 
 //TOC
-static size_t htmlVitelityAvailStateSelect(void *ptr, size_t size, size_t nmemb, void *stream);
-static void GetVitelityAvailStates(void);
-static size_t htmlVitelityAvailRatecenterSelect(void *ptr, size_t size, size_t nmemb, void *stream);
-static void GetVitelityAvailRatecentersPerState(char *cState);
-static size_t htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, void *stream);
-static void GetVitelityAvailLocalDIDsPerRatecenter(char *cState,char *cRatecenter);
-//public functions exposed
+int main(int iArgc, char *cArgv[]);
+size_t htmlVitelityAvailStateSelect(void *ptr, size_t size, size_t nmemb, void *stream);
+void GetVitelityAvailStates(void);
+size_t htmlVitelityAvailRatecenterSelect(void *ptr, size_t size, size_t nmemb, void *stream);
+void GetVitelityAvailRatecentersPerState(char *cState);
+size_t htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, void *stream);
+void GetVitelityAvailLocalDIDsPerRatecenter(char *cState,char *cRatecenter);
 void htmlAvailRatecentersPerState(char *cState);
 void htmlAvailStates(void);
 void htmlAvailLocalDIDs(char *cState,char *cRatecenter);
-
 
 void htmlAvailRatecentersPerState(char *cState)
 {
@@ -56,7 +60,7 @@ void htmlAvailStates(void)
 void htmlAvailLocalDIDs(char *cState,char *cRatecenter)
 {
 	printf("<select type='DIDNewSelect' id='DIDNewSelect' class='form-control'"
-			" title='Select a new DID from our inventory for immediate use'"
+			" title='Select the state to use for DID inventory'"
 			" name='gcDIDNew' onChange='submit()'>\n");
 	printf("<option>---</option>");
 	GetVitelityAvailLocalDIDsPerRatecenter(cState,cRatecenter);
@@ -64,9 +68,18 @@ void htmlAvailLocalDIDs(char *cState,char *cRatecenter)
 }//void htmlAvailLocalDIDs(char *cState,char *cRatecenter)
 
 
-//private functions
+int main(int iArgc, char *cArgv[])
+{
+	//htmlAvailStates();
+	htmlAvailRatecentersPerState("CA");
+	htmlAvailLocalDIDs("CA","EL CAJON");
+	if(curl)
+		curl_easy_cleanup(curl);
+	return(0);
+}//int main()
 
-static size_t htmlVitelityAvailStateSelect(void *ptr, size_t size, size_t nmemb, void *stream)
+
+size_t htmlVitelityAvailStateSelect(void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	//parse
 	//find first [[
@@ -88,7 +101,7 @@ static size_t htmlVitelityAvailStateSelect(void *ptr, size_t size, size_t nmemb,
 				printf("<option");
 				if(!strcmp(cpLineStart,gcDIDState))
 					printf(" selected");
-				printf(" value='%s'>%s</option>",cpLineStart,cpLineStart);
+				printf(">%s</option>",cpLineStart);
 				cpLineStart=cpBuffer+i+1;
 			}
 		}
@@ -99,13 +112,11 @@ static size_t htmlVitelityAvailStateSelect(void *ptr, size_t size, size_t nmemb,
 }//size_t htmlVitelityAvailStateSelect()
 
 
-static void GetVitelityAvailStates(void)
+void GetVitelityAvailStates(void)
 {
 	if(curl==NULL) curl=curl_easy_init();
 	if(curl)
 	{
-		if(!cVitelityAPILogin[0]) GetConfiguration("cVitelityAPILogin",cVitelityAPILogin,0,0,0,0);
-		if(!cVitelityAPIPwd[0]) GetConfiguration("cVitelityAPIPwd",cVitelityAPIPwd,0,0,0,0);
 		if(cVitelityAPILogin[0] && cVitelityAPIPwd[0])
 		{
 			char cURL[256]={""};
@@ -134,7 +145,7 @@ static void GetVitelityAvailStates(void)
 }//void GetVitelityAvailStates(void)
 
 
-static size_t htmlVitelityAvailRatecenterSelect(void *ptr, size_t size, size_t nmemb, void *stream)
+size_t htmlVitelityAvailRatecenterSelect(void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	//parse
 	//find first [[
@@ -156,7 +167,7 @@ static size_t htmlVitelityAvailRatecenterSelect(void *ptr, size_t size, size_t n
 				printf("<option");
 				if(!strcmp(cpLineStart,gcDIDRatecenter))
 					printf(" selected");
-				printf(" value='%s'>%s</option>",cpLineStart,cpLineStart);
+				printf(">%s</option>",cpLineStart);
 				cpLineStart=cpBuffer+i+1;
 			}
 		}
@@ -169,13 +180,11 @@ static size_t htmlVitelityAvailRatecenterSelect(void *ptr, size_t size, size_t n
 }//size_t htmlVitelityAvailRatecenterSelect()
 
 
-static void GetVitelityAvailRatecentersPerState(char *cState)
+void GetVitelityAvailRatecentersPerState(char *cState)
 {
 	if(curl==NULL) curl=curl_easy_init();
 	if(curl)
 	{
-		if(!cVitelityAPILogin[0]) GetConfiguration("cVitelityAPILogin",cVitelityAPILogin,0,0,0,0);
-		if(!cVitelityAPIPwd[0]) GetConfiguration("cVitelityAPIPwd",cVitelityAPIPwd,0,0,0,0);
 		if(cVitelityAPILogin[0] && cVitelityAPIPwd[0])
 		{
 			char cURL[256]={""};
@@ -204,7 +213,7 @@ static void GetVitelityAvailRatecentersPerState(char *cState)
 }//void GetVitelityAvailRatecentersPerState()
 
 
-static size_t htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, void *stream)
+size_t htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	//parse
 	//find first [[
@@ -226,7 +235,8 @@ static size_t htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, v
 				long long unsigned lluDID=0;
 				float fMinRate=0.0,fMonthRate=0.0,fSetup=0.0;
 				char cRatecenter[64]={""};
-				if(5==sscanf(cpLineStart,"%llu,%[A-Z ],%f:%f:%f",&lluDID,cRatecenter,&fMinRate,&fMonthRate,&fSetup))
+				printf("%s\n",cpLineStart);
+				if(sscanf(cpLineStart,"%llu,%[A-Z ],%f:%f:%f",&lluDID,cRatecenter,&fMinRate,&fMonthRate,&fSetup))
 				{
 					printf("<option");
 					if(gcDIDNew[0] && !strncmp(cpLineStart,gcDIDNew,strlen(gcDIDNew)))
@@ -244,13 +254,11 @@ static size_t htmlVitelityAvailLocalDIDs(void *ptr, size_t size, size_t nmemb, v
 }//size_t htmlVitelityAvailLocalDIDs()
 
 
-static void GetVitelityAvailLocalDIDsPerRatecenter(char *cState,char *cRatecenter)
+void GetVitelityAvailLocalDIDsPerRatecenter(char *cState,char *cRatecenter)
 {
 	if(curl==NULL) curl=curl_easy_init();
 	if(curl)
 	{
-		if(!cVitelityAPILogin[0]) GetConfiguration("cVitelityAPILogin",cVitelityAPILogin,0,0,0,0);
-		if(!cVitelityAPIPwd[0]) GetConfiguration("cVitelityAPIPwd",cVitelityAPIPwd,0,0,0,0);
 		if(cVitelityAPILogin[0] && cVitelityAPIPwd[0])
 		{
 			char cURL[256]={""};

@@ -5082,11 +5082,12 @@ void funcDIDForm(FILE *fp)
 
 	fprintf(fp,"<!-- funcDIDForm(fp) Start -->\n");
 
-	GetVitelityAvailStates();
+	//see vitelity.c
+	htmlAvailStates();
 	if(gcDIDState[0] && gcDIDState[0]!='-')
-		GetVitelityAvailRatecentersPerState(gcDIDState);
+		htmlAvailRatecentersPerState(gcDIDState);
 	if(gcDIDRatecenter[0] && gcDIDRatecenter[0]!='-' && gcDIDState[0] && gcDIDState[0]!='-')
-		GetVitelityAvailLocalDIDsPerRatecenter(gcDIDState,gcDIDRatecenter);
+		htmlAvailLocalDIDs(gcDIDState,gcDIDRatecenter);
 
 	fprintf(fp,"<!-- funcDIDForm(fp) End -->\n");
 

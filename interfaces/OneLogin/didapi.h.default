@@ -1,0 +1,2 @@
+#define cAPILOGIN "acct_test"
+#define cAPIPWD "somepasswd"
