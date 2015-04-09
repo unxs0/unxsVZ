@@ -7,6 +7,10 @@ AUTHOR/LEGAL
 	GPLv2 license applies. See included LICENSE file.
 PURPOSE
 	Standalone test Vitelity API.
+COMPILE AND RUN
+	cp -i didapi.h.default didapi.h (only once)
+	gcc -Wall testvitelity.c -o vitelity ../../cgi.o -L/usr/lib64 -lcurl;
+	./vitelity
 */
 
 #include <stdio.h>
