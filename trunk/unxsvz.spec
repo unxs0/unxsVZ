@@ -1,6 +1,6 @@
 %define name unxsvz
-%define version 4.0
-%define release 5
+%define version 5.0
+%define release 2
 
 Summary: unxsVZ (CentOS 6 yum version) is a multiple datacenter and hardware node, OpenVZ manager with autonomics.
 Name: %{name}
@@ -14,11 +14,13 @@ Vendor: Unixservice, LLC.
 Packager: Unixservice Support Group <supportgrp@unixservice.com>
 Requires: unxsadmin
 BuildArch: x86_64
-Provides: Binary programs and config files for unxsVZ hardware compute node.
+Provides: unxsVZ unxsUBC unxsOVZ
 
 %description
 unxsVZ is a multiple datacenter, multiple hardware node, OpenVZ
 container manager with autonomics, failover, auto rsync'd clones, and advanced migration.
+
+Provides /usr/sbin binaries unxsVZ unxsUBC unxsOVZ.
 
 unxsVZ has internally managed rrdtool traffic graphics per datacenter, node and container.
 
@@ -39,6 +41,17 @@ You will most likely need unxsscripts and unxscron installed also for any real f
 
 
 %prep
+#test just moving stuff already built
+mkdir -p ~/rpm/BUILDROOT/%{name}-%{version}-%{release}.x86_64/usr/sbin/
+mkdir -p ~/rpm/BUILDROOT/%{name}-%{version}-%{release}.x86_64/var/www/unxs/cgi-bin
+mkdir -p ~/rpm/BUILDROOT/%{name}-%{version}-%{release}.x86_64/var/www/unxs/html/traffic
+mkdir -p ~/rpm/BUILDROOT/%{name}-%{version}-%{release}.x86_64/usr/local/unxsVZ/data/
+mkdir -p ~/rpm/BUILDROOT/%{name}-%{version}-%{release}.x86_64/usr/local/unxsVZ/setup/
+mkdir -p ~/rpm/BUILDROOT/%{name}-%{version}-%{release}.x86_64/var/lib/rrd/
+cp /usr/sbin/unxsVZ ~/rpm/BUILDROOT/%{name}-%{version}-%{release}.x86_64/usr/sbin/
+cp /usr/sbin/unxsUBC ~/rpm/BUILDROOT/%{name}-%{version}-%{release}.x86_64/usr/sbin/
+cp /usr/sbin/unxsOVZ ~/rpm/BUILDROOT/%{name}-%{version}-%{release}.x86_64/usr/sbin/
+cp /var/www/unxs/cgi-bin/unxsVZ.cgi ~/rpm/BUILDROOT/%{name}-%{version}-%{release}.x86_64/var/www/unxs/cgi-bin/
 exit 0
 
 %build
@@ -48,6 +61,7 @@ exit 0
 exit 0
 
 %clean
+rm -rf ~/rpm/BUILDROOT/%{name}-%{version}-%{release}.x86_64
 exit 0
 
 %files
@@ -56,13 +70,16 @@ exit 0
 /usr/local/unxsVZ/data/
 /usr/local/unxsVZ/setup/
 /var/lib/rrd/
-#not required
-#/usr/lib/openisp/libunxsvz.a
-#/usr/lib/oath/liboath.a
 /usr/sbin/unxsVZ
+/usr/sbin/unxsUBC
+/usr/sbin/unxsOVZ
 /var/www/unxs/cgi-bin/unxsVZ.cgi
 
 %changelog
+* Wed Mar 30 2015 Gary Wallis <support@unixservice.com> 
+- Added unxsUBX and unxsOVZ binaries.
+* Wed Mar 27 2015 Gary Wallis <support@unixservice.com> 
+- New unxsVZ AddContainers command.
 * Wed Mar 25 2015 Gary Wallis <support@unixservice.com> 
 - New unxsVZ AddHardwareNode command.
 * Tue Mar 10 2015 Gary Wallis <support@unixservice.com> 

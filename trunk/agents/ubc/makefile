@@ -11,7 +11,7 @@
 #
 
 CFLAGS= -Wall
-LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lm
+LIBS= -L/usr/lib64/mysql -L/usr/lib/mysql -lmysqlclient -lssl -lm
 
 all: unxsUBC
 

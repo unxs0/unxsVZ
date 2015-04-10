@@ -2,7 +2,7 @@
 # $Id$
 # agents/openvz/makefile
 #
-# (C) 2001-2014 Gary Wallis for Unixservice, LLC.
+# (C) 2001-2015 Gary Wallis for Unixservice, LLC.
 #
 # Notes:
 #	Must use gmake (usually same as make in linux)
@@ -11,7 +11,7 @@
 #
 
 CFLAGS= -Wall
-LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lm
+LIBS= -L/usr/lib/mysql -L/usr/lib64/mysql -lmysqlclient -lssl -lm
 
 all: unxsOVZ
 
