@@ -1110,12 +1110,6 @@ void ExtMainShell(int argc, char *argv[])
                 ImportOSTemplates(argv[2],argv[3]);
 	else if(argc==3 && !strcmp(argv[1],"MassCreateContainers"))
                 MassCreateContainers(argv[2]);
-        else if(argc==2 && !strcmp(argv[1],"UpdateNodeInfo"))
-	{
-		if(TextConnectDb())
-			exit(1);
-		SelectedNodeInformation(0,0);
-	}
         else if(argc==2 && !strcmp(argv[1],"Debug"))
 	{
 		printf("Debug start\n");
@@ -1128,7 +1122,6 @@ void ExtMainShell(int argc, char *argv[])
 	{
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
 		printf("\nSpecial Admin Ops:\n");
-		printf("\tUpdateNodeInfo\n");
 		printf("\tUpdateSchema\n");
 		printf("\tUpdateCloneHostnames\n");
 		printf("\tRecoverMode\n");
