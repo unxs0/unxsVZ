@@ -1,6 +1,6 @@
 %define name unxsscripts
 %define version 1.0
-%define release 2
+%define release 3
 
 Summary: unxsScripts provides initial unxsVZ system scripts.
 Name: %{name}
@@ -41,6 +41,8 @@ exit 0
 /usr/sbin/changestaffpasswd
 /usr/sbin/unxsvzAllNodeCmd.sh
 /usr/sbin/unxsvzAllNodeScp.sh
+/usr/sbin/unxsvzEveryNodeCmd.sh
+/usr/sbin/unxsvzEveryNodeScp.sh
 /usr/sbin/unxsvzCapacityPlanning.sh
 /usr/sbin/unxsvzChangePBXPasswds.sh
 /usr/sbin/unxsvzChangeRootPasswd.sh
@@ -55,5 +57,7 @@ exit 0
 
 
 %changelog
+* Wed Apr 15 2015 Gary Wallis <support@unixservice.com> 
+- Added EveryNode scripts.
 * Wed Mar 4 2015 Gary Wallis <support@unixservice.com> 
 - Initial RPM release of new CentOS6 version
