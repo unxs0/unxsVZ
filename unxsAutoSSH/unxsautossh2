@@ -1,0 +1,73 @@
+#!/bin/bash
+#
+# chkconfig: 2345 99 01
+# description: script to start autossh for mysql tunnel
+# Processname: autossh2
+# pidfile: /var/run/autossh2.pid
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+#
+#FILE
+#	
+#INSTALL AS
+#	/etc/init.d/unxsautossh2
+#PURPOSE
+#	Start autossh2 for mysql tunnel.
+#DEPENDS ON
+#	autossh2 of course
+#
+
+#configure these
+cLocalIPAndPort="127.0.0.2:3306";#IP and port for local server connection.
+cRemoteIPAndPort="udb1.unixservice.com:3306";#The remote MySQL server IP and port.
+cSSHUser="unxsvz@udb1.unixservice.com";#The remote MySQL server user and IP/server must have ssh cert authentication working
+cSSHPort="22037";#The remote MySQL server ssh port for cSSHUser connection.
+
+#test ssh -p $cSSHPort $cSSHUser first after this script is run:
+#local connect example with defaults above: mysql -h127.0.0.2 -ppasswd -uuser dbname
+#this will work as long as user is allowed to connect from the IP configured above.
+
+cListen="$cLocalIPAndPort:$cRemoteIPAndPort";
+function start {
+        echo -n "Starting autossh2"
+        daemon "/usr/bin/autossh2 -M 0 -q -f -N -o 'ServerAliveInterval 60' -o 'ServerAliveCountMax 3' -L $cListen -p $cSSHPort $cSSHUser";
+	RETVAL=$?;
+	if [ $? != 0 ];then
+		echo "could not start autossh2";
+		return;
+	fi
+	echo;
+        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/autossh2;
+}
+
+function stop {
+	if test "x`pidof autossh2`" != x; then
+		echo -n "Shutting down autossh2: ";
+		killproc autossh2;
+	fi
+	RETVAL=$?;
+	echo;
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/autossh2 /var/run/autossh2.pid;
+}
+
+case $1 in
+
+	start)
+		start;
+		;;
+	stop)
+		stop;
+		;;
+	restart)
+		stop;
+		start;
+		;;
+	status)
+		status autossh2
+		;;
+	*)
+		echo "Usage: $0 start|stop|restart|status"
+esac
+
