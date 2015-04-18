@@ -21,9 +21,9 @@
 
 #configure these
 cLocalIPAndPort="127.0.0.2:3306";#IP and port for local server connection.
-cRemoteIPAndPort="udb1.unixservice.com:3306";#The remote MySQL server IP and port.
-cSSHUser="unxsvz@udb1.unixservice.com";#The remote MySQL server user and IP/server must have ssh cert authentication working
-cSSHPort="22037";#The remote MySQL server ssh port for cSSHUser connection.
+cRemoteIPAndPort="db1.foss.com:3306";#The remote MySQL server IP and port.
+cSSHUser="user@db1.free.com";#The remote MySQL server user and IP/server must have ssh cert authentication working
+cSSHPort="22";#The remote MySQL server ssh port for cSSHUser connection.
 
 #test ssh -p $cSSHPort $cSSHUser first after this script is run:
 #local connect example with defaults above: mysql -h127.0.0.2 -ppasswd -uuser dbname
@@ -31,6 +31,13 @@ cSSHPort="22037";#The remote MySQL server ssh port for cSSHUser connection.
 
 cListen="$cLocalIPAndPort:$cRemoteIPAndPort";
 function start {
+	if [ ! -L /usr/bin/autossh2 ];then
+		ln -s /usr/bin/autossh /usr/bin/autossh2;
+		if [ $? != 0 ];then
+			echo "error creating /usr/bin/autossh2 link";
+			return;
+		fi
+	fi
         echo -n "Starting autossh2"
         daemon "/usr/bin/autossh2 -M 0 -q -f -N -o 'ServerAliveInterval 60' -o 'ServerAliveCountMax 3' -L $cListen -p $cSSHPort $cSSHUser";
 	RETVAL=$?;
