@@ -231,7 +231,7 @@ void ExttConfigurationListSelect(void)
         if(!strcmp(gcFilter,"uConfiguration"))
         {
                 sscanf(gcCommand,"%u",&uConfiguration);
-		if(guPermLevel<10)
+		if(guLoginClient!=1)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
@@ -240,7 +240,7 @@ void ExttConfigurationListSelect(void)
         }
         else if(!strcmp(gcFilter,"cLabel"))
         {
-		if(guPermLevel<10)
+		if(guLoginClient!=1)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
@@ -253,6 +253,8 @@ void ExttConfigurationListSelect(void)
                 strcpy(gcFilter,"None");
 		strcat(gcQuery," ORDER BY uConfiguration");
         }
+
+	//tConfiguration(gcQuery);
 
 }//void ExttConfigurationListSelect(void)
 
