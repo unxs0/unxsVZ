@@ -1,5 +1,5 @@
 ##
 ## in only one server per datacenter -special log file for debug
-#*/5 * * * * unxs sleep $[($RANDOM\%10)+1]; /usr/sbin/DatacenterGraphFromRRDs.sh create >> /var/log/datacenter_traffic_log 2>&1;
-#7 4,12 * * * unxs sleep $[($RANDOM\%60)+1]; /usr/sbin/DatacenterWkMonYrGraphsFromRRDs.sh create >> /var/log/datacenter_traffic_log 2>&1;
-#
+#*/5 * * * * root sleep $[($RANDOM\%10)+1]; /usr/sbin/unxsvzDatacenterGraphFromRRDs.sh create >> /var/log/unxsvzGraphs.log 2>&1;
+#7 4,12 * * * root sleep $[($RANDOM\%60)+1]; /usr/sbin/unxsvzDatacenterWkMonYrGraphsFromRRDs.sh create >> /var/log/unxsvzGraphs.log 2>&1;
+##

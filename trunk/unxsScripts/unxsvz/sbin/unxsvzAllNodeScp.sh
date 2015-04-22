@@ -81,7 +81,7 @@ if [ "$cRemoteServer" != "" ];then
 	if [ "$?" == "0" ]; then exit 1; fi
 
 	echo $cRemoteServer;
-	/usr/bin/scp -c $cEncAlg "$1" $cRemoteServer:"$1";
+	/usr/bin/scp $cRemotePort -c $cEncAlg "$1" $cRemoteServer:"$1";
 fi
 
 exit 0;
