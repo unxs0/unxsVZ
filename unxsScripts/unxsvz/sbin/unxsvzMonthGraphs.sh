@@ -31,15 +31,15 @@ fi
 
 /usr/sbin/vzlist -a > /dev/null 2>&1; 
 if [ $? != 0 ];then
-	fLog "vzlist error";
+	fLog "vzlist error1";
 	exit 0;
 fi
 /usr/sbin/vzlist > /dev/null 2>&1; 
 if [ $? != 0 ];then
-	#no active containers
+	fLog "vzlist error2";
 	exit 0;
 fi
-for veid in `/usr/sbin/vzlist -o veid -H | sed 's/ //g'`; do
+for veid in `/usr/sbin/vzlist -o veid -H 2>/dev/null| sed 's/ //g'`; do
 
 	RRDFILE="/var/lib/rrd/$veid.rrd";
 

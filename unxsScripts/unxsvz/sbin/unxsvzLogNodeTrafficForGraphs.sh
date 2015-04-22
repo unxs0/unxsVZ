@@ -11,8 +11,6 @@
 #REQUIRES
 #	hostname (/etc/hosts should be configured correctly if using -a)
 #	/bin/bash
-#	/usr/sbin/vzlist
-#	/usr/sbin/vzctl
 #	/bin/awk
 #	/usr/bin/rrdtool
 #	/usr/sbin/unxsvzAllNodeScp.sh

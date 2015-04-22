@@ -1,3 +1,4 @@
 #used by AllNode ssh and scp type scripts
 
 #cRemoteServer="someserver";
+#cRemotePort="-P 22"
