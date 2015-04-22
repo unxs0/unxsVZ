@@ -11,6 +11,8 @@
 #REQUIRES
 #	hostname (/etc/hosts should be configured correctly if using -a)
 #	/bin/bash
+#	/usr/sbin/vzlist
+#	/usr/sbin/vzctl
 #	/bin/awk
 #	/usr/bin/rrdtool
 #	/usr/sbin/unxsvzAllNodeScp.sh
@@ -109,6 +111,12 @@ if [ $? == 0 ] && [ "$CTIN" != "" ] && [ "$CTOUT" != "" ];then
 	nice /usr/sbin/unxsvzAllNodeScp.sh $PNGFILE > /dev/null 2>&1;
 	if [ $? != 0 ];then
 		fLog "unxsvzAllNodeScp.sh $PNGFILE error";
+		exit 0;
+	fi
+	#copy node rrd files to all other nodes
+	nice /usr/sbin/unxsvzAllNodeScp.sh $RRDFILE > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		fLog "unxsvzAllNodeScp.sh $RRDFILE error";
 		exit 0;
 	fi
 fi
