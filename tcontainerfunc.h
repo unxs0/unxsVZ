@@ -1207,7 +1207,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 	                        guMode=2001;
 				//Special safety for root level cleanup dels
-				if(uStatus!=uINITSETUP && uSource)
+				if(uStatus!=uINITSETUP && uSource && uStatus!=uAWAITCLONE)
 				{
 					sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u",uSource);
 					mysql_query(&gMysql,gcQuery);
@@ -1216,6 +1216,23 @@ void ExttContainerCommands(pentry entries[], int x)
         				res=mysql_store_result(&gMysql);
 					if(mysql_num_rows(res)!=0)
 						tContainer("<blink>Error:</blink> This container has a source. Delete it first.");
+				}
+				else if(uStatus==uAWAITCLONE && uSource)
+				{
+					//delete a waiting clone container that has not been deployed yet
+					//set parent container status back to active.
+					sprintf(gcQuery,"UPDATE tContainer SET uStatus=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uContainer=%u",guLoginClient,uSource);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					//Cancel any jobs
+					sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uContainer=%u AND cJobName='CloneContainer' AND (uJobStatus=%u OR uJobStatus=%u)",
+								uCANCELED,guLoginClient,uSource,uAWAITCLONE,uSUSPENDED);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
 				}
 
 				guMode=5;
@@ -1244,12 +1261,12 @@ void ExttContainerCommands(pentry entries[], int x)
 					htmlPlainTextError(mysql_error(&gMysql));
 				CancelContainerJob(uDatacenter,uNode,uContainer,0);
 				//81=Awaiting clone
-				sprintf(gcQuery,"DELETE FROM tContainer WHERE uStatus=81 AND uSource=%u",uContainer);
+				sprintf(gcQuery,"DELETE FROM tContainer WHERE uStatus=%u AND uSource=%u",uAWAITCLONE,uContainer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
 				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer IN "
-						"(SELECT uContainer FROM tContainer WHERE uSource=%u AND uStatus=81)",uContainer);
+						"(SELECT uContainer FROM tContainer WHERE uSource=%u AND uStatus=%u)",uContainer,uAWAITCLONE);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
@@ -1643,6 +1660,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						
 				}
 
+				//this also handle the -backup uniqueness issue
 				//we don't allow extra remote clones on same node --seems to be no reason to do so
 				//	since you can always clone a local container if you need to make "copies."
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uSource=%u AND uDatacenter=%u"
@@ -3072,8 +3090,8 @@ void ExttContainerButtons(void)
                 case 2001:
                         printf("<p><u>Think twice</u>");
                         printf("<br>Container and it's properties will be removed from unxsVZ database for good.<br>Any jobs"
-				" pending for this container or it's clone will be canceled. Any clone in <i>Awaiting clone</i>"
-				" status, will also be deleted.<p>");
+				" pending for this container or it's clone will be canceled. Any clone of this container in <i>Awaiting clone</i>"
+				" status, will also be deleted. You can also delete a clone container that has not yet been deployed.<p>");
                         printf(LANG_NBB_CONFIRMDEL);
                 break;
 
@@ -7449,7 +7467,7 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CloneContainer(%u)',cJobName='CloneContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
-			",uJobStatus=1"
+			",uJobStatus=%u"
 			",cJobData='"
 			"uTargetNode=%u;\n"
 			"uNewVeid=%u;\n"
@@ -7459,6 +7477,7 @@ unsigned CloneContainerJob(unsigned uDatacenter, unsigned uNode, unsigned uConta
 				uContainer,
 				uDatacenter,uNode,uContainer,
 				luJobDate,luJobDate,
+				uWAITING,
 				uTargetNode,
 				uNewVeid,
 				uCloneStop,
@@ -8030,7 +8049,10 @@ unsigned CommonCloneContainer(
 	while(uWizLabelLoop)
 	{
 		uWizLabelSuffix++;
-		sprintf(cWizLabel,"%.25s-clone%u",cLabel,uWizLabelSuffix);
+		if(uDatacenter!=uTargetDatacenter)
+			sprintf(cWizLabel,"%.25s-backup",cLabel);
+		else
+			sprintf(cWizLabel,"%.25s-clone%u",cLabel,uWizLabelSuffix);
 		sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cWizLabel);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -8044,12 +8066,18 @@ unsigned CommonCloneContainer(
 	if((cp=strchr(cHostname,'.')))
 	{
 		*cp=0;
-		sprintf(cWizHostname,"%.32s-clone%u.%.60s",cHostname,uWizLabelSuffix,cp+1);
+		if(uDatacenter!=uTargetDatacenter)
+			sprintf(cWizHostname,"%.32s-backup.%.60s",cHostname,cp+1);
+		else
+			sprintf(cWizHostname,"%.32s-clone%u.%.60s",cHostname,uWizLabelSuffix,cp+1);
 		*cp='.';
 	}
 	else
 	{
-		sprintf(cWizHostname,"%.93s.clone%u",cHostname,uWizLabelSuffix);
+		if(uDatacenter!=uTargetDatacenter)
+			sprintf(cWizHostname,"%.93s.backup",cHostname);
+		else
+			sprintf(cWizHostname,"%.93s.clone%u",cHostname,uWizLabelSuffix);
 	}
 
 	sprintf(gcQuery,"INSERT INTO tContainer SET cLabel='%s',"
