@@ -5,7 +5,7 @@ FILE
 PURPOSE
 	Command line processing of jobs in the tJob queue.
 AUTHOR/LEGAL
-	(C) 2008-2011 Gary Wallis for Unxiservice, LLC.
+	(C) 2008-2015 Gary Wallis for Unxiservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 NOTES
 	We still use KISS code, var naming conventions, and Allman (ANSI) style C 
