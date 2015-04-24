@@ -903,20 +903,12 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 	GetContainerProp(uContainer,"cOrg_TimeZone",cTimezone);
 	if(cTimezone[0] && !uNotValidSystemCallArg(cTimezone) )
 	{
-		sprintf(gcQuery,"rm -f /vz/private/%u/etc/localtime",uContainer);
+		sprintf(gcQuery,"cp /vz/root/%u/usr/share/zoneinfo/%s /vz/root/%u/etc/localtime",
+							uContainer,cTimezone,uContainer);
 		if(system(gcQuery))
-		{
 			logfileLine("NewContainer",gcQuery);
-		}
 		else
-		{
-			sprintf(gcQuery,"ln -s /usr/share/zoneinfo/%s /vz/private/%u/etc/localtime",
-							cTimezone,uContainer);
-			if(system(gcQuery))
-				logfileLine("NewContainer",gcQuery);
-			else
-				logfileLine("NewContainer","Container timezone changed");
-		}
+			logfileLine("NewContainer","Container timezone changed");
 	}
 
 	//6-.
@@ -1516,21 +1508,12 @@ CommonExit2:
 	GetContainerProp(uContainer,"cOrg_TimeZone",cTimezone);
 	if(cTimezone[0] && !uNotValidSystemCallArg(cTimezone) )
 	{
-		sprintf(gcQuery,"rm -f /vz/private/%u/etc/localtime",uContainer);
+		sprintf(gcQuery,"cp /vz/root/%u/usr/share/zoneinfo/%s /vz/root/%u/etc/localtime",
+						uContainer,cTimezone,uContainer);
 		if(system(gcQuery))
-		{
 			logfileLine("ChangeHostnameContainer",gcQuery);
-		}
 		else
-		{
-			//The link target is internal to container
-			sprintf(gcQuery,"ln -s /usr/share/zoneinfo/%s /vz/private/%u/etc/localtime",
-							cTimezone,uContainer);
-			if(system(gcQuery))
-				logfileLine("ChangeHostnameContainer",gcQuery);
-			else
-				logfileLine("ChangeHostnameContainer","Container timezone changed");
-		}
+			logfileLine("ChangeHostnameContainer","Container timezone changed");
 	}
 
 CommonExit:
