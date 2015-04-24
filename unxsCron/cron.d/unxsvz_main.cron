@@ -1,7 +1,5 @@
 ###
-##*/5 * * * * root /usr/sbin/unxsUBC --parallel >> /var/log/unxsvzlog  2>&1;
-#*/5 * * * * root /usr/sbin/unxsUBC >> /var/log/unxsvzlog  2>&1;
-##* * * * * root /var/www/unxs/cgi-bin/unxsVZ.cgi ProcessJobQueue >> /var/log/unxsvzlog 2>&1;
+#resource monitoring
+#*/5 * * * * root /usr/sbin/unxsUBC --parallel >> /var/log/unxsvzlog  2>&1;
+#unxsVZ job queue.
 #* * * * * root /usr/sbin/unxsVZ ProcessJobQueue >> /var/log/unxsvzlog 2>&1;
-#6 * * * * root nice /var/www/unxs/cgi-bin/unxsVZ.cgi UpdateNodeInfo >> /var/log/unxsvzlog 2>&1;
-#
