@@ -54,4 +54,3 @@ install-local: $(unxsvzLOCALDEF)
 		chown root:root /etc/unxsvz/$$cScript; \
 	done
 	@ rm -f *.sh
-

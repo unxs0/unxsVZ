@@ -8,7 +8,7 @@
 #	The distributed scripts will have a top section with default settings.
 #	The scripts will source this file for localization of said settings.
 #AUTHOR
-#	Gary Wallis for Unixservice, LLC. Copyright 2014.
+#	Copyright 2014-2015 Gary Wallis for Unixservice, LLC.
 #NOTES
 #	All /usr/sbin/*.sh scripts need to be changed to use this mysql.local.sh file.
 #	This file contains confidential info keep secure!
@@ -16,5 +16,5 @@
 
 #Global settings
 #for all scripts that use MySQL
-cMySQLConnect="/usr/bin/mysql -h mysqldbserver.isp.net -u unxsvz -pwsxedc unxsvz";
+cMySQLConnect="/usr/bin/mysql -h 127.0.0.1 -u unxsvz -pwsxedc unxsvz";
 cGroupStatement="tGroup.cLabel LIKE '%PBX%'";
