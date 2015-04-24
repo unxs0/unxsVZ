@@ -229,8 +229,11 @@ void ProcessJobQueue(unsigned uDebug)
 
 	unsigned uDelay=0;
     	uDelay=rand() % 60;
-	//sprintf(gcQuery,"random delay of %us added",uDelay);
-	//logfileLine("ProcessJobQueue",gcQuery);
+	if(guDebug)
+	{
+		sprintf(gcQuery,"random delay of %us added",uDelay);
+		logfileLine("ProcessJobQueue",gcQuery);
+	}
 	sleep(uDelay);
 
 	//Uses login data from local.h
