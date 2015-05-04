@@ -1108,8 +1108,8 @@ void ProcessSingleQuota(unsigned uContainer)
 			long unsigned luDiskUsage=0,luDiskUsageHardLimit=0,luDiskUsageSoftLimit=0;
 			long unsigned luDiskInodeUsage=0,luDiskInodeUsageHardLimit=0,luDiskInodeUsageSoftLimit=0;
 			if(sscanf(cLine,"%lu %lu %lu %lu %lu %lu",
-					&luDiskUsage,&luDiskUsageHardLimit,&luDiskUsageHardLimit,
-					&luDiskInodeUsage,&luDiskInodeUsageHardLimit,&luDiskInodeUsageSoftLimit)!=6)
+					&luDiskUsage,&luDiskUsageSoftLimit,&luDiskUsageHardLimit,
+					&luDiskInodeUsage,&luDiskInodeUsageSoftLimit,&luDiskInodeUsageHardLimit)!=6)
 			{
 				logfileLine0("ProcessSingleQuota","sscanf error",uContainer);
 				return;
