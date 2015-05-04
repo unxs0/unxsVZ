@@ -61,6 +61,7 @@ void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
 void ProcessSingleTraffic(unsigned uContainer);
 void SendEmail(char *cSubject,char *cMsg);
 void UBCConnectToOptionalUBCDb(unsigned uDatacenter);
+void SetContainerNumProperty(char *cName,long unsigned luDiskUsage,unsigned uContainer);
 
 unsigned guLogLevel=3;
 static FILE *gLfp0=NULL;
@@ -1088,192 +1089,93 @@ void ProcessSingleQuota(unsigned uContainer)
 		logfileLine0("ProcessSingleQuota","start",uContainer);
 
 	FILE *fp;
-	char cLine[1024];
-	char cContainerTag[64];
-	register unsigned uStart=0;
-	unsigned long luUsage,luSoftlimit,luHardlimit,luTime,luExpire;
-	char cResource[64];
-	unsigned uType=3;//tContainter type
 
-	//qid: path            usage      softlimit      hardlimit       time     expire
-	//111: /vz/private/111
-	//  1k-blocks         876364        1048576        1153024          0          0
-	//     inodes          29792         200000         220000          0          0
-
-
-	sprintf(cContainerTag,"%u: /vz/private/%u",uContainer,uContainer);
-	if(uContainer)
-	{
-		;
-	}
-	else
+	if(!uContainer)
 	{
 		logfileLine0("ProcessSingleQuota","No container specified",uContainer);
-		exit(1);
+		return;
 	}
 		
 
-	if((fp=fopen("/proc/vz/vzquota","r")))
+	char cCommand[256];
+	sprintf(cCommand,"/usr/sbin/vzlist -H -o diskspace,diskspace.s,diskspace.h,diskinodes,diskinodes.s,diskinodes.h %u",uContainer);
+	if((fp=popen(cCommand,"r")))
 	{
-		while(fgets(cLine,1024,fp)!=NULL)
+		char cLine[1024];
+
+		if(fgets(cLine,1024,fp)!=NULL)
 		{
-			cResource[0]=0;
-			luUsage=0;
-			luSoftlimit=0;
-			luHardlimit=0;
-			luTime=0;
-			luExpire=0;
-
-			if(!uStart)
+			long unsigned luDiskUsage=0,luDiskUsageHardLimit=0,luDiskUsageSoftLimit=0;
+			long unsigned luDiskInodeUsage=0,luDiskInodeUsageHardLimit=0,luDiskInodeUsageSoftLimit=0;
+			if(sscanf(cLine,"%lu %lu %lu %lu %lu %lu",
+					&luDiskUsage,&luDiskUsageHardLimit,&luDiskUsageHardLimit,
+					&luDiskInodeUsage,&luDiskInodeUsageHardLimit,&luDiskInodeUsageSoftLimit)!=6)
 			{
-				if(strstr(cLine,cContainerTag))
-				{
-					uStart=1;
-					continue;
-				}
-				continue;
-			}
-			else
-			{
-				if(strchr(cLine,':')) break;
+				logfileLine0("ProcessSingleQuota","sscanf error",uContainer);
+				return;
 			}
 
-			if(uStart==1)
-				sprintf(cResource,"1k-blocks");
-			else
-				sprintf(cResource,"inodes");
+			SetContainerNumProperty("1k-blocks.luUsage",luDiskUsage,uContainer);
+			SetContainerNumProperty("1k-blocks.luSoftlimit",luDiskUsageSoftLimit,uContainer);
+			SetContainerNumProperty("1k-blocks.luHardlimit",luDiskUsageHardLimit,uContainer);
+			SetContainerNumProperty("inodes.luUsage",luDiskInodeUsage,uContainer);
+			SetContainerNumProperty("inodes.luSoftlimit",luDiskInodeUsageSoftLimit,uContainer);
+			SetContainerNumProperty("inodes.luHardlimit",luDiskInodeUsageHardLimit,uContainer);
 
-				
-			sscanf(cLine,"%s %lu %lu %lu %lu %lu",
-				cResource,
-				&luUsage,&luSoftlimit,&luHardlimit,&luTime,&luExpire);
 
-			//debug only
-			//printf("%s %lu %lu %lu %lu %lu\n",
-			//	cResource,
-			//	luUsage,luSoftlimit,luHardlimit,luTime,luExpire);
-
-        		MYSQL_RES *res;
-        		MYSQL_ROW field;
-			register int i;
-			char cKnownQuotaVals[8][32]={"luUsage","luSoftlimit","luHardlimit","luTime","luExpire"};
-			long unsigned luKnownQuotaVals[8];
-
-			luKnownQuotaVals[0]=luUsage;
-			luKnownQuotaVals[1]=luSoftlimit;
-			luKnownQuotaVals[2]=luHardlimit;
-			luKnownQuotaVals[3]=luTime;
-			luKnownQuotaVals[4]=luExpire;
-
-			for(i=0;i<5;i++)
+			//keep stats of 1k-blocks.luUsage only
+			MYSQL_RES *res;
+			MYSQL_ROW field;
+			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE"
+					" cName=CONCAT('1k-blocks.luUsage.',DAYOFWEEK(NOW()))"
+					" AND uKey=%u AND uType=3",uContainer);
+			mysql_query(&gMysqlUBC,gcQuery);
+			if(mysql_errno(&gMysqlUBC))
 			{
-				sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='%.63s.%.32s'"
-							" AND uKey=%u AND uType=%u",
-					cResource,cKnownQuotaVals[i],uContainer,uType);
+				logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
+				exit(2);
+			}
+			res=mysql_store_result(&gMysqlUBC);
+			if((field=mysql_fetch_row(res)))
+			{
+				//Average TODO ???
+				sprintf(gcQuery,"UPDATE tProperty SET cValue=CONVERT((%lu+cValue)/2,UNSIGNED)"
+						",uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+						" uProperty=%s"
+							,luDiskUsage
+							,guContainerOwner
+							,field[0]);
 				mysql_query(&gMysqlUBC,gcQuery);
 				if(mysql_errno(&gMysqlUBC))
 				{
 					logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
-			       	res=mysql_store_result(&gMysqlUBC);
-				if((field=mysql_fetch_row(res)))
-				{
-					sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
-							"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
-							" uProperty=%s"
-								,luKnownQuotaVals[i]
-								,guContainerOwner
-								,field[0]);
-					mysql_query(&gMysqlUBC,gcQuery);
-					if(mysql_errno(&gMysqlUBC))
-					{
-						logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
-						exit(2);
-					}
-				}
-				else
-				{
-					sprintf(gcQuery,"INSERT INTO tProperty SET cValue=%lu"
-							",cName='%.63s.%.32s'"
-							",uType=%u"
-							",uKey=%u"
-							",uOwner=%u"
-							",uCreatedBy=1"
-							",uCreatedDate=UNIX_TIMESTAMP(NOW())"
-								,luKnownQuotaVals[i]
-								,cResource
-								,cKnownQuotaVals[i]
-								,uType
-								,uContainer
-								,guContainerOwner);
-					mysql_query(&gMysqlUBC,gcQuery);
-					if(mysql_errno(&gMysqlUBC))
-					{
-						logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
-						exit(2);
-					}
-				}
-				mysql_free_result(res);
 			}
-
-			//Keep one week of usage data for trend analysis
-			for(i=0;i<1;i++)
+			else
 			{
-				sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE"
-						" cName=CONCAT('%.63s.%.32s.',DAYOFWEEK(NOW()))"
-							" AND uKey=%u AND uType=%u",
-					cResource,cKnownQuotaVals[i],uContainer,uType);
+				sprintf(gcQuery,"INSERT INTO tProperty SET cValue=%lu"
+						",cName=CONCAT('1k-blocks.luUsage.',DAYOFWEEK(NOW()))"
+						",uType=3"
+						",uKey=%u"
+						",uOwner=%u"
+						",uCreatedBy=1"
+						",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+							,luDiskUsage
+							,uContainer
+							,guContainerOwner);
 				mysql_query(&gMysqlUBC,gcQuery);
 				if(mysql_errno(&gMysqlUBC))
 				{
 					logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
 					exit(2);
 				}
-			       	res=mysql_store_result(&gMysqlUBC);
-				if((field=mysql_fetch_row(res)))
-				{
-					//Average
-					sprintf(gcQuery,"UPDATE tProperty SET cValue=CONVERT((%lu+cValue)/2,UNSIGNED)"
-							",uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
-							" uProperty=%s"
-								,luKnownQuotaVals[i]
-								,guContainerOwner
-								,field[0]);
-					mysql_query(&gMysqlUBC,gcQuery);
-					if(mysql_errno(&gMysqlUBC))
-					{
-						logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
-						exit(2);
-					}
-				}
-				else
-				{
-					sprintf(gcQuery,"INSERT INTO tProperty SET cValue=%lu"
-							",cName=CONCAT('%.63s.%.32s.',DAYOFWEEK(NOW()))"
-							",uType=%u"
-							",uKey=%u"
-							",uOwner=%u"
-							",uCreatedBy=1"
-							",uCreatedDate=UNIX_TIMESTAMP(NOW())"
-								,luKnownQuotaVals[i]
-								,cResource
-								,cKnownQuotaVals[i]
-								,uType
-								,uContainer
-								,guContainerOwner);
-					mysql_query(&gMysqlUBC,gcQuery);
-					if(mysql_errno(&gMysqlUBC))
-					{
-						logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
-						exit(2);
-					}
-				}
-				mysql_free_result(res);
 			}
-		}
+			mysql_free_result(res);
+
+		}//if fgets ok
 		fclose(fp);
-	}
+	}//if popen ok
 	else
 	{
 		logfileLine0("ProcessSingleQuota","fopen() failed",uContainer);
@@ -2332,3 +2234,54 @@ void UBCConnectToOptionalUBCDb(unsigned uDatacenter)
 
 }//void UBCConnectToOptionalUBCDb()
 
+
+void SetContainerNumProperty(char *cName,long unsigned luDiskUsage,unsigned uContainer)
+{
+	MYSQL_RES *res;
+       	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='%s'"
+					" AND uKey=%u AND uType=3",cName,uContainer);
+	mysql_query(&gMysqlUBC,gcQuery);
+	if(mysql_errno(&gMysqlUBC))
+	{
+		logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
+		exit(2);
+	}
+	res=mysql_store_result(&gMysqlUBC);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET cValue=%lu,"
+				"uModDate=UNIX_TIMESTAMP(NOW()),uModBy=1,uOwner=%u WHERE"
+				" uProperty=%s"
+					,luDiskUsage
+					,guContainerOwner
+					,field[0]);
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
+		{
+			logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
+			exit(2);
+		}
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET cValue=%lu"
+				",cName='%s'"
+				",uType=3"
+				",uKey=%u"
+				",uOwner=%u"
+				",uCreatedBy=1"
+				",uCreatedDate=UNIX_TIMESTAMP(NOW())"
+					,luDiskUsage
+					,cName
+					,uContainer
+					,guContainerOwner);
+		mysql_query(&gMysqlUBC,gcQuery);
+		if(mysql_errno(&gMysqlUBC))
+		{
+			logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
+			exit(2);
+		}
+	}
+	mysql_free_result(res);
+}//void SetContainerNumProperty()
