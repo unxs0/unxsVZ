@@ -542,7 +542,7 @@ void Header_ism3(char *title, int iJs)
 		jsToggleCheckboxes();
 
 	printf("</head><body><form name=formMain action=iDNS.cgi method=post><blockquote>\n");
-	printf("<img src=/images/unxsbind.jpg>&nbsp;&nbsp;\n");
+	//printf("<img src=/images/unxsbind.jpg>&nbsp;&nbsp;\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tZone") || !strcmp(gcFunction,"tZoneTools") ||
@@ -646,7 +646,7 @@ void Header_ism3(char *title, int iJs)
 		ExttAuthorizeNavBar();
 
 	//Login info
-	printf(" \n ");
+	printf("<font size=3><b>iDNS</b></font> \n ");
 	if(!guPermLevel)
 	{
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>Your IP address %s has been logged</font>",gcHost);
