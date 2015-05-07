@@ -484,8 +484,8 @@ void ExttJobCommands(pentry entries[], int x)
 					//tJob(cMsg);
 					uJobStatus=uCANCELED;
 					sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
-							" WHERE uJob=%u AND (uJobStatus=%u OR uJobStatus=%u)",
-						uJobStatus,guLoginClient,uJobCheckbox,uWAITING,uERROR);
+							" WHERE uJob=%u AND (uJobStatus=%u OR uJobStatus=%u OR uJobStatus=%u)",
+						uJobStatus,guLoginClient,uJobCheckbox,uWAITING,uERROR,uREMOTEWAITING);
         				mysql_query(&gMysql,gcQuery);
         				if(mysql_errno(&gMysql))
                 				tJob("SQL UPDATE failed");
