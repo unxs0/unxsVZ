@@ -120,6 +120,9 @@ void ExttConfigurationButtons(void)
                 case 2000:
 			printf("<p><u>Enter required data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
+		
+			printf("<input class=largeButton title='Add new set of cExtVz name value pairs'"
+					" type=submit name=gcCommand value='Add cExtVz Set'>\n");
                 break;
 
                 case 2001:
