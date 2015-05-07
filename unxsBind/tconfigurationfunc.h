@@ -106,6 +106,70 @@ void ExttConfigurationCommands(pentry entries[], int x)
 			else
 				tConfiguration("<blink>Error</blink>: Denied by permissions settings");
                 }
+		else if(!strcmp(gcCommand,"Add cExtVzDb Set"))
+		{
+			if(guPermLevel>=10)
+			{
+                        	ProcesstConfigurationVars(entries,x);
+
+                        	guMode=2000;
+				//Check entries here
+                        	guMode=0;
+
+				uCreatedBy=guLoginClient;
+				uOwner=guCompany;
+				uModBy=0;//Never modified
+				uModDate=0;//Never modified
+
+				//5 pair set
+				//cExtVzDbIp
+				//cExtVzDbPort
+				//cExtVzDbName
+				//cExtVzDbLogin
+				//cExtVzDbPwd
+				char cCommentBuffer[256]={""};
+				cComment=cCommentBuffer;
+
+				uConfiguration=0;
+				sprintf(cLabel,"cExtVzDbIP");
+				sprintf(cValue,"127.0.0.1");
+				sprintf(cComment,"For local tunnel to remote unxsVZ DB server. [Add cExtVzDb Set] created");
+				NewtConfiguration(1);
+
+				uConfiguration=0;
+				sprintf(cLabel,"cExtVzDbPort");
+				sprintf(cValue,"53306");
+				sprintf(cComment,"Local tunnel port to remote unxsVZ DB server. [Add cExtVzDb Set] created");
+				NewtConfiguration(1);
+
+				uConfiguration=0;
+				sprintf(cLabel,"cExtVzDbName");
+				sprintf(cValue,"unxsvz");
+				sprintf(cComment,"Standard unxsVZ db name. [Add cExtVzDb Set] created");
+				NewtConfiguration(1);
+
+				uConfiguration=0;
+				sprintf(cLabel,"cExtVzDbLogin");
+				sprintf(cValue,"unxsbind");
+				sprintf(cComment,"Must GRANT PERMISSION for this user. [Add cExtVzDb Set] created");
+				NewtConfiguration(1);
+
+				uConfiguration=0;
+				sprintf(cLabel,"cExtVzDbPwd");
+				sprintf(cValue,"wsxedc");
+				sprintf(cComment,"%.255s","Must issue restrictive GRANT for this user with this password:"
+					" GRANT select,update ON unxsvz.tJob ...\n"
+					" [Add cExtVzDb Set] created");
+				NewtConfiguration(1);
+
+				if(uConfiguration)
+					tConfiguration("cExtVzDb set created");
+				else
+					tConfiguration("<blink>Error</blink>: cExtVzDb set creation issue");
+			}
+			else
+				tConfiguration("<blink>Error</blink>: Denied by permissions settings");
+		}
 	}
 
 }//void ExttConfigurationCommands(pentry entries[], int x)
@@ -121,8 +185,8 @@ void ExttConfigurationButtons(void)
 			printf("<p><u>Enter required data</u><br>");
                         printf(LANG_NBB_CONFIRMNEW);
 		
-			printf("<input class=largeButton title='Add new set of cExtVz name value pairs'"
-					" type=submit name=gcCommand value='Add cExtVz Set'>\n");
+			printf("<p><input class=largeButton title='Add new set of cExtVzDb name value pairs'"
+					" type=submit name=gcCommand value='Add cExtVzDb Set'>\n");
                 break;
 
                 case 2001:
