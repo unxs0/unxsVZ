@@ -1884,6 +1884,26 @@ void CreateNewClient(structExtJobParameters *structExtParam)
 //We may want to add remote running, remote error and remotely queued job status to unxsVZ
 //That involves changing dashboard and tjobfunc.h left panel logic.
 //It also involves Update CLI changes and rpm update action.
+//
+//TOC Supported jobs (in file order):
+//	unxsVZContainerDelSRVRR
+//		Removes SRV record created by unxsVZContainerSRVRR
+//	unxsVZRemoveContainer
+//		this appears to work with unxsVZPBXSRVZone below
+//	unxsVZContainerSRVRR
+//		adds an SRV record to managed zone and view
+//	unxsVZContainerARR
+//		adds an A record to managed zone and view
+//	unxsVZGenericRR
+//		adds most any record to managed zone and view
+//	unxsVZPBXSRVZone
+//		adds a complete new zone a subzone of the managed zone and view.
+//Missing jobs:
+//	unxsVZContainerDelARR
+//		unxsVZ at this time creates unxsVZRemoveContainer
+//		maybe we can improve unxsVZRemoveContainer to also delete A records from parent zone?
+//		but only if no subzone exists? Mess?
+//	unxsVZGenericDelRR
 void ProcessVZJobQueue(void)
 {
 	unsigned uJob=0;
@@ -2193,7 +2213,7 @@ void ProcessVZJobQueue(void)
 			else if(!strcmp("unxsVZContainerSRVRR",field[0]))
 			{
 				//debug only
-				//printf("ProcessVZJobQueue() unxsVZContainerARR\n");
+				//printf("ProcessVZJobQueue() unxsVZContainerSRVRR\n");
 
 				//Update remote job queue running
 				sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='%.32s'"
