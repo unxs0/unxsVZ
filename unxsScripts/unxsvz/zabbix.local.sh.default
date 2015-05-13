@@ -17,6 +17,9 @@
 
 #This file contains confidential info keep secure!
 
+cZabbixAgentServer="zabbix.isp.net";
+cZabbixAgentServerActive="zabbixproxy.isp.net";
+
 cZabbixServer="zabbix.isp.net:443";
 cZabbixPassword="ksjdcb8347ksjdc";
 
