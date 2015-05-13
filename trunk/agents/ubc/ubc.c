@@ -63,6 +63,7 @@ void ProcessSingleTraffic(unsigned uContainer);
 void SendEmail(char *cSubject,char *cMsg);
 void UBCConnectToOptionalUBCDb(unsigned uDatacenter);
 void SetContainerNumProperty(char *cName,long unsigned luDiskUsage,unsigned uContainer);
+void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 
 unsigned guLogLevel=3;
 static FILE *gLfp0=NULL;
@@ -1124,34 +1125,59 @@ void ProcessSingleQuota(unsigned uContainer)
 			SetContainerNumProperty("inodes.luHardlimit",luDiskInodeUsageHardLimit,uContainer);
 
 			//Autonomics for setting of disk usage.
-			//When disk usage is more than 80% of luDiskUsageSoftLimit warn by email.
-			char cSubject[64]={""};
-			char cMessage[128]={""};
-			//debug only
-			//sprintf(cMessage,"%f %f %f",(double)luDiskUsage,(double)luDiskUsageSoftLimit,(double)(luDiskUsageSoftLimit*(double)0.90));
-			//logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
-			if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*(double)0.90))
+			//ALPHA TESTING ONLY
+			//This should be controlled via tConfiguration and a tContainer::tProperty
+			char cAllowDiskAutonomics[256]={""};
+			GetContainerProp(uContainer,"cAllowDiskAutonomics",cAllowDiskAutonomics);
+			if(cAllowDiskAutonomics[0]=='Y')
 			{
-				//When disk usage is more than 90% of luDiskUsageSoftLimit 
-				//create job to increase by 10% and notify by email.
-				sprintf(cMessage,"--diskspace %lu:%lu",
-					(unsigned long)(luDiskUsageSoftLimit*1.1),
-					(unsigned long)(luDiskUsageHardLimit*1.1));
+				//When disk usage is more than 80% of luDiskUsageSoftLimit warn by email.
+				char cSubject[64]={""};
+				char cMessage[128]={""};
+				//debug only
+				sprintf(cMessage,"%f is %g%% of %f",(double)luDiskUsage,100*((double)luDiskUsage/(double)luDiskUsageSoftLimit),
+						(double)luDiskUsageSoftLimit);
 				logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
-				if(SetUBCJob(uContainer,cMessage))
+				//Note the 3% adjustments made below to 90% 80% and 50%. This last one the adjustment is positive.
+				//This is too match what df reports closer. We need to understand why df shows different numbers.
+				if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*(double)0.87))
 				{
-					sprintf(cSubject,"%s SetUBCJob diskspace increase 10%% for VEID=%u",cHostname,uContainer);
+					//When disk usage is more than 90% of luDiskUsageSoftLimit 
+					//create job to increase by 10% and notify by email.
+					sprintf(cMessage,"--diskspace %lu:%lu",
+						(unsigned long)(luDiskUsageSoftLimit*1.1),
+						(unsigned long)(luDiskUsageHardLimit*1.1));
+					logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
+					if(SetUBCJob(uContainer,cMessage))
+					{
+						sprintf(cSubject,"%s SetUBCJob diskspace increase 10%% for VEID=%u",cHostname,uContainer);
+						SendEmail(cSubject,cMessage);
+					}
+				}
+				else if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*(double)0.77))
+				{
+					sprintf(cMessage,"luDiskUsage=%lu luDiskUsageSoftLimit=%lu luDiskUsageHardLimit=%lu",
+							luDiskUsage,luDiskUsageSoftLimit,luDiskUsageHardLimit);
+					sprintf(cSubject,"%s Warning diskspace at 80%% for VEID=%u",cHostname,uContainer);
+					logfileLine0("ProcessSingleQuotaWarning",cMessage,uContainer);
 					SendEmail(cSubject,cMessage);
 				}
-			}
-			else if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*(double)0.80))
-			{
-				sprintf(cMessage,"luDiskUsage=%lu luDiskUsageSoftLimit=%lu luDiskUsageHardLimit=%lu",
-						luDiskUsage,luDiskUsageSoftLimit,luDiskUsageHardLimit);
-				sprintf(cSubject,"%s Warning diskspace at 80%% for VEID=%u",cHostname,uContainer);
-				logfileLine0("ProcessSingleQuotaWarning",cMessage,uContainer);
-				SendEmail(cSubject,cMessage);
-			}
+				else if((double)luDiskUsage<(double)(luDiskUsageSoftLimit*(double)0.53))
+				{
+					//When disk usage is less than 50% of luDiskUsageSoftLimit 
+					//create job to decrease by 10% and notify by email.
+					sprintf(cMessage,"--diskspace %lu:%lu",
+						(unsigned long)((double)luDiskUsageSoftLimit*(double)0.9),
+						(unsigned long)((double)luDiskUsageHardLimit*(double)0.9));
+					logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
+					if(SetUBCJob(uContainer,cMessage))
+					{
+						sprintf(cSubject,"%s SetUBCJob diskspace decrease 10%% for VEID=%u",cHostname,uContainer);
+						SendEmail(cSubject,cMessage);
+					}
+				}
+			}//allow disk autonomics per container
+	
 
 			//keep stats of 1k-blocks.luUsage only
 			MYSQL_RES *res;
@@ -2391,3 +2417,31 @@ unsigned SetUBCJob(unsigned uContainer,char *cSet)
 
 }//unsigned SetUBCJob(unsigned uContainer,char *cSet)
 
+
+//Do not use for UBC props. Not distributed UBC safe. Use the below function.
+void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(uContainer==0) return;
+
+	sprintf(gcQuery,"SELECT cValue FROM tProperty WHERE uKey=%u AND uType=3 AND cName='%s'",
+				uContainer,cName);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine0("GetContainerProp",mysql_error(&gMysql),uContainer);
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		char *cp;
+		if((cp=strchr(field[0],'\n')))
+			*cp=0;
+		sprintf(cValue,"%.255s",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void GetContainerProp()
