@@ -5,9 +5,10 @@
 #	From unxsVZ/unxsScripts/unxsvz/sbin/unxsvzInstallZabbixAgent.sh
 #	$Id$
 #PURPOSE
-#	Install a zabbix agent using 
+#	Install a simple zabbix agent using 
 #		/etc/unxsvz/$cType.zabbix_agentd.conf
 #		/etc/unxsvz/$cType.zabbix_agentd.d
+#		/etc/unxsvz/zabbix.local.sh
 #INPUT
 #	VEID and agent configuration cType file prefix
 #REQUIRES
@@ -112,10 +113,38 @@ fi
 echo "conf files installed";
 
 #install zabbix binaries from host node dependency on same arch
+cp /usr/sbin/zabbix_agentd /vz/root/$1/usr/sbin/zabbix_agentd;
+if [ "$?" != "0" ];then
+	echo "cp /usr/sbin/zabbix_agentd /vz/root/$1/usr/sbin/zabbix_agentd failed";
+	exit 10;
+fi
+cp /etc/init.d/zabbix-agent /vz/root/$1/etc/init.d/zabbix-agent;
+if [ "$?" != "0" ];then
+	echo "cp /etc/init.d/zabbix-agent /vz/root/$1/etc/init.d/zabbix-agent failed";
+	exit 11;
+fi
 
-#configure container boot for zabbix
-#install zabbix init file
+echo "other files installed";
 
-#start zabbix agent
+vzctl exec2 $1 "chkconfig --level 3 zabbix-agent on";
+if [ "$?" != "0" ];then
+	echo "chkconfig --level 3 zabbix-agent on failed";
+	exit 12;
+fi
+vzctl exec2 $1 "useradd -s /sbin/nologin zabbix";
+if [ "$?" != "0" ];then
+	echo "useradd -s /sbin/nologin zabbix failed";
+fi
+vzctl exec2 $1 "mkdir /var/run/zabbix;chown -R zabbix:zabbix /var/run/zabbix;mkdir /var/log/zabbix;touch /var/log/zabbix/zabbix_agentd.log;chown -R zabbix:zabbix /var/log/zabbix";
+if [ "$?" != "0" ];then
+	echo "log items failed";
+fi
+vzctl exec2 $1 "service zabbix-agent start";
+if [ "$?" != "0" ];then
+	echo "service zabbix-agent start failed";
+	exit 14;
+fi
+echo "zabbix_agentd started";
+
 
 exit 0;
