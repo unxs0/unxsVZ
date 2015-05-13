@@ -58,6 +58,7 @@ void ProcessSingleTraffic(unsigned uContainer);
 void ProcessVZMemCheck(unsigned uContainer, unsigned uNode);
 void ProcessVZCPUCheck(unsigned uContainer, unsigned uNode);
 void UpdateContainerUBCJob(unsigned uContainer, char *cResource);
+unsigned SetUBCJob(unsigned uContainer,char *cSet);
 void ProcessSingleTraffic(unsigned uContainer);
 void SendEmail(char *cSubject,char *cMsg);
 void UBCConnectToOptionalUBCDb(unsigned uDatacenter);
@@ -1122,6 +1123,35 @@ void ProcessSingleQuota(unsigned uContainer)
 			SetContainerNumProperty("inodes.luSoftlimit",luDiskInodeUsageSoftLimit,uContainer);
 			SetContainerNumProperty("inodes.luHardlimit",luDiskInodeUsageHardLimit,uContainer);
 
+			//Autonomics for setting of disk usage.
+			//When disk usage is more than 80% of luDiskUsageSoftLimit warn by email.
+			char cSubject[64]={""};
+			char cMessage[128]={""};
+			//debug only
+			//sprintf(cMessage,"%f %f %f",(double)luDiskUsage,(double)luDiskUsageSoftLimit,(double)(luDiskUsageSoftLimit*(double)0.90));
+			//logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
+			if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*(double)0.90))
+			{
+				//When disk usage is more than 90% of luDiskUsageSoftLimit 
+				//create job to increase by 10% and notify by email.
+				sprintf(cMessage,"--diskspace %lu:%lu",
+					(unsigned long)(luDiskUsageSoftLimit*1.1),
+					(unsigned long)(luDiskUsageHardLimit*1.1));
+				logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
+				if(SetUBCJob(uContainer,cMessage))
+				{
+					sprintf(cSubject,"%s SetUBCJob diskspace increase 10%% for VEID=%u",cHostname,uContainer);
+					SendEmail(cSubject,cMessage);
+				}
+			}
+			else if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*(double)0.80))
+			{
+				sprintf(cMessage,"luDiskUsage=%lu luDiskUsageSoftLimit=%lu luDiskUsageHardLimit=%lu",
+						luDiskUsage,luDiskUsageSoftLimit,luDiskUsageHardLimit);
+				sprintf(cSubject,"%s Warning diskspace at 80%% for VEID=%u",cHostname,uContainer);
+				logfileLine0("ProcessSingleQuotaWarning",cMessage,uContainer);
+				SendEmail(cSubject,cMessage);
+			}
 
 			//keep stats of 1k-blocks.luUsage only
 			MYSQL_RES *res;
@@ -2174,6 +2204,7 @@ void SendEmail(char *cSubject,char *cMsg)
 		fprintf(fp,"%s\n",cMsg);
 	}
 	pclose(fp);
+	logfileLine0("SendEmail","attempting to send message",0);
 
 }//void SendEmail()
 
@@ -2244,7 +2275,7 @@ void SetContainerNumProperty(char *cName,long unsigned luDiskUsage,unsigned uCon
 	mysql_query(&gMysqlUBC,gcQuery);
 	if(mysql_errno(&gMysqlUBC))
 	{
-		logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
+		logfileLine0("SetContainerNumProperty",mysql_error(&gMysqlUBC),uContainer);
 		exit(2);
 	}
 	res=mysql_store_result(&gMysqlUBC);
@@ -2259,7 +2290,7 @@ void SetContainerNumProperty(char *cName,long unsigned luDiskUsage,unsigned uCon
 		mysql_query(&gMysqlUBC,gcQuery);
 		if(mysql_errno(&gMysqlUBC))
 		{
-			logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
+			logfileLine0("SetContainerNumProperty",mysql_error(&gMysqlUBC),uContainer);
 			exit(2);
 		}
 	}
@@ -2279,9 +2310,84 @@ void SetContainerNumProperty(char *cName,long unsigned luDiskUsage,unsigned uCon
 		mysql_query(&gMysqlUBC,gcQuery);
 		if(mysql_errno(&gMysqlUBC))
 		{
-			logfileLine0("ProcessSingleQuota",mysql_error(&gMysqlUBC),uContainer);
+			logfileLine0("SetContainerNumProperty",mysql_error(&gMysqlUBC),uContainer);
 			exit(2);
 		}
 	}
 	mysql_free_result(res);
 }//void SetContainerNumProperty()
+
+
+unsigned SetUBCJob(unsigned uContainer,char *cSet)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uCount=0;
+	unsigned uDatacenter=0;
+	unsigned uNode=0;
+
+	sprintf(gcQuery,"SELECT tNode.uDatacenter,tNode.uNode FROM tNode,tContainer WHERE"
+			" tNode.uNode=tContainer.uNode"
+			" AND tContainer.uContainer=%u",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine0("SetUBCJob",mysql_error(&gMysql),uContainer);
+		return(0);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uDatacenter);
+		sscanf(field[1],"%u",&uNode);
+	}
+	else
+	{
+		mysql_free_result(res);
+		return(0);
+	}
+	mysql_free_result(res);
+
+	//Only one waiting SetUBCJob  job per container please
+	sprintf(gcQuery,"SELECT uJob FROM tJob WHERE uContainer=%u"
+				" AND uNode=%u AND uDatacenter=%u"
+				" AND uJobStatus=1"
+				" AND cLabel='SetUBCJob(%u)'"
+					,uContainer,uNode,uDatacenter,uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine0("SetUBCJob",mysql_error(&gMysql),uContainer);
+		return(0);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		mysql_free_result(res);
+		return(0);
+	}
+	mysql_free_result(res);
+
+	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='SetUBCJob(%u)',cJobName='SetUBCJob'"
+			",uDatacenter=%u,uNode=%u,uContainer=%u"
+			",uJobDate=UNIX_TIMESTAMP(NOW())+60"
+			",uJobStatus=1"
+			",cJobData='%.99s'"
+			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				uContainer,
+				uDatacenter,uNode,uContainer,
+				cSet,
+				guContainerOwner,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine0("SetUBCJob",mysql_error(&gMysql),uContainer);
+		return(0);
+	}
+	uCount=mysql_insert_id(&gMysql);
+	if(uCount)
+		logfileLine0("SetUBCJob","Job created",uContainer);
+	return(uCount);
+
+}//unsigned SetUBCJob(unsigned uContainer,char *cSet)
+
