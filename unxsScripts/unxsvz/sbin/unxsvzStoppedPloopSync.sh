@@ -26,7 +26,6 @@ else
 	mkdir $cLockfile; 
 fi
 
-#take snapshot
 
 #make sure ssh is working
 /usr/bin/ssh $3 "ls /vz/private/$2/root.hdd/root.hdd > /dev/null 2>&1";
@@ -45,17 +44,36 @@ if [ ! -f /vz/private/$1/root.hdd/root.hdd ];then
 	exit 4;
 fi
 
+#take snapshot
+UUID=$(uuidgen);
+vzctl snapshot $1 --skip-suspend --skip-config --id $UUID > /dev/null 2>&1;
+if [ $? != 0 ];then
+	fLog "vzctl snapshot $1 --skip-suspend --skip-config --id $UUID";
+	#rollback
+	rm -rf $cLockfile;
+	exit 2;
+fi
 
 /usr/bin/rsync -e '/usr/bin/ssh -ax -c arcfour'\
-	 --stats -axlH  /vz/private/$1/root.hdd  $3:/vz/private/$2/ > /tmp/$1-$2-$3.rsync 2>&1
+	 --stats -vv -axlH  /vz/private/$1/root.hdd  $3:/vz/private/$2/ > /tmp/$1-$2-$3.rsync 2>&1
 #we can ignore return value 24:
 #rsync warning: some files vanished before they could be transferred (code 24) at main.c(892) [sender=2.6.8]
 if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync failed";
 	#rollback
+	#remove snapshot
+	vzctl snapshot-delete $1 --id $UUID > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		fLog "vzctl snapshot-delete $1 --id $UUID;";
+	fi
 	rm -rf $cLockfile;
 	exit 3;
 else
+	#remove snapshot
+	vzctl snapshot-delete $1 --id $UUID > /dev/null 2>&1;
+	if [ $? != 0 ];then
+		fLog "vzctl snapshot-delete $1 --id $UUID;";
+	fi
 	#remove lock file
 	rm -rf $cLockfile;
 
