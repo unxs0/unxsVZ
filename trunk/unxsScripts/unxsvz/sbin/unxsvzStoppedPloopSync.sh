@@ -71,9 +71,9 @@ fi
 
 #take snapshot
 UUID=$(uuidgen);
-vzctl snapshot $1 --skip-suspend --skip-config --id $UUID > /dev/null 2>&1;
+/usr/sbin/vzctl snapshot $1 --skip-suspend --skip-config --id $UUID > /dev/null 2>&1;
 if [ $? != 0 ];then
-	fLog "vzctl snapshot $1 --skip-suspend --skip-config --id $UUID";
+	fLog "/usr/sbin/vzctl snapshot $1 --skip-suspend --skip-config --id $UUID";
 	#rollback
 	rm -rf $cLockfile;
 	exit 2;
@@ -88,9 +88,9 @@ if [ $? != 0 ] && [ $? != 24 ];then
 	fLog "rsync failed";
 	#rollback
 	#remove snapshot
-	vzctl snapshot-delete $1 --id $UUID > /dev/null 2>&1;
+	/usr/sbin/vzctl snapshot-delete $1 --id $UUID > /dev/null 2>&1;
 	if [ $? != 0 ];then
-		fLog "vzctl snapshot-delete $1 --id $UUID;";
+		fLog "/usr/sbin/vzctl snapshot-delete $1 --id $UUID;";
 	fi
 	rm -rf $cLockfile;
 	exit 3;
@@ -111,19 +111,19 @@ fi
 
 
 #remove local snapshot
-vzctl snapshot-delete $1 --id $UUID > /dev/null 2>&1;
+/usr/sbin/vzctl snapshot-delete $1 --id $UUID > /dev/null 2>&1;
 if [ $? != 0 ];then
-	fLog "vzctl snapshot-delete $1 --id $UUID;";
+	fLog "/usr/sbin/vzctl snapshot-delete $1 --id $UUID;";
 fi
 
 #remote switch and delete so container is ready to start
-ssh $3 vzctl snapshot-switch $2 --id $UUID > /dev/null 2>&1;
+ssh $3 /usr/sbin/vzctl snapshot-switch $2 --id $UUID > /dev/null 2>&1;
 if [ $? != 0 ];then
-	fLog "ssh $3 vzctl snapshot-switch $2 --id $UUID;";
+	fLog "ssh $3 /usr/sbin/vzctl snapshot-switch $2 --id $UUID;";
 fi
-ssh $3 vzctl snapshot-delete $2 --id $UUID > /dev/null 2>&1;
+ssh $3 /usr/sbin/vzctl snapshot-delete $2 --id $UUID > /dev/null 2>&1;
 if [ $? != 0 ];then
-	fLog "ssh $3 vzctl snapshot-delete $2 --id $UUID;";
+	fLog "ssh $3 /usr/sbin/vzctl snapshot-delete $2 --id $UUID;";
 fi
 
 
