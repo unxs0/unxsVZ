@@ -26,7 +26,15 @@ MYSQL gMysqlUBC;
 char gcQuery[8192]={""};
 unsigned guLoginClient=1;//Root user
 char cHostname[100]={""};
+char gcContainerLabel[100]={""};
 char gcProgram[32]={""};
+unsigned guAllowDiskAutonomics=0;
+unsigned guPloopDisk=0;
+long unsigned gluMaxDiskSize=0;
+long unsigned gluMinDiskSize=0;
+long unsigned guGrowAtPercent=85;
+long unsigned guWarnAtPercent=81;
+long unsigned guShrinkAtPercent=60;
 unsigned guNodeOwner=1;
 unsigned guContainerOwner=1;
 unsigned guStatus=0;//not a valid status
@@ -64,6 +72,10 @@ void SendEmail(char *cSubject,char *cMsg);
 void UBCConnectToOptionalUBCDb(unsigned uDatacenter);
 void SetContainerNumProperty(char *cName,long unsigned luDiskUsage,unsigned uContainer);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
+unsigned GetConf(const char *cName,char *cValue,
+		unsigned uDatacenter,
+		unsigned uNode,
+		unsigned uContainer);
 
 unsigned guLogLevel=3;
 static FILE *gLfp0=NULL;
@@ -803,12 +815,68 @@ void ProcessUBC(void)
 
 	UBCConnectToOptionalUBCDb(uDatacenter);
 
+	//Global datacenter  configuration items
+	char cConfBuffer[256]={""};
+	GetConf("cAllowDiskAutonomics",cConfBuffer,uDatacenter,0,0);
+	if(cConfBuffer[0]=='Y')
+	{
+		guAllowDiskAutonomics=1;
+		logfileLine0("ProcessUBC","cAllowDiskAutonomics On",uDatacenter);
+
+		if(strstr(cConfBuffer,"ploop"))
+		{
+			guPloopDisk=1;
+			logfileLine0("ProcessUBC","ploop filesystem",uDatacenter);
+		}
+
+		cConfBuffer[0]=0;
+		GetConf("cluMaxDiskSize",cConfBuffer,uDatacenter,0,0);
+		if(cConfBuffer[0])
+			sscanf(cConfBuffer,"%lu",&gluMaxDiskSize);
+		if(gluMaxDiskSize)
+		{
+			sprintf(cConfBuffer,"gluMaxDiskSize=%lu",gluMaxDiskSize);
+			logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
+		}
+
+		cConfBuffer[0]=0;
+		GetConf("cluMinDiskSize",cConfBuffer,uDatacenter,0,0);
+		if(cConfBuffer[0])
+			sscanf(cConfBuffer,"%lu",&gluMinDiskSize);
+		if(gluMinDiskSize)
+		{
+			sprintf(cConfBuffer,"gluMinDiskSize=%lu",gluMinDiskSize);
+			logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
+		}
+
+		cConfBuffer[0]=0;
+		GetConf("cuGrowAtPercent",cConfBuffer,uDatacenter,0,0);
+		if(cConfBuffer[0])
+			sscanf(cConfBuffer,"%lu",&guGrowAtPercent);
+		sprintf(cConfBuffer,"guGrowAtPercent=%lu",guGrowAtPercent);
+		logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
+
+		cConfBuffer[0]=0;
+		GetConf("cuShrinkAtPercent",cConfBuffer,uDatacenter,0,0);
+		if(cConfBuffer[0])
+			sscanf(cConfBuffer,"%lu",&guShrinkAtPercent);
+		sprintf(cConfBuffer,"guShrinkAtPercent=%lu",guShrinkAtPercent);
+		logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
+
+		cConfBuffer[0]=0;
+		GetConf("cuWarnAtPercent",cConfBuffer,uDatacenter,0,0);
+		if(cConfBuffer[0])
+			sscanf(cConfBuffer,"%lu",&guWarnAtPercent);
+		sprintf(cConfBuffer,"guWarnAtPercent=%lu",guWarnAtPercent);
+		logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
+	}
+
 	//debug only
 	//printf("ProcessUBC() for %s (uNode=%u,uDatacenter=%u)\n",
 	//		cHostname,uNode,uDatacenter);
 
 	//Main loop. TODO use defines for tStatus.uStatus values.
-	sprintf(gcQuery,"SELECT uContainer,uOwner,uStatus FROM tContainer WHERE uNode=%u"
+	sprintf(gcQuery,"SELECT uContainer,uOwner,uStatus,cLabel FROM tContainer WHERE uNode=%u"
 				" AND uDatacenter=%u"
 				" AND (uStatus=1"//Active
 				" OR uStatus=31)"//Stopped
@@ -841,6 +909,7 @@ void ProcessUBC(void)
 		sscanf(field[0],"%u",&uContainer);
 		sscanf(field[1],"%u",&guContainerOwner);
 		sscanf(field[2],"%u",&guStatus);
+		sprintf(gcContainerLabel,"%.99s",field[3]);
 		//Job dispatcher based on cJobName
 		if(guStatus==uSTOPPED)
 		{
@@ -1124,59 +1193,205 @@ void ProcessSingleQuota(unsigned uContainer)
 			SetContainerNumProperty("inodes.luSoftlimit",luDiskInodeUsageSoftLimit,uContainer);
 			SetContainerNumProperty("inodes.luHardlimit",luDiskInodeUsageHardLimit,uContainer);
 
-			//Autonomics for setting of disk usage.
-			//ALPHA TESTING ONLY
-			//This should be controlled via tConfiguration and a tContainer::tProperty
-			char cAllowDiskAutonomics[256]={""};
-			GetContainerProp(uContainer,"cAllowDiskAutonomics",cAllowDiskAutonomics);
-			if(cAllowDiskAutonomics[0]=='Y')
+//Temp margin change
+//Autonomics for setting of disk usage.
+//ALPHA TESTING ONLY
+if(guAllowDiskAutonomics)
+{
+	char cPropBuffer[256]={""};
+	//Must have global on AND per container on
+	GetContainerProp(uContainer,"cAllowDiskAutonomics",cPropBuffer);
+	if(cPropBuffer[0]=='Y')
+	{
+		//Get per container settings if any
+		cPropBuffer[0]=0;
+		long unsigned luMaxDiskSize=0;
+		GetContainerProp(uContainer,"cluMaxDiskSize",cPropBuffer);
+		if(cPropBuffer[0])
+			sscanf(cPropBuffer,"%lu",&luMaxDiskSize);
+		if(luMaxDiskSize)
+		{
+			sprintf(cPropBuffer,"container luMaxDiskSize=%lu",luMaxDiskSize);
+			logfileLine0("ProcessUBC",cPropBuffer,uContainer);
+		}
+		else
+		{
+			luMaxDiskSize=gluMaxDiskSize;
+			sprintf(cPropBuffer,"global luMaxDiskSize=%lu",luMaxDiskSize);
+			logfileLine0("ProcessUBC",cPropBuffer,uContainer);
+		}
+
+		cPropBuffer[0]=0;
+		long unsigned luMinDiskSize=0;
+		GetContainerProp(uContainer,"cluMinDiskSize",cPropBuffer);
+		if(cPropBuffer[0])
+			sscanf(cPropBuffer,"%lu",&luMinDiskSize);
+		if(luMinDiskSize)
+		{
+			sprintf(cPropBuffer,"container luMinDiskSize=%lu",luMinDiskSize);
+			logfileLine0("ProcessUBC",cPropBuffer,uContainer);
+		}
+		else
+		{
+			luMinDiskSize=gluMinDiskSize;
+			sprintf(cPropBuffer,"global luMinDiskSize=%lu",luMinDiskSize);
+			logfileLine0("ProcessUBC",cPropBuffer,uContainer);
+		}
+
+		cPropBuffer[0]=0;
+		unsigned uShrinkAtPercent=0;
+		GetContainerProp(uContainer,"uShrinkAtPercent",cPropBuffer);
+		if(cPropBuffer[0])
+			sscanf(cPropBuffer,"%u",&uShrinkAtPercent);
+		if(uShrinkAtPercent)
+		{
+			sprintf(cPropBuffer,"container uShrinkAtPercent=%u%%",uShrinkAtPercent);
+			logfileLine0("ProcessUBC",cPropBuffer,uContainer);
+		}
+		else
+			uShrinkAtPercent=guShrinkAtPercent;
+		//weirdness factor
+		if(guPloopDisk)
+			uShrinkAtPercent+=3;
+		double dShrinkAtPercent=uShrinkAtPercent/100.00;
+
+		cPropBuffer[0]=0;
+		unsigned uGrowAtPercent=0;
+		GetContainerProp(uContainer,"uGrowAtPercent",cPropBuffer);
+		if(cPropBuffer[0])
+			sscanf(cPropBuffer,"%u",&uGrowAtPercent);
+		if(uGrowAtPercent)
+		{
+			sprintf(cPropBuffer,"container uGrowAtPercent=%u%%",uGrowAtPercent);
+			logfileLine0("ProcessUBC",cPropBuffer,uContainer);
+		}
+		else
+			uGrowAtPercent=guGrowAtPercent;
+		//weirdness factor
+		if(guPloopDisk)
+			uGrowAtPercent-=3;
+		double dGrowAtPercent=uGrowAtPercent/100.00;
+
+		cPropBuffer[0]=0;
+		unsigned uWarnAtPercent=0;
+		GetContainerProp(uContainer,"uWarnAtPercent",cPropBuffer);
+		if(cPropBuffer[0])
+			sscanf(cPropBuffer,"%u",&uWarnAtPercent);
+		if(uWarnAtPercent)
+		{
+			sprintf(cPropBuffer,"container uWarnAtPercent=%u%%",uWarnAtPercent);
+			logfileLine0("ProcessUBC",cPropBuffer,uContainer);
+		}
+		else
+			uWarnAtPercent=guWarnAtPercent;
+		//weirdness factor
+		if(guPloopDisk)
+			uWarnAtPercent-=3;
+		double dWarnAtPercent=uWarnAtPercent/100.00;
+		
+		
+		//When disk usage is more than 80% of luDiskUsageSoftLimit warn by email.
+		long unsigned luDiskUsageSoftLimitNew=0;
+		long unsigned luDiskUsageHardLimitNew=0;
+		double dDiskChangeRatio=1.1;
+		char cSubject[64]={""};
+		char cMessage[256]={""};
+		//debug only
+		sprintf(cMessage,"%g is %g%% of %g (Ratios Warn %g%% Grow %g%% Shrink %g%%)",
+				(double)luDiskUsage,100*((double)luDiskUsage/(double)luDiskUsageSoftLimit),
+				(double)luDiskUsageSoftLimit,dWarnAtPercent,dGrowAtPercent,dShrinkAtPercent);
+		logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
+		//Note the 3% adjustments made below to 90% 80% and 50%. This last one the adjustment is positive.
+		//This is too match what df reports closer. We need to understand why df shows different numbers.
+		if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*dGrowAtPercent))
+		{
+
+			if(guPloopDisk)
 			{
-				//When disk usage is more than 80% of luDiskUsageSoftLimit warn by email.
-				char cSubject[64]={""};
-				char cMessage[128]={""};
-				//debug only
-				sprintf(cMessage,"%f is %g%% of %f",(double)luDiskUsage,100*((double)luDiskUsage/(double)luDiskUsageSoftLimit),
-						(double)luDiskUsageSoftLimit);
+				//WIERDNESS: At low disk sizes there is a 10% to 15% difference (lower) reported
+				//by df and by diskspace.s itself! versus the set --diskspace number!
+				//Temp sliding scale based on simple experiments
+				if(luDiskUsageSoftLimit<1300000)
+					dDiskChangeRatio=1.4;
+				else if(luDiskUsageSoftLimit<1500000)
+					dDiskChangeRatio=1.3;
+				else if(luDiskUsageSoftLimit<1700000)
+					dDiskChangeRatio=1.2;
+				else if(1)
+					dDiskChangeRatio=1.1;
+			}
+			luDiskUsageSoftLimitNew=(unsigned long)(luDiskUsageSoftLimit*dDiskChangeRatio);
+			luDiskUsageHardLimitNew=(unsigned long)(luDiskUsageHardLimit*dDiskChangeRatio);
+			if(luMaxDiskSize && luDiskUsageSoftLimitNew>luMaxDiskSize)
+			{
+				luDiskUsageSoftLimitNew=luMaxDiskSize;
+				luDiskUsageHardLimitNew=luMaxDiskSize;
+				logfileLine0("ProcessSingleQuotaAutonomics","Set to luMaxDiskSize",uContainer);
+			}
+			else if(luMinDiskSize && luDiskUsageSoftLimitNew<luMinDiskSize)
+			{
+				luDiskUsageSoftLimitNew=luMinDiskSize;
+				luDiskUsageHardLimitNew=luMinDiskSize;
+				logfileLine0("ProcessSingleQuotaAutonomics","Set to luMinDiskSize at grow",uContainer);
+			}
+			if(luDiskUsageSoftLimitNew > luDiskUsageSoftLimit )
+			{
+				sprintf(cMessage,"--diskspace %lu:%lu",luDiskUsageSoftLimitNew,luDiskUsageHardLimitNew);
 				logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
-				//Note the 3% adjustments made below to 90% 80% and 50%. This last one the adjustment is positive.
-				//This is too match what df reports closer. We need to understand why df shows different numbers.
-				if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*(double)0.87))
+				if(SetUBCJob(uContainer,cMessage))
 				{
-					//When disk usage is more than 90% of luDiskUsageSoftLimit 
-					//create job to increase by 10% and notify by email.
-					sprintf(cMessage,"--diskspace %lu:%lu",
-						(unsigned long)(luDiskUsageSoftLimit*1.1),
-						(unsigned long)(luDiskUsageHardLimit*1.1));
-					logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
-					if(SetUBCJob(uContainer,cMessage))
-					{
-						sprintf(cSubject,"%s SetUBCJob diskspace increase 10%% for VEID=%u",cHostname,uContainer);
-						SendEmail(cSubject,cMessage);
-					}
-				}
-				else if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*(double)0.77))
-				{
-					sprintf(cMessage,"luDiskUsage=%lu luDiskUsageSoftLimit=%lu luDiskUsageHardLimit=%lu",
-							luDiskUsage,luDiskUsageSoftLimit,luDiskUsageHardLimit);
-					sprintf(cSubject,"%s Warning diskspace at 80%% for VEID=%u",cHostname,uContainer);
-					logfileLine0("ProcessSingleQuotaWarning",cMessage,uContainer);
+					sprintf(cSubject,"%s:%s SetUBCJob diskspace increase %g VEID=%u",
+								cHostname,gcContainerLabel,dDiskChangeRatio,uContainer);
+					logfileLine0("ProcessSingleQuotaAutonomics",cSubject,uContainer);
 					SendEmail(cSubject,cMessage);
 				}
-				else if((double)luDiskUsage<(double)(luDiskUsageSoftLimit*(double)0.53))
+			}
+			else
+			{
+				logfileLine0("ProcessSingleQuotaAutonomics","Increase ignored !luDiskUsageSoftLimitNew > luDiskUsageSoftLimit",uContainer);
+			}
+		}
+		else if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*dWarnAtPercent))
+		{
+			sprintf(cMessage,"luDiskUsage=%lu luDiskUsageSoftLimit=%lu luDiskUsageHardLimit=%lu",
+					luDiskUsage,luDiskUsageSoftLimit,luDiskUsageHardLimit);
+			if(guPloopDisk)
+				dWarnAtPercent+=0.03;
+			sprintf(cSubject,"%s:%s Warning diskspace at %g%% for VEID=%u",cHostname,gcContainerLabel,100*dWarnAtPercent,uContainer);
+			logfileLine0("ProcessSingleQuotaWarning",cMessage,uContainer);
+			SendEmail(cSubject,cMessage);
+		}
+		else if((double)luDiskUsage<(double)(luDiskUsageSoftLimit*dShrinkAtPercent))
+		{
+			//if difference is larger than 40% we should speed up convergence by
+			//shrinking at 20%
+			luDiskUsageSoftLimitNew=(unsigned long)(luDiskUsageSoftLimit*(double)0.9);
+			luDiskUsageHardLimitNew=(unsigned long)(luDiskUsageHardLimit*(double)0.9);
+			//When disk usage is less than 50% of luDiskUsageSoftLimit 
+			//create job to decrease by 10% and notify by email.
+			if(luMinDiskSize && luDiskUsageSoftLimitNew<luMinDiskSize)
+			{
+				luDiskUsageSoftLimitNew=luMinDiskSize;
+				luDiskUsageHardLimitNew=luMinDiskSize;
+				logfileLine0("ProcessSingleQuotaAutonomics","Set to luMinDiskSize",uContainer);
+			}
+			sprintf(cMessage,"--diskspace %lu:%lu",luDiskUsageSoftLimitNew,luDiskUsageHardLimitNew);
+			logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
+			if(luDiskUsageSoftLimitNew < luDiskUsageSoftLimit )
+			{
+				if(SetUBCJob(uContainer,cMessage))
 				{
-					//When disk usage is less than 50% of luDiskUsageSoftLimit 
-					//create job to decrease by 10% and notify by email.
-					sprintf(cMessage,"--diskspace %lu:%lu",
-						(unsigned long)((double)luDiskUsageSoftLimit*(double)0.9),
-						(unsigned long)((double)luDiskUsageHardLimit*(double)0.9));
-					logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
-					if(SetUBCJob(uContainer,cMessage))
-					{
-						sprintf(cSubject,"%s SetUBCJob diskspace decrease 10%% for VEID=%u",cHostname,uContainer);
-						SendEmail(cSubject,cMessage);
-					}
+					sprintf(cSubject,"%s SetUBCJob diskspace decrease 10%% for VEID=%u",cHostname,uContainer);
+					SendEmail(cSubject,cMessage);
 				}
-			}//allow disk autonomics per container
+			}
+			else
+			{
+				logfileLine0("ProcessSingleQuotaAutonomics","Reduction ignored !luDiskUsageSoftLimitNew < luDiskUsageSoftLimit",uContainer);
+			}
+		}
+	}//allow disk autonomics per container
+}//allow disk autonomics per datacenter
 	
 
 			//keep stats of 1k-blocks.luUsage only
@@ -2412,7 +2627,7 @@ unsigned SetUBCJob(unsigned uContainer,char *cSet)
 	}
 	uCount=mysql_insert_id(&gMysql);
 	if(uCount)
-		logfileLine0("SetUBCJob","Job created",uContainer);
+		logfileLine0("SetUBCJob","job created",uContainer);
 	return(uCount);
 
 }//unsigned SetUBCJob(unsigned uContainer,char *cSet)
@@ -2445,3 +2660,51 @@ void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue)
 	mysql_free_result(res);
 
 }//void GetContainerProp()
+
+
+unsigned GetConf(const char *cName,char *cValue,
+		unsigned uDatacenter,
+		unsigned uNode,
+		unsigned uContainer)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+        char cQuery[256];
+	char cExtra[100]={""};
+	unsigned uConfiguration=0;
+
+        sprintf(cQuery,"SELECT cValue,uConfiguration FROM tConfiguration WHERE cLabel='%s'",
+			cName);
+	if(uDatacenter)
+	{
+		sprintf(cExtra," AND uDatacenter=%u",uDatacenter);
+		strcat(cQuery,cExtra);
+	}
+	if(uNode)
+	{
+		sprintf(cExtra," AND uNode=%u",uNode);
+		strcat(cQuery,cExtra);
+	}
+	if(uContainer)
+	{
+		sprintf(cExtra," AND uContainer=%u",uContainer);
+		strcat(cQuery,cExtra);
+	}
+        mysql_query(&gMysql,cQuery);
+        if(mysql_errno(&gMysql))
+	{
+		logfileLine0("GetConf",mysql_error(&gMysql),uContainer);
+		return(0);
+	}
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+	{
+        	sprintf(cValue,"%.255s",field[0]);
+        	sscanf(field[1],"%u",&uConfiguration);
+	}
+        mysql_free_result(res);
+
+	return(uConfiguration);
+
+}//unsigned GetConf()
