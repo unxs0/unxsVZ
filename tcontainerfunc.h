@@ -3622,6 +3622,9 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Fix missing global properties'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Fix Properties'>\n");
+			printf("&nbsp; <input title='Enable disk autonomics for selected containers'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group AllowDiskAutonomics'>\n");
 			CloseFieldSet();
 
 			//Delete all of these
@@ -5708,6 +5711,7 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group Change IP
+
 				else if(!strcmp(gcCommand,"Group Initial Setup"))
 				{
 					struct structContainer sContainer;
@@ -5725,7 +5729,8 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"change status ignored");
 					}
-				}
+				}//Group Initial Setup
+
 				else if(!strcmp(gcCommand,"Group DNS Update"))
 				{
 					struct structContainer sContainer;
@@ -5749,7 +5754,8 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"DNS update ignored");
 					}
-				}
+				}//Group DNS Update
+
 				else if(!strcmp(gcCommand,"Group Hostname Update"))
 				{
 					struct structContainer sContainer;
@@ -5810,7 +5816,8 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"hostname update ignored");
 					}
-				}
+				}//Group Hostname Update
+
 				else if(!strcmp(gcCommand,"Group BackupDate Adjust"))
 				{
 					struct structContainer sContainer;
@@ -5839,7 +5846,8 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"backupdate adjust ignored");
 					}
-				}
+				}//Group BackupDate Adjust
+
 				else if(!strcmp(gcCommand,"Group Fix Properties"))
 				{
 					struct structContainer sContainer;
@@ -5908,7 +5916,40 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"fix properties ignored");
 					}
-				}
+				}//Group Fix Properties
+
+				else if(!strcmp(gcCommand,"Group AllowDiskAutonomics"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						//expensive DELETE
+						sprintf(gcQuery,"DELETE FROM tProperty"
+									" WHERE cName='cAllowDiskAutonomics'"
+									" AND uKey=%u AND uType=3",uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+
+						sprintf(gcQuery,"INSERT INTO tProperty"
+									" SET cName='cAllowDiskAutonomics',cValue='Yes',"
+									"uKey=%u,uType=3,"
+									" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+										uCtContainer,sContainer.uOwner,guLoginClient);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						sprintf(cResult,"AllowDiskAutonomics");
+					}
+					else
+					{
+						sprintf(cResult,"group op ignored");
+					}
+					break;
+				}//Group AllowDiskAutonomics
 
 
 				else if(strcmp(gcCommand,"Reload Search Set"))
