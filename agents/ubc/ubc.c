@@ -28,6 +28,7 @@ unsigned guLoginClient=1;//Root user
 char cHostname[100]={""};
 char gcContainerLabel[100]={""};
 char gcProgram[32]={""};
+unsigned guConnectedToUBCDb=0;
 unsigned guAllowDiskAutonomics=0;
 unsigned guPloopDisk=0;
 long unsigned gluMaxDiskSize=0;
@@ -507,6 +508,7 @@ int main(int iArgc, char *cArgv[])
 	}
 
 	ProcessNodeUBC();
+	mysql_close(&gMysqlUBC);//trying to reuse this connection, see UBCConnectToOptionalUBCDb 
 
 	if(rmdir(cLockfile))
 	{
@@ -749,14 +751,14 @@ void ProcessUBC(void)
 
 	if(!cRandom[0])
 	{
-		logfileLine0("ProcessJobQueue","/dev/urandom error",uContainer);
+		logfileLine0("ProcessUBC","/dev/urandom error",uContainer);
 		(void)srand((int)time((time_t *)NULL));
 	}
 
 	unsigned uDelay=0;
     	uDelay=rand() % 60;
 	sprintf(gcQuery,"random delay of %us added",uDelay);
-	logfileLine0("ProcessJobQueue",gcQuery,uContainer);
+	logfileLine0("ProcessUBC",gcQuery,uContainer);
 	sleep(uDelay);
 
 
@@ -894,6 +896,10 @@ void ProcessUBC(void)
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
+	//debug
+	char cMessage[256];
+	sprintf(cMessage,"num rows %lu",(long unsigned)mysql_num_rows(res));
+	logfileLine0("ProcessUBC",cMessage,0);
 	while((field=mysql_fetch_row(res)))
 	{
 		if(sysinfo(&structSysinfo))
@@ -906,7 +912,6 @@ void ProcessUBC(void)
 			logfileLine0("ProcessUBC","structSysinfo.loads[1] larger than JOBQUEUE_MAXLOAD",0);
 			mysql_free_result(res);
 			mysql_close(&gMysql);
-			mysql_close(&gMysqlUBC);
 			return;
 		}
 
@@ -942,7 +947,6 @@ void ProcessUBC(void)
 	}
 	mysql_free_result(res);
 	mysql_close(&gMysql);
-	mysql_close(&gMysqlUBC);
 
 }//void ProcessUBC(void)
 
@@ -1031,7 +1035,6 @@ void ProcessNodeUBC(void)
 		logfileLine0("ProcessNodeUBC","end",uNode);
 
 	mysql_close(&gMysql);
-	mysql_close(&gMysqlUBC);
 
 }//void ProcessNodeUBC(void)
 
@@ -2456,6 +2459,13 @@ void SendEmail(char *cSubject,char *cMsg)
 
 void UBCConnectToOptionalUBCDb(unsigned uDatacenter)
 {
+
+	if(guConnectedToUBCDb)
+	{
+		logfileLine0("UBCConnectToOptionalUBCDb","already connected",uDatacenter);
+		return;
+	}
+
         MYSQL_RES *res;
         MYSQL_ROW field;
 
@@ -2507,6 +2517,8 @@ void UBCConnectToOptionalUBCDb(unsigned uDatacenter)
 	//If gcUBCDBIP1 or gcUBCDBIP1 exist then we will use another MySQL db for UBC tProperty
 	//	data
 	TextConnectDbUBC();
+
+	guConnectedToUBCDb=1;//trying to reuse
 
 }//void UBCConnectToOptionalUBCDb()
 
