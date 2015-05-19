@@ -1360,13 +1360,63 @@ if(guAllowDiskAutonomics)
 		}
 		else if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*dWarnAtPercent))
 		{
+			//Only send a warning message every 12 hours for a given container
+			MYSQL_RES *res;
+			MYSQL_ROW field;
+			long unsigned luCreatedDate=0;
+			long unsigned luNowUnixTime=0;
+			unsigned uProperty=0;
+			sprintf(gcQuery,"SELECT uCreatedDate,UNIX_TIMESTAMP(NOW()),uProperty FROM tProperty WHERE"
+					" cName='DiskUsageWarningLastSent'"
+					" AND uKey=%u AND uType=3",uContainer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				logfileLine0("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
+				exit(2);
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%lu",&luCreatedDate);
+				sscanf(field[1],"%lu",&luNowUnixTime);
+				sscanf(field[2],"%u",&uProperty);
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tProperty SET"
+					" cName='DiskUsageWarningLastSent',uKey=%u,uType=3,uOwner=%u,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
+							uContainer,guContainerOwner,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					logfileLine0("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
+					exit(2);
+				}
+			}
 			sprintf(cMessage,"luDiskUsage=%lu luDiskUsageSoftLimit=%lu luDiskUsageHardLimit=%lu",
 					luDiskUsage,luDiskUsageSoftLimit,luDiskUsageHardLimit);
-			if(guPloopDisk)
-				dWarnAtPercent+=0.03;
-			sprintf(cSubject,"%s:%s Warning diskspace at %g%% for VEID=%u",cHostname,gcContainerLabel,100*dWarnAtPercent,uContainer);
 			logfileLine0("ProcessSingleQuotaWarning",cMessage,uContainer);
-			SendEmail(cSubject,cMessage);
+			if(!luCreatedDate || luCreatedDate+43200<luNowUnixTime)
+			{
+				if(guPloopDisk)
+					dWarnAtPercent+=0.03;
+				sprintf(cSubject,"%s:%s Warning diskspace at %g%% for VEID=%u",cHostname,gcContainerLabel,100*dWarnAtPercent,uContainer);
+				SendEmail(cSubject,cMessage);
+
+				//allow to send again in 12 hours if already sent once.
+				if(uProperty)
+				{
+					sprintf(gcQuery,"UPDATE tProperty SET uCreatedDate=UNIX_TIMESTAMP(NOW()) WHERE uProperty=%u",uProperty);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						logfileLine0("ProcessSingleQuota",mysql_error(&gMysql),uContainer);
+						exit(2);
+					}
+				}
+			}
 		}
 		else if((double)luDiskUsage<(double)(luDiskUsageSoftLimit*dShrinkAtPercent))
 		{
