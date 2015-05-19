@@ -815,62 +815,66 @@ void ProcessUBC(void)
 
 	UBCConnectToOptionalUBCDb(uDatacenter);
 
-	//Global datacenter  configuration items
-	char cConfBuffer[256]={""};
-	GetConf("cAllowDiskAutonomics",cConfBuffer,uDatacenter,0,0);
-	if(cConfBuffer[0]=='Y')
+
+	if(guRunQuota)
 	{
-		guAllowDiskAutonomics=1;
-		logfileLine0("ProcessUBC","cAllowDiskAutonomics On",uDatacenter);
-
-		if(strstr(cConfBuffer,"ploop"))
+		//Global datacenter  configuration items
+		char cConfBuffer[256]={""};
+		GetConf("cAllowDiskAutonomics",cConfBuffer,uDatacenter,0,0);
+		if(cConfBuffer[0]=='Y')
 		{
-			guPloopDisk=1;
-			logfileLine0("ProcessUBC","ploop filesystem",uDatacenter);
-		}
-
-		cConfBuffer[0]=0;
-		GetConf("cluMaxDiskSize",cConfBuffer,uDatacenter,0,0);
-		if(cConfBuffer[0])
-			sscanf(cConfBuffer,"%lu",&gluMaxDiskSize);
-		if(gluMaxDiskSize)
-		{
-			sprintf(cConfBuffer,"gluMaxDiskSize=%lu",gluMaxDiskSize);
+			guAllowDiskAutonomics=1;
+			logfileLine0("ProcessUBC","cAllowDiskAutonomics On",uDatacenter);
+	
+			if(strstr(cConfBuffer,"ploop"))
+			{
+				guPloopDisk=1;
+				logfileLine0("ProcessUBC","ploop filesystem",uDatacenter);
+			}
+	
+			cConfBuffer[0]=0;
+			GetConf("cluMaxDiskSize",cConfBuffer,uDatacenter,0,0);
+			if(cConfBuffer[0])
+				sscanf(cConfBuffer,"%lu",&gluMaxDiskSize);
+			if(gluMaxDiskSize)
+			{
+				sprintf(cConfBuffer,"gluMaxDiskSize=%lu",gluMaxDiskSize);
+				logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
+			}
+	
+			cConfBuffer[0]=0;
+			GetConf("cluMinDiskSize",cConfBuffer,uDatacenter,0,0);
+			if(cConfBuffer[0])
+				sscanf(cConfBuffer,"%lu",&gluMinDiskSize);
+			if(gluMinDiskSize)
+			{
+				sprintf(cConfBuffer,"gluMinDiskSize=%lu",gluMinDiskSize);
+				logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
+			}
+	
+			cConfBuffer[0]=0;
+			GetConf("cuGrowAtPercent",cConfBuffer,uDatacenter,0,0);
+			if(cConfBuffer[0])
+				sscanf(cConfBuffer,"%lu",&guGrowAtPercent);
+			sprintf(cConfBuffer,"guGrowAtPercent=%lu",guGrowAtPercent);
+			logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
+	
+			cConfBuffer[0]=0;
+			GetConf("cuShrinkAtPercent",cConfBuffer,uDatacenter,0,0);
+			if(cConfBuffer[0])
+				sscanf(cConfBuffer,"%lu",&guShrinkAtPercent);
+			sprintf(cConfBuffer,"guShrinkAtPercent=%lu",guShrinkAtPercent);
+			logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
+	
+			cConfBuffer[0]=0;
+			GetConf("cuWarnAtPercent",cConfBuffer,uDatacenter,0,0);
+			if(cConfBuffer[0])
+				sscanf(cConfBuffer,"%lu",&guWarnAtPercent);
+			sprintf(cConfBuffer,"guWarnAtPercent=%lu",guWarnAtPercent);
 			logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
 		}
-
-		cConfBuffer[0]=0;
-		GetConf("cluMinDiskSize",cConfBuffer,uDatacenter,0,0);
-		if(cConfBuffer[0])
-			sscanf(cConfBuffer,"%lu",&gluMinDiskSize);
-		if(gluMinDiskSize)
-		{
-			sprintf(cConfBuffer,"gluMinDiskSize=%lu",gluMinDiskSize);
-			logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
-		}
-
-		cConfBuffer[0]=0;
-		GetConf("cuGrowAtPercent",cConfBuffer,uDatacenter,0,0);
-		if(cConfBuffer[0])
-			sscanf(cConfBuffer,"%lu",&guGrowAtPercent);
-		sprintf(cConfBuffer,"guGrowAtPercent=%lu",guGrowAtPercent);
-		logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
-
-		cConfBuffer[0]=0;
-		GetConf("cuShrinkAtPercent",cConfBuffer,uDatacenter,0,0);
-		if(cConfBuffer[0])
-			sscanf(cConfBuffer,"%lu",&guShrinkAtPercent);
-		sprintf(cConfBuffer,"guShrinkAtPercent=%lu",guShrinkAtPercent);
-		logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
-
-		cConfBuffer[0]=0;
-		GetConf("cuWarnAtPercent",cConfBuffer,uDatacenter,0,0);
-		if(cConfBuffer[0])
-			sscanf(cConfBuffer,"%lu",&guWarnAtPercent);
-		sprintf(cConfBuffer,"guWarnAtPercent=%lu",guWarnAtPercent);
-		logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
-	}
-
+	}//if guRunQuota
+	
 	//debug only
 	//printf("ProcessUBC() for %s (uNode=%u,uDatacenter=%u)\n",
 	//		cHostname,uNode,uDatacenter);
@@ -1381,7 +1385,7 @@ if(guAllowDiskAutonomics)
 			{
 				if(SetUBCJob(uContainer,cMessage))
 				{
-					sprintf(cSubject,"%s SetUBCJob diskspace decrease 10%% for VEID=%u",cHostname,uContainer);
+					sprintf(cSubject,"%s:%s SetUBCJob diskspace decrease 10%% for VEID=%u",cHostname,gcContainerLabel,uContainer);
 					SendEmail(cSubject,cMessage);
 				}
 			}
