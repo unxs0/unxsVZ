@@ -33,9 +33,10 @@ unsigned guAllowDiskAutonomics=0;
 unsigned guPloopDisk=0;
 long unsigned gluMaxDiskSize=0;
 long unsigned gluMinDiskSize=0;
-long unsigned guGrowAtPercent=85;
-long unsigned guWarnAtPercent=81;
-long unsigned guShrinkAtPercent=60;
+unsigned guGrowAtPercent=85;
+unsigned guWarnAtPercent=81;
+unsigned guShrinkAtPercent=60;
+unsigned guAllowDiskShrink=0;
 unsigned guNodeOwner=1;
 unsigned guContainerOwner=1;
 unsigned guStatus=0;//not a valid status
@@ -119,6 +120,8 @@ int main(int iArgc, char *cArgv[])
 		register int i;
 		for(i=1;i<iArgc;i++)
 		{
+			if(!strcmp(cArgv[i],"--debug"))
+				guLogLevel=4;
 			if(!strcmp(cArgv[i],"--parallel"))
 				guParallel=1;
 			if(!strcmp(cArgv[i],"--noUBC"))
@@ -127,7 +130,7 @@ int main(int iArgc, char *cArgv[])
 				guUBCOnly=1;
 			if(!strcmp(cArgv[i],"--help"))
 			{
-				printf("usage: %s [--parallel] [--noUBC] [--UBCOnly] [--help] [--version] [--initUBCDB]\n",cArgv[0]);
+				printf("usage: %s [--parallel] [--noUBC] [--UBCOnly] [--help] [--version] [--initUBCDB] [--debug]\n",cArgv[0]);
 				exit(0);
 			}
 			if(!strcmp(cArgv[i],"--version"))
@@ -818,6 +821,7 @@ void ProcessUBC(void)
 	UBCConnectToOptionalUBCDb(uDatacenter);
 
 
+	//if forking keep in correct one
 	if(guRunQuota)
 	{
 		//Global datacenter  configuration items
@@ -857,23 +861,31 @@ void ProcessUBC(void)
 			cConfBuffer[0]=0;
 			GetConf("cuGrowAtPercent",cConfBuffer,uDatacenter,0,0);
 			if(cConfBuffer[0])
-				sscanf(cConfBuffer,"%lu",&guGrowAtPercent);
-			sprintf(cConfBuffer,"guGrowAtPercent=%lu",guGrowAtPercent);
+				sscanf(cConfBuffer,"%u",&guGrowAtPercent);
+			sprintf(cConfBuffer,"guGrowAtPercent=%u",guGrowAtPercent);
 			logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
 	
 			cConfBuffer[0]=0;
 			GetConf("cuShrinkAtPercent",cConfBuffer,uDatacenter,0,0);
 			if(cConfBuffer[0])
-				sscanf(cConfBuffer,"%lu",&guShrinkAtPercent);
-			sprintf(cConfBuffer,"guShrinkAtPercent=%lu",guShrinkAtPercent);
+				sscanf(cConfBuffer,"%u",&guShrinkAtPercent);
+			sprintf(cConfBuffer,"guShrinkAtPercent=%u",guShrinkAtPercent);
 			logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
 	
 			cConfBuffer[0]=0;
 			GetConf("cuWarnAtPercent",cConfBuffer,uDatacenter,0,0);
 			if(cConfBuffer[0])
-				sscanf(cConfBuffer,"%lu",&guWarnAtPercent);
-			sprintf(cConfBuffer,"guWarnAtPercent=%lu",guWarnAtPercent);
+				sscanf(cConfBuffer,"%u",&guWarnAtPercent);
+			sprintf(cConfBuffer,"guWarnAtPercent=%u",guWarnAtPercent);
 			logfileLine0("ProcessUBC",cConfBuffer,uDatacenter);
+
+			cConfBuffer[0]=0;
+			GetConf("cAllowDiskShrink",cConfBuffer,uDatacenter,0,0);
+			if(cConfBuffer[0]=='Y')
+			{
+				logfileLine0("ProcessUBC","allow disk shrink on",uDatacenter);
+				guAllowDiskShrink=1;
+			}
 		}
 	}//if guRunQuota
 	
@@ -898,8 +910,11 @@ void ProcessUBC(void)
         res=mysql_store_result(&gMysql);
 	//debug
 	char cMessage[256];
-	sprintf(cMessage,"num rows %lu",(long unsigned)mysql_num_rows(res));
-	logfileLine0("ProcessUBC",cMessage,0);
+	if(guLogLevel>3)
+	{
+		sprintf(cMessage,"num rows %lu",(long unsigned)mysql_num_rows(res));
+		logfileLine0("ProcessUBC",cMessage,0);
+	}
 	while((field=mysql_fetch_row(res)))
 	{
 		if(sysinfo(&structSysinfo))
@@ -1176,7 +1191,7 @@ void ProcessSingleQuota(unsigned uContainer)
 		
 
 	char cCommand[256];
-	sprintf(cCommand,"/usr/sbin/vzlist -H -o diskspace,diskspace.s,diskspace.h,diskinodes,diskinodes.s,diskinodes.h %u",uContainer);
+	sprintf(cCommand,"/usr/sbin/vzlist -H -o diskspace,diskspace.s,diskspace.h,diskinodes,diskinodes.s,diskinodes.h %u 2> /dev/null",uContainer);
 	if((fp=popen(cCommand,"r")))
 	{
 		char cLine[1024];
@@ -1224,8 +1239,11 @@ if(guAllowDiskAutonomics)
 		else
 		{
 			luMaxDiskSize=gluMaxDiskSize;
-			sprintf(cPropBuffer,"global luMaxDiskSize=%lu",luMaxDiskSize);
-			logfileLine0("ProcessUBC",cPropBuffer,uContainer);
+			if(guLogLevel>3)
+			{
+				sprintf(cPropBuffer,"global luMaxDiskSize=%lu",luMaxDiskSize);
+				logfileLine0("ProcessUBC",cPropBuffer,uContainer);
+			}
 		}
 
 		cPropBuffer[0]=0;
@@ -1241,8 +1259,11 @@ if(guAllowDiskAutonomics)
 		else
 		{
 			luMinDiskSize=gluMinDiskSize;
-			sprintf(cPropBuffer,"global luMinDiskSize=%lu",luMinDiskSize);
-			logfileLine0("ProcessUBC",cPropBuffer,uContainer);
+			if(guLogLevel>3)
+			{
+				sprintf(cPropBuffer,"global luMinDiskSize=%lu",luMinDiskSize);
+				logfileLine0("ProcessUBC",cPropBuffer,uContainer);
+			}
 		}
 
 		cPropBuffer[0]=0;
@@ -1295,19 +1316,32 @@ if(guAllowDiskAutonomics)
 		if(guPloopDisk)
 			uWarnAtPercent-=3;
 		double dWarnAtPercent=uWarnAtPercent/100.00;
-		
-		
+	
+		//can over write global setting!	
+		cPropBuffer[0]=0;
+		unsigned uAllowDiskShrink=0;
+		GetContainerProp(uContainer,"cAllowDiskShrink",cPropBuffer);
+		if(cPropBuffer[0]=='Y')
+		{
+			logfileLine0("ProcessUBC","container allow disk shrink",uContainer);
+			uAllowDiskShrink=1;
+		}
+		else
+			uAllowDiskShrink=guAllowDiskShrink;
+
 		//When disk usage is more than 80% of luDiskUsageSoftLimit warn by email.
 		long unsigned luDiskUsageSoftLimitNew=0;
 		long unsigned luDiskUsageHardLimitNew=0;
 		double dDiskChangeRatio=1.1;
 		char cSubject[64]={""};
 		char cMessage[256]={""};
-		//debug only
-		sprintf(cMessage,"%g is %g%% of %g (Ratios Warn %g%% Grow %g%% Shrink %g%%)",
+		if(guLogLevel>3 || uAllowDiskShrink)
+		{
+			sprintf(cMessage,"%g is %g%% of %g (Ratios Warn %g%% Grow %g%% Shrink %g%%)",
 				(double)luDiskUsage,100*((double)luDiskUsage/(double)luDiskUsageSoftLimit),
 				(double)luDiskUsageSoftLimit,dWarnAtPercent,dGrowAtPercent,dShrinkAtPercent);
-		logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
+			logfileLine0("ProcessSingleQuotaAutonomics",cMessage,uContainer);
+		}
 		//Note the 3% adjustments made below to 90% 80% and 50%. This last one the adjustment is positive.
 		//This is too match what df reports closer. We need to understand why df shows different numbers.
 		if((double)luDiskUsage>(double)(luDiskUsageSoftLimit*dGrowAtPercent))
@@ -1418,7 +1452,7 @@ if(guAllowDiskAutonomics)
 				}
 			}
 		}
-		else if((double)luDiskUsage<(double)(luDiskUsageSoftLimit*dShrinkAtPercent))
+		else if(uAllowDiskShrink && ((double)luDiskUsage<(double)(luDiskUsageSoftLimit*dShrinkAtPercent)))
 		{
 			//if difference is larger than 40% we should speed up convergence by
 			//shrinking at 20%
