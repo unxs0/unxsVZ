@@ -2372,6 +2372,27 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		goto CommonExit;
 	}
 
+	//check to see if ploop container
+	unsigned uPloopFS=0;
+	sprintf(gcQuery,"ls /vz/private/%u/root.hdd/root.hdd > /dev/null 2>&1",uContainer);
+	if(!system(gcQuery))
+	{
+		logfileLine("TemplateContainer","ploop container");
+		sprintf(gcQuery,"/usr/sbin/unxsvzCreateSimFSFromPloop.sh %u > /tmp/%u.unxsvzCreateSimFSFromPloop.sh.log 2>&1",
+				uContainer,uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("TemplateContainer",gcQuery);
+			tJobErrorUpdate(uJob,"failed convert to simfs!");
+			goto CommonExit;
+		}
+		//convert to simfs creates a tmp VEID based on source VEID
+		uContainer+=2000000;
+		uPloopFS=1;
+	}
+
+	//New vzdump uses new file format, E.G.: /var/vzdump/vzdump-openvz-10511-2011_02_03-07_37_01.tgz
+
 	char cSnapshotDir[256]={""};
 	GetConfiguration("cSnapshotDir",cSnapshotDir,guDatacenter,gfuNode,0,0);//First try node specific
 	if(!cSnapshotDir[0])
@@ -2384,7 +2405,8 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		cSnapshotDir[0]=0;
 	//1-.
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u",uContainer);
+		//sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u",uContainer);
+		sprintf(gcQuery,"/usr/sbin/vzdump --compress --stop %u",uContainer);
 	else
 		sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir %s --snapshot %u",
 									cSnapshotDir,uContainer);
@@ -2399,7 +2421,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//Quick fix (hackorama) just mv it to old format
 	//Added support for old vzdump
 	if(!cSnapshotDir[0])
-		sprintf(gcQuery,"if [ ! -f /var/vzdump/vzdump-%u.tgz ];then"
+		sprintf(gcQuery,"if [ ! -f /vz/dump/vzdump-%u.tgz ];then"
 				" mv `ls -1 /vz/dump/vzdump*-%u-*.tgz | head -n 1` /vz/dump/vzdump-%u.tgz; fi;",
 					uContainer,uContainer,uContainer);
 	else
@@ -2416,6 +2438,9 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		goto CommonExit;
 	}
 
+	//New vzdump uses new file format, E.G.: /var/vzdump/vzdump-openvz-10511-2011_02_03-07_37_01.tgz
+	//Quick fix (hackorama) just mv it to old format
+	//Added support for old vzdump
 
 	//2-.	
 	if(!cSnapshotDir[0])
@@ -2445,34 +2470,34 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 
 
 	//3-. scp template to all nodes depends on /usr/sbin/allnodescp.sh installed and configured correctly
-	if(!stat("/usr/sbin/allnodescp.sh",&statInfo))
+	if(!stat("/usr/sbin/unxsvzAllNodeScp.sh",&statInfo))
 	{
-		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /vz/template/cache/%s.tar.gz",cConfigLabel);
+		sprintf(gcQuery,"/usr/sbin/unxsvzAllNodeScp.sh /vz/template/cache/%s.tar.gz",cConfigLabel);
 		if(system(gcQuery))
 		{
 			logfileLine("TemplateContainer",gcQuery);
-			tJobErrorUpdate(uJob,"allnodescp.sh .tar.gz failed");
+			tJobErrorUpdate(uJob,"unxsvzAllNodeScp.sh .tar.gz failed");
 			goto CommonExit;
 		}
-		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /vz/template/cache/%s.tar.gz.md5sum",cConfigLabel);
+		sprintf(gcQuery,"/usr/sbin/unxsvzAllNodeScp.sh /vz/template/cache/%s.tar.gz.md5sum",cConfigLabel);
 		if(system(gcQuery))
 		{
 			logfileLine("TemplateContainer",gcQuery);
-			tJobErrorUpdate(uJob,"allnodescp.sh .tar.gz.md5sum failed");
+			tJobErrorUpdate(uJob,"unxsvzAllNodeScp.sh .tar.gz.md5sum failed");
 			goto CommonExit;
 		}
 	}
 
 	//3b-. check transfer via md5sum
 	//Relies on new version of "/usr/sbin/allnodecmd.sh" that adds return values.
-	if(!stat("/usr/sbin/allnodecmd.sh",&statInfo) && !stat("/usr/bin/md5sum",&statInfo))
+	if(!stat("/usr/sbin/unxsvzAllNodeCmd.sh",&statInfo) && !stat("/usr/bin/md5sum",&statInfo))
 	{
-		sprintf(gcQuery,"/usr/sbin/allnodecmd.sh"
+		sprintf(gcQuery,"/usr/sbin/unxsvzAllNodeCmd.sh"
 				" \"/usr/bin/md5sum -c /vz/template/cache/%s.tar.gz.md5sum\"",cConfigLabel);
 		if(system(gcQuery))
 		{
 			logfileLine("TemplateContainer",gcQuery);
-			tJobErrorUpdate(uJob,"allnodecmd.sh md5sum -c .tar.gz.md5sum failed");
+			tJobErrorUpdate(uJob,"unxsvzAllNodeCmd.sh md5sum -c .tar.gz.md5sum failed");
 			goto CommonExit;
 		}
 	}
@@ -2486,13 +2511,25 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 		tJobErrorUpdate(uJob,"cp conf container failed");
 		goto CommonExit;
 	}
-	if(!stat("/usr/sbin/allnodescp.sh",&statInfo))
+	if(!stat("/usr/sbin/unxsvzAllNodeScp.sh",&statInfo))
 	{
-		sprintf(gcQuery,"/usr/sbin/allnodescp.sh /etc/vz/conf/ve-%s.conf-sample",cConfigLabel);
+		sprintf(gcQuery,"/usr/sbin/unxsvzAllNodeScp.sh /etc/vz/conf/ve-%s.conf-sample",cConfigLabel);
 		if(system(gcQuery))
 		{
 			logfileLine("TemplateContainer",gcQuery);
-			tJobErrorUpdate(uJob,"allnodescp.sh .conf failed");
+			tJobErrorUpdate(uJob,"unxsvzAllNodeScp.sh .conf failed");
+			goto CommonExit;
+		}
+	}
+
+	//extra safety check
+	if(uPloopFS && uContainer>2000000)
+	{
+		sprintf(gcQuery,"/usr/sbin/vzctl destroy %u",uContainer);
+		if(system(gcQuery))
+		{
+			logfileLine("TemplateContainer",gcQuery);
+			tJobErrorUpdate(uJob,"destroy tmp simfs");
 			goto CommonExit;
 		}
 	}
