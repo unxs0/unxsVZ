@@ -2600,6 +2600,8 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	mysql_free_result(res);
 
 	//Everything ok
+	if(uPloopFS)
+		uContainer-=2000000;
 	SetContainerStatus(uContainer,uPrevStatus);
 	tJobDoneUpdate(uJob);
 
