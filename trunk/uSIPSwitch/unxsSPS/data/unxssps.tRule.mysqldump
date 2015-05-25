@@ -1,0 +1,61 @@
+-- MySQL dump 10.11
+--
+-- Host: localhost    Database: unxssps
+-- ------------------------------------------------------
+-- Server version	5.0.95
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `tRule`
+--
+
+DROP TABLE IF EXISTS `tRule`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tRule` (
+  `uRule` int(10) unsigned NOT NULL auto_increment,
+  `cLabel` varchar(32) NOT NULL default '',
+  `uPriority` int(10) unsigned NOT NULL default '0',
+  `cPrefix` varchar(32) NOT NULL default '',
+  `cComment` varchar(32) NOT NULL default '',
+  `uOwner` int(10) unsigned NOT NULL default '0',
+  `uCreatedBy` int(10) unsigned NOT NULL default '0',
+  `uCreatedDate` int(10) unsigned NOT NULL default '0',
+  `uModBy` int(10) unsigned NOT NULL default '0',
+  `uModDate` int(10) unsigned NOT NULL default '0',
+  `uInGroup` int(10) unsigned NOT NULL default '0',
+  `uExGroup` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`uRule`)
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tRule`
+--
+
+LOCK TABLES `tRule` WRITE;
+/*!40000 ALTER TABLE `tRule` DISABLE KEYS */;
+INSERT INTO `tRule` VALUES (1,'Default',0,'','Priority=0 Lowest',1,1,1349359778,1,1349537115,0,0),(2,'Default Weekend',0,'','If no other rules match',1,1,1349447279,1,1349571582,0,0),(3,'International Calls 5am-12pm',100,'011','',1,1,1349463500,1,1350578482,0,0),(4,'Block Intl Calls 12am-5am',0,'011','',1,1,1349471892,1,1350924691,0,2);
+/*!40000 ALTER TABLE `tRule` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2015-05-25 13:16:20
