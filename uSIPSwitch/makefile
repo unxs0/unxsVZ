@@ -11,10 +11,17 @@
 #We code with all kinds of gcc allowed crazyness. Show our trangressions with pedantic flag
 #CFLAGS= -Wall -pedantic
 CFLAGS= -Wall
-LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so /usr/lib64/libevent.so
-LIBS2= -L/usr/lib/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so /usr/lib/openisp/libdns.a
+LIBS= -L/usr/lib64/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so /usr/lib64/libevent.so
+LIBS2= -L/usr/lib64/mysql -lmysqlclient -lssl -lm /usr/lib64/libmemcached.so /usr/lib/openisp/libdns.a
 
-all: uSIPSwitch
+help:
+	@echo "main make options available"
+	@echo "	install (uSIPSwitch)"
+	@echo "	install-unxsLoadFromSPS"
+	@echo "	install-run"
+	@echo "	install-test"
+	@echo "	install-libs)"
+
 
 uSIPSwitch: main.o mysqlconnect.o
 	cc main.o mysqlconnect.o -o uSIPSwitch $(LIBS) 
