@@ -909,7 +909,7 @@ void ContactsNavList(void)
 		while((field=mysql_fetch_row(res)))
         	{
 			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tClient&uClient=%s&uOnlyOrgs=%u",field[0],uOnlyOrgs);
-			if(cSearch)
+			if(cSearch[0])
 			{
 				spacetoplus(cSearch);
 				printf("&cSearch=%s",cSearch);

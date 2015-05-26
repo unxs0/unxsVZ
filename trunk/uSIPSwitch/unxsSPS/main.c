@@ -586,13 +586,13 @@ void Header_ism3(char *title, int js)
 {
 	printf("Content-type: text/html\n\n");
 	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-        printf("<html><head><title>vcSPC %s </title>",title);
+        printf("<html><head><title>unxsSPS %s </title>",title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();
         if(js)
                 jsCalendarHeader();
 
-	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/rad.ico>"
+	printf("<link rel=\"shortcut icon 2\" type=image/x-icon href=/images/rad2.ico>"
 		"</head><body><form action=unxsSPS.cgi method=post><blockquote>\n");
 
 	//Open header table
@@ -689,7 +689,7 @@ void Header_ism3(char *title, int js)
 
 
 	//Login info
-	printf("<font size=3><b>VoiceCarrier SIPProxy Controller</b></font> \n ");
+	printf("<font size=3><b>UnxsSPS</b></font> \n ");
 	printf("&nbsp;&nbsp;&nbsp;<font color=red>%s logged in from %s [%s]</font>",
 							gcUser,gcHost,cUserLevel(guPermLevel));
 

@@ -12,8 +12,8 @@ LEGAL
 //Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
 #define DBIP0 NULL
 #define DBIP1 NULL
-#define DBNAME "unxsvz"
-#define DBLOGIN "unxsvz"
+#define DBNAME "unxssps"
+#define DBLOGIN "unxssps"
 #define DBPASSWD "wsxedc"
 #define DBPORT 0
 #define DBSOCKET NULL

@@ -113,7 +113,7 @@ void plustospace(char *str) {
     for(x=0;str[x];x++) if(str[x] == '+') str[x] = ' ';
 }
 
-int getline(char *s, int n, FILE *f) {
+int cgigetline(char *s, int n, FILE *f) {
     register int i=0;
 
     while(1) {

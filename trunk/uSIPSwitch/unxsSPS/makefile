@@ -14,7 +14,7 @@
 CFLAGS= -DLinux -Wall
 RELEASE= 0.1
 #If using lib64 make sure you have adjusted if any errors emerge
-LIBS= -L/usr/lib/openisp /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl -ltemplate
+LIBS= -L/usr/lib/openisp -L/usr/lib64/mysql -lz -lcrypt -lm -lssl -ltemplate -lmysqlclient
 CGIDIR=/var/www/unxs/cgi-bin/
 
 all: unxsSPS.cgi unxsSPS
