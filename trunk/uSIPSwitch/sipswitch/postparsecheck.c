@@ -23,38 +23,51 @@ AVAILABLE DATA FROM readEv() and parsemessage.c
 */
 
 //Previous section is parsemessage.c
+logfileLine("readEv-postparse start",cSourceIP);
 
 //
 //If anything is amiss send back an error message and return.
 //
-char cMsg[100]={""};
+char cMsg[256]={""};
 
 if(!cCallID[0])
 {
-	sprintf(cMsg,"400 Missing CallID\r\nCSeq: %s\r\n",cCSeq);
-	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 	if(guLogLevel>3)
 		logfileLine("readEv-postparse 400 Missing CallID",cSourceIP);	
+	sprintf(cMsg,"400 Missing CallID\r\nCSeq: %s\r\n",cCSeq);
+	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 }
 
-if(!cGateway[0] || !cDID[0])
+if(!cGateway[0])
 {
+	if(guLogLevel>3)
+		logfileLine("readEv-postparse 416 cGateway empty",cSourceIP);
 	//Empty cGateway
 	sprintf(cMsg,"SIP/2.0 416 Unsupported URI\r\nCSeq: %s\r\n",cCSeq);
 	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
-	if(guLogLevel>3)
-		logfileLine("readEv-postparse 416 cGateway or cDID empty",cSourceIP);
 	return;
 }
 
 if(!cCSeq[0])
 {
 	//Empty cGateway
-	sprintf(cMsg,"SIP/2.0 400 Missing CSeq\r\nCSeq: 0\r\n");
-	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 	if(guLogLevel>3)
 		logfileLine("readEv-postparse 400 Missing CSeq",cSourceIP);
+	sprintf(cMsg,"SIP/2.0 400 Missing CSeq\r\nCSeq: 0\r\n");
+	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 	return;
 }
 
+if(!cDID[0] && !strstr(cCSeq,"OPTIONS"))
+{
+	if(guLogLevel>3)
+		logfileLine("readEv-postparse 416 cDID empty",cSourceIP);
+	//Empty cDID when not an OPTIONS
+	sprintf(cMsg,"SIP/2.0 416 Unsupported URI\r\nCSeq: %s\r\n",cCSeq);
+	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
+	return;
+}
+
+
 //next section is sipswitch/process.c
+logfileLine("readEv-postparse end",cCallID);

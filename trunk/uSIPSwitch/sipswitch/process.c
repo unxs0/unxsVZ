@@ -303,8 +303,10 @@ int CallStartCIU(void)
 			logfileLine("readEv-CallStartCIU read",cKey);
 	}
 
+	//testing
 	//if(uLines && uChannelsInUse && uChannelsInUse>uLines)
-	if(1)
+	//if(1)
+	if(0)
 	{
 
 		//You must setup a media server that will provide announcements
@@ -506,6 +508,82 @@ if(!uReply)
 		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 
 	}//INVITE
+	//OPTIONS
+	else if(!strncmp(cFirstLine,"OPTIONS",7))
+	{
+		if(uType==GATEWAY)
+		{
+			if(guLogLevel>4)
+				logfileLine("readEv-process OPTIONS GATEWAY","");
+		}
+		else
+		{
+			if(guLogLevel>4)
+				logfileLine("readEv-process OPTIONS PBX","");
+		}
+		//Create OPTIONS response and send back.
+		//
+//Sample OPTIONS exchange 
+//OPTIONS sip:5009@181.111.2.106:10273 SIP/2.0
+//Via: SIP/2.0/UDP 69.61.19.10:5060;branch=z9hG4bK1886cc29;rport
+//Max-Forwards: 70
+//From: "Unknown" <sip:Unknown@69.61.19.10>;tag=as2c012818
+//To: <sip:5009@181.111.2.106:10273>
+//Contact: <sip:Unknown@69.61.19.10:5060>
+//Call-ID: 1fb396b0676c407a17f42b9f7c7b02f1@69.61.19.10:5060
+//CSeq: 102 OPTIONS
+//User-Agent: asterisk
+//Date: Wed, 27 May 2015 21:29:17 GMT
+//Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO, PUBLISH
+//Supported: replaces, timer
+//Content-Length: 0
+//
+//
+//SIP/2.0 200 OK
+//Via: SIP/2.0/UDP 69.61.19.10:5060;branch=z9hG4bK1886cc29;rport=5060
+//From: "Unknown" <sip:Unknown@69.61.19.10>;tag=as2c012818
+//To: <sip:5009@181.111.2.106:10273>;tag=1965203006
+//Call-ID: 1fb396b0676c407a17f42b9f7c7b02f1@69.61.19.10:5060
+//CSeq: 102 OPTIONS
+//Supported: replaces, path, timer, eventlist
+//User-Agent: Grandstream HT-503  V1.1B 1.0.10.9  chip V2.2
+//Allow: INVITE, ACK, OPTIONS, CANCEL, BYE, SUBSCRIBE, NOTIFY, INFO, REFER, UPDATE
+//Content-Length: 0
+//
+		char cLargeMsg[1024]={""};
+
+		strcat(cLargeMsg,"SIP/2.0 200 Ok\r\n");
+
+		sprintf(cMsg,"Via: %s\r\n",cVia1);
+		strcat(cLargeMsg,cMsg);
+
+		sprintf(cMsg,"From: %s\r\n",cFrom);
+		strcat(cLargeMsg,cMsg);
+
+		sprintf(cMsg,"To: %s\r\n",cTo);
+		strcat(cLargeMsg,cMsg);
+
+		sprintf(cMsg,"Call-ID: %s\r\n",cCallID);
+		strcat(cLargeMsg,cMsg);
+
+		sprintf(cMsg,"CSeq: %s\r\n",cCSeq);
+		strcat(cLargeMsg,cMsg);
+
+		sprintf(cMsg,"Supported: %s\r\n","replaces, timer");
+		strcat(cLargeMsg,cMsg);
+
+		sprintf(cMsg,"User-Agent: %s\r\n","Unixservice Unxs uSIPSwitch v0.1");
+		strcat(cLargeMsg,cMsg);
+
+		sprintf(cMsg,"Allow: %s\r\n","INVITE, ACK, OPTIONS, CANCEL, BYE");
+		strcat(cLargeMsg,cMsg);
+
+		sprintf(cMsg,"Content-Length: %u\r\n",0);
+		strcat(cLargeMsg,cMsg);
+
+		iSendUDPMessageWrapper(cLargeMsg,cSourceIP,uSourcePort);
+		return;
+	}//OPTIONS
 	//ACK
 	else if(!strncmp(cFirstLine,"ACK",3))
 	{
