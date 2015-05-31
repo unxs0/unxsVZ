@@ -1898,6 +1898,7 @@ void CreateNewClient(structExtJobParameters *structExtParam)
 //		adds most any record to managed zone and view
 //	unxsVZPBXSRVZone
 //		adds a complete new zone a subzone of the managed zone and view.
+//		REQUIRES a special tZoneImport template zone: pbxsrvzone.template.com
 //Missing jobs:
 //	unxsVZContainerDelARR
 //		unxsVZ at this time creates unxsVZRemoveContainer
@@ -2112,7 +2113,7 @@ void ProcessVZJobQueue(void)
 				//validation of job data
 				if(structExtParam.cZone[0]=='.')
 				{
-					fprintf(stdout,"%s ends with a period.\n",structExtParam.cZone);
+					fprintf(stdout,"%s starts with a period.\n",structExtParam.cZone);
 					goto ErrorExit;
 				}
 
@@ -2183,7 +2184,7 @@ void ProcessVZJobQueue(void)
 						goto ErrorExit;
 					}
 
-					sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZContainerDelSRVRR ok'"
+					sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZRemoveContainer ZONE ok'"
 						" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
 				}
 				else
@@ -2191,13 +2192,74 @@ void ProcessVZJobQueue(void)
 					fprintf(stdout,"No tZone.uZone for %s %s\n",
 								structExtParam.cView,
 								structExtParam.cZone);
-					fprintf(stdout,"%s",gcQuery);
+					//fprintf(stdout,"%s",gcQuery);
 					//We can ignore no such uZone
 					//since we can assume that it has been deleted or never existed.
 					//debug only
 					sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='No uZone'"
 						" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
-				}
+
+					//try removing the A record from one level up parent zone
+					char *cp=NULL;
+					if((cp=strchr(structExtParam.cZone,'.')))
+					{
+						char cParentZone[128]={""};
+						sprintf(cParentZone,"%.127s",cp+1);
+						*cp='.';
+						//Get required data
+						sprintf(gcQuery,"SELECT uZone,uNSSet,uView,uOwner FROM tZone WHERE"
+						" uView=(SELECT uView FROM tView WHERE cLabel='%s' LIMIT 1) AND"
+						" cZone='%s' LIMIT 1",
+									structExtParam.cView,
+									cParentZone);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(stdout,"%s\n",mysql_error(&gMysql));
+							goto ErrorExit;
+						}
+						res2=mysql_store_result(&gMysql);
+						if((field2=mysql_fetch_row(res2)))
+						{
+							sscanf(field2[0],"%u",&uZone);
+							sscanf(field2[1],"%u",&uNSSet);
+							sscanf(field2[2],"%u",&uView);
+							sscanf(field2[3],"%u",&uOwner);
+						}
+						mysql_free_result(res2);
+
+						if(uZone)
+						{
+
+							//remove only matching A zone resources
+							sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%u AND cName='%s.' AND uRRType=1",
+										uZone,structExtParam.cZone);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+							{
+								fprintf(stdout,"%s\n",mysql_error(&gMysql));
+								goto ErrorExit;
+							}
+
+							if(mysql_affected_rows(&gMysql)>0)
+							{
+		
+								//Submit zone mod job
+								guLoginClient=1;
+								guCompany=uOwner;
+								if(SubmitJob("Modify",uNSSet,cParentZone,0,0))
+								{
+									fprintf(stdout,"SubmitJob() failed.\n");
+									goto ErrorExit;
+								}
+								fprintf(stdout,"alternative A record removal from parent zone done\n");
+							}
+							//always update job anyway
+							sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u,cRemoteMsg='unxsVZRemoveContainer A ok'"
+								" WHERE uJob=%u",unxsVZ_uDONEOK,uJob);
+						}//alternative A record removal from parent zone
+					}//parent zone via '.'
+				}//uZone exists
 
 				mysql_query(&gMysql2,gcQuery);
 				if(mysql_errno(&gMysql2))
