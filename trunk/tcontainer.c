@@ -1487,7 +1487,7 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 			{
 				cValue[0]=0;
 				GetNodeProp(uField0,"NewContainerMode",cValue);
-				if(strstr(cValue,"Clone Only"))
+				if(strstr(cValue,"Clone"))
 				{
 					sprintf(cStyle," style='background-color: #ffff99'");
 				}
@@ -2124,7 +2124,7 @@ void voidGetDatacenterSlots(unsigned *uMaxContainers,unsigned *uActiveContainers
 		{
 			cValue[0]=0;
 			GetNodeProp(uNode,"NewContainerMode",cValue);
-			if(strstr(cValue,"Clone Only")) continue;
+			if(strstr(cValue,"Clone")) continue;
 
 			unsigned uNodeMaxContainers=0;
 			unsigned uNodeActiveContainers=0;

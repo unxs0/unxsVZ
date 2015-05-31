@@ -47,6 +47,29 @@ void ExttGroupCommands(pentry entries[], int x)
 	                        tGroup(LANG_NB_CONFIRMNEW);
 			}
                 }
+		else if(!strcmp(gcCommand,"Create Property"))
+                {
+			if(guPermLevel>=10)
+			{
+                        	ProcesstGroupVars(entries,x);
+				
+				if(!uGroup)
+					tGroup("<blink>Error</blink>: uGroup must be selected");
+				if(!uGroupType)
+					tGroup("<blink>Error</blink>: uGroupType must be selected");
+                        	guMode=0;
+				sprintf(gcQuery,"INSERT INTO tProperty SET"
+						" cName='Dummy',cValue='Dummy',uType="
+						PROP_GROUP
+						",uKey=%u,uOwner=%u,"
+						"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							uGroup,guCompany,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+				tGroup("New dummy property created");
+			}
+		}
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
 			if(guPermLevel>=10)
@@ -224,6 +247,16 @@ void ExttGroupAuxTable(void)
 			printf("</tr>\n");
 		}
 		printf("</table>");
+	}
+	else
+	{
+		if(guPermLevel>=10)
+		{
+			printf("<input type=hidden name=uGroupType value=%u>",uGroupType);
+			printf("<p><input title='Create a new dummy property for this group'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Create Property'>\n");
+		}
 	}
 
 	CloseFieldSet();
