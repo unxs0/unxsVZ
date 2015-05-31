@@ -53,7 +53,7 @@ static unsigned uMaxCloneContainers=0;
 static char cuMaxCloneContainers[16]={"0"};
 static unsigned uMaxContainers=0;
 static char cuMaxContainers[16]={"0"};
-static char cNewContainerMode[32]={"Active Only"};
+static char cNewContainerMode[32]={"Active"};
 
 
 
@@ -465,7 +465,7 @@ void tNodeHardwareDataEntry(unsigned uMode)
 
 	GetNodeProp(uNode,"NewContainerMode",cNewContainerMode);
 	OpenRow("NewContainerMode","black");
-	printf("<input title='What kinds of containers can be created on this node. Active and/or Clone can have Only qualifier.'"
+	printf("<input title='What kinds of containers can be created on this node.'"
 		" type=text name=cNewContainerMode value='%s' size=40 maxlength=31 ",cNewContainerMode);
 	if(guPermLevel>=6 && uMode)
 	{

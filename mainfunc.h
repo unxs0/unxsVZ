@@ -349,13 +349,20 @@ void CapacityReport(const char *cOptionalMsg)
 			" AND tContainer.uNode=tNode.uNode"
 			" AND tNode.uDatacenter=tDatacenter.uDatacenter"
 				" GROUP BY tDatacenter.uDatacenter");
-	macro_mySQLQueryErrorText
-	printf("</td></tr><tr><td>(based on 80 per production server)</td>"
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		CloseFieldSet();
+		return;
+	}
+	printf("</td></tr><tr><td>(based on 128 per production server)</td>"
 		"<td><u>Open Slots</u></td>"
 		"<td><u>Container Count</u></td>"
 		"<td><u>Node Count</u></td>"
 		"<td><u>Datacenter Label</u></td>\n");
 	char *cColor="black";
+	mysqlRes=mysql_store_result(&gMysql);
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 			sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE uKey=%s AND uType=1 AND cName='NoCapacityPlanning'",mysqlField[2]);
@@ -386,7 +393,7 @@ void CapacityReport(const char *cOptionalMsg)
 		
 			uOpenSlots=0;
 			if(uNodeCount && uContainerCount)
-				uOpenSlots=(((uNodeCount)*40)-uContainerCount);
+				uOpenSlots=(((uNodeCount)*(128/2))-uContainerCount);
 			if(uOpenSlots<0)
 				cColor="red";
 			else
@@ -396,7 +403,7 @@ void CapacityReport(const char *cOptionalMsg)
 			uTotalNodeCount+=uNodeCount;
 			uTotalContainerCount+=uContainerCount;
 			uTotalDatacenters++;
-			if((uTotalNodeCount % 8) != 0)
+			if((uTotalNodeCount % 2) != 0)
 				cColor="red";
 			else
 				cColor="black";
@@ -408,7 +415,7 @@ void CapacityReport(const char *cOptionalMsg)
 						cColor,uOpenSlots,uContainerCount,cColor,uNodeCount,mysqlField[1]);
 	}
 	mysql_free_result(mysqlRes);
-	if((uTotalNodeCount % 8) != 0)
+	if((uTotalNodeCount % 2) != 0)
 		cColor="red";
 	else
 		cColor="black";
@@ -419,6 +426,9 @@ void CapacityReport(const char *cOptionalMsg)
 				"<td bgcolor=lightgray>%u</td>\n",
 						uTotalOpenSlots,uTotalContainerCount,cColor,uTotalNodeCount,uTotalDatacenters);
 
+	CloseFieldSet();
+	return;
+
 	OpenRow("<p>&nbsp;<p><u>Containers created</u>","black");
 	sprintf(gcQuery,"SELECT COUNT(uContainer) FROM tContainer WHERE uStatus=1 AND uSource=0"
 			" AND uCreatedDate > (UNIX_TIMESTAMP(NOW())-(86400*7))");
@@ -428,7 +438,6 @@ void CapacityReport(const char *cOptionalMsg)
 		printf("%s\n",mysql_error(&gMysql));
 		CloseFieldSet();
 		return;
-		
 	}
 	res=mysql_store_result(&gMysql);
 	uContainerCount=0;
@@ -5151,17 +5160,6 @@ void NodeMapReport(const char *cOptionalMsg)
 			{
 				sscanf(field[0],"%lu",&luInstalledDiskSpace);
 				sscanf(field[1],"%u",&uInstalledDiskSpaceProp);
-			}
-			//business logic validation: if disk larger than 250G then node NewContainerMode should be 'Active Clone Only'
-			if((luInstalledDiskSpace>250000000 && strcmp(cNewContainerMode,"Active Clone Only")) ||
-				(luInstalledDiskSpace<250000000 && strcmp(cNewContainerMode,"Active Only"))
-			  )
-			{
-				if(!uFailover)
-					cMsg=" (maybe wrong!)";
-				else
-					cMsg=" (failover disk mismatch)";
-				strncat(cNewContainerMode,cMsg,63-strlen(cNewContainerMode)+strlen(cMsg));
 			}
 
 			unsigned uActiveContainers=0;

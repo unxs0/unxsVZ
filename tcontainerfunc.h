@@ -2033,8 +2033,8 @@ void ExttContainerCommands(pentry entries[], int x)
 				}//if(uSource) clone section
 
 				uHostnameLen=strlen(cHostname);
-				if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
-						tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+				//if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
+				//		tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
 				//debug only
 				//tContainer("s3");
 
@@ -2292,8 +2292,8 @@ void ExttContainerCommands(pentry entries[], int x)
 						tContainer("<blink>Error:</blink> Create job for unxsBind,"
 								" but no cunxsBindARecordJobZone");
 					
-					if(!strstr(cWizHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
-						tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+					//if(!strstr(cWizHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
+					//	tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
 				}
 				//No same names or hostnames for same XXXdatacenterXXX -now global restriction- allowed.
 				sprintf(gcQuery,"SELECT uContainer,uStatus,uIPv4 FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
@@ -2473,9 +2473,9 @@ void ExttContainerCommands(pentry entries[], int x)
 									" but no cunxsBindARecordJobZone");
 					
 						uHostnameLen=strlen(cHostname);
-						if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),
-							cunxsBindARecordJobZone))
-							tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+						//if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),
+						//	cunxsBindARecordJobZone))
+						//	tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
 					}
 					guMode=0;
 					//Fatal error section
@@ -3158,7 +3158,7 @@ void ExttContainerButtons(void)
 			printf("In conjunction with your master plan; review node usage, traffic"
 				" and problem stats, in order to make an optimal node selection. Only nodes that belong"
 				" to the previously chosen datacenter are shown.<br>"
-				" Nodes with property NewContainerMode that contains \"Clone Only\" are marked."
+				" Nodes with property NewContainerMode that contains \"Clone\" are marked."
 				" Other factors may also limit the available node list, such as autonomic or configuration imposed restrictions.<p>");
 			printf("<input type=submit class=largeButton title='Select hardware node. Clone only nodes are marked in yellow'"
 				" name=gcCommand value='Select Node'>\n");
@@ -3625,6 +3625,9 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Enable disk autonomics for selected containers'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group AllowDiskAutonomics'>\n");
+			printf("&nbsp; <input title='Seperate backup container from source, e.g. for independent/internal sync'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group BackupDisconnect'>\n");
 			CloseFieldSet();
 
 			//Delete all of these
@@ -5617,13 +5620,13 @@ while((field=mysql_fetch_row(res)))
 							break;
 						}
 						
-						unsigned uHostnameLen=strlen(sContainer.cHostname);
-						if(!strstr(sContainer.cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),
-							cunxsBindARecordJobZone))
-						{
-							sprintf(cResult,"incorrect cunxsBindARecordJobZone for cHostname");
-							break;
-						}
+						//unsigned uHostnameLen=strlen(sContainer.cHostname);
+						//if(!strstr(sContainer.cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),
+						//	cunxsBindARecordJobZone))
+						//{
+						//	sprintf(cResult,"incorrect cunxsBindARecordJobZone for cHostname");
+						//	break;
+						//}
 
 						char cIPOld[32]={""};
 						sprintf(cIPOld,"%.31s",ForeignKey("tIP","cLabel",sContainer.uIPv4));
@@ -5950,6 +5953,33 @@ while((field=mysql_fetch_row(res)))
 					}
 					break;
 				}//Group AllowDiskAutonomics
+
+				else if(!strcmp(gcCommand,"Group BackupDisconnect"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uOwner==guCompany || guCompany==1) && sContainer.uSource!=0 && strstr(sContainer.cLabel,"-backup"))
+					{
+
+						sprintf(gcQuery,"UPDATE tContainer"
+									" SET uSource=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+									" WHERE uContainer=%u AND uSource!=0",guLoginClient,uCtContainer);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+						if(mysql_affected_rows(&gMysql)==1)
+							sprintf(cResult,"BackupDisconnect");
+						else
+							sprintf(cResult,"!No update!");
+					}
+					else
+					{
+						sprintf(cResult,"group op ignored");
+					}
+					break;
+				}//Group BackupDisconnect
 
 
 				else if(strcmp(gcCommand,"Reload Search Set"))
@@ -8156,7 +8186,9 @@ unsigned CommonCloneContainer(
 	if(!uNewVeid)
 		return(0);
 
-	if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus,uOwner,uLoginClient,uCloneStop))
+	//New clone system: we start a new container. Still need to figure out how to do the initial rsync/rdiff-backup asap.
+	if(CreateNewContainerJob(uTargetDatacenter,uTargetNode,uNewVeid,uOwner))
+	//if(CloneContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uNewVeid,uStatus,uOwner,uLoginClient,uCloneStop))
 	{
 		//TODO something is wrong here.
 		//If we specify a class C mask then we check it here. Why?
@@ -8194,7 +8226,7 @@ unsigned CommonCloneContainer(
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 
-			sprintf(gcQuery,"DELETE FROM tJob WHERE cLabel='CloneContainer(%u)'"
+			sprintf(gcQuery,"DELETE FROM tJob WHERE cLabel='NewContainer(%u)'"
 					,uContainer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -8211,6 +8243,8 @@ unsigned CommonCloneContainer(
 			}
 		}
 		CopyContainerProps(uContainer,uNewVeid);
+		if(uCloneStop)
+			SetContainerProp(uNewVeid,"cDeployOptions","uDeployStopped=1;");
 		//Update NAME
 		//UBC safe
 		sprintf(gcQuery,"DELETE FROM tProperty WHERE"
@@ -8240,8 +8274,9 @@ unsigned CommonCloneContainer(
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 		uModBy=uLoginClient;
-		uStatus=uAWAITCLONE;
-		SetContainerStatus(uContainer,uAWAITCLONE);
+		//New clone method using ostemplate and initial rsync/rdiff-backup
+		//uStatus=uAWAITCLONE;
+		//SetContainerStatus(uContainer,uAWAITCLONE);
 	}
 	else
 	{

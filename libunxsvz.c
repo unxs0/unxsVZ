@@ -47,8 +47,6 @@ void unxsVZLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 unsigned unxsBindPBXRecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
 	unsigned uOwner,unsigned uCreatedBy);
 unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
-		unsigned uOwner,unsigned uCreatedBy);
-unsigned unxsBindARecordJob(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
 	unsigned uOwner,unsigned uCreatedBy);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);
 void GetNodePropUBC(const unsigned uNode,const char *cName,char *cValue);
@@ -607,6 +605,25 @@ unsigned CreateDNSJob(unsigned uIPv4,unsigned uOwner,char const *cOptionalIPv4,c
 		{
 			unxsVZLog(uContainer,"tContainer","CreateDNSJob-err8");
 			return 0;
+		}
+
+		//we allow cZone to be different from cZone of FQ cHostname now
+		if(!strstr(cHostname,cZone))
+		{
+			//create new cZone from cHostname
+			//following our cLabel cHostname rule: No '.' in cLabel
+			//so the cHostname minux the cLabel is the cZone
+			char *cp=NULL;
+			if((cp=strchr(cHostname,'.'))!=NULL)
+			{
+				sprintf(cZone,"%.99s",cp+1);
+				*cp='.';//do not change data we need later
+			}
+			else
+			{
+				unxsVZLog(uContainer,"tContainer","CreateDNSJob-err7b");
+				return(0);
+			}
 		}
 
 		sprintf(cJobData,"cName=%.99s.;\n"//Note trailing dot

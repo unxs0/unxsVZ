@@ -211,8 +211,8 @@ else if(!strcmp(gcCommand,"Single Container Creation")
 				tContainer("<blink>Error:</blink> Create job for unxsBind,"
 						" but no cunxsBindARecordJobZone");
 			
-			if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
-				tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+			//if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
+			//	tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
 		}
 			
 		if(cService1[0] && strlen(cService1)<6)
@@ -982,8 +982,8 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 				tContainer("<blink>Error:</blink> Create job for unxsBind,"
 						" but no cunxsBindARecordJobZone");
 			
-			if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
-				tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+			//if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
+			//	tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
 		}
 			
 		if(cService1[0] && strlen(cService1)<6)
