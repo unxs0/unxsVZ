@@ -3760,6 +3760,7 @@ void PrintMXList(FILE *zfp,char *cuMailServers);
 
 unsigned OnLineZoneCheck(unsigned uZone,unsigned uCalledMode,unsigned uCalledFrom)
 {
+	return(0);
 	//This function will create a zonefile online and run named-checkzone
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -3777,7 +3778,15 @@ unsigned OnLineZoneCheck(unsigned uZone,unsigned uCalledMode,unsigned uCalledFro
 	if(access("/usr/sbin/named-checkzone",X_OK)==-1) return(0); //Ticket #100
 
 	sprintf(cZone,"%.255s",ForeignKey("tZone","cZone",uZone));
-	sprintf(cZoneFile,"/tmp/%s",cZone);
+	char *cp;
+	if((cp=strchr(cZone,'/'))==NULL)
+	{
+		sprintf(cZoneFile,"/tmp/%s",cZone);
+	}
+	else
+	{
+		sprintf(cZoneFile,"/tmp/%s",cp+1);
+	}
 
 	if((zfp=fopen(cZoneFile,"w"))==NULL)
 		htmlPlainTextError("fopen() failed for temp zonefile");
