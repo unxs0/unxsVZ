@@ -26,3 +26,25 @@ extern MYSQL gMysql;
 
 #define cLOGFILE "/var/log/uSIPSwitch"
 #define cPIDFILE "/var/run/uSIPSwitch.pid"
+
+//struct sizes
+#define MAX_ADDR 16
+#define MAX_RULES 32
+#define RULE_BUFFER_SIZE 4192
+
+typedef struct {
+	char cIP[32];
+	unsigned uPort;
+	unsigned uPriority;
+	unsigned uWeight;
+} structAddr;
+
+typedef struct {
+	char cPrefix[32];
+	unsigned uRule;
+	unsigned short usRoundRobin;
+	unsigned short usQualify;
+	unsigned short usNumOfAddr;
+	structAddr sAddr[MAX_ADDR];
+} structRule;
+
