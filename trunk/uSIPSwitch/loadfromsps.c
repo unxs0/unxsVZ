@@ -643,7 +643,8 @@ void AddRules(char const *cCluster)
 				"tRule.cLabel,"
 				"if(tRule.cPrefix='','Any',tRule.cPrefix),"
 				"tRule.uPriority,"
-				"if(tRule.cPrefix='','0','1') AS HasPrefix"
+				"if(tRule.cPrefix='','0','1') AS HasPrefix,"
+				"tRule.cComment"
 			" FROM tRule,tGroupGlue,tTimeInterval"
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
@@ -666,9 +667,9 @@ void AddRules(char const *cCluster)
 	while((field2=mysql_fetch_row(res2)))
 	{
 		unsigned uCount=0;
-		char cData[1024]={""};
-		sprintf(cData,"uRule=%.16s;cLabel=%.32s;cPrefix=%.32s;uPriority=%.5s;\n",field2[0],field2[1],field2[2],field2[3]);
-
+		char cData[RULE_BUFFER_SIZE]={""};
+		sprintf(cData,"uRule=%.16s;cLabel=%.32s;cPrefix=%.32s;uPriority=%.5s;%.31s\n",
+				field2[0],field2[1],field2[2],field2[3],field2[5]);
 		sprintf(gcQuery,"SELECT DISTINCT tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight"
 			" FROM tRule,tGroupGlue,tGateway,tAddress,tCluster"
 			" WHERE tGateway.uCluster=tCluster.uCluster"
@@ -692,7 +693,7 @@ void AddRules(char const *cCluster)
 		res=mysql_store_result(&gMysql);
 		while((field=mysql_fetch_row(res)))
 		{
-			if(uCount>8) break;
+			if(uCount>MAX_ADDR) break;
 			char cValue[128]={""};
 			sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uPriority=%.5s,uWeight=%.5s;\n",
 						field[0],field[1],field[2],field[3]);

@@ -449,11 +449,24 @@ if(!uReply)
 				//	cPrefix should come after all the number based ones.
 				if(!strncmp(cDID,gsRuleTest[i].cPrefix,strlen(gsRuleTest[i].cPrefix)) || gsRuleTest[i].cPrefix[0]=='A')
 				{
-					//We are looking at the first one only still.
+					//We are looking at the first one (or a random one) only still.
 					//Need to add if first one fails try next
-					//Need to add marking "down" gateways
-					uDestinationPort=gsRuleTest[i].sAddr[0].uPort;
-					sprintf(cDestinationIP,"%.31s",gsRuleTest[i].sAddr[0].cIP);
+					//Need to add marking "down" failed gateways, with timer to try again (dns ttl?)
+					//Or should loadfromsps.c do this for us? And remove "bad" IPs?
+					if(gsRuleTest[i].usRoundRobin)
+					{
+						srand(time(NULL));
+						unsigned uRandom = (rand() % gsRuleTest[i].usNumOfAddr);
+						uDestinationPort=gsRuleTest[i].sAddr[uRandom].uPort;
+						sprintf(cDestinationIP,"%.31s",gsRuleTest[i].sAddr[uRandom].cIP);
+						if(guLogLevel>3)
+							logfileLine("readEv-process","usRoundRobin=1");
+					}
+					else
+					{
+						uDestinationPort=gsRuleTest[i].sAddr[0].uPort;
+						sprintf(cDestinationIP,"%.31s",gsRuleTest[i].sAddr[0].cIP);
+					}
 					break;
 				}
 			}

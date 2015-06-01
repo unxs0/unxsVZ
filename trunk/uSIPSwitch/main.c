@@ -30,22 +30,7 @@ FREE HELP
 
 #include "sipproxy.h"
 
-typedef struct {
-	char cIP[32];
-	unsigned uPort;
-	unsigned uPriority;
-	unsigned uWeight;
-} structAddr;
-
-#define MAX_ADDR 16
-typedef struct {
-	char cPrefix[32];
-	unsigned uRule;
-	structAddr sAddr[MAX_ADDR];
-} structRule;
-
 //Global data
-#define MAX_RULES 32
 #define DEFAULT_SIP_PORT 5060
 structRule gsRuleTest[MAX_RULES];
 MYSQL gMysql; 
@@ -408,7 +393,7 @@ void sigLoadRules(int iSigNum)
 	memset((void *)&gsRuleTest[0],0,sizeof(structRule)*MAX_RULES);
 
 	register int i;
-	char cData[512];
+	char cData[RULE_BUFFER_SIZE]={""};
 	char cKey[32];
 	size_t sizeData;
 	uint32_t flags;
@@ -418,7 +403,7 @@ void sigLoadRules(int iSigNum)
 	{
 		//load from memcached
 		sprintf(cKey,"%d-rule",i);
-		sprintf(cData,"%.511s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
+		sprintf(cData,"%.4191s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
 		if(rc!=MEMCACHED_SUCCESS)
 		{
 			logfileLine("sigLoadRules",cKey);
@@ -430,7 +415,7 @@ void sigLoadRules(int iSigNum)
 			unsigned uLine=0;
 			unsigned uAddr=0;
 			char *cp=cData;
-			for(i=0;i<512 && cData[i];i++)
+			for(i=0;i<RULE_BUFFER_SIZE && cData[i];i++)
 			{
 				if(cData[i]=='\n')
 				{
@@ -459,14 +444,19 @@ void sigLoadRules(int iSigNum)
 						if(uAddr<MAX_ADDR && uRule)
 						{
 							if(guLogLevel>3)
-								logfileLine("sigLoadRules",gcQuery);
+								logfileLine("sigLoadRules uAddr",gcQuery);
 							gsRuleTest[uRule-1].sAddr[uAddr].uPort=uPort;
 							gsRuleTest[uRule-1].sAddr[uAddr].uPriority=uPriority;
 							gsRuleTest[uRule-1].sAddr[uAddr].uWeight=uWeight;
 							sprintf(gsRuleTest[uRule-1].sAddr[uAddr].cIP,"%.31s",cIP);
 							uAddr++;
 						}
-						else
+						else if(!uRule)
+						{
+							if(guLogLevel>3)
+								logfileLine("sigLoadRules","!uRule");
+						}
+						else if(1)
 						{
 							if(guLogLevel>3)
 								logfileLine("sigLoadRules Ex",gcQuery);
@@ -475,7 +465,10 @@ void sigLoadRules(int iSigNum)
 					else
 					{
 						sscanf(cp,"uRule=%u;",&uRuleNum);
-						if((cp1=strstr(cp,"cPrefix=")))
+						gsRuleTest[uRule].uRule=uRuleNum;
+
+						//preset cp2 also jic
+						if((cp2=cp1=strstr(cp,"cPrefix=")))
 						{
 							if((cp2=strchr(cp1+strlen("cPrefix="),';')))
 							{
@@ -483,17 +476,34 @@ void sigLoadRules(int iSigNum)
 								sprintf(cPrefix,"%.32s",cp1+strlen("cPrefix="));
 							}
 						}
-						gsRuleTest[uRule].uRule=uRuleNum;
 						sprintf(gsRuleTest[uRule].cPrefix,"%.31s",cPrefix);
+
+						//cOption= must come after cPrefix
+						if(strstr(cp2+strlen(cPrefix),"RoundRobin=yes"))
+							gsRuleTest[uRule].usRoundRobin=1;
+						else
+							gsRuleTest[uRule].usRoundRobin=0;
+
+						if(strstr(cp2+strlen(cPrefix),"Qualify=yes"))
+							gsRuleTest[uRule].usQualify=1;
+						else
+							gsRuleTest[uRule].usQualify=0;
+
 						if(guLogLevel>3)
 						{
 							logfileLine("sigLoadRules l1",cp);
-							sprintf(gcQuery,"(%u) uRuleNum=%u;cPrefix=%s;",uRule,uRuleNum,cPrefix);
+							sprintf(gcQuery,"(%u) uRuleNum=%u;cPrefix=%s;usQualify=%u;usRoundRobin=%u;",
+									uRule,
+									gsRuleTest[uRule].uRule,
+									gsRuleTest[uRule].cPrefix,
+									gsRuleTest[uRule].usQualify,
+									gsRuleTest[uRule].usRoundRobin);
 							logfileLine("sigLoadRules",gcQuery);
 						}
 						uRule++;
 					}
 					cp=cData+i+1;
+					gsRuleTest[uRule-1].usNumOfAddr=uAddr;
 				}//if newline
 			}
 		}
@@ -514,7 +524,13 @@ void sigLoadRules(int iSigNum)
 		
 			if(gsRuleTest[i].uRule)	
 			{
-				sprintf(gcQuery,"(%d) uRuleNum=%u;cPrefix=%s;",i,gsRuleTest[i].uRule,gsRuleTest[i].cPrefix);
+				sprintf(gcQuery,"(%d) uRuleNum=%u;cPrefix=%s;usRoundRobin=%u;usQualify=%u;usNumOfAddr=%u;",
+						i,
+						gsRuleTest[i].uRule,
+						gsRuleTest[i].cPrefix,
+						gsRuleTest[i].usRoundRobin,
+						gsRuleTest[i].usQualify,
+						gsRuleTest[i].usNumOfAddr);
 				logfileLine("sigLoadRules rreport",gcQuery);
 			}
 			for(j=0;j<MAX_ADDR;j++)
