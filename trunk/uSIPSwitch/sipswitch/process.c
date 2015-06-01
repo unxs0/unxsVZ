@@ -231,7 +231,7 @@ void CallEndCIU(void)
 	unsigned uChannelsInUse=0;
 	char cCIU[2048]={""};
 	char cBigData[2048]={""};
-	char cSearch[128]={""};
+	//char cSearch[128]={""};
 	sprintf(cKey,"%s-ciu",cDestinationIP);
 
 	sprintf(cCIU,"%.2047s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
@@ -243,19 +243,20 @@ void CallEndCIU(void)
 			logfileLine("readEv-CallEndCIU read",cKey);
 	}
 
-	sprintf(cSearch,";cCallID=%s;",cCallID);
-	if(cCIU[0] && strstr(cCIU,cSearch))
-	{
+	//sprintf(cSearch,";cCallID=%s;",cCallID);
+	//if(cCIU[0] && strstr(cCIU,cSearch))
+	//{
 		if(uChannelsInUse>0)
 		{
 			time_t luNow=0;
 			time(&luNow);
-			sprintf(cBigData,"uChannelsInUse=%u;cCallID=%s;CallEndCIU;luTime=%lu;",--uChannelsInUse,cCallID,luNow);
-			if(cCIU[0])
-			{
-				strncat(cBigData,"\n",1);
-				strncat(cBigData,cCIU,2047-(strlen(cBigData)+strlen(cCIU)));
-			}
+			//sprintf(cBigData,"uChannelsInUse=%u;cCallID=%s;CallEndCIU;luTime=%lu;",--uChannelsInUse,cCallID,luNow);
+			sprintf(cBigData,"uChannelsInUse=%u;luTime=%lu;",--uChannelsInUse,luNow);
+			//if(cCIU[0])
+			//{
+			//	strncat(cBigData,"\n",1);
+			//	strncat(cBigData,cCIU,2047-(strlen(cBigData)+strlen(cCIU)));
+			//}
 			rc=memcached_set(gsMemc,cKey,strlen(cKey),cBigData,strlen(cBigData),(time_t)0,(uint32_t)0);
 			if(rc!=MEMCACHED_SUCCESS)
 			{
@@ -273,12 +274,12 @@ void CallEndCIU(void)
 			if(guLogLevel>3)
 				logfileLine("readEv-CallEndCIU already zero",cCallID);
 		}
-	}
-	else
-	{
-		if(guLogLevel>3)
-			logfileLine("readEv-CallEndCIU cCallID not found",cCallID);
-	}
+	//}
+	//else
+	//{
+	//	if(guLogLevel>3)
+	//		logfileLine("readEv-CallEndCIU cCallID not found",cCallID);
+	//}
 
 }// void CallEndCIU(void)
 
@@ -318,12 +319,13 @@ int CallStartCIU(void)
 
 	time_t luNow=0;
 	time(&luNow);
-	sprintf(cBigData,"uChannelsInUse=%u;cCallID=%s;CallStartCIU;luTime=%lu;",++uChannelsInUse,cCallID,luNow);
-	if(cCIU[0])
-	{
-		strncat(cBigData,"\n",1);
-		strncat(cBigData,cCIU,2047-(strlen(cBigData)+strlen(cCIU)));
-	}
+	//sprintf(cBigData,"uChannelsInUse=%u;cCallID=%s;CallStartCIU;luTime=%lu;",++uChannelsInUse,cCallID,luNow);
+	sprintf(cBigData,"uChannelsInUse=%u;luTime=%lu;",++uChannelsInUse,luNow);
+	//if(cCIU[0])
+	//{
+	//	strncat(cBigData,"\n",1);
+	//	strncat(cBigData,cCIU,2047-(strlen(cBigData)+strlen(cCIU)));
+	//}
 	rc=memcached_set(gsMemc,cKey,strlen(cKey),cBigData,strlen(cBigData),(time_t)0,(uint32_t)0);
 	if(rc!=MEMCACHED_SUCCESS)
 	{

@@ -23,7 +23,9 @@ unsigned guSilent=0;
 //TOC
 void TextConnectDb(void);//mysqlconnect.c
 void UpdatetAddressForPBX(unsigned uPBX,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight);
-void DNSUpdate(char const *cCluster,unsigned uPBX);
+void UpdatetAddressForGateway(unsigned uGateway,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight);
+void DNSUpdatePBX(char const *cCluster,unsigned uPBX);
+void DNSUpdateGW(char const *cCluster,unsigned uPBX);
 void AddPBXs(char const *cCluster);
 void AddDIDs(char const *cCluster);
 void AddGWs(char const *cCluster);
@@ -52,9 +54,14 @@ int main(int iArgc, char *cArgv[])
 
 	if(iArgc>=3)
 	{
-		if(!strncmp(cArgv[1],"DNSUpdate",9))
+		if(!strncmp(cArgv[1],"DNSUpdatePBX",12))
 		{
-			DNSUpdate(cArgv[2],0);
+			DNSUpdatePBX(cArgv[2],0);
+			goto CommonExit;
+		}
+		else if(!strncmp(cArgv[1],"DNSUpdateGW",11))
+		{
+			DNSUpdateGW(cArgv[2],0);
 			goto CommonExit;
 		}
 		else if(!strncmp(cArgv[1],"AddPBXs",7))
@@ -87,7 +94,7 @@ int main(int iArgc, char *cArgv[])
 		}
 	}
 
-	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddRules, AddAll, DNSUpdate <cCluster> [silent]\n",gcProgram);
+	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddRules, AddAll, DNSUpdatePBX, DNSUpdateGW <cCluster> [silent]\n",gcProgram);
 
 CommonExit:
 	mysql_close(&gMysql);
@@ -122,14 +129,14 @@ void UpdatetAddressForPBX(unsigned uPBX,char *cIP,unsigned uPort,unsigned uPrior
 
 
 //Can be used to resolv a single PBX if uPBX!=0
-void DNSUpdate(char const *cCluster,unsigned uPBX)
+void DNSUpdatePBX(char const *cCluster,unsigned uPBX)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uCount=0;
 	unsigned uRRCount=0;
 
-	if(!guSilent) printf("DNSUpdate() start\n");
+	if(!guSilent) printf("DNSUpdatePBX() start\n");
 
 	sprintf(gcQuery,"SELECT tPBX.cHostname,tPBX.uPBX"
 			" FROM tPBX,tCluster"
@@ -141,7 +148,7 @@ void DNSUpdate(char const *cCluster,unsigned uPBX)
 	if(mysql_errno(&gMysql))
 	{
 		printf(gcQuery);
-		logfileLine("DNSUpdate",mysql_error(&gMysql));
+		logfileLine("DNSUpdatePBX",mysql_error(&gMysql));
 		mysql_close(&gMysql);
 		exit(2);
 	}
@@ -165,7 +172,7 @@ void DNSUpdate(char const *cCluster,unsigned uPBX)
 		if(mysql_errno(&gMysql))
 		{
 			printf(gcQuery);
-			logfileLine("UpdatetAddress",mysql_error(&gMysql));
+			logfileLine("DNSUpdatePBX",mysql_error(&gMysql));
 			mysql_close(&gMysql);
 			exit(2);
 		}
@@ -182,11 +189,11 @@ void DNSUpdate(char const *cCluster,unsigned uPBX)
 				if(!guSilent)
 					printf(gcQuery);
 				if(guLogLevel>0)
-					logfileLine("DNSUpdate",gcQuery);
+					logfileLine("DNSUpdatePBX",gcQuery);
 				continue;
 			}
 			//Matches pattern but out of range values
-			logfileLine("DNSUpdate",field[0]);
+			logfileLine("DNSUpdatePBX",field[0]);
 		}
 		uCount++;
 
@@ -216,20 +223,20 @@ void DNSUpdate(char const *cCluster,unsigned uPBX)
 			{
 				UpdatetAddressForPBX(uPBX,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
 				if(guLogLevel>3)
-					logfileLine("DNSUpdate A",(char *)sDnsHost2->rr);
+					logfileLine("DNSUpdatePBX A",(char *)sDnsHost2->rr);
 				uRRCount++;
 				while(sDnsHost2->next!=NULL)
 				{
 					sDnsHost2=sDnsHost2->next;
 					UpdatetAddressForPBX(uPBX,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
 					if(guLogLevel>3)
-						logfileLine("DNSUpdate A",(char *)sDnsHost2->rr);
+						logfileLine("DNSUpdatePBX A",(char *)sDnsHost2->rr);
 					uRRCount++;
 				}
 			}
 			//
 			if(guLogLevel>3)
-				logfileLine("DNSUpdate SRV",sDnsSrv->name);
+				logfileLine("DNSUpdatePBX SRV",sDnsSrv->name);
 			uRRCount++;
 			while(sDnsHost->next!=NULL)
 			{
@@ -243,27 +250,27 @@ void DNSUpdate(char const *cCluster,unsigned uPBX)
 				{
 					UpdatetAddressForPBX(uPBX,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
 					if(guLogLevel>3)
-						logfileLine("DNSUpdate A",(char *)sDnsHost2->rr);
+						logfileLine("DNSUpdatePBX A",(char *)sDnsHost2->rr);
 					uRRCount++;
 					while(sDnsHost2->next!=NULL)
 					{
 						sDnsHost2=sDnsHost2->next;
 						UpdatetAddressForPBX(uPBX,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
 						if(guLogLevel>3)
-							logfileLine("DNSUpdate A",(char *)sDnsHost2->rr);
+							logfileLine("DNSUpdatePBX A",(char *)sDnsHost2->rr);
 						uRRCount++;
 					}
 			}
 			//
 				if(guLogLevel>3)
-					logfileLine("DNSUpdate SRV",sDnsSrv->name);
+					logfileLine("DNSUpdatePBX SRV",sDnsSrv->name);
 				uRRCount++;
 			}
 		}
 		else
 		{
 			if(guLogLevel>4)
-				logfileLine("DNSUpdate No SRV",cHostname);
+				logfileLine("DNSUpdatePBX No SRV",cHostname);
 		}
 		dns_free(sDnsHostSave);
 
@@ -275,21 +282,21 @@ void DNSUpdate(char const *cCluster,unsigned uPBX)
 		{
 			UpdatetAddressForPBX(uPBX,(char *)sDnsHost->rr,5060,1000,100);
 			if(guLogLevel>3)
-				logfileLine("DNSUpdate A",(char *)sDnsHost->rr);
+				logfileLine("DNSUpdatePBX A",(char *)sDnsHost->rr);
 			uRRCount++;
 			while(sDnsHost->next!=NULL)
 			{
 				sDnsHost=sDnsHost->next;
 				UpdatetAddressForPBX(uPBX,(char *)sDnsHost->rr,5060,1000,100);
 				if(guLogLevel>3)
-					logfileLine("DNSUpdate A",(char *)sDnsHost->rr);
+					logfileLine("DNSUpdatePBX A",(char *)sDnsHost->rr);
 				uRRCount++;
 			}
 		}
 		else
 		{
 			if(guLogLevel>0)
-				logfileLine("DNSUpdate No A",cHostname);
+				logfileLine("DNSUpdatePBX No A",cHostname);
 			if(!guSilent)
 				printf("No A records\n");
 		}
@@ -300,11 +307,11 @@ void DNSUpdate(char const *cCluster,unsigned uPBX)
 	if(guLogLevel>0)
 	{
 		sprintf(gcQuery,"Processed %u cHostnames updated %u tAddress records",uCount,uRRCount);
-		logfileLine("DNSUpdate",gcQuery);
+		logfileLine("DNSUpdatePBX",gcQuery);
 	}
 
-	if(!guSilent) printf("DNSUpdate() end\n");
-}//void DNSUpdate(char const *cCluster)
+	if(!guSilent) printf("DNSUpdatePBX() end\n");
+}//void DNSUpdatePBX(char const *cCluster)
 
 
 //Inbound gateways
@@ -403,7 +410,7 @@ void AddDIDs(char const *cCluster)
 		exit(2);
 	}
         res=mysql_store_result(&gMysql);
-	unsigned uFirstTime=1;
+	unsigned uFirstTime=0;
 	char cKey[100];
 	char cData[1028]={""};
 	char cCurrentDID[16]={"x"};
@@ -422,6 +429,8 @@ void AddDIDs(char const *cCluster)
 			//New DID
 			sprintf(cCurrentDID,"%s",field[0]);
 			sprintf(cKey,"%.90s-did",field[1]);
+			if(!guSilent)
+				printf("Trying: %s %s\n",cKey,cValue);
 			if(!uFirstTime && cData[0])
 			{
 				rc=memcached_set(gsMemc,cKey,strlen(cKey),cData,strlen(cData),(time_t)0,(uint32_t)0);
@@ -437,7 +446,7 @@ void AddDIDs(char const *cCluster)
 				uCount=0;
 				uDIDCount++;
 				if(!guSilent)
-					printf("%s %s\n",cKey,cValue);
+					printf("Added: %s %s\n",cKey,cValue);
 			}
 			uFirstTime=0;
 		}
@@ -718,3 +727,216 @@ void AddRules(char const *cCluster)
 	if(!guSilent) printf("AddRules() end\n");
 
 }//void AddRules()
+
+
+//Can be used to resolv a single GW if uGateway!=0
+void DNSUpdateGW(char const *cCluster,unsigned uGateway)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uCount=0;
+	unsigned uRRCount=0;
+
+	if(!guSilent) printf("DNSUpdateGW() start\n");
+
+	//outbound GW only non empty cHostname
+	sprintf(gcQuery,"SELECT tGateway.cHostname,tGateway.uGateway"
+			" FROM tGateway,tCluster"
+			" WHERE tGateway.uCluster=tCluster.uCluster"
+			" AND tCluster.cLabel='%s'"
+			" AND tGateway.uGatewayType=2"
+			" AND tGateway.cHostname!=''"
+			" AND IF(%u,tGateway.uGateway=%u,1)"
+				,cCluster,uGateway,uGateway);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf(gcQuery);
+		logfileLine("DNSUpdateGW",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		unsigned uA=0,uB=0,uC=0,uD=0;
+		if(!guSilent)
+			printf("%s\n",field[0]);
+
+		//This has to be done first
+		sscanf(field[1],"%u",&uGateway);
+
+		//This has to be done 2nd
+		//This needs to be improved. If resolver fails bye bye switch data.
+		//We keep records that have been added via backend web app.
+		sprintf(gcQuery,"DELETE FROM tAddress"
+				" WHERE tAddress.uGateway=%u AND uOwner=0"
+					,uGateway);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf(gcQuery);
+			logfileLine("DNSUpdateGW",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+
+		//Handle special case where cDomain is an IPv4 number
+		if(sscanf(field[0],"%u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
+		{
+			//Not sure if this is an exact test see RFC
+			if(uA>0 && uA<256 && uB<256 && uC<256 && uD<256)
+			{
+				//5060,0,0 pattern it is not an A record
+				UpdatetAddressForGateway(uGateway,field[0],5060,0,0);
+				sprintf(gcQuery,"%s added as IP to %u\n",field[0],uGateway);
+				if(!guSilent)
+					printf(gcQuery);
+				if(guLogLevel>0)
+					logfileLine("DNSUpdateGW",gcQuery);
+				continue;
+			}
+			//Matches pattern but out of range values
+			logfileLine("DNSUpdateGW",field[0]);
+		}
+		uCount++;
+
+		//DNS
+		dns_host_t sDnsHost;
+		dns_host_t sDnsHostSave;
+		dns_host_t sDnsHost2;
+		dns_host_t sDnsHostSave2;
+		dns_srv_t sDnsSrv;
+		char cHostname[128]={""};
+
+		//SRV records
+		sprintf(cHostname,"_sip._udp.%.99s",field[0]);
+		sDnsHost=dns_resolve(cHostname,3);
+		sDnsHostSave=sDnsHost;
+		if(sDnsHost!=NULL)
+		{
+			if(!guSilent)
+				printf("SRV records\n");
+			sDnsSrv=(dns_srv_t)sDnsHost->rr;
+
+			//Nested get A record
+			sprintf(cHostname,"%.99s",sDnsSrv->name);
+			sDnsHost2=dns_resolve(cHostname,1);
+			sDnsHostSave2=sDnsHost2;
+			if(sDnsHost2!=NULL)
+			{
+				UpdatetAddressForGateway(uGateway,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+				if(guLogLevel>3)
+					logfileLine("DNSUpdateGW A",(char *)sDnsHost2->rr);
+				uRRCount++;
+				while(sDnsHost2->next!=NULL)
+				{
+					sDnsHost2=sDnsHost2->next;
+					UpdatetAddressForGateway(uGateway,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+					if(guLogLevel>3)
+						logfileLine("DNSUpdateGW A",(char *)sDnsHost2->rr);
+					uRRCount++;
+				}
+			}
+			//
+			if(guLogLevel>3)
+				logfileLine("DNSUpdateGW SRV",sDnsSrv->name);
+			uRRCount++;
+			while(sDnsHost->next!=NULL)
+			{
+				sDnsHost=sDnsHost->next;
+				sDnsSrv=(dns_srv_t)sDnsHost->rr;
+				//Nested get A record
+				sprintf(cHostname,"%.99s",sDnsSrv->name);
+				sDnsHost2=dns_resolve(cHostname,1);
+				sDnsHostSave2=sDnsHost2;
+				if(sDnsHost2!=NULL)
+				{
+					UpdatetAddressForGateway(uGateway,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+					if(guLogLevel>3)
+						logfileLine("DNSUpdateGW A",(char *)sDnsHost2->rr);
+					uRRCount++;
+					while(sDnsHost2->next!=NULL)
+					{
+						sDnsHost2=sDnsHost2->next;
+						UpdatetAddressForGateway(uGateway,(char *)sDnsHost2->rr,sDnsSrv->port,sDnsSrv->priority,sDnsSrv->weight);
+						if(guLogLevel>3)
+							logfileLine("DNSUpdateGW A",(char *)sDnsHost2->rr);
+						uRRCount++;
+					}
+			}
+			//
+				if(guLogLevel>3)
+					logfileLine("DNSUpdateGW SRV",sDnsSrv->name);
+				uRRCount++;
+			}
+		}
+		else
+		{
+			if(guLogLevel>4)
+				logfileLine("DNSUpdateGW No SRV",cHostname);
+		}
+		dns_free(sDnsHostSave);
+
+		//A records
+		sprintf(cHostname,"%.99s",field[0]);
+		sDnsHost=dns_resolve(cHostname,1);
+		sDnsHostSave=sDnsHost;
+		if(sDnsHost!=NULL)
+		{
+			UpdatetAddressForGateway(uGateway,(char *)sDnsHost->rr,5060,1000,100);
+			if(guLogLevel>3)
+				logfileLine("DNSUpdateGW A",(char *)sDnsHost->rr);
+			uRRCount++;
+			while(sDnsHost->next!=NULL)
+			{
+				sDnsHost=sDnsHost->next;
+				UpdatetAddressForGateway(uGateway,(char *)sDnsHost->rr,5060,1000,100);
+				if(guLogLevel>3)
+					logfileLine("DNSUpdateGW A",(char *)sDnsHost->rr);
+				uRRCount++;
+			}
+		}
+		else
+		{
+			if(guLogLevel>0)
+				logfileLine("DNSUpdateGW No A",cHostname);
+			if(!guSilent)
+				printf("No A records\n");
+		}
+		dns_free(sDnsHostSave);
+	}
+	mysql_free_result(res);
+
+	if(guLogLevel>0)
+	{
+		sprintf(gcQuery,"Processed %u cHostnames updated %u tAddress records",uCount,uRRCount);
+		logfileLine("DNSUpdateGW",gcQuery);
+	}
+
+	if(!guSilent) printf("DNSUpdateGW() end\n");
+}//void DNSUpdateGW(char const *cCluster)
+
+
+void UpdatetAddressForGateway(unsigned uGateway,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight)
+{
+	//We keep uOwner=0 as a marker
+	sprintf(gcQuery,"INSERT INTO tAddress"
+			" SET uGateway=%u,"
+			" cLabel='%s',"
+			" cIP='%s',"
+			" uPort=%u,"
+			" uPriority=%u,"
+			" uWeight=%u,"
+			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+			" uCreatedBy=1"
+				,uGateway,cIP,cIP,uPort,uPriority,uWeight);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf(gcQuery);
+		logfileLine("UpdatetAddress",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+}//void UpdatetAddressForGateway(unsigned uGateway,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight)
