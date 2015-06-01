@@ -37,7 +37,7 @@ typedef struct {
 	unsigned uWeight;
 } structAddr;
 
-#define MAX_ADDR 8
+#define MAX_ADDR 16
 typedef struct {
 	char cPrefix[32];
 	unsigned uRule;
@@ -54,7 +54,7 @@ unsigned guServerPort=DEFAULT_SIP_PORT;
 char gcServerIP[16]={"127.0.0.1"};
 static FILE *gLfp=NULL;
 char gcQuery[1024];
-unsigned guLogLevel=5;//1 errors, 2 warnings, 3 info, 4 debug, 5 packet capture to log file, 6 rule dump
+unsigned guLogLevel=6;//1 errors, 2 warnings, 3 info, 4 debug, 5 packet capture to log file, 6 rule dump
 memcached_st *gsMemc;
 int giSock;
 
@@ -511,18 +511,25 @@ void sigLoadRules(int iSigNum)
 		for(i=0;i<MAX_RULES;i++)
 		{
 			register int j=0;
-			
-			sprintf(gcQuery,"(%d) uRuleNum=%u;cPrefix=%s;",i,gsRuleTest[i].uRule,gsRuleTest[i].cPrefix);
-			logfileLine("sigLoadRules rreport",gcQuery);
+		
+			if(gsRuleTest[i].uRule)	
+			{
+				sprintf(gcQuery,"(%d) uRuleNum=%u;cPrefix=%s;",i,gsRuleTest[i].uRule,gsRuleTest[i].cPrefix);
+				logfileLine("sigLoadRules rreport",gcQuery);
+			}
 			for(j=0;j<MAX_ADDR;j++)
 			{
-				sprintf(gcQuery,"(%d) cIP=%s;uPort=%u;uPriority=%u,uWeight=%u;",
+				if(gsRuleTest[i].sAddr[j].cIP[0] || gsRuleTest[i].sAddr[j].uPort || gsRuleTest[i].sAddr[j].uPriority
+					|| gsRuleTest[i].sAddr[j].uWeight)
+				{
+					sprintf(gcQuery,"(%d) cIP=%s;uPort=%u;uPriority=%u,uWeight=%u;",
 						j,
 						gsRuleTest[i].sAddr[j].cIP,
 						gsRuleTest[i].sAddr[j].uPort,
 						gsRuleTest[i].sAddr[j].uPriority,
 						gsRuleTest[i].sAddr[j].uWeight);
-				logfileLine("sigLoadRules rreport",gcQuery);
+					logfileLine("sigLoadRules rreport",gcQuery);
+				}
 			}
 		}
 	}

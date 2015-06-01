@@ -83,6 +83,7 @@ Initial design notes:
 	table.
 	If not found an appropriate error message will be sent back.
 
+
 Development Prep
 ----------------
 setup repos: epel-testing.repo mirrors-rpmforge unxs.repo epel.repo rpmforge.repo vz.repo
@@ -94,3 +95,19 @@ yum install mysql-devel.x86_64
 yum install mysql-server.x86_64
 yum install sipsak.x86_64
 ln -s /usr/lib64/mysql /usr/lib/mysql
+
+
+Testing with no iptables locking memcached access
+-------------------------------------------------
+Make sure you run memcached with -l 127.0.0.1
+
+
+Sync backup server with repcached
+---------------------------------
+memcached-1.2.8-repcached-2.2-1.el6_.x86_64.rpm
+
+/etc/sysconfig/memcached, edit line with OPTIONS="" to:
+
+OPTIONS="-x a.b.c.d"
+
+Where a.b.c.d is the IP of the other repcached patched memcached server
