@@ -60,7 +60,7 @@ int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
 	char *cp;
 	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
 	{
-		if(guLogLevel>3)
+		if(guLogLevel>2)
 		{
 			if((cp=strchr(cMsg,'\r'))) *cp=0;
 			sprintf(gcQuery,"%.64s sent to %s:%u",cMsg,cSourceIP,uSourcePort);
@@ -70,7 +70,7 @@ int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
 	}
 	else
 	{
-		if(guLogLevel>1)
+		if(guLogLevel>0)
 		{
 			if((cp=strchr(cMsg,'\r'))) *cp=0;
 			sprintf(gcQuery,"%.64s failed to %s:%u",cMsg,cSourceIP,uSourcePort);
@@ -107,7 +107,7 @@ if((cp=strstr(cMessage,"CSeq: ")))
 }
 if(guLogLevel>3 && cCSeq[0])
 	logfileLine("readEv-parse cCSeq",cCSeq);
-if(guLogLevel>1 && !cCSeq[0])
+if(guLogLevel>0 && !cCSeq[0])
 	logfileLine("readEv-parse","No cCSeq");
 //cCSeq
 
@@ -124,7 +124,7 @@ if((cp=strstr(cMessage,"Call-ID: ")))
 }
 if(guLogLevel>3 && cCallID[0])
 	logfileLine("readEv-parse cCallID",cCallID);
-if(guLogLevel>1 && !cCallID[0])
+if(guLogLevel>0 && !cCallID[0])
 	logfileLine("readEv-parse","No Call-ID");
 //cCallID
 
@@ -187,6 +187,17 @@ if(cTo[0])
 			{
 				if(guLogLevel>3)
 					logfileLine("readEv-parse","cTo sip: sscanf error");
+				if(sscanf(cp1+1,"%[0-9\\.]",cGateway)!=1)
+				{
+					if(guLogLevel>3)
+						logfileLine("readEv-parse","cTo sip: sscanf error");
+				}
+				else
+				{
+					uGatewayPort=5060;//default
+					if(guLogLevel>3)
+						logfileLine("readEv-parse","cTo sip: error fixed 5060 default");
+				}
 			}
 			*cp1='@';
 		}

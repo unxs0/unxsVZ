@@ -39,19 +39,39 @@ unsigned guServerPort=DEFAULT_SIP_PORT;
 char gcServerIP[16]={"127.0.0.1"};
 static FILE *gLfp=NULL;
 char gcQuery[1024];
-unsigned guLogLevel=6;//1 errors, 2 warnings, 3 info, 4 debug, 5 packet capture to log file, 6 rule dump
+unsigned guLogLevel=3;//0,1 errors, 2 warnings, 3 info, 4 debug, 5 packet capture to log file, 6 rule dump
 memcached_st *gsMemc;
 int giSock;
 
 //TOC
+void vTimerA(int fd, short event, void *arg);
 void readEv(int fd,short event,void* arg);
 void logfileLine(const char *cFunction,const char *cLogline);
 void daemonize(void);
 void sigHandler(int iSignum);
+void sigChangeLogLevelDown(int iSignum);
+void sigChangeLogLevelUp(int iSignum);
 int iCheckLibEventVersion(void);
 int iSetupAndTestMemcached(void);
 int iSendUDPMessage(char *cMsg,char *cIP,unsigned uPort);
 void sigLoadRules(int iSigNum);
+
+#define uTIMERA_SECS 300
+void vTimerA(int fd, short event, void *arg)
+{
+
+	//do something
+	if(guLogLevel>2)
+		logfileLine("vTimerA","running");
+
+	//do it again later
+	struct event *ev = arg;
+	struct timeval tvTimerA;
+	tvTimerA.tv_sec = uTIMERA_SECS;
+	tvTimerA.tv_usec = 0;
+	evtimer_add(ev,&tvTimerA);
+
+}//void vTimerA(int fd, short event, void *arg)
 
 
 void readEv(int fd,short event,void* arg)
@@ -204,8 +224,10 @@ int main(int iArgc, char *cArgv[])
 	daemonize();
 	if(guLogLevel>3)
 		logfileLine("main","forked");
-	signal(SIGINT,sigHandler);
-	signal(SIGHUP,sigLoadRules);
+	signal(SIGINT,sigHandler);//removes pid file and exits daemon cleanly
+	signal(SIGHUP,sigLoadRules);//load rules
+	signal(SIGUSR1,sigChangeLogLevelDown);//change guLogLevel--
+	signal(SIGUSR2,sigChangeLogLevelUp);//change guLogLevel++
 	sprintf(gcQuery,"listening on %s:%u",gcServerIP,guServerPort);
 	logfileLine("main",gcQuery);
 
@@ -213,6 +235,15 @@ int main(int iArgc, char *cArgv[])
 	event_init();
 	event_set(&ev,giSock,EV_READ|EV_PERSIST,readEv,&ev);
 	event_add(&ev, NULL);
+
+	//Timer A
+	struct event evTimerA;
+	struct timeval tvTimerA;
+	tvTimerA.tv_sec = uTIMERA_SECS;
+	tvTimerA.tv_usec = 0;
+	evtimer_set(&evTimerA,vTimerA,&evTimerA);
+	evtimer_add(&evTimerA,&tvTimerA);
+
 	event_dispatch();
 
 	//We should never reach here unless something wrong has happened
@@ -292,6 +323,28 @@ void sigHandler(int iSignum)
 }//void sigHandler(int iSignum)
 
 
+void sigChangeLogLevelDown(int iSignum)
+{
+	if(guLogLevel>0)
+		guLogLevel--;
+	char cMsg[128];
+	sprintf(cMsg,"guLogLevel=%u",guLogLevel);
+	logfileLine("sigChangeLogLevelDown",cMsg);
+}
+//void sigChangeLogLevelDown(int iSignum)
+
+
+void sigChangeLogLevelUp(int iSignum)
+{
+	if(guLogLevel<6)
+		guLogLevel++;
+	char cMsg[128];
+	sprintf(cMsg,"guLogLevel=%u",guLogLevel);
+	logfileLine("sigChangeLogLevelUp",cMsg);
+}
+//void sigChangeLogLevelDown(int iSignum)
+
+
 int iCheckLibEventVersion(void)
 {
 	const char *v=event_get_version();
@@ -357,7 +410,8 @@ int iSetupAndTestMemcached(void)
 		logfileLine("iSetupAndTestMemcached",gcQuery);
 		return(-1);
 	}
-	logfileLine("iSetupAndTestMemcached","memcached running");
+	if(guLogLevel>2)
+		logfileLine("iSetupAndTestMemcached","memcached running");
 
 	return(0);
 
@@ -509,7 +563,7 @@ void sigLoadRules(int iSigNum)
 		}
 	}
 
-	if(guLogLevel>1)
+	if(guLogLevel>2)
 	{
 		sprintf(gcQuery,"Loaded %d rules",i);
 		logfileLine("sigLoadRules",gcQuery);
