@@ -174,7 +174,7 @@ unsigned uLoadGWFromCallID(void)
 	{
 		sprintf(cMsg,"SIP/2.0 481 Transaction Does Not Exist\r\nCSeq: %s\r\n",cCSeq);
 		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
-		if(guLogLevel>3)
+		if(guLogLevel>2)
 			logfileLine("readEv-process 481 Transaction Does Not Exist",cCallID);
 		return(1);
 	}
@@ -203,7 +203,7 @@ unsigned uLoadPBXFromCallID(void)
 	{
 		sprintf(cMsg,"SIP/2.0 481 Transaction Does Not Exist\r\nCSeq: %s\r\n",cCSeq);
 		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
-		if(guLogLevel>3)
+		if(guLogLevel>2)
 			logfileLine("readEv-process 481 Transaction Does Not Exist",cCallID);
 		return(1);
 	}
@@ -329,7 +329,7 @@ int CallStartCIU(void)
 	rc=memcached_set(gsMemc,cKey,strlen(cKey),cBigData,strlen(cBigData),(time_t)0,(uint32_t)0);
 	if(rc!=MEMCACHED_SUCCESS)
 	{
-		if(guLogLevel>3)
+		if(guLogLevel>2)
 			logfileLine("readEv-CallStartCIU Could not create channels in use record",cKey);
 	}
 	else
@@ -343,9 +343,10 @@ int CallStartCIU(void)
 }//int CallStartCIU(void)
 
 
-if(guLogLevel>4)
+if(guLogLevel>3)
 	logfileLine("readEv-process check source",cSourceIP);
 
+//Approve gateway and get type
 //Check to see if request or reply is coming from valid source
 //source can be carrier gateway or one of our SBC'd PBXs
 //PBXs and gateways are BOTH found in memcached as -gw keys
@@ -370,9 +371,8 @@ else if(rc==MEMCACHED_SUCCESS)
 		return;
 	}
 }
-//Approve gateway and get type
 
-if(guLogLevel>4)
+if(guLogLevel>3)
 {
 	if(uType==GATEWAY)
 		logfileLine("readEv-process source ok gateway","");
@@ -408,7 +408,7 @@ if(!uReply)
 				//Not found
 				sprintf(cMsg,"SIP/2.0 404 User not found\r\nCSeq: %s\r\n",cCSeq);
 				iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
-				if(guLogLevel>3)
+				if(guLogLevel>2)
 					logfileLine("readEv-process cToDomain/cFromDomain 404 not found",cKey);
 				return;
 			}
@@ -453,7 +453,10 @@ if(!uReply)
 					//Need to add if first one fails try next
 					//Need to add marking "down" failed gateways, with timer to try again (dns ttl?)
 					//Or should loadfromsps.c do this for us? And remove "bad" IPs?
+					//Note if we get another INVITE for some reason it will go to another outbound GW
+					//do we need dialogues?
 					if(gsRuleTest[i].usRoundRobin)
+					//if(0)
 					{
 						srand(time(NULL));
 						unsigned uRandom = (rand() % gsRuleTest[i].usNumOfAddr);
@@ -476,7 +479,7 @@ if(!uReply)
 				sprintf(cMsg,"SIP/2.0 500 No outbound gateway\r\nCSeq: %s\r\n",cCSeq);
 				if(iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort))
 				{
-					if(guLogLevel>3)
+					if(guLogLevel>2)
 						logfileLine("readEv-process 500 No outbound gateway",cKey);
 					return;
 				}
@@ -503,7 +506,7 @@ if(!uReply)
 			sprintf(cMsg,"SIP/2.0 500 Could not create transaction\r\nCSeq: %s\r\n",cCSeq);
 			if(iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort))
 			{
-				if(guLogLevel>3)
+				if(guLogLevel>2)
 					logfileLine("readEv-process 500 Could not create transaction",cCallID);
 				return;
 			}
@@ -518,9 +521,10 @@ if(!uReply)
 			return;
 		}
 
+		//stateless proxy do not send this
 		//after validation we let inviter know we are continuing.
-		sprintf(cMsg,"SIP/2.0 100 Trying\r\nCSeq: %s\r\n",cCSeq);//Send back same CSeq check this
-		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
+		//sprintf(cMsg,"SIP/2.0 100 Trying\r\nCSeq: %s\r\n",cCSeq);//Send back same CSeq check this
+		//iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
 
 	}//INVITE
 	//OPTIONS
@@ -626,12 +630,12 @@ if(!uReply)
 		//If the source and the destination as calculated is the same we need to try something else
 		if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
 		{
-			if(guLogLevel>3)
+			if(guLogLevel>2)
 				logfileLine("readEv-process ACK same dest as server trying cFirstLine",cSourceIP);
 			if(uLoadDestinationFromFirstLine()) return;
 			if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
 			{
-				if(guLogLevel>3)
+				if(guLogLevel>2)
 					logfileLine("readEv-process ACK same dest as server giving up",cSourceIP);
 				//giving up
 				return;
@@ -718,12 +722,12 @@ if(!uReply)
 		//If the source and the destination as calculated is the same we need to try something else
 		if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
 		{
-			if(guLogLevel>3)
+			if(guLogLevel>2)
 				logfileLine("readEv-process CANCEL same dest as server trying cFirstLine",cSourceIP);
 			if(uLoadDestinationFromFirstLine()) return;
 			if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
 			{
-				if(guLogLevel>3)
+				if(guLogLevel>2)
 					logfileLine("readEv-process CANCEL same dest as server giving up",cSourceIP);
 					//giving up
 					return;
@@ -763,7 +767,7 @@ else
 	{
 		sprintf(cMsg,"SIP/2.0 481 Transaction Does Not Exist\r\nCSeq: %s\r\n",cCSeq);
 		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
-		if(guLogLevel>3)
+		if(guLogLevel>2)
 			logfileLine("readEv-process 481 Transaction Does Not Exist",cCallID);
 		return;
 	}
@@ -793,7 +797,7 @@ if(cDestinationIP[0])
 	{
 		sprintf(cMsg,"SIP/2.0 500 Forward failed-0\r\nCSeq: %s\r\n",cCSeq);
 		iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
-		if(guLogLevel>3)
+		if(guLogLevel>2)
 			logfileLine("readEv-process iModifyMessage error",cCallID);
 	}
 
@@ -813,7 +817,7 @@ else
 {
 	sprintf(cMsg,"SIP/2.0 500 Forward failed-2\r\nCSeq: %s\r\n",cCSeq);
 	iSendUDPMessageWrapper(cMsg,cSourceIP,uSourcePort);
-	if(guLogLevel>3)
+	if(guLogLevel>2)
 		logfileLine("readEv-process unexpected no cDestinationIP/uDestinationPort",cCallID);
 }
 

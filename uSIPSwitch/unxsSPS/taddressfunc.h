@@ -142,6 +142,7 @@ void ExttAddressButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
+			printf("Important: Make sure that your firewall allows traffic for all IPs listed here.");
 			printf("<p><u>Record Context Info</u><br>");
 			printf("<p><u>Operations</u><br>");
 			//printf("<br><input type=submit class=largeButton title='Sample button help'"
