@@ -49,22 +49,24 @@ Content-Type: application/sdp
 Content-Length: 336
 */
 
-int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
+char cCSeq[64]={""};
+char cCallID[100]={""};
+int iSendUDPMessageWrapper(char *cMsg,char *cDestIP,unsigned uDestPort)
 {
-	if(!strncmp(cSourceIP,gcServerIP,strlen(gcServerIP)))
+	if(!strncmp(cDestIP,gcServerIP,strlen(gcServerIP)))
 	{
-		logfileLine("readEv-send to same server error",cSourceIP);
+		logfileLine("readEv-send to same server error",cDestIP);
 		return(2);
 	}
 
 	char *cp;
-	if(!iSendUDPMessage(cMsg,cSourceIP,uSourcePort))
+	if(!iSendUDPMessage(cMsg,cDestIP,uDestPort))
 	{
 		if(guLogLevel>2)
 		{
 			if((cp=strchr(cMsg,'\r'))) *cp=0;
-			sprintf(gcQuery,"%.64s sent to %s:%u",cMsg,cSourceIP,uSourcePort);
-			logfileLine("readEv-send",gcQuery);
+			sprintf(gcQuery,"%.64s to %s:%u %s %.32s",cMsg,cDestIP,uDestPort,cCSeq,cCallID);
+			logfileLine("send",gcQuery);
 		}
 		return(0);
 	}
@@ -73,14 +75,13 @@ int iSendUDPMessageWrapper(char *cMsg,char *cSourceIP,unsigned uSourcePort)
 		if(guLogLevel>0)
 		{
 			if((cp=strchr(cMsg,'\r'))) *cp=0;
-			sprintf(gcQuery,"%.64s failed to %s:%u",cMsg,cSourceIP,uSourcePort);
+			sprintf(gcQuery,"%.64s failed to %s:%u",cMsg,cDestIP,uDestPort);
 			logfileLine("readEv-send",gcQuery);
 		}
 	}
 	return(1);
 
 }//int iSendUDPMessageWrapper()
-
 
 //This is used for request/reply determination
 char *cp,*cp1;
@@ -95,7 +96,6 @@ if(guLogLevel>3 && cFirstLine[0])
 	logfileLine("readEv-parse cFirstLine",cFirstLine);
 //cFirstLine
 
-char cCSeq[64]={""};
 if((cp=strstr(cMessage,"CSeq: ")))
 {
 	if((cp1=strchr(cp+strlen("CSeq: "),'\r')))
@@ -112,7 +112,6 @@ if(guLogLevel>0 && !cCSeq[0])
 //cCSeq
 
 //Call-ID: 59a4299d2649d1005081ea49322354fe@209.177.154.79:5060
-char cCallID[100]={""};
 if((cp=strstr(cMessage,"Call-ID: ")))
 {
 	if((cp1=strchr(cp+strlen("Call-ID: "),'\r')))
@@ -225,6 +224,5 @@ if(guLogLevel>3)
 
 //debug only
 //return;
-
 
 //next section is "sipswitch/postparsecheck.c"

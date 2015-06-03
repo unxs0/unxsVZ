@@ -380,6 +380,18 @@ if(guLogLevel>3)
 		logfileLine("readEv-process source ok pbx","");
 }
 
+//minimal details log incoming traffic message summary
+if(guLogLevel>2)
+{
+	char *cType;
+	if(uType==GATEWAY)
+		cType="GW";
+	else
+		cType="PBX";
+	sprintf(gcQuery,"%s %s %s %.32s",cType,cSourceIP,cFirstLine,cCallID);
+	logfileLine("message",gcQuery);
+}
+
 
 //debug only
 //return;
@@ -532,12 +544,12 @@ if(!uReply)
 	{
 		if(uType==GATEWAY)
 		{
-			if(guLogLevel>2)
+			if(guLogLevel>3)
 				logfileLine("readEv-process OPTIONS GATEWAY",cSourceIP);
 		}
 		else
 		{
-			if(guLogLevel>2)
+			if(guLogLevel>3)
 				logfileLine("readEv-process OPTIONS PBX",cSourceIP);
 		}
 		//Create OPTIONS response and send back.
