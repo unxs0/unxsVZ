@@ -388,7 +388,7 @@ if(guLogLevel>2)
 		cType="GW";
 	else
 		cType="PBX";
-	sprintf(gcQuery,"%s %s %s %.32s",cType,cSourceIP,cFirstLine,cCallID);
+	sprintf(gcQuery,"%s %s %s %s %.32s",cType,cSourceIP,cFirstLine,cCSeq,cCallID);
 	logfileLine("message",gcQuery);
 }
 
