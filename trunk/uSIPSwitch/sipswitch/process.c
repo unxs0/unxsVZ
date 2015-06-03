@@ -532,13 +532,13 @@ if(!uReply)
 	{
 		if(uType==GATEWAY)
 		{
-			if(guLogLevel>4)
-				logfileLine("readEv-process OPTIONS GATEWAY","");
+			if(guLogLevel>2)
+				logfileLine("readEv-process OPTIONS GATEWAY",cSourceIP);
 		}
 		else
 		{
-			if(guLogLevel>4)
-				logfileLine("readEv-process OPTIONS PBX","");
+			if(guLogLevel>2)
+				logfileLine("readEv-process OPTIONS PBX",cSourceIP);
 		}
 		//Create OPTIONS response and send back.
 		//

@@ -1,0 +1,12 @@
+HELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
+HOME=/root
+#
+#uSIPSwitch and unxsSPS related cron items
+#
+#Need to update unxsSPS DNS data
+#Need to move MySQL data into memcached. Only things that have changed.
+#Need to keep track of last publish time, we can use unxsSPS tLog to figure out what needs
+#to be placed into production.
+*/5 * * * * root /usr/sbin/uSIPSwitchProvision.sh;
