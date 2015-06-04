@@ -104,30 +104,6 @@ CommonExit:
 }//main()
 
 
-void UpdatetAddressForPBX(unsigned uPBX,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight)
-{
-	//We keep uOwner=0 as a marker
-	sprintf(gcQuery,"INSERT INTO tAddress"
-			" SET uPBX=%u,"
-			" cLabel='%s',"
-			" cIP='%s',"
-			" uPort=%u,"
-			" uPriority=%u,"
-			" uWeight=%u,"
-			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
-			" uCreatedBy=1"
-				,uPBX,cIP,cIP,uPort,uPriority,uWeight);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf(gcQuery);
-		logfileLine("UpdatetAddress",mysql_error(&gMysql));
-		mysql_close(&gMysql);
-		exit(2);
-	}
-}//void UpdatetAddressForPBX(unsigned uPBX,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight)
-
-
 //Can be used to resolv a single PBX if uPBX!=0
 void DNSUpdatePBX(char const *cCluster,unsigned uPBX)
 {
@@ -161,21 +137,6 @@ void DNSUpdatePBX(char const *cCluster,unsigned uPBX)
 
 		//This has to be done first
 		sscanf(field[1],"%u",&uPBX);
-
-		//This has to be done 2nd
-		//This needs to be improved. If resolver fails bye bye switch data.
-		//We keep records that have been added via backend web app.
-		sprintf(gcQuery,"DELETE FROM tAddress"
-				" WHERE tAddress.uPBX=%u AND uOwner=0"
-					,uPBX);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			printf(gcQuery);
-			logfileLine("DNSUpdatePBX",mysql_error(&gMysql));
-			mysql_close(&gMysql);
-			exit(2);
-		}
 
 		//Handle special case where cDomain is an IPv4 number
 		if(sscanf(field[0],"%u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
@@ -301,6 +262,26 @@ void DNSUpdatePBX(char const *cCluster,unsigned uPBX)
 				printf("No A records\n");
 		}
 		dns_free(sDnsHostSave);
+
+		//Remove non updated in this pass records 300s 5min ago
+		sprintf(gcQuery,"DELETE FROM tAddress"
+				" WHERE tAddress.uPBX=%u AND uOwner=0"
+				" AND ((uModDate>0 AND (uModDate<(UNIX_TIMESTAMP(NOW())-300))) OR (uModDate=0 AND uCreatedDate<(UNIX_TIMESTAMP(NOW())-300)))"
+					,uPBX);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf(gcQuery);
+			logfileLine("DNSUpdateGW",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+		if(guLogLevel>0)
+		{
+			sprintf(gcQuery,"%lu stale tAddress records deleted",(long unsigned)mysql_affected_rows(&gMysql));
+			logfileLine("DNSUpdatePBX",gcQuery);
+		}
+
 	}
 	mysql_free_result(res);
 
@@ -352,7 +333,7 @@ void AddGWs(char const *cCluster)
 		unsigned rc;
 
 		sprintf(cKey,"%.90s-gw",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=1;uPriority=%s;uWeight=%s;cHostname=%s;",
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=1;uPriority=%.5s;uWeight=%.5s;uGroup=0;uLines=0;cHostname=%s;",
 				field[0],field[1],field[2],field[3],field[4]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
@@ -521,9 +502,8 @@ void AddPBXs(char const *cCluster)
 
 		//PBXs are gateways too. This makes the server run faster.
 		sprintf(cKey,"%.90s-gw",field[0]);
-		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;"
-				"uType=2;uPriority=%.5s;uWeight=%.5s;cHostname=%.64s;uGroup=%s;uLines=%s;",
-				field[0],field[1],field[2],field[3],field[4],field[5],field[6]);
+		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=2;uPriority=%.5s;uWeight=%.5s;uGroup=%s;uLines=%s;cHostname=%.64s;",
+				field[0],field[1],field[2],field[3],field[5],field[6],field[4]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -767,21 +747,6 @@ void DNSUpdateGW(char const *cCluster,unsigned uGateway)
 		//This has to be done first
 		sscanf(field[1],"%u",&uGateway);
 
-		//This has to be done 2nd
-		//This needs to be improved. If resolver fails bye bye switch data.
-		//We keep records that have been added via backend web app.
-		sprintf(gcQuery,"DELETE FROM tAddress"
-				" WHERE tAddress.uGateway=%u AND uOwner=0"
-					,uGateway);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			printf(gcQuery);
-			logfileLine("DNSUpdateGW",mysql_error(&gMysql));
-			mysql_close(&gMysql);
-			exit(2);
-		}
-
 		//Handle special case where cDomain is an IPv4 number
 		if(sscanf(field[0],"%u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
 		{
@@ -906,6 +871,25 @@ void DNSUpdateGW(char const *cCluster,unsigned uGateway)
 				printf("No A records\n");
 		}
 		dns_free(sDnsHostSave);
+
+		//Remove non updated in this pass records 300s 5min ago
+		sprintf(gcQuery,"DELETE FROM tAddress"
+				" WHERE tAddress.uGateway=%u AND uOwner=0"
+				" AND ((uModDate>0 AND (uModDate<(UNIX_TIMESTAMP(NOW())-300))) OR (uModDate=0 AND uCreatedDate<(UNIX_TIMESTAMP(NOW())-300)))"
+					,uGateway);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf(gcQuery);
+			logfileLine("DNSUpdateGW",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+		if(guLogLevel>0)
+		{
+			sprintf(gcQuery,"%lu stale tAddress records deleted",(long unsigned)mysql_affected_rows(&gMysql));
+			logfileLine("DNSUpdateGW",gcQuery);
+		}
 	}
 	mysql_free_result(res);
 
@@ -921,17 +905,11 @@ void DNSUpdateGW(char const *cCluster,unsigned uGateway)
 
 void UpdatetAddressForGateway(unsigned uGateway,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight)
 {
-	//We keep uOwner=0 as a marker
-	sprintf(gcQuery,"INSERT INTO tAddress"
-			" SET uGateway=%u,"
-			" cLabel='%s',"
-			" cIP='%s',"
-			" uPort=%u,"
-			" uPriority=%u,"
-			" uWeight=%u,"
-			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
-			" uCreatedBy=1"
-				,uGateway,cIP,cIP,uPort,uPriority,uWeight);
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uAddress FROM tAddress WHERE uGateway=%u AND cIP='%s' AND cIP=cLabel AND uOwner=0 AND uPort=%u",
+			uGateway,cIP,uPort);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -940,4 +918,106 @@ void UpdatetAddressForGateway(unsigned uGateway,char *cIP,unsigned uPort,unsigne
 		mysql_close(&gMysql);
 		exit(2);
 	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tAddress"
+				" SET uPriority=%u,"
+				" uWeight=%u,"
+				" uModDate=UNIX_TIMESTAMP(NOW()),"
+				" uModBy=1"
+				" WHERE uAddress=%s"
+						,uPriority,uWeight,field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf(gcQuery);
+			logfileLine("UpdatetAddress",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+	}
+	else
+	{
+		//We keep uOwner=0 as a marker
+		sprintf(gcQuery,"INSERT INTO tAddress"
+				" SET uGateway=%u,"
+				" cLabel='%s',"
+				" cIP='%s',"
+				" uPort=%u,"
+				" uPriority=%u,"
+				" uWeight=%u,"
+				" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+				" uCreatedBy=1"
+					,uGateway,cIP,cIP,uPort,uPriority,uWeight);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf(gcQuery);
+			logfileLine("UpdatetAddress",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+	}
 }//void UpdatetAddressForGateway(unsigned uGateway,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight)
+
+
+void UpdatetAddressForPBX(unsigned uPBX,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uAddress FROM tAddress WHERE uPBX=%u AND cIP='%s' AND cIP=cLabel AND uOwner=0 AND uPort=%u",
+			uPBX,cIP,uPort);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf(gcQuery);
+		logfileLine("UpdatetAddress",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tAddress"
+				" SET uPriority=%u,"
+				" uWeight=%u,"
+				" uModDate=UNIX_TIMESTAMP(NOW()),"
+				" uModBy=1"
+				" WHERE uAddress=%s"
+						,uPriority,uWeight,field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf(gcQuery);
+			logfileLine("UpdatetAddress",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+	}
+	else
+	{
+		//We keep uOwner=0 as a marker
+		sprintf(gcQuery,"INSERT INTO tAddress"
+				" SET uPBX=%u,"
+				" cLabel='%s',"
+				" cIP='%s',"
+				" uPort=%u,"
+				" uPriority=%u,"
+				" uWeight=%u,"
+				" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+				" uCreatedBy=1"
+					,uPBX,cIP,cIP,uPort,uPriority,uWeight);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf(gcQuery);
+			logfileLine("UpdatetAddress",mysql_error(&gMysql));
+			mysql_close(&gMysql);
+			exit(2);
+		}
+	}
+}//void UpdatetAddressForPBX(unsigned uPBX,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight)
+
+
