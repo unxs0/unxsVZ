@@ -61,7 +61,7 @@ unsigned uType=0;//1 is gateway, 2 is pbx, 0 is unknown
 unsigned uLines=0;
 #define INVITE 1
 unsigned uRequestType=0;//1 is INVITE
-size_t sizeData=255;
+size_t sizeData=255;//this is set by memcached
 uint32_t flags=0;
 memcached_return rc;
 
@@ -225,14 +225,19 @@ unsigned uLoadPBXFromCallID(void)
 }//unsigned uLoadPBXFromCallID(void)
 
 
-void CallEndCIU(void)
+void CallEndCIU(char *cIP)
 {
+
+	//debug only
+	guLogLevel++;
+
 	//update or create a new record a.b.c.d-ciu (channels in use by PBX) where a.b.c.d is the IP of the PBX leg of call.
 	unsigned uChannelsInUse=0;
 	char cCIU[2048]={""};
 	char cBigData[2048]={""};
+	char cKey[128]={""};
 	//char cSearch[128]={""};
-	sprintf(cKey,"%s-ciu",cDestinationIP);
+	sprintf(cKey,"%s-ciu",cIP);
 
 	sprintf(cCIU,"%.2047s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
 	if(rc==MEMCACHED_SUCCESS)
@@ -243,53 +248,44 @@ void CallEndCIU(void)
 			logfileLine("readEv-CallEndCIU read",cKey);
 	}
 
-	//sprintf(cSearch,";cCallID=%s;",cCallID);
-	//if(cCIU[0] && strstr(cCIU,cSearch))
-	//{
-		if(uChannelsInUse>0)
+	if(uChannelsInUse>0)
+	{
+		time_t luNow=0;
+		time(&luNow);
+		sprintf(cBigData,"uChannelsInUse=%u;luTime=%lu;",--uChannelsInUse,luNow);
+		rc=memcached_set(gsMemc,cKey,strlen(cKey),cBigData,strlen(cBigData),(time_t)0,(uint32_t)0);
+		if(rc!=MEMCACHED_SUCCESS)
 		{
-			time_t luNow=0;
-			time(&luNow);
-			//sprintf(cBigData,"uChannelsInUse=%u;cCallID=%s;CallEndCIU;luTime=%lu;",--uChannelsInUse,cCallID,luNow);
-			sprintf(cBigData,"uChannelsInUse=%u;luTime=%lu;",--uChannelsInUse,luNow);
-			//if(cCIU[0])
-			//{
-			//	strncat(cBigData,"\n",1);
-			//	strncat(cBigData,cCIU,2047-(strlen(cBigData)+strlen(cCIU)));
-			//}
-			rc=memcached_set(gsMemc,cKey,strlen(cKey),cBigData,strlen(cBigData),(time_t)0,(uint32_t)0);
-			if(rc!=MEMCACHED_SUCCESS)
-			{
-				if(guLogLevel>3)
-					logfileLine("readEv-CallEndCIU Could not create channels in use record",cKey);
-			}
-			else
-			{
-				if(guLogLevel>3)
-					logfileLine("readEv-CallEndCIU set",cKey);
-			}
+			if(guLogLevel>3)
+				logfileLine("readEv-CallEndCIU Could not create channels in use record",cKey);
 		}
 		else
 		{
 			if(guLogLevel>3)
-				logfileLine("readEv-CallEndCIU already zero",cCallID);
+				logfileLine("readEv-CallEndCIU set",cKey);
 		}
-	//}
-	//else
-	//{
-	//	if(guLogLevel>3)
-	//		logfileLine("readEv-CallEndCIU cCallID not found",cCallID);
-	//}
+	}
+	else
+	{
+		if(guLogLevel>3)
+			logfileLine("readEv-CallEndCIU already zero",cCallID);
+	}
+	//debug only
+	guLogLevel--;
 
 }// void CallEndCIU(void)
 
 
 int CallStartCIU(void)
 {
+	guLogLevel++;
+
 	//update or create a new record a.b.c.d-ciu (channels in use by PBX) where a.b.c.d is the IP of the PBX leg of call.
 	unsigned uChannelsInUse=0;
 	char cCIU[2048]={""};
 	char cBigData[2048]={""};
+	char cKey2[128]={""};
+	char cData[256]={""};
 	if(uType==PBX)
 		sprintf(cKey,"%s-ciu",cSourceIP);
 	else
@@ -304,28 +300,56 @@ int CallStartCIU(void)
 			logfileLine("readEv-CallStartCIU read",cKey);
 	}
 
+	//get uLines
+	if(uType==PBX)
+		sprintf(cKey2,"%s-gw",cSourceIP);
+	else
+		sprintf(cKey2,"%s-gw",cDestinationIP);
+	sprintf(cData,"%.255s",memcached_get(gsMemc,cKey2,strlen(cKey),&sizeData,&flags,&rc));
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		//Not found
+		if(guLogLevel>3)
+			logfileLine("readEv-process missing -gw",cKey2);
+	}
+	else if(rc==MEMCACHED_SUCCESS)
+	{
+		//format defined in loadfromsps.c
+		//see same sscanf in this file below 
+		//cDestinationIP=8.6.19.10;uDestinationPort=5060;uType=2;uPriority=10;uWeight=1;uGroup=2;uLines=1;cHostname=upbx0.unixservice.com;
+		if(sscanf(cData,"cDestinationIP=%*[^;];uDestinationPort=%*u;uType=%*u;uPriority=%*u;uWeight=%*u;uGroup=%*u;uLines=%u;cHostname=%*[^;]",
+				&uLines)!=1)
+		{
+			logfileLine("readEv-process","sscanf error1");
+			logfileLine("readEv-process",cData);
+		}
+	}
+
 	//testing
+	if(guLogLevel>3)
+	{
+		sprintf(gcQuery,"uChannelsInUse:%u uLines:%u",uChannelsInUse,uLines);
+		logfileLine("readEv-CallStartCIU",gcQuery);
+	}
 	//if(uLines && uChannelsInUse && uChannelsInUse>uLines)
-	//if(1)
 	if(0)
 	{
+		if(guLogLevel>3)
+		{
+			sprintf(gcQuery,"%u>%u %s",uChannelsInUse,uLines,cKey);
+			logfileLine("readEv-CallStartCIU",gcQuery);
+		}
 
 		//You must setup a media server that will provide announcements
 		//We are using the sems with announcement module only.
-		sprintf(cDestinationIP,"127.0.0.1");
-		uDestinationPort=5080;
-		return(0);
+		//sprintf(cDestinationIP,"127.0.0.1");
+		//uDestinationPort=5080;
+		//return(0);
 	}
 
 	time_t luNow=0;
 	time(&luNow);
-	//sprintf(cBigData,"uChannelsInUse=%u;cCallID=%s;CallStartCIU;luTime=%lu;",++uChannelsInUse,cCallID,luNow);
 	sprintf(cBigData,"uChannelsInUse=%u;luTime=%lu;",++uChannelsInUse,luNow);
-	//if(cCIU[0])
-	//{
-	//	strncat(cBigData,"\n",1);
-	//	strncat(cBigData,cCIU,2047-(strlen(cBigData)+strlen(cCIU)));
-	//}
 	rc=memcached_set(gsMemc,cKey,strlen(cKey),cBigData,strlen(cBigData),(time_t)0,(uint32_t)0);
 	if(rc!=MEMCACHED_SUCCESS)
 	{
@@ -338,7 +362,9 @@ int CallStartCIU(void)
 			logfileLine("readEv-CallStartCIU set",cKey);
 	}
 
+	guLogLevel--;
 	return(0);
+
 
 }//int CallStartCIU(void)
 
@@ -352,6 +378,8 @@ if(guLogLevel>3)
 //PBXs and gateways are BOTH found in memcached as -gw keys
 sprintf(cKey,"%s-gw",cSourceIP);
 sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
+if(sizeData<=0)
+	logfileLine("readEv-process","sizeData error");
 if(rc!=MEMCACHED_SUCCESS)
 {
 	//Not found
@@ -363,11 +391,21 @@ if(rc!=MEMCACHED_SUCCESS)
 }
 else if(rc==MEMCACHED_SUCCESS)
 {
-	sscanf(cData,"cDestinationIP=%[^;];uDestinationPort=%u;uType=%u;uLines=%u;",cDestinationIP,&uDestinationPort,&uType,&uLines);
+	//format defined in loadfromsps.c
+	//cDestinationIP=8.6.19.10;uDestinationPort=5060;uType=2;uPriority=10;uWeight=1;uGroup=2;uLines=1;cHostname=upbx0.unixservice.com;
+	if(sscanf(cData,"cDestinationIP=%[^;];uDestinationPort=%u;uType=%u;uPriority=%*u;uWeight=%*u;uGroup=%*u;uLines=%u;",
+			cDestinationIP,&uDestinationPort,&uType,&uLines)!=4)
+	{
+		logfileLine("readEv-process","sscanf error0");
+		logfileLine("readEv-process cKey",cKey);
+		logfileLine("readEv-process cData",cData);
+		return;
+	}
 	if(cDestinationIP[0]==0 || uDestinationPort==0 || uType==0 )
 	{
 		logfileLine("readEv-process","cData incorrect");
-		logfileLine("readEv-process",cData);
+		logfileLine("readEv-process cKey",cKey);
+		logfileLine("readEv-process cData",cData);
 		return;
 	}
 }
@@ -524,15 +562,6 @@ if(!uReply)
 			}
 		}
 
-		//update or create a new record a.b.c.d-ciu (channels in use by PBX) where a.b.c.d is the IP of the PBX leg of call.
-		//returns non 0 value if no more lines or error.
-		if(CallStartCIU())
-		{
-			//we will end the call here so we need to clean up
-			CallEndCIU();
-			return;
-		}
-
 		//stateless proxy do not send this
 		//after validation we let inviter know we are continuing.
 		//sprintf(cMsg,"SIP/2.0 100 Trying\r\nCSeq: %s\r\n",cCSeq);//Send back same CSeq check this
@@ -657,16 +686,6 @@ if(!uReply)
 	//BYE
 	else if(!strncmp(cFirstLine,"BYE",3))
 	{
-		//always get PBX for ciu and cdr closing
-		if(!uLoadPBXFromCallID())
-		{
-			CallEndCIU();
-		}
-		else
-		{
-			if(uLoadDestinationFromFirstLine()) return;
-		}
-
 		if(uType==GATEWAY)
 		{
 			if(guLogLevel>4)
@@ -705,7 +724,7 @@ if(!uReply)
 		//always get PBX for ciu and cdr closing
 		if(!uLoadPBXFromCallID())
 		{
-			CallEndCIU();
+			CallEndCIU(cDestinationIP);
 		}
 		else
 		{
@@ -767,7 +786,7 @@ else
 	{
 		if(!uLoadPBXFromCallID())
 		{
-			CallEndCIU();
+			CallEndCIU(cDestinationIP);
 		}
 	}
 
@@ -791,6 +810,26 @@ else
 	{
 		sprintf(gcQuery,"cSourceIP:%s uSourcePort:%u uReply=%u",cDestinationIP,uDestinationPort,uReply);
 		logfileLine("readEv-process",gcQuery);
+	}
+
+	if(uReply==200)
+	{
+		if(strstr(cCSeq," INVITE"))
+		{
+			//context 200 OK Invite of same session. No dialogs supported yet.
+			//update or create a new record a.b.c.d-ciu (channels in use by PBX) where a.b.c.d is the IP of the PBX leg of call.
+			//returns non 0 value if no more lines or error.
+			if(CallStartCIU())
+			{
+				//we will end the call here so we need to clean up
+				CallEndCIU(cDestinationIP);
+				return;
+			}
+		}
+		else if(strstr(cCSeq," BYE"))
+		{
+			CallEndCIU(cDestinationIP);
+		}
 	}
 }//if a reply
 
