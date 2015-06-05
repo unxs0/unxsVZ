@@ -301,7 +301,7 @@ void ExttAddressNavBar(void)
 	if(uAllowDel(uOwner,uCreatedBy)) 
 		printf(LANG_NBB_DELETE);
 
-	if(uOwner)
+	if(uOwner || guPermLevel>=7)
 		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);
