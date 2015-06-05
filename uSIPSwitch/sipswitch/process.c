@@ -144,6 +144,8 @@ int iModifyMessage(char *cMessage)
 			if(uLen>2047)
 				logfileLine("readEv-process error","cMessageModified len");
 			cpMsg=cMessageModified;
+			if(guLogLevel>3)
+				logfileLine("readEv-process","iModifyMessage() added Record-Route");
 		}
 	}
 	return(0);
@@ -225,7 +227,7 @@ unsigned uLoadPBXFromCallID(void)
 }//unsigned uLoadPBXFromCallID(void)
 
 
-void CallEndCIU(char *cIP)
+void CallEndCIU(void)
 {
 
 	//debug only
@@ -237,38 +239,51 @@ void CallEndCIU(char *cIP)
 	char cBigData[2048]={""};
 	char cKey[128]={""};
 	//char cSearch[128]={""};
-	sprintf(cKey,"%s-ciu",cIP);
+	if(uType==PBX)
+		sprintf(cKey,"%s-ciu",cSourceIP);
+	else
+		sprintf(cKey,"%s-ciu",cDestinationIP);
 
 	sprintf(cCIU,"%.2047s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
 	if(rc==MEMCACHED_SUCCESS)
 	{
 		//read top most CIU value
 		sscanf(cCIU,"uChannelsInUse=%u;",&uChannelsInUse);
-		if(guLogLevel>3)
-			logfileLine("readEv-CallEndCIU read",cKey);
-	}
 
-	if(uChannelsInUse>0)
-	{
-		time_t luNow=0;
-		time(&luNow);
-		sprintf(cBigData,"uChannelsInUse=%u;luTime=%lu;",--uChannelsInUse,luNow);
-		rc=memcached_set(gsMemc,cKey,strlen(cKey),cBigData,strlen(cBigData),(time_t)0,(uint32_t)0);
-		if(rc!=MEMCACHED_SUCCESS)
+		if(uChannelsInUse>0)
 		{
-			if(guLogLevel>3)
-				logfileLine("readEv-CallEndCIU Could not create channels in use record",cKey);
+			time_t luNow=0;
+			time(&luNow);
+			sprintf(cBigData,"uChannelsInUse=%u;luTime=%lu;",--uChannelsInUse,luNow);
+			rc=memcached_set(gsMemc,cKey,strlen(cKey),cBigData,strlen(cBigData),(time_t)0,(uint32_t)0);
+			if(rc!=MEMCACHED_SUCCESS)
+			{
+				if(guLogLevel>3)
+					logfileLine("readEv-CallEndCIU Could not create channels in use record",cKey);
+			}
+			else
+			{
+				if(guLogLevel>3)
+					logfileLine("readEv-CallEndCIU set",cBigData);
+			}
 		}
 		else
 		{
 			if(guLogLevel>3)
-				logfileLine("readEv-CallEndCIU set",cKey);
+			{
+				logfileLine("readEv-CallEndCIU already zero",cCallID);
+				if(guLogLevel>4)
+				{
+					logfileLine("readEv-CallEndCIU cKey",cKey);
+					logfileLine("readEv-CallEndCIU cCIU",cCIU);
+				}
+			}
 		}
 	}
 	else
 	{
 		if(guLogLevel>3)
-			logfileLine("readEv-CallEndCIU already zero",cCallID);
+			logfileLine("readEv-CallEndCIU no cKey",cKey);
 	}
 	//debug only
 	guLogLevel--;
@@ -436,7 +451,7 @@ if(guLogLevel>2)
 
 //
 //Process requests
-//	(e.g. commands like INVITE, ACK, BYE, CANCEL, OPTIONS, REGISTER and INFO)
+//	(e.g. commands like INVITE, ACK, BYE, CANCEL, OPTIONS, REGISTER, UPDATE and INFO)
 //
 if(!uReply)
 {
@@ -721,15 +736,6 @@ if(!uReply)
 	//CANCEL
 	else if(!strncmp(cFirstLine,"CANCEL",6))
 	{
-		//always get PBX for ciu and cdr closing
-		if(!uLoadPBXFromCallID())
-		{
-			CallEndCIU(cDestinationIP);
-		}
-		else
-		{
-			if(uLoadDestinationFromFirstLine()) return;
-		}
 		//if PBX did the invite then the call-id source is the PBX and destination is the GW.
 		//if the GW did the invite then the call-id source is the GW and the destination is the PBX.
 		//so to save time here we should identify the case in the call-id record.
@@ -786,7 +792,9 @@ else
 	{
 		if(!uLoadPBXFromCallID())
 		{
-			CallEndCIU(cDestinationIP);
+			//There has to have been a call start for same session! Fix!
+			//CallEndCIU();
+			;
 		}
 	}
 
@@ -822,13 +830,13 @@ else
 			if(CallStartCIU())
 			{
 				//we will end the call here so we need to clean up
-				CallEndCIU(cDestinationIP);
+				CallEndCIU();
 				return;
 			}
 		}
 		else if(strstr(cCSeq," BYE"))
 		{
-			CallEndCIU(cDestinationIP);
+			CallEndCIU();
 		}
 	}
 }//if a reply
