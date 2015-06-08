@@ -35,6 +35,7 @@ void DashBoard(const char *cOptionalMsg);
 void EncryptPasswdMD5(char *pw);
 
 //ProjectFunctionProtos()
+void UpdateSchema(void);
 
 
 int iExtMainCommands(pentry entries[], int x)
@@ -202,6 +203,8 @@ void ExtMainShell(int argc, char *argv[])
                 RestoreAll(argv[2]);
 	else if(argc==6 && !strcmp(argv[1],"ExtracttLog"))
                	ExtracttLog(argv[2],argv[3],argv[4],argv[5]);
+        else if(argc==2 && !strcmp(argv[1],"UpdateSchema"))
+                UpdateSchema();
         else
 	{
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
@@ -213,6 +216,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\nSpecial Admin Ops:\n");
 		printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
+		printf("\tUpdateSchema\n");
 		printf("\n");
 	}
         exit(0);
@@ -1043,3 +1047,42 @@ void EncryptPasswdMD5(char *pw)
 }//void EncryptPasswdMD5(char *pw)
 //End passwd stuff ;)
 
+
+void UpdateSchema(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	printf("UpdateSchema(): Start\n");
+
+	if(TextConnectDb())
+		exit(1);
+
+	//
+	//tAddress
+	unsigned uHealthCheckedDate=0;
+	sprintf(gcQuery,"SHOW COLUMNS IN tAddress");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uHealthCheckedDate"))
+			uHealthCheckedDate=1;
+	}
+       	mysql_free_result(res);
+	if(!uHealthCheckedDate)
+	{
+		sprintf(gcQuery,"ALTER TABLE tAddress ADD uHealthCheckedDate INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uHealthCheckedDate to tAddress\n");
+	}
+
+	printf("UpdateSchema(): End\n");
+
+}//void UpdateSchema(void)

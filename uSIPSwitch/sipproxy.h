@@ -2,7 +2,7 @@
 FILE
 	uSIPSwitch/sipproxy.h
 AUTHOR
-	(C) 2012 Gary Wallis for Unixservice.
+	(C) 2012-2105 Gary Wallis for Unixservice.
 */
 
 #include <stdio.h>
@@ -26,6 +26,8 @@ extern MYSQL gMysql;
 
 #define cLOGFILE "/var/log/uSIPSwitch"
 #define cPIDFILE "/var/run/uSIPSwitch.pid"
+#define cLOGFILE_HEALTH "/var/log/unxsSIPHealth"
+#define cPIDFILE_HEALTH "/var/run/unxsSIPHealth.pid"
 
 //struct sizes
 #define MAX_ADDR 16
