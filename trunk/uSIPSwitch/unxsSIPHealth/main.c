@@ -15,9 +15,34 @@ OTHER
 	Only tested on CentOS 6.
 	yum install libmemcached, memcached, libevent
 FREE HELP
-	support @ openisp . net
 	supportgrp @ unixservice . com
 	Join mailing list: https://lists.openisp.net/mailman/listinfo/unxsvz
+NOTES
+	This software is part of a distributed "HA/Failover" system for cluster of uSIPSwitch's
+
+	The idea behind this daemon is to provide updated memcached IP data to uSIPSwitch
+	via unxsSPS  where only a single IP is listed at any given time for a carrier gateway or
+	a customer PBX. For every IP we get from DNS and fixed data entry: We mark the IP as 
+	unavailable then we send an OPTIONS packet to the IP if we get a 200 OK answer back
+	we mark it as available. The uSIPSwitch provisioning system via unxsLoadFromSPS then
+	provides only a single IP based on availability and then based on priority and then 
+	weight.
+
+	This keeps uSIPSwitch very straightforward since it does not have to keep track of
+	up and down endpoints on it's own with all the timers and data structure that this 
+	would entail.
+
+	unxsLoadFromSPS 
+	How to deal with uAvailable=0 window while we wait for answer from endpoint that may never arrive.
+	(Or how to avoid programming per IP timers!)
+	We select a single available IP in the following manner:
+	 1. Select the lowest uPriority uAvailable=1 tAddress for the given PBX or GW
+	 2. If 1. returns an empty set, we then select for highest uUptime then the lowest priority uAvailable=0 all 
+	    with uHealthCheckedDate+120>NOW()
+	 3. If 2. returns an empty set we set to a default endpoint for a media server that has audio for all circuits
+	    busy try again later type of message.
+	We should also use an uUptime counter that is incremented every time an endpoint is marked available.
+	This is used to select the most likely endpoint candidate while this daemon is checking in step 2.
 */
 
 #include "../sipproxy.h"
@@ -162,7 +187,7 @@ void vSendOPTIONSRequest(char *cIP,unsigned uPort,char *cDate)
 
 
 
-#define uTIMERA_SECS 120
+#define uTIMERA_SECS 60
 void vTimerA(int fd, short event, void *arg)
 {
 
@@ -193,7 +218,10 @@ void vTimerA(int fd, short event, void *arg)
 	}
 
 	//do it again later
-	sprintf(gcQuery,"SELECT DISTINCT cIP,uPort FROM tAddress WHERE uPBX>0 AND uHealthCheckedDate<(UNIX_TIMESTAMP(NOW())-300) LIMIT 128");
+	//sprintf(gcQuery,"SELECT cIP,uPort,uAddress,FROM_UNIXTIME(uHealthCheckedDate),NOW() FROM tAddress"
+	sprintf(gcQuery,"SELECT DISTINCT cIP,uPort FROM tAddress"
+			" WHERE uPBX>0 AND ((uHealthCheckedDate+120)<UNIX_TIMESTAMP(NOW()))"
+			" LIMIT 128");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -201,14 +229,29 @@ void vTimerA(int fd, short event, void *arg)
 	}
 	else
 	{
+		//char cIPPrevious[32]={"nosuchip"};
+		//unsigned uPortPrevious=0;
         	res=mysql_store_result(&gMysql);
 		while((field=mysql_fetch_row(res)))
 		{
+			//logfileLine("vTimerA uHealthCheckedDate",field[3]);
+			//logfileLine("vTimerA NOW()",field[4]);
 			unsigned uPort=0;
-			logfileLine("vTimerA",field[0]);
 			sscanf(field[1],"%u",&uPort);
+			//if(!strcmp(field[0],cIPPrevious) && uPort==uPortPrevious) continue;
+			//uPortPrevious=uPort;	
+			//sprintf(cIPPrevious,"%.31s",field[0]);
 			if(uPort && field[0][0] && cDate[0])
+			{
 				vSendOPTIONSRequest(field[0],uPort,cDate);
+				sprintf(gcQuery,"UPDATE tAddress SET uHealthCheckedDate=UNIX_TIMESTAMP(NOW()),uAvailable=0"
+						" WHERE cIP='%s' AND uPort=%u",
+						field[0],uPort);
+        			mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+					logfileLine("vTimerA",mysql_error(&gMysql));
+				logfileLine("vTimerA",field[0]);
+			}
 		}
 		mysql_free_result(res);
 	}
@@ -230,7 +273,7 @@ void readEv(int fd,short event,void* arg)
 	//Load message
 	ssize_t len;
 	char cMessage[2048]={""};
-	char cMessageModified[2048]={""};
+	//char cMessageModified[2048]={""};
 	socklen_t l=sizeof(struct sockaddr);
 	struct sockaddr_in sourceAddr;
 	len=recvfrom(fd,(void *)cMessage,2047,0,(struct sockaddr*)&sourceAddr,&l);
@@ -261,15 +304,14 @@ void readEv(int fd,short event,void* arg)
 	//Save source IP and port for future use.
 	//
 	char cSourceIP[INET_ADDRSTRLEN]={""};
-	char cDestinationIP[256]={""};
-	unsigned uSourcePort=ntohs(sourceAddr.sin_port);
-	unsigned uDestinationPort=0;
+	//char cDestinationIP[256]={""};
+	//unsigned uSourcePort=ntohs(sourceAddr.sin_port);
+	//unsigned uDestinationPort=0;
 	inet_ntop(AF_INET,&sourceAddr.sin_addr,cSourceIP,sizeof(cSourceIP));
 
 	if(guLogLevel>3 && gLfp!=NULL)
 		fprintf(gLfp,"[%s]\n",cMessage);
 
-//symbolic link your SIP implementation files to module
 #include "endpoint.c"
 
 }//void readEv(int fd,short event,void* arg)
@@ -371,7 +413,7 @@ int main(int iArgc, char *cArgv[])
 	signal(SIGINT,sigHandler);//removes pid file and exits daemon cleanly
 	signal(SIGUSR1,sigChangeLogLevelDown);//change guLogLevel--
 	signal(SIGUSR2,sigChangeLogLevelUp);//change guLogLevel++
-	sprintf(gcQuery,"listening on %s:%u",gcServerIP,guServerPort);
+	sprintf(gcQuery,"listening on %s:%u with guLogLevel=%u",gcServerIP,guServerPort,guLogLevel);
 	logfileLine("main",gcQuery);
 
 	struct event ev;

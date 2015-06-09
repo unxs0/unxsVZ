@@ -44,9 +44,12 @@ static unsigned uCreatedBy=0;
 static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 static time_t uModDate=0;
+static time_t uHealthCheckedDate=0;
+static short unsigned uAvailable=0;
+static char cYesNouAvailable[32]={""};
 
 
-#define VAR_LIST_tAddress "tAddress.uAddress,tAddress.cLabel,tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight,tAddress.uPBX,tAddress.uGateway,tAddress.uOwner,tAddress.uCreatedBy,tAddress.uCreatedDate,tAddress.uModBy,tAddress.uModDate"
+#define VAR_LIST_tAddress "tAddress.uAddress,tAddress.cLabel,tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight,tAddress.uPBX,tAddress.uGateway,tAddress.uOwner,tAddress.uCreatedBy,tAddress.uCreatedDate,tAddress.uModBy,tAddress.uModDate,tAddress.uHealthCheckedDate,tAddress.uAvailable"
 
  //Local only
 void Insert_tAddress(void);
@@ -107,6 +110,15 @@ void ProcesstAddressVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uHealthCheckedDate"))
+			sscanf(entries[i].val,"%lu",&uHealthCheckedDate);
+		else if(!strcmp(entries[i].name,"uAvailable"))
+			sscanf(entries[i].val,"%hi",&uAvailable);
+		else if(!strcmp(entries[i].name,"cYesNouAvailable"))
+		{
+			sprintf(cYesNouAvailable,"%.31s",entries[i].val);
+			uAvailable=ReadYesNoPullDown(cYesNouAvailable);
+		}
 
 	}
 
@@ -218,6 +230,8 @@ void tAddress(const char *cResult)
 		sscanf(field[10],"%lu",&uCreatedDate);
 		sscanf(field[11],"%u",&uModBy);
 		sscanf(field[12],"%lu",&uModDate);
+		sscanf(field[13],"%lu",&uHealthCheckedDate);
+		sscanf(field[14],"%hu",&uAvailable);
 
 		}
 
@@ -393,6 +407,21 @@ void tAddressInput(unsigned uMode)
 	else
 		printf("---\n\n");
 	printf("<input type=hidden name=uModDate id=uModDate value='%lu' >\n",uModDate);
+	//uHealthCheckedDate COLTYPE_UNIXTIMECREATE COLTYPE_UNIXTIMEUPDATE
+	OpenRow(LANG_FL_tAddress_uHealthCheckedDate,"black");
+	if(uHealthCheckedDate)
+		printf("%s\n\n",ctime(&uHealthCheckedDate));
+	else
+		printf("---\n\n");
+	printf("<input type=hidden name=uHealthCheckedDate id=uHealthCheckedDate value='%lu' >\n",uHealthCheckedDate);
+
+	//uAvailable
+	OpenRow(LANG_FL_tAddress_uAvailable,"black");
+	if(guPermLevel>=10 && uMode)
+		YesNoPullDown("uAvailable",uAvailable,1);
+	else
+		YesNoPullDown("uAvailable",uAvailable,0);
+
 	printf("</tr>\n");
 
 }//void tAddressInput(unsigned uMode)
@@ -594,6 +623,7 @@ void tAddressList(void)
 		"<td><font face=arial,helvetica color=white>uCreatedDate"
 		"<td><font face=arial,helvetica color=white>uModBy"
 		"<td><font face=arial,helvetica color=white>uModDate"
+		"<td><font face=arial,helvetica color=white>uHealthCheckedDate"
 		"</tr>");
 
 
@@ -624,6 +654,12 @@ void tAddressList(void)
 			ctime_r(&luTime12,cBuf12);
 		else
 			sprintf(cBuf12,"---");
+		time_t luTime13=strtoul(field[13],NULL,10);
+		char cBuf13[32];
+		if(luTime13)
+			ctime_r(&luTime13,cBuf13);
+		else
+			sprintf(cBuf13,"---");
 		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tAddress&uAddress=%s>%s</a>"
 				"<td>%s"
 				"<td>%s"
@@ -632,6 +668,7 @@ void tAddressList(void)
 				"<td>%s"
 				"<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tPBX&uPBX=%s>%s</a>"
 				"<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tGateway&uGateway=%s>%s</a>"
+				"<td>%s"
 				"<td>%s"
 				"<td>%s"
 				"<td>%s"
@@ -650,6 +687,7 @@ void tAddressList(void)
 			,cBuf10
 			,ForeignKey("tClient","cLabel",strtoul(field[11],NULL,10))
 			,cBuf12
+			,cBuf13
 				);
 
 	}
@@ -676,7 +714,9 @@ void CreatetAddress(void)
 		"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
-		"uHealthCheckedDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+		"uHealthCheckedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uAvailable TINYINT UNSIGNED NOT NULL DEFAULT 1,"
+		"uUptime BIGINT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
