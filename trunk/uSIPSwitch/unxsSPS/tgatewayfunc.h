@@ -14,18 +14,26 @@ TEMPLATE VARS AND FUNCTIONS
 */
 
 
+static unsigned uGroup=0;
+static char cuGroupPullDown[256]={""};
 
 void tGatewayNavList(void);
 void tGatewaytAddressNavList(void);
+void tGatewaytGroupNavList(void);
 
 void ExtProcesstGatewayVars(pentry entries[], int x)
 {
-	/*
 	register int i;
 	for(i=0;i<x;i++)
 	{
+		if(!strcmp(entries[i].name,"uGroup"))
+			sscanf(entries[i].val,"%u",&uGroup);
+		else if(!strcmp(entries[i].name,"cuGroupPullDown"))
+		{
+			sprintf(cuGroupPullDown,"%.255s",entries[i].val);
+			uGroup=ReadPullDown("tGroup","cLabel",cuGroupPullDown);
+		}
 	}
-	*/
 }//void ExtProcesstGatewayVars(pentry entries[], int x)
 
 
@@ -136,6 +144,39 @@ void ExttGatewayCommands(pentry entries[], int x)
 			else
 				tGateway("<blink>Error</blink>: Denied by permissions settings");
                 }
+		//Custom operations
+		else if(!strcmp(gcCommand,"Add to Group"))
+                {
+                        ProcesstGatewayVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) && uGateway)
+			{
+				if(uGroup)
+				{
+        				MYSQL_RES *res;
+
+					sprintf(gcQuery,"SELECT uGroupGlue FROM tGroupGlue WHERE uKey=%u"
+							" AND uGroupType=5"
+							" AND uGroup=%u",
+								uGateway,uGroup);
+        				mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tRule(gcQuery);
+				        res=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res)>0)
+						tGateway("Gateway has already been added");
+					sprintf(gcQuery,"INSERT INTO tGroupGlue SET uKey=%u,"
+							"uGroupType=5,"
+							"uGroup=%u",uGateway,uGroup);
+        				mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				tRule(gcQuery);
+					tGateway("Gateway added");
+				}
+				tGateway("No group selected");
+			}
+			else
+				tGateway("<blink>Error</blink>: Denied by permissions settings");
+		}
 	}
 
 }//void ExttGatewayCommands(pentry entries[], int x)
@@ -163,10 +204,15 @@ void ExttGatewayButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			//printf("<p><u>Record Context Info</u><br>");
-			//printf("<p><u>Operations</u><br>");
-			//printf("<br><input type=submit class=largeButton title='Sample button help'"
-			//		" name=gcCommand value='Sample Button'>");
+			printf("Gateways are the carrier SIP proxies (or other servers of our own, like CLEC or CPE SIP equipment)"
+				" usually for DID or PSTN services.");
+			printf("<p><u>Record Context Info</u><br>");
+			if(uGateway)
+				tGatewaytGroupNavList();
+			printf("<p><u>Operations</u><br>");
+			tTablePullDown("tGroup;cuGroupPullDown","cLabel","cLabel",uGroup,1);
+			printf("<br><input type=submit class=largeButton title='Add this GW to the above GW tGroup'"
+					" name=gcCommand value='Add to Group'>");
 			if(uGateway)
 				tGatewaytAddressNavList();
 			tGatewayNavList();
@@ -427,4 +473,39 @@ void tGatewaytAddressNavList(void)
         mysql_free_result(res);
 
 }//void tGatewayAddressNavList(void)
+
+
+void tGatewaytGroupNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tGroup.uGroup,tGroup.cLabel"
+			" FROM tGroup,tGroupGlue"
+			" WHERE tGroupGlue.uKey=%u"
+			" AND tGroupGlue.uGroupType=5"
+			" AND tGroupGlue.uGroup=tGroup.uGroup"
+						,uGateway);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>Group Membership</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>Group Membership</u><br>\n");
+
+	        while((field=mysql_fetch_row(res)))
+			printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroup"
+				"&uGroup=%s>%s</a><br>\n",
+				field[0],field[1]);
+	}
+
+        mysql_free_result(res);
+
+}//void tGatewaytGroupNavList(void)
 

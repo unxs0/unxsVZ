@@ -220,7 +220,7 @@ void vTimerA(int fd, short event, void *arg)
 	//do it again later
 	//sprintf(gcQuery,"SELECT cIP,uPort,uAddress,FROM_UNIXTIME(uHealthCheckedDate),NOW() FROM tAddress"
 	sprintf(gcQuery,"SELECT DISTINCT cIP,uPort FROM tAddress"
-			" WHERE uPBX>0 AND ((uHealthCheckedDate+120)<UNIX_TIMESTAMP(NOW()))"
+			" WHERE (uPBX>0 OR uGateway>0) AND (((uHealthCheckedDate+120)<UNIX_TIMESTAMP(NOW())) OR uAvailable=0)"
 			" LIMIT 128");
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))

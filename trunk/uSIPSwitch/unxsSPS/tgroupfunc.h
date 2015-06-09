@@ -16,6 +16,7 @@ TEMPLATE VARS AND FUNCTIONS
 
 
 void tGroupNavList(void);
+void tGroupMemberNavList(void);
 
 void ExtProcesstGroupVars(pentry entries[], int x)
 {
@@ -162,7 +163,12 @@ void ExttGroupButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
+			printf("This table is used to group GWs and PBXs, or similarly to assign a label (or property)"
+				" with some programatic meaning in uSIPSwitch (etc) to a set of GWs or PBXs."
+				" Note that there are two kinds of groups in use at this time:"
+				" The groups here and \"hidden groups\" that work with tGroupGlue only.");
 			printf("<p><u>Record Context Info</u><br>");
+			tGroupMemberNavList();
 			printf("<p><u>Operations</u><br>");
 			//printf("<br><input type=submit class=largeButton title='Sample button help'"
 			//		" name=gcCommand value='Sample Button'>");
@@ -393,5 +399,73 @@ void tGroupNavList(void)
         mysql_free_result(res);
 
 }//void tGroupNavList(void)
+
+
+void tGroupMemberNavList(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uContactParentCompany=0;
+
+	GetClientOwner(guLoginClient,&uContactParentCompany);
+	GetClientOwner(uContactParentCompany,&guReseller);//Get owner of your owner...
+	if(guReseller==1) guReseller=0;//...except Root companies
+	
+	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT tGroupGlue.uGroupGlue,tGroupType.cLabel,tGroupGlue.uKey FROM tGroup,tGroupGlue,tGroupType"
+				" WHERE tGroup.uGroupType=tGroupType.uGroupType"
+				" AND tGroup.uGroupType=tGroupGlue.uGroupType"
+				" AND tGroupGlue.uGroup=tGroup.uGroup"
+				" AND tGroupGlue.uGroup=%u"
+				" ORDER BY tGroupType.cLabel LIMIT 33",
+					uGroup);
+	else
+		sprintf(gcQuery,"SELECT tGroupGlue.uGroupGlue,tGroupType.cLabel,tGroupGlue.uKey FROM tGroup,tGroupGlue,tGroupType"
+				" WHERE tGroup.uGroupType=tGroupType.uGroupType"
+				" AND tGroup.uGroupType=tGroupGlue.uGroupType"
+				" AND tGroupGlue.uGroup=tGroup.uGroup"
+				" AND tGroupGlue.uGroup=%u"
+				" AND tGroup.uOwner=tClient.uClient"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY tGroupType.cLabel LIMIT 33",
+					uGroup
+					,uContactParentCompany
+					,uContactParentCompany);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+        {
+        	printf("<p><u>tGroupMemberNavList</u><br>\n");
+                printf("%s",mysql_error(&gMysql));
+                return;
+        }
+
+        res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res))
+	{	
+        	printf("<p><u>tGroupMemberNavList</u><br>\n");
+		unsigned uCount=0;
+	        while((field=mysql_fetch_row(res)))
+		{
+			unsigned uKey=0;
+			sscanf(field[2],"%u",&uKey);
+			//GW group 5 PBX group 6 TODO
+			if(uGroupType==6)
+				printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupGlue"
+				"&uGroupGlue=%s>%s/%s</a><br>\n",
+				field[0],field[1],ForeignKey("tPBX","cLabel",uKey));
+			else
+				printf("<a class=darkLink href=unxsSPS.cgi?gcFunction=tGroupGlue"
+				"&uGroupGlue=%s>%s/%s</a><br>\n",
+				field[0],field[1],ForeignKey("tGateway","cLabel",uKey));
+			if(++uCount>32)
+			{
+				printf("(only first 32 records shown)\n");
+				break;
+			}
+		}
+	}
+        mysql_free_result(res);
+
+}//void tGroupMemberNavList(void)
 
 
