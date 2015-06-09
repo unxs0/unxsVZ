@@ -46,10 +46,11 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 static time_t uHealthCheckedDate=0;
 static short unsigned uAvailable=0;
+static long long unsigned uUptime=0;
 static char cYesNouAvailable[32]={""};
 
 
-#define VAR_LIST_tAddress "tAddress.uAddress,tAddress.cLabel,tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight,tAddress.uPBX,tAddress.uGateway,tAddress.uOwner,tAddress.uCreatedBy,tAddress.uCreatedDate,tAddress.uModBy,tAddress.uModDate,tAddress.uHealthCheckedDate,tAddress.uAvailable"
+#define VAR_LIST_tAddress "tAddress.uAddress,tAddress.cLabel,tAddress.cIP,tAddress.uPort,tAddress.uPriority,tAddress.uWeight,tAddress.uPBX,tAddress.uGateway,tAddress.uOwner,tAddress.uCreatedBy,tAddress.uCreatedDate,tAddress.uModBy,tAddress.uModDate,tAddress.uHealthCheckedDate,tAddress.uAvailable,tAddress.uUptime"
 
  //Local only
 void Insert_tAddress(void);
@@ -232,6 +233,7 @@ void tAddress(const char *cResult)
 		sscanf(field[12],"%lu",&uModDate);
 		sscanf(field[13],"%lu",&uHealthCheckedDate);
 		sscanf(field[14],"%hu",&uAvailable);
+		sscanf(field[15],"%llu",&uUptime);
 
 		}
 
@@ -624,6 +626,8 @@ void tAddressList(void)
 		"<td><font face=arial,helvetica color=white>uModBy"
 		"<td><font face=arial,helvetica color=white>uModDate"
 		"<td><font face=arial,helvetica color=white>uHealthCheckedDate"
+		"<td><font face=arial,helvetica color=white>uAvailable"
+		"<td><font face=arial,helvetica color=white>uUptime"
 		"</tr>");
 
 
@@ -673,6 +677,8 @@ void tAddressList(void)
 				"<td>%s"
 				"<td>%s"
 				"<td>%s"
+				"<td>%s"
+				"<td>%s"
 				"<td>%s</tr>"
 			,field[0],field[0]
 			,field[1]
@@ -688,6 +694,8 @@ void tAddressList(void)
 			,ForeignKey("tClient","cLabel",strtoul(field[11],NULL,10))
 			,cBuf12
 			,cBuf13
+			,field[14]
+			,field[15]
 				);
 
 	}
