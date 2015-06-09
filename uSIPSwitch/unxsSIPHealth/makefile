@@ -22,7 +22,7 @@ help:
 unxsSIPHealth: main.o ../mysqlconnect.o
 	cc main.o ../mysqlconnect.o -o unxsSIPHealth $(LIBS) 
 
-main.o: main.c ../sipproxy.h ../local.h 
+main.o: main.c ../sipproxy.h ../local.h endpoint.c
 	cc -c main.c -o main.o $(CFLAGS)
 
 mysqlconnect.o: ../mysqlconnect.c ../sipproxy.h ../local.h
@@ -40,5 +40,5 @@ install-run: unxsSIPHealth
 	rm -f /var/run/unxsSIPHealth.pid
 	install -s unxsSIPHealth /usr/sbin/unxsSIPHealth
 	rm unxsSIPHealth
-	/usr/sbin/unxsSIPHealth $(uSIPSwitchIP) 5070
+	/usr/sbin/unxsSIPHealth $(uSIPSwitchIP) 6060
 

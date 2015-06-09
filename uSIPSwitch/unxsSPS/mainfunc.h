@@ -1061,6 +1061,8 @@ void UpdateSchema(void)
 	//
 	//tAddress
 	unsigned uHealthCheckedDate=0;
+	unsigned uAvailable=0;
+	unsigned uUptime=0;
 	sprintf(gcQuery,"SHOW COLUMNS IN tAddress");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1071,6 +1073,10 @@ void UpdateSchema(void)
 	{
 		if(!strcmp(field[0],"uHealthCheckedDate"))
 			uHealthCheckedDate=1;
+		else if(!strcmp(field[0],"uAvailable"))
+			uAvailable=1;
+		else if(!strcmp(field[0],"uUptime"))
+			uUptime=1;
 	}
        	mysql_free_result(res);
 	if(!uHealthCheckedDate)
@@ -1081,6 +1087,26 @@ void UpdateSchema(void)
 			printf("%s\n",mysql_error(&gMysql));
 		else
 			printf("Added uHealthCheckedDate to tAddress\n");
+	}
+
+	if(!uAvailable)
+	{
+		sprintf(gcQuery,"ALTER TABLE tAddress ADD uAvailable TINYINT UNSIGNED NOT NULL DEFAULT 1");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uAvailable to tAddress\n");
+	}
+
+	if(!uUptime)
+	{
+		sprintf(gcQuery,"ALTER TABLE tAddress ADD uUptime BIGINT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uUptime to tAddress\n");
 	}
 
 	printf("UpdateSchema(): End\n");
