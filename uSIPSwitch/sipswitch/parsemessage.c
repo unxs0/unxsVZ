@@ -216,6 +216,14 @@ if(cTo[0])
 	}
 }//cDID cGateway uGatewayPort
 
+//Always strip leading '1' from cDID
+if(cDID[0]=='1')
+{
+	char cDIDCopy[32]={""};
+	sprintf(cDIDCopy,"%.31s",cDID+1);
+	sprintf(cDID,"%.31s",cDIDCopy);
+}
+
 if(guLogLevel>3)
 {
 	sprintf(gcQuery,"cTo:%s cDID:%s cGateway:%s:%u",cTo,cDID,cGateway,uGatewayPort);
