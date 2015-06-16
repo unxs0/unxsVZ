@@ -1,0 +1,8 @@
+[sems config]
+
+useradd -s /sbin/nologin sems
+mkdir /var/run/sems/
+chown sems:sems /var/run/sems
+vi /etc/sems/sems.conf [set correct media IP]
+/etc/init.d/sems start
+

@@ -61,6 +61,7 @@ unsigned uType=0;//1 is gateway, 2 is pbx, 0 is unknown
 unsigned uLines=0;
 #define INVITE 1
 unsigned uRequestType=0;//1 is INVITE
+unsigned guStayOnNet=0;//1 is call stayed on our network, e.g. from one PBX to another or the same.
 size_t sizeData=255;//this is set by memcached
 uint32_t flags=0;
 memcached_return rc;
@@ -168,6 +169,7 @@ unsigned uLoadDestinationFromFirstLine(void)
 	return(0);
 }//unsigned uLoadDestinationFromFirstLine(void)
 
+//cCallID record format "cSourceIP=%.15s;uSourcePort=%u;cDestIP=%.15s;uDestPort=%u;uType=%u;cDID=%s;luTime=%lu;uStayOnNet=%u;"
 
 unsigned uLoadGWFromCallID(void)
 {
@@ -185,13 +187,15 @@ unsigned uLoadGWFromCallID(void)
 	//uType=1=GATEWAY
 	if(strstr(cData,";uType=1;"))
 		//Initial INVITE by GW
-		sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;",cDestinationIP,&uDestinationPort);
+		sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;cDestIP=%*[^;];uDestPort=%*u;uType=%*u;cDID=%*[^;];luTime=%*u;uStayOnNet=%u;",
+			cDestinationIP,&uDestinationPort,&guStayOnNet);
 	else
 		//Initial INVITE by PBX
-		sscanf(cData,"cSourceIP=%*[^;];uSourcePort=%*u;cDestIP=%[^;];uDestPort=%u;",cDestinationIP,&uDestinationPort);
+		sscanf(cData,"cSourceIP=%*[^;];uSourcePort=%*u;cDestIP=%[^;];uDestPort=%u;uType=%*u;cDID=%*[^;];luTime=%*u;uStayOnNet=%u;",
+			cDestinationIP,&uDestinationPort,&guStayOnNet);
 	if(guLogLevel>3)
 	{
-		sprintf(gcQuery,"cDestIP:%s uDestPort:%u",cDestinationIP,uDestinationPort);
+		sprintf(gcQuery,"cDestIP:%s uDestPort:%u guStayOnNet:%u",cDestinationIP,uDestinationPort,guStayOnNet);
 		logfileLine("readEv-process uLoadGWFromCallID()",gcQuery);
 	}
 	return(0);
@@ -214,13 +218,15 @@ unsigned uLoadPBXFromCallID(void)
 	//uType=2=PBX
 	if(strstr(cData,";uType=2;"))
 		//Initial INVITE by PBX
-		sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;",cDestinationIP,&uDestinationPort);
+		sscanf(cData,"cSourceIP=%[^;];uSourcePort=%u;cDestIP=%*[^;];uDestPort=%*u;uType=%*u;cDID=%*[^;];luTime=%*u;uStayOnNet=%u;",
+			cDestinationIP,&uDestinationPort,&guStayOnNet);
 	else
 		//Initial INVITE by GW
-		sscanf(cData,"cSourceIP=%*[^;];uSourcePort=%*u;cDestIP=%[^;];uDestPort=%u;",cDestinationIP,&uDestinationPort);
+		sscanf(cData,"cSourceIP=%*[^;];uSourcePort=%*u;cDestIP=%[^;];uDestPort=%u;uType=%*u;cDID=%*[^;];luTime=%*u;uStayOnNet=%u;",
+			cDestinationIP,&uDestinationPort,&guStayOnNet);
 	if(guLogLevel>3)
 	{
-		sprintf(gcQuery,"cDestIP:%s uDestPort:%u",cDestinationIP,uDestinationPort);
+		sprintf(gcQuery,"cDestIP:%s uDestPort:%u guStayOnNet:%u",cDestinationIP,uDestinationPort,guStayOnNet);
 		logfileLine("readEv-process uLoadPBXFromCallID()",gcQuery);
 	}
 	return(0);
@@ -229,6 +235,8 @@ unsigned uLoadPBXFromCallID(void)
 
 void CallEndCIU(void)
 {
+
+	if(guStayOnNet) return;//We do not count internal PBX or customer to customer calls as channel use
 
 	//debug only
 	guLogLevel++;
@@ -351,15 +359,14 @@ int CallStartCIU(void)
 	{
 		if(guLogLevel>3)
 		{
-			sprintf(gcQuery,"%u>%u %s",uChannelsInUse,uLines,cKey);
+			sprintf(gcQuery,"%u more than %u %s",uChannelsInUse,uLines,cKey);
 			logfileLine("readEv-CallStartCIU",gcQuery);
 		}
 
-		//You must setup a media server that will provide announcements
-		//We are using the sems with announcement module only.
-		//sprintf(cDestinationIP,"127.0.0.1");
-		//uDestinationPort=5080;
-		//return(0);
+		//We are using sems with announcement module only.
+		sprintf(cDestinationIP,"127.0.0.1");
+		uDestinationPort=5080;
+		return(1);
 	}
 
 	time_t luNow=0;
@@ -459,6 +466,7 @@ if(!uReply)
 		logfileLine("readEv-process request","");
 	if(!strncmp(cFirstLine,"INVITE",6))
 	{
+		unsigned uStayOnNet=0;
 		uRequestType=INVITE;
 		if(guLogLevel>4)
 			logfileLine("readEv-process INVITE","");
@@ -499,44 +507,85 @@ if(!uReply)
 				if(!cDestinationIP[0] || !uDestinationPort)
 					logfileLine("readEv-process pbx parse error",cData);
 			}
+
+			//Only for non stay on net calls
+			//Valid INVITE mark channel used.	
+			CallStartCIU();
+
 		}//if GATEWAY
 		else if(uType==PBX)
 		{
 			if(guLogLevel>4)
 				logfileLine("readEv-process PBX","");
 
+
 			cDestinationIP[0]=0;
 			uDestinationPort=0;
-			register int i;
-			for(i=0;gsRuleTest[i].cPrefix[0] && i<MAX_RULES;i++)
+
+			//First check to see if call is for a local DID of a PBX of ours.
+			if(guLogLevel>4)
+				logfileLine("readEv-process route",cDID);
+			sprintf(cKey,"%s-did",cDID);
+			sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
+			//One of our DIDs keep traffic on our network
+			//no LCR no rules apply
+			if(rc==MEMCACHED_SUCCESS)
 			{
-				//Find first rule that matches prefix the 'Any' default route 
-				//	cPrefix should come after all the number based ones.
-				if(!strncmp(cDID,gsRuleTest[i].cPrefix,strlen(gsRuleTest[i].cPrefix)) || gsRuleTest[i].cPrefix[0]=='A')
+				//parse cData for forwarding information
+				if((cp=strstr(cData,"cDestinationIP=")))
 				{
-					//We are looking at the first one (or a random one) only still.
-					//Need to add if first one fails try next
-					//Need to add marking "down" failed gateways, with timer to try again (dns ttl?)
-					//Or should loadfromsps.c do this for us? And remove "bad" IPs?
-					//Note if we get another INVITE for some reason it will go to another outbound GW
-					//do we need dialogues?
-					if(gsRuleTest[i].usRoundRobin)
-					//if(0)
+					if((cp1=strchr(cp+15,';')))
 					{
-						srand(time(NULL));
-						unsigned uRandom = (rand() % gsRuleTest[i].usNumOfAddr);
-						uDestinationPort=gsRuleTest[i].sAddr[uRandom].uPort;
-						sprintf(cDestinationIP,"%.31s",gsRuleTest[i].sAddr[uRandom].cIP);
-						if(guLogLevel>3)
-							logfileLine("readEv-process","usRoundRobin=1");
+						*cp1=0;
+						sprintf(cDestinationIP,"%.15s",cp+15);
+						*cp1=';';
 					}
-					else
-					{
-						uDestinationPort=gsRuleTest[i].sAddr[0].uPort;
-						sprintf(cDestinationIP,"%.31s",gsRuleTest[i].sAddr[0].cIP);
-					}
-					break;
 				}
+				if((cp=strstr(cData,"uDestinationPort=")))
+					sscanf(cp+17,"%u",&uDestinationPort);
+				if(guLogLevel>4)
+					logfileLine("readEv-process stay on net",cData);
+				uStayOnNet=1;
+			}
+
+			if(!cDestinationIP[0])
+			{
+
+				register int i;
+				for(i=0;gsRuleTest[i].cPrefix[0] && i<MAX_RULES;i++)
+				{
+					//Find first rule that matches prefix the 'Any' default route 
+					//	cPrefix should come after all the number based ones.
+					if(!strncmp(cDID,gsRuleTest[i].cPrefix,strlen(gsRuleTest[i].cPrefix)) || gsRuleTest[i].cPrefix[0]=='A')
+					{
+						//We are looking at the first one (or a random one) only still.
+						//Need to add if first one fails try next
+						//Need to add marking "down" failed gateways, with timer to try again (dns ttl?)
+						//Or should loadfromsps.c do this for us? And remove "bad" IPs?
+						//Note if we get another INVITE for some reason it will go to another outbound GW
+						//do we need dialogues?
+						if(gsRuleTest[i].usRoundRobin)
+						//if(0)
+						{
+							srand(time(NULL));
+							unsigned uRandom = (rand() % gsRuleTest[i].usNumOfAddr);
+							uDestinationPort=gsRuleTest[i].sAddr[uRandom].uPort;
+							sprintf(cDestinationIP,"%.31s",gsRuleTest[i].sAddr[uRandom].cIP);
+							if(guLogLevel>3)
+								logfileLine("readEv-process","usRoundRobin=1");
+						}
+						else
+						{
+							uDestinationPort=gsRuleTest[i].sAddr[0].uPort;
+							sprintf(cDestinationIP,"%.31s",gsRuleTest[i].sAddr[0].cIP);
+						}
+						break;
+					}
+				}
+
+				//Only for non stay on net calls
+				//Valid INVITE mark channel used.	
+				CallStartCIU();
 			}
 
 			if(!cDestinationIP[0] || !uDestinationPort)
@@ -563,8 +612,10 @@ if(!uReply)
 		//the uType (save here at initial INVITE) can be used to determine whether the source or the dest is the GW
 		if(guLogLevel>4)
 			logfileLine("readEv-process set transaction","");
-		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;cDestIP=%.15s;uDestPort=%u;uType=%u;",
-			cSourceIP,uSourcePort,cDestinationIP,uDestinationPort,uType);
+		time_t luNow=0;
+		time(&luNow);
+		sprintf(cData,"cSourceIP=%.15s;uSourcePort=%u;cDestIP=%.15s;uDestPort=%u;uType=%u;cDID=%s;luTime=%lu;uStayOnNet=%u;",
+			cSourceIP,uSourcePort,cDestinationIP,uDestinationPort,uType,cDID,luNow,uStayOnNet);
 		rc=memcached_set(gsMemc,cCallID,strlen(cCallID),cData,strlen(cData),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -683,20 +734,6 @@ if(!uReply)
 
 		}
 
-		//If the source and the destination as calculated is the same we need to try something else
-		if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
-		{
-			if(guLogLevel>2)
-				logfileLine("readEv-process ACK same dest as server trying cFirstLine",cSourceIP);
-			if(uLoadDestinationFromFirstLine()) return;
-			if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
-			{
-				if(guLogLevel>2)
-					logfileLine("readEv-process ACK same dest as server giving up",cSourceIP);
-				//giving up
-				return;
-			}
-		}
 	}//ACK
 	//BYE
 	else if(!strncmp(cFirstLine,"BYE",3))
@@ -718,20 +755,8 @@ if(!uReply)
 
 		}
 
-		//If the source and the destination as calculated is the same we need to try something else
-		if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
-		{
-			if(guLogLevel>3)
-				logfileLine("readEv-process BYE same dest as server trying cFirstLine",cSourceIP);
-			if(uLoadDestinationFromFirstLine()) return;
-			if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
-			{
-				if(guLogLevel>3)
-					logfileLine("readEv-process BYE same dest as server giving up",cSourceIP);
-				//giving up
-				return;
-			}
-		}
+		//release channel from counter
+		CallEndCIU();
 	}//BYE
 	//CANCEL
 	else if(!strncmp(cFirstLine,"CANCEL",6))
@@ -756,20 +781,7 @@ if(!uReply)
 
 		}
 
-		//If the source and the destination as calculated is the same we need to try something else
-		if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
-		{
-			if(guLogLevel>2)
-				logfileLine("readEv-process CANCEL same dest as server trying cFirstLine",cSourceIP);
-			if(uLoadDestinationFromFirstLine()) return;
-			if(!strncmp(cDestinationIP,cSourceIP,strlen(cSourceIP)))
-			{
-				if(guLogLevel>2)
-					logfileLine("readEv-process CANCEL same dest as server giving up",cSourceIP);
-					//giving up
-					return;
-			}
-		}
+		CallEndCIU();
 	}//CANCEL
 	else
 	{
@@ -824,19 +836,20 @@ else
 	{
 		if(strstr(cCSeq," INVITE"))
 		{
-			//context 200 OK Invite of same session. No dialogs supported yet.
-			//update or create a new record a.b.c.d-ciu (channels in use by PBX) where a.b.c.d is the IP of the PBX leg of call.
-			//returns non 0 value if no more lines or error.
-			if(CallStartCIU())
+			if(guLogLevel>2)
 			{
-				//we will end the call here so we need to clean up
-				CallEndCIU();
-				return;
+				sprintf(gcQuery,"INVITE OK for cDID:%s",cDID);
+				logfileLine("readEv-process",gcQuery);
 			}
+			//context 200 OK Invite of same session. No dialogs supported yet.
 		}
 		else if(strstr(cCSeq," BYE"))
 		{
-			CallEndCIU();
+			if(guLogLevel>2)
+			{
+				sprintf(gcQuery,"BYE OK for cDID:%s",cDID);
+				logfileLine("readEv-process",gcQuery);
+			}
 		}
 	}
 }//if a reply
