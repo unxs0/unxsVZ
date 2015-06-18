@@ -522,6 +522,13 @@ void sigLoadRules(int iSigNum)
 						sscanf(cp,"uRule=%u;",&uRuleNum);
 						gsRuleTest[uRule].uRule=uRuleNum;
 
+						if((cp1=strstr(cp,";uPriority=")))
+						{
+							unsigned uPriority=0;
+							if(sscanf(cp1,";uPriority=%u;",&uPriority)==1)
+								gsRuleTest[uRule].uPriority=uPriority;
+						}
+
 						//preset cp2 also jic
 						if((cp2=cp1=strstr(cp,"cPrefix=")))
 						{
@@ -546,11 +553,13 @@ void sigLoadRules(int iSigNum)
 
 						if(guLogLevel>3)
 						{
+							//uRule=1;cLabel=Default;cPrefix=Any;uPriority=1000;cOption=RoundRobin=yes;
 							logfileLine("sigLoadRules l1",cp);
-							sprintf(gcQuery,"(%u) uRuleNum=%u;cPrefix=%s;usQualify=%u;usRoundRobin=%u;",
+							sprintf(gcQuery,"(%u) uRuleNum=%u;cPrefix=%s;uPriority=%u;usQualify=%u;usRoundRobin=%u;",
 									uRule,
 									gsRuleTest[uRule].uRule,
 									gsRuleTest[uRule].cPrefix,
+									gsRuleTest[uRule].uPriority,
 									gsRuleTest[uRule].usQualify,
 									gsRuleTest[uRule].usRoundRobin);
 							logfileLine("sigLoadRules",gcQuery);
@@ -572,6 +581,26 @@ void sigLoadRules(int iSigNum)
 		logfileLine("sigLoadRules",gcQuery);
 	}
 
+	//simple bubble sort (ok for now and small rule sets) based on tRule.uPriority
+	//this allows the DR code to be simple
+	//but requires that backend rule priority field be set correctly in a global context
+	//note that tRules needs uCluster urgently!
+	for(i=0;i<uRule;i++)
+	{
+		register int j;
+		structRule tmp;
+		for(j=0;j<uRule-i-1;j++)
+		{
+			if(gsRuleTest[j].uPriority>gsRuleTest[j+1].uPriority)
+			{
+				memcpy((void *)&tmp,(void *)&gsRuleTest[j],sizeof(structRule));
+				memcpy((void *)&gsRuleTest[j],(void *)&gsRuleTest[j+1],sizeof(structRule));
+				memcpy((void *)&gsRuleTest[j+1],(void *)&tmp,sizeof(structRule));
+			}
+		}
+	}
+     
+
 	if(guLogLevel>2)
 	{
 		//debug only
@@ -581,10 +610,11 @@ void sigLoadRules(int iSigNum)
 		
 			if(gsRuleTest[i].uRule)	
 			{
-				sprintf(gcQuery,"(%d) uRuleNum=%u;cPrefix=%s;usRoundRobin=%u;usQualify=%u;usNumOfAddr=%u;",
+				sprintf(gcQuery,"(%d) uRuleNum=%u;cPrefix=%s;uPriority=%u;usRoundRobin=%u;usQualify=%u;usNumOfAddr=%u;",
 						i,
 						gsRuleTest[i].uRule,
 						gsRuleTest[i].cPrefix,
+						gsRuleTest[i].uPriority,
 						gsRuleTest[i].usRoundRobin,
 						gsRuleTest[i].usQualify,
 						gsRuleTest[i].usNumOfAddr);

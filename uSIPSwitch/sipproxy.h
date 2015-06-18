@@ -44,6 +44,7 @@ typedef struct {
 typedef struct {
 	char cPrefix[32];
 	unsigned uRule;
+	unsigned uPriority;
 	unsigned short usRoundRobin;
 	unsigned short usQualify;
 	unsigned short usNumOfAddr;
