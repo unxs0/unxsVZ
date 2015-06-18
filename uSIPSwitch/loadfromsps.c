@@ -32,6 +32,7 @@ void AddGWs(char const *cCluster);
 void logfileLine(const char *cFunction,const char *cLogline);
 int iSetupAndTestMemcached(void);
 void AddRules(char const *cCluster);
+void DelRules(char const *cCluster);
 
 static FILE *gLfp=NULL;
 memcached_st *gsMemc;
@@ -84,17 +85,23 @@ int main(int iArgc, char *cArgv[])
 			AddRules(cArgv[2]);
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"DelRules",8))
+		{
+			DelRules(cArgv[2]);
+			goto CommonExit;
+		}
 		else if(!strncmp(cArgv[1],"AddAll",6))
 		{
 			AddPBXs(cArgv[2]);
 			AddDIDs(cArgv[2]);
 			AddGWs(cArgv[2]);
+			DelRules(cArgv[2]);
 			AddRules(cArgv[2]);
 			goto CommonExit;
 		}
 	}
 
-	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddRules, AddAll, DNSUpdatePBX, DNSUpdateGW <cCluster> [silent]\n",gcProgram);
+	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddRules, DelRules, AddAll, DNSUpdatePBX, DNSUpdateGW <cCluster> [silent]\n",gcProgram);
 
 CommonExit:
 	mysql_close(&gMysql);
@@ -616,7 +623,6 @@ void AddRules(char const *cCluster)
         MYSQL_ROW field;
         MYSQL_RES *res2;
         MYSQL_ROW field2;
-	unsigned uRuleCount=0;
 
 	if(!guSilent) printf("AddRules() start\n");
 	sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,"
@@ -686,7 +692,7 @@ void AddRules(char const *cCluster)
 		//We created the data string now commit to memcached
 		char cKey[100];
 		unsigned rc;
-		sprintf(cKey,"%u-rule",uRuleCount++);
+		sprintf(cKey,"%s-rule",field2[0]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cData,strlen(cData),(time_t)0,(uint32_t)0);
 		if(rc!=MEMCACHED_SUCCESS)
 		{
@@ -1021,3 +1027,77 @@ void UpdatetAddressForPBX(unsigned uPBX,char *cIP,unsigned uPort,unsigned uPrior
 }//void UpdatetAddressForPBX(unsigned uPBX,char *cIP,unsigned uPort,unsigned uPriority,unsigned uWeight)
 
 
+void DelRules(char const *cCluster)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	if(!guSilent) printf("DelRules() start\n");
+	//This SQL does not work for rules with two time intervals
+	sprintf(gcQuery,"SELECT tRule.uRule,"
+			" SUM( IF(tTimeInterval.cStartDate='',1,DATE(NOW())>=tTimeInterval.cStartDate)"
+			" AND IF(tTimeInterval.cEndDate='',1,DATE(NOW())<=tTimeInterval.cEndDate)),"
+			" SUM(IF(tTimeInterval.cStartTime='',1,TIME(NOW())>=tTimeInterval.cStartTime)"
+			" AND IF(tTimeInterval.cEndTime='',1,TIME(NOW())<=tTimeInterval.cEndTime)),"
+			" SUM(IF(INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK(NOW()))>0,1,0)),"
+			" GROUP_CONCAT(tTimeInterval.cStartDate),"
+			" GROUP_CONCAT(tTimeInterval.cEndDate),"
+			" GROUP_CONCAT(tTimeInterval.cStartTime),"
+			" GROUP_CONCAT(tTimeInterval.cEndTime),"
+			" GROUP_CONCAT(tTimeInterval.cDaysOfWeek)"
+			" FROM tRule,tGroupGlue,tTimeInterval"
+			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
+			" AND tGroupGlue.uGroup=tRule.uRule"
+			" AND tGroupGlue.uGroupType=1"
+			" GROUP BY tRule.uRule");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf(gcQuery);
+		logfileLine("DelRules",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		char cKey[100];
+		unsigned rc;
+		sprintf(cKey,"%s-rule",field[0]);
+		if(!guSilent)
+		{
+			printf("Date:%s Time:%s cDaysOfWeek:%s\n",
+						field[1],field[2],field[3]);
+			printf("cStartDate:%s cEndDate:%s cStartTime:%s cEndTime:%s cDaysOfWeek:%s\n",
+						field[4],field[5],field[6],field[7],field[8]);
+		}
+		unsigned uDateConditionMet=0;
+		unsigned uTimeConditionMet=0;
+		unsigned uDayConditionMet=0;
+		sscanf(field[1],"%u",&uDateConditionMet);
+		sscanf(field[2],"%u",&uTimeConditionMet);
+		sscanf(field[3],"%u",&uDayConditionMet);
+		if(uDateConditionMet && uTimeConditionMet && uDayConditionMet)
+			continue;
+		//else try to delete the memcached rule
+		rc=memcached_delete(gsMemc,cKey,strlen(cKey),(time_t)0);
+		if(rc!=MEMCACHED_SUCCESS)
+		{
+			if(guLogLevel>2)
+			{
+				logfileLine("DelRules not found",cKey);
+			}
+			if(!guSilent) printf("DelRules() %s not found\n",cKey);
+		}
+		else
+		{
+			if(guLogLevel>2)
+			{
+				logfileLine("DelRules",cKey);
+			}
+			if(!guSilent) printf("DelRules() %s\n",cKey);
+		}
+	}//while rules
+	if(!guSilent) printf("DelRules() end\n");
+
+}//void DelRules()

@@ -453,15 +453,16 @@ void sigLoadRules(int iSigNum)
 	uint32_t flags;
 	unsigned uRule=0;
 	memcached_return rc;
-	for(i=0;i<MAX_RULES;i++)
+#define MAX_DB_RULE 32
+	for(i=1;i<=MAX_DB_RULE;i++)
 	{
 		//load from memcached
 		sprintf(cKey,"%d-rule",i);
 		sprintf(cData,"%.4191s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
 		if(rc!=MEMCACHED_SUCCESS)
 		{
-			logfileLine("sigLoadRules",cKey);
-			break;
+			//logfileLine("sigLoadRules skip",cKey);
+			continue;
 		}
 		else
 		{
@@ -555,6 +556,8 @@ void sigLoadRules(int iSigNum)
 							logfileLine("sigLoadRules",gcQuery);
 						}
 						uRule++;
+						if(uRule>=MAX_RULES)
+							break;
 					}
 					cp=cData+i+1;
 					gsRuleTest[uRule-1].usNumOfAddr=uAddr;
@@ -565,11 +568,11 @@ void sigLoadRules(int iSigNum)
 
 	if(guLogLevel>2)
 	{
-		sprintf(gcQuery,"Loaded %d rules",i);
+		sprintf(gcQuery,"Loaded %d rules",uRule);
 		logfileLine("sigLoadRules",gcQuery);
 	}
 
-	if(guLogLevel>5)
+	if(guLogLevel>2)
 	{
 		//debug only
 		for(i=0;i<MAX_RULES;i++)
