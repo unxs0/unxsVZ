@@ -354,8 +354,8 @@ int CallStartCIU(void)
 		sprintf(gcQuery,"uChannelsInUse:%u uLines:%u",uChannelsInUse,uLines);
 		logfileLine("readEv-CallStartCIU",gcQuery);
 	}
-	//if(uLines && uChannelsInUse && uChannelsInUse>uLines)
-	if(0)
+	if(uLines && uChannelsInUse && uChannelsInUse>uLines)
+	//if(1)
 	{
 		if(guLogLevel>3)
 		{
@@ -364,6 +364,10 @@ int CallStartCIU(void)
 		}
 
 		//We are using sems with announcement module only.
+		//here we should set the domain and user r-uri to
+		//select the specific audio message to be played e.g.
+		//vReplaceSIPHeaderToUser("NoMoreChannels");
+		//Then sems would look for NoMoreChannels.wav file
 		sprintf(cDestinationIP,"127.0.0.1");
 		uDestinationPort=5080;
 		return(1);
