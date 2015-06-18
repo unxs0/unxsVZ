@@ -193,6 +193,8 @@ unsigned uLoadGWFromCallID(void)
 		//Initial INVITE by PBX
 		sscanf(cData,"cSourceIP=%*[^;];uSourcePort=%*u;cDestIP=%[^;];uDestPort=%u;uType=%*u;cDID=%*[^;];luTime=%*u;uStayOnNet=%u;",
 			cDestinationIP,&uDestinationPort,&guStayOnNet);
+	if(!strncmp(cDestinationIP,"127.0.0",7))
+		guStayOnNet=1;
 	if(guLogLevel>3)
 	{
 		sprintf(gcQuery,"cDestIP:%s uDestPort:%u guStayOnNet:%u",cDestinationIP,uDestinationPort,guStayOnNet);
@@ -224,6 +226,9 @@ unsigned uLoadPBXFromCallID(void)
 		//Initial INVITE by GW
 		sscanf(cData,"cSourceIP=%*[^;];uSourcePort=%*u;cDestIP=%[^;];uDestPort=%u;uType=%*u;cDID=%*[^;];luTime=%*u;uStayOnNet=%u;",
 			cDestinationIP,&uDestinationPort,&guStayOnNet);
+
+	if(!strncmp(cDestinationIP,"127.0.0",7))
+		guStayOnNet=1;
 	if(guLogLevel>3)
 	{
 		sprintf(gcQuery,"cDestIP:%s uDestPort:%u guStayOnNet:%u",cDestinationIP,uDestinationPort,guStayOnNet);
@@ -301,6 +306,7 @@ void CallEndCIU(void)
 
 int CallStartCIU(void)
 {
+	if(guStayOnNet) return(0);//We do not count internal PBX or customer to customer calls as channel use
 	guLogLevel++;
 
 	//update or create a new record a.b.c.d-ciu (channels in use by PBX) where a.b.c.d is the IP of the PBX leg of call.
@@ -354,7 +360,7 @@ int CallStartCIU(void)
 		sprintf(gcQuery,"uChannelsInUse:%u uLines:%u",uChannelsInUse,uLines);
 		logfileLine("readEv-CallStartCIU",gcQuery);
 	}
-	if(uLines && uChannelsInUse && uChannelsInUse>uLines)
+	if(uLines && uChannelsInUse && uChannelsInUse>=uLines)
 	//if(1)
 	{
 		if(guLogLevel>3)
@@ -370,6 +376,7 @@ int CallStartCIU(void)
 		//Then sems would look for NoMoreChannels.wav file
 		sprintf(cDestinationIP,"127.0.0.1");
 		uDestinationPort=5080;
+		guLogLevel--;
 		return(1);
 	}
 
@@ -558,6 +565,8 @@ if(!uReply)
 				register int i;
 				for(i=0;gsRuleTest[i].cPrefix[0] && i<MAX_RULES;i++)
 				{
+					//logfileLine("readEv-process DR",gsRuleTest[i].cPrefix);
+					//logfileLine("readEv-process DR",cDID);
 					//Find first rule that matches prefix the 'Any' default route 
 					//	cPrefix should come after all the number based ones.
 					if(!strncmp(cDID,gsRuleTest[i].cPrefix,strlen(gsRuleTest[i].cPrefix)) || gsRuleTest[i].cPrefix[0]=='A')
@@ -589,6 +598,11 @@ if(!uReply)
 
 				//Only for non stay on net calls
 				//Valid INVITE mark channel used.	
+				if(!strncmp(cDestinationIP,"127.0.0",7))
+				{
+					uStayOnNet=1;
+					guStayOnNet=1;
+				}
 				CallStartCIU();
 			}
 
@@ -808,9 +822,7 @@ else
 	{
 		if(!uLoadPBXFromCallID())
 		{
-			//There has to have been a call start for same session! Fix!
-			//CallEndCIU();
-			;
+			CallEndCIU();
 		}
 	}
 
