@@ -1033,13 +1033,19 @@ void DelRules(char const *cCluster)
         MYSQL_ROW field;
 
 	if(!guSilent) printf("DelRules() start\n");
-	//This SQL does not work for rules with two time intervals
+	//We only need the large sum with the dayofweek, still testing...
 	sprintf(gcQuery,"SELECT tRule.uRule,"
 			" SUM( IF(tTimeInterval.cStartDate='',1,DATE(NOW())>=tTimeInterval.cStartDate)"
 			" AND IF(tTimeInterval.cEndDate='',1,DATE(NOW())<=tTimeInterval.cEndDate)),"
 			" SUM(IF(tTimeInterval.cStartTime='',1,TIME(NOW())>=tTimeInterval.cStartTime)"
 			" AND IF(tTimeInterval.cEndTime='',1,TIME(NOW())<=tTimeInterval.cEndTime)),"
-			" SUM(IF(INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK(NOW()))>0,1,0)),"
+			" SUM("
+			" IF(INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK(NOW()))>0,1,0)"
+			" AND IF(tTimeInterval.cStartTime='',1,TIME(NOW())>=tTimeInterval.cStartTime)"
+			" AND IF(tTimeInterval.cEndTime='',1,TIME(NOW())<=tTimeInterval.cEndTime)"
+			" AND IF(tTimeInterval.cStartDate='',1,DATE(NOW())>=tTimeInterval.cStartDate)"
+			" AND IF(tTimeInterval.cEndDate='',1,DATE(NOW())<=tTimeInterval.cEndDate)"
+			" ),"
 			" GROUP_CONCAT(tTimeInterval.cStartDate),"
 			" GROUP_CONCAT(tTimeInterval.cEndDate),"
 			" GROUP_CONCAT(tTimeInterval.cStartTime),"
