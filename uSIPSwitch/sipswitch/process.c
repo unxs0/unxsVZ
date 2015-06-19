@@ -53,7 +53,6 @@ if(cMessage[0]=='S')
 
 char cData[256]={""};
 char cKey[128]={""};
-char *cpMsg=cMessage;
 #define GATEWAY 1
 #define PBX 2
 unsigned uType=0;//1 is gateway, 2 is pbx, 0 is unknown
@@ -66,38 +65,142 @@ size_t sizeData=255;//this is set by memcached
 uint32_t flags=0;
 memcached_return rc;
 
+//
 //nested functions
+//
+//
+
+
+void ReplaceInviteUser(char *cMessage,char *cNewUser)
+{
+	//First line
+	//INVITE sip:19999990000@69.61.19.20
+	//replaces only the 19999990000
+	if(!strncmp(cMessage,"INVITE sip:",strlen("INVITE sip:")) && (strlen(cMessage)+strlen(cNewUser)<2047))
+	{	
+		sprintf(cMessageModified,"INVITE sip:%s",cNewUser);
+
+		char *cp;
+		if((cp=strchr(cMessage,'@')))
+		{
+			//copy rest
+			strcat(cMessageModified,cp);
+
+			memcpy((void *)cMessage,(void *)cMessageModified,2048);
+
+			if(guLogLevel>3)
+				logfileLine("readEv-process","ReplaceInviteUser()");
+				//logfileLine("readEv-process",cMessage);
+				//logfileLine("readEv-process",cMessageModified);
+		}
+		else
+		{
+			if(guLogLevel>2)
+				logfileLine("readEv-process","ReplaceInviteUser() @Error");
+		}
+	}
+}//void ReplaceInviteUser(char *cMessage,char *cNewUser)
+
+
+void ReplaceTo(char *cMessage,char *cNewTo)
+{
+	char *cp;
+	if((cp=strstr(cMessage,"To:")) && (strlen(cMessage)+strlen(cNewTo)<2047))
+	{	
+		//copy upto cp
+		char cSave[1];
+		strncpy(cSave,cp,1);
+		*(cp)=0;
+		cMessageModified[0]=0;
+		strcat(cMessageModified,cMessage);
+		*(cp)=cSave[0];
+
+		char *cp2;
+		if((cp2=strchr(cp,'\r')))
+		{
+
+			//add new To:
+			strcat(cMessageModified,cNewTo);
+
+			//copy rest
+			strcat(cMessageModified,cp2);
+
+			memcpy((void *)cMessage,(void *)cMessageModified,2048);
+
+			if(guLogLevel>3)
+				logfileLine("readEv-process","ReplaceTo()");
+				//logfileLine("readEv-process",cMessage);
+				//logfileLine("readEv-process",cMessageModified);
+		}
+	}
+}//void ReplaceTo(char *cMessage,char *cNewTo)
+
+
+void AddRecordRoute(char *cMessage)
+{
+	char *cp;
+	if((cp=strchr(cMessage,'\n')))
+	{	//copy upto cp included
+		char cSave[1];
+		unsigned uLen=0;
+		strncpy(cSave,cp+1,1);
+		*(cp+1)=0;
+		cMessageModified[0]=0;
+		strncat(cMessageModified,cMessage,2047);
+		uLen=strlen(cMessage);
+		*(cp+1)=cSave[0];
+
+		//add new content
+		strcat(cMessageModified,"Record-Route: <sip:");
+		uLen+=strlen("Record-Route: <sip:");
+		strcat(cMessageModified,gcServerIP);
+		uLen+=strlen(gcServerIP);
+		strcat(cMessageModified,";lr>\r\n");
+		uLen+=strlen(";lr>\r\n");
+
+		//copy rest
+		strncat(cMessageModified,cp+1,(2047-uLen));
+		uLen+=strlen(cp+1);
+		if(uLen>2047)
+			logfileLine("readEv-process error","cMessageModified len");
+		memcpy((void *)cMessage,(void *)cMessageModified,2048);
+
+		if(guLogLevel>3)
+			logfileLine("readEv-process","AddRecordRoute()");
+	}
+}//void AddRecordRoute(char *cMessage)
+
+
 int iModifyMessage(char *cMessage)
 {
-/*
-16.12 Summary of Proxy Route Processing
+	/*
+	16.12 Summary of Proxy Route Processing
 
+	In the absence of local policy to the contrary, the processing a
+	proxy performs on a request containing a Route header field can be
+	summarized in the following steps.
 
-   In the absence of local policy to the contrary, the processing a
-   proxy performs on a request containing a Route header field can be
-   summarized in the following steps.
-
-      1.  The proxy will inspect the Request-URI.  If it indicates a
+        1.  The proxy will inspect the Request-URI.  If it indicates a
           resource owned by this proxy, the proxy will replace it with
           the results of running a location service.  Otherwise, the
           proxy will not change the Request-URI.
 
-      2.  The proxy will inspect the URI in the topmost Route header
+        2.  The proxy will inspect the URI in the topmost Route header
           field value.  If it indicates this proxy, the proxy removes it
           from the Route header field (this route node has been
           reached).
 
-      3.  The proxy will forward the request to the resource indicated
+        3.  The proxy will forward the request to the resource indicated
           by the URI in the topmost Route header field value or in the
           Request-URI if no Route header field is present.  The proxy
           determines the address, port and transport to use when
           forwarding the request by applying the procedures in [4] to
           that URI.
 
-   If no strict-routing elements are encountered on the path of the
-   request, the Request-URI will always indicate the target of the
-   request.
-*/
+	If no strict-routing elements are encountered on the path of the
+	request, the Request-URI will always indicate the target of the
+	request.
+	*/
 
 	//Rewrite URI if required
 	//Parse URI
@@ -119,36 +222,10 @@ int iModifyMessage(char *cMessage)
 	//Initial test just add a Record-Route so this proxy get's everything.
 	//The non changing URI does not seem to confuse the Asterisk PBX or Vitelity GW
 	//at this time. Maybe the adding of a Record-Route will affect this now?
+	
 	if(uType==GATEWAY && uRequestType==INVITE)
-	{
-		if((cp=strchr(cMessage,'\n')))
-		{	//copy upto cp included
-			char cSave[1];
-			unsigned uLen=0;
-			strncpy(cSave,cp+1,1);
-			*(cp+1)=0;
-			strncat(cMessageModified,cMessage,2047);
-			uLen=strlen(cMessage);
-			*(cp+1)=cSave[0];
+		AddRecordRoute(cMessage);
 
-			//add new content
-			strcat(cMessageModified,"Record-Route: <sip:");
-			uLen+=strlen("Record-Route: <sip:");
-			strcat(cMessageModified,gcServerIP);
-			uLen+=strlen(gcServerIP);
-			strcat(cMessageModified,";lr>\r\n");
-			uLen+=strlen(";lr>\r\n");
-
-			//copy rest
-			strncat(cMessageModified,cp+1,(2047-uLen));
-			uLen+=strlen(cp+1);
-			if(uLen>2047)
-				logfileLine("readEv-process error","cMessageModified len");
-			cpMsg=cMessageModified;
-			if(guLogLevel>3)
-				logfileLine("readEv-process","iModifyMessage() added Record-Route");
-		}
-	}
 	return(0);
 
 }//int iModifyMessage(char *cMessage)
@@ -372,10 +449,12 @@ int CallStartCIU(void)
 		//We are using sems with announcement module only.
 		//here we should set the domain and user r-uri to
 		//select the specific audio message to be played e.g.
-		//vReplaceSIPHeaderToUser("NoMoreChannels");
 		//Then sems would look for NoMoreChannels.wav file
 		sprintf(cDestinationIP,"127.0.0.1");
 		uDestinationPort=5080;
+		//To: <sip:7073613110@64.2.142.90:5060>
+		//This replace allows us to customize sems audio announcement
+		ReplaceInviteUser(cMessage,"channellimit");
 		guLogLevel--;
 		return(1);
 	}
@@ -602,6 +681,9 @@ if(!uReply)
 				{
 					uStayOnNet=1;
 					guStayOnNet=1;
+					//testing only via tRule routing
+					if(!strncmp(cDestinationIP,"127.0.0.1",9) && uDestinationPort==5080)
+						ReplaceInviteUser(cMessage,"allbusy");
 				}
 				CallStartCIU();
 			}
@@ -873,7 +955,7 @@ else
 
 
 //
-//Forward unmodified packet
+//Forward message packet
 if(cDestinationIP[0])
 {
 	if(!uDestinationPort) uDestinationPort=DEFAULT_SIP_PORT;
@@ -890,7 +972,7 @@ if(cDestinationIP[0])
 	}
 
 	int iRetVal=0;
-	if((iRetVal=iSendUDPMessageWrapper(cpMsg,cDestinationIP,uDestinationPort)))
+	if((iRetVal=iSendUDPMessageWrapper(cMessage,cDestinationIP,uDestinationPort)))
 	{
 		//Can be 2 for sending to same server error
 		if(iRetVal==1)
