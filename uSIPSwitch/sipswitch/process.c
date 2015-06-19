@@ -666,10 +666,14 @@ if(!uReply)
 							if(guLogLevel>3)
 								logfileLine("readEv-process","usRoundRobin=1");
 						}
-						else
+						else if(gsRuleTest[i].usNumOfAddr>0)
 						{
 							uDestinationPort=gsRuleTest[i].sAddr[0].uPort;
 							sprintf(cDestinationIP,"%.31s",gsRuleTest[i].sAddr[0].cIP);
+						}
+						else if(1)
+						{
+							continue;
 						}
 						break;
 					}
@@ -683,7 +687,7 @@ if(!uReply)
 					guStayOnNet=1;
 					//testing only via tRule routing
 					if(!strncmp(cDestinationIP,"127.0.0.1",9) && uDestinationPort==5080)
-						ReplaceInviteUser(cMessage,"allbusy");
+						ReplaceInviteUser(cMessage,"international");
 				}
 				CallStartCIU();
 			}
