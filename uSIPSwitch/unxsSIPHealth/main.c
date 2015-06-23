@@ -110,6 +110,38 @@ int iSendUDPMessageWrapper(char *cMsg,char *cDestIP,unsigned uDestPort)
 
 }//int iSendUDPMessageWrapper()
 
+#include <ctype.h>
+void vRandom32Chars(char *cOut)
+{
+	FILE *fp;
+	if((fp=fopen("/dev/urandom","r"))==NULL)
+		return;
+
+	char cBuffer[128];
+	if(fread(cBuffer,128,1,fp)!=1)
+	{
+		fclose(fp);
+		return;
+	}
+	fclose(fp);
+	int i,j=0;
+	for(i=0;i<128 && j<32;i++)
+	{
+		if(!islower(cBuffer[i]) && !isdigit(cBuffer[i]))
+		{
+			cBuffer[i]=cBuffer[i]%16+'a';
+		}
+
+		if(islower(cBuffer[i])||isdigit(cBuffer[i]))
+		{
+			cOut[j]=cBuffer[i];
+			j++;
+		}
+	}
+	cOut[j]=0;
+
+}//void vRandom32Chars(char *cOut)
+
 
 void vSendOPTIONSRequest(char *cIP,unsigned uPort,char *cDate)
 {
@@ -160,7 +192,9 @@ void vSendOPTIONSRequest(char *cIP,unsigned uPort,char *cDate)
 	sprintf(cMsg,"Contact: <sip:Unknown@%s:%u>\r\n",gcServerIP,guServerPort);
 	strcat(cLargeMsg,cMsg);
 
-	sprintf(cMsg,"Call-ID: 1fb396b0676c407a17f42b9f7c7b02f1@%s:%u\r\n",gcServerIP,guServerPort);
+	char cCallIDString[33]={"1fb396b0676c407a17f42b9f7c7b02f1"};
+	vRandom32Chars(cCallIDString);
+	sprintf(cMsg,"Call-ID: %s@%s:%u\r\n",cCallIDString,gcServerIP,guServerPort);
 	strcat(cLargeMsg,cMsg);
 
 	sprintf(cMsg,"CSeq: 102 OPTIONS\r\n");
