@@ -40,6 +40,7 @@ static char cuDatacenterPullDown[256]={""};
 
 //cComment
 static char *cComment={""};
+static char *cIPList={""};
 
 //new added post RAD
 static unsigned uIPNum=0;
@@ -141,6 +142,8 @@ void ProcesstIPVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uCountryCode);
 		else if(!strcmp(entries[i].name,"uIPType"))
 			sscanf(entries[i].val,"%u",&uIPType);
+		else if(!strcmp(entries[i].name,"cIPList"))
+			cIPList=entries[i].val;
 		//
 		else if(!strcmp(entries[i].name,"cuDatacenterPullDown"))
 		{
@@ -390,6 +393,9 @@ void tIPSearchSet(unsigned uStep)
 	if(uFirewallMode)
 		printf(" checked");
 	printf("> Firewall mode");
+
+	printf("<td><textarea title='List of IPs one per line. Leave one extra blank line at the end of list.'" 
+			" cols=32 wrap=soft rows=1 name=cIPList>%s</textarea></td>",cIPList);
 
 	OpenRow("Date Limits","black");
 	printf("<input title='Only show last 24 hours FW entries' type=checkbox name=u24LimitNoCA");
