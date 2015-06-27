@@ -307,6 +307,48 @@ void ExttIPCommands(pentry entries[], int x)
 					uFWStatusAnySearch=1;
 				}
 
+				//If we have a list it takes precedence for now
+				if(cIPList[0])
+				{
+					if((uGroup=uGetSearchGroup(gcUser,31))==0)
+					{
+						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=31"//2 is search group
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcUser,guCompany,guLoginClient);//2=search set type TODO
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+								tIP("Insert error");
+						if((uGroup=mysql_insert_id(&gMysql))==0)
+		                       	 		tIP("An error ocurred when attempting to create your search set");
+					}
+
+					register int i;
+					char cIP[32]={""};
+					for(i=0;cIPList[i] && i<strlen(cIPList);i++)
+					{
+						if(cIPList[i]=='\n' || cIPList[i]=='\r' || cIPList[i+1]==0)
+						{
+							//tIP(cIP);
+							sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uIP)"
+								" SELECT %u,uIP FROM tIP WHERE cLabel='%s'",uGroup,cIP);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+									tIP(gcQuery);
+							cIP[0]=0;
+						}
+						else
+						{
+							if(strlen(cIP)<31)
+							{
+								char cIPChar[2]={""};
+								sprintf(cIPChar,"%c",cIPList[i]);
+								strcat(cIP,cIPChar);
+							}
+						}
+					}
+					tIP("New cIPList feature being developed");
+				}
+
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
 						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0 
 						&& uFWStatusSearch==0 && uFWStatusAnySearch==0 && uCountryCodeSearch==0)
