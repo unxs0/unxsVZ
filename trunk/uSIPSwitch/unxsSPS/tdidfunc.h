@@ -14,7 +14,8 @@ TEMPLATE VARS AND FUNCTIONS
 */
 
 
-
+//extern
+void tPBXtDIDNavList(unsigned uPBX);
 
 void ExtProcesstDIDVars(pentry entries[], int x)
 {
@@ -140,8 +141,18 @@ void ExttDIDButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
+			printf("DIDs are used to route incoming SIP traffic from Carriers to PBXs. You need to make sure that"
+				" your routing logic strips any leading chars like 1s or other chars that your Carriers might"
+				" be sending.");
 			printf("<p><u>Record Context Info</u><br>");
+			printf("If possible we provide links to related items.");
+			if(uPBX)
+			{
+				printf(" Like DIDs of same PBX:");
+				tPBXtDIDNavList(uPBX);
+			}
 			printf("<p><u>Operations</u><br>");
+			printf("This feature is not available at this time.<br>");
 			//printf("<br><input type=submit class=largeButton title='Sample button help'"
 			//		" name=gcCommand value='Sample Button'>");
 	}

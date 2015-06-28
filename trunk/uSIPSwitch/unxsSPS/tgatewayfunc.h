@@ -18,7 +18,7 @@ static unsigned uGroup=0;
 static char cuGroupPullDown[256]={""};
 
 void tGatewayNavList(void);
-void tGatewaytAddressNavList(void);
+void tGatewaytAddressNavList(unsigned uGateway);
 void tGatewaytGroupNavList(void);
 
 void ExtProcesstGatewayVars(pentry entries[], int x)
@@ -204,8 +204,8 @@ void ExttGatewayButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("Gateways are the carrier SIP proxies (or other servers of our own, like CLEC or CPE SIP equipment)"
-				" usually for DID or PSTN services.");
+			printf("Gateways are Carrier SIP proxies (or other servers of our own, like CLEC, early audio, or CPE SIP equipment)"
+				" usually for incoming DID traffic or outboud PSTN or other termination services.");
 			printf("<p><u>Record Context Info</u><br>");
 			if(uGateway)
 				tGatewaytGroupNavList();
@@ -214,7 +214,7 @@ void ExttGatewayButtons(void)
 			printf("<br><input type=submit class=largeButton title='Add this GW to the above GW tGroup'"
 					" name=gcCommand value='Add to Group'>");
 			if(uGateway)
-				tGatewaytAddressNavList();
+				tGatewaytAddressNavList(uGateway);
 			tGatewayNavList();
 	}
 	CloseFieldSet();
@@ -445,7 +445,7 @@ void tGatewayNavList(void)
 
 
 
-void tGatewaytAddressNavList(void)
+void tGatewaytAddressNavList(unsigned uGateway)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -472,7 +472,7 @@ void tGatewaytAddressNavList(void)
 
         mysql_free_result(res);
 
-}//void tGatewayAddressNavList(void)
+}//void tGatewayAddressNavList(unsigned uGateway)
 
 
 void tGatewaytGroupNavList(void)

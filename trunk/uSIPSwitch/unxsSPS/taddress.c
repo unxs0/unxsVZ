@@ -424,6 +424,20 @@ void tAddressInput(unsigned uMode)
 	else
 		YesNoPullDown("uAvailable",uAvailable,0);
 
+	//uAvailable
+	OpenRow(LANG_FL_tAddress_uUptime,"black");
+	printf("<input title='%s' type=text name=uUptime id=uUptime value='%llu' size=16 maxlength=10 "
+		,LANG_FT_tAddress_uUptime,uUptime);
+	if(guPermLevel>=0 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uUptime id=uUptime value='%llu' >\n",uUptime);
+	}
+
 	printf("</tr>\n");
 
 }//void tAddressInput(unsigned uMode)

@@ -17,9 +17,9 @@ TEMPLATE VARS AND FUNCTIONS
 static unsigned uInGroup=0;
 static char cuInGroupPullDown[256]={""};
 
-void tPBXtAddressNavList(void);
+void tPBXtAddressNavList(unsigned uPBX);
 void tPBXtGroupNavList(void);
-void tPBXtDIDNavList(void);
+void tPBXtDIDNavList(unsigned uPBX);
 
 void ExtProcesstPBXVars(pentry entries[], int x)
 {
@@ -187,15 +187,29 @@ void ExttPBXButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
+			printf("uSIPSwitch is usually used for switching SIP traffic between Carriers and hosted business PBXs."
+				" PBXs are SIP gateways, usually B2BUA Asterisk servers or similar, that are"
+				" associated with DIDs.<br>"
+				" PBXs have IP addresses that are manually set or added by our DNS subsystem. A record IPs are added"
+				" along with standard udp SRV record IPs if the hostname has them. This means that if a PBX has a backup"
+				" or failover PBX, the IP will also show up here.<br>"
+				" If our end point health system is running the IPs will be checked for SIP responses to OPTIONS requests"
+				" and will be marked in tAddress as available. An uptime counter is incremented giving an adhoc reliability"
+				" number."
+					);
+
 			printf("<p><u>Operations</u><br>");
+			printf("No tJob data feature is available at this time.");
+
+			printf("<p>");
 			tTablePullDown("tGroup;cuInGroupPullDown","cLabel","cLabel",uInGroup,1);
 			printf("<br><input type=submit class=largeButton title='Add/remove this PBX to/from the selected group above'"
 					" name=gcCommand value='Add/Remove Group'>");
 			if(uPBX)
 			{
-				tPBXtAddressNavList();
+				tPBXtAddressNavList(uPBX);
 				tPBXtGroupNavList();
-				tPBXtDIDNavList();
+				tPBXtDIDNavList(uPBX);
 			}
 	}
 	CloseFieldSet();
@@ -351,7 +365,7 @@ void ExttPBXNavBar(void)
 }//void ExttPBXNavBar(void)
 
 
-void tPBXtAddressNavList(void)
+void tPBXtAddressNavList(unsigned uPBX)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -378,7 +392,7 @@ void tPBXtAddressNavList(void)
 
         mysql_free_result(res);
 
-}//void tPBXtAddressNavList(void)
+}//void tPBXtAddressNavList()
 
 
 void tPBXtGroupNavList(void)
@@ -414,7 +428,7 @@ void tPBXtGroupNavList(void)
 }//void tPBXtGroupNavList(void)
 
 
-void tPBXtDIDNavList(void)
+void tPBXtDIDNavList(unsigned uPBX)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -442,5 +456,5 @@ void tPBXtDIDNavList(void)
 
         mysql_free_result(res);
 
-}//void tPBXtDIDNavList(void)
+}//void tPBXtDIDNavList(unsigned uPBX)
 

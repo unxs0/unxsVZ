@@ -44,9 +44,11 @@ static unsigned uCreatedBy=0;
 static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 static time_t uModDate=0;
+static unsigned uCluster=0;
+static char cuClusterPullDown[256]={""};
 
 
-#define VAR_LIST_tRule "tRule.uRule,tRule.cLabel,tRule.uPriority,tRule.cPrefix,tRule.uInGroup,tRule.uExGroup,tRule.cComment,tRule.uOwner,tRule.uCreatedBy,tRule.uCreatedDate,tRule.uModBy,tRule.uModDate"
+#define VAR_LIST_tRule "tRule.uRule,tRule.cLabel,tRule.uPriority,tRule.cPrefix,tRule.uInGroup,tRule.uExGroup,tRule.cComment,tRule.uOwner,tRule.uCreatedBy,tRule.uCreatedDate,tRule.uModBy,tRule.uModDate,tRule.uCluster"
 
  //Local only
 void Insert_tRule(void);
@@ -110,6 +112,13 @@ void ProcesstRuleVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uCluster"))
+			sscanf(entries[i].val,"%u",&uCluster);
+		else if(!strcmp(entries[i].name,"cuClusterPullDown"))
+		{
+			sprintf(cuClusterPullDown,"%.255s",entries[i].val);
+			uCluster=ReadPullDown("tCluster","cLabel",cuClusterPullDown);
+		}
 
 	}
 
@@ -220,6 +229,7 @@ void tRule(const char *cResult)
 		sscanf(field[9],"%lu",&uCreatedDate);
 		sscanf(field[10],"%u",&uModBy);
 		sscanf(field[11],"%lu",&uModDate);
+		sscanf(field[12],"%u",&uCluster);
 
 		}
 
@@ -308,6 +318,12 @@ void tRuleInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel id=cLabel value='%s'>\n",EncodeDoubleQuotes(cLabel));
 	}
+	//uCluster COLTYPE_SELECTTABLE
+	OpenRow(LANG_FL_tPBX_uCluster,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tCluster;cuClusterPullDown","cLabel","cLabel",uCluster,1);
+	else
+		tTablePullDown("tCluster;cuClusterPullDown","cLabel","cLabel",uCluster,0);
 	//uPriority uRADType=3
 	OpenRow(LANG_FL_tRule_uPriority,"black");
 	printf("<input title='%s' type=text name=uPriority id=uPriority value='%u' size=16 maxlength=10 "
@@ -443,6 +459,7 @@ void Insert_tRule(void)
 {
 	sprintf(gcQuery,"INSERT INTO tRule SET "
 		"cLabel='%s',"
+		"uCluster=%u,"
 		"uPriority=%u,"
 		"cPrefix='%s',"
 		"uInGroup=%u,"
@@ -452,6 +469,7 @@ void Insert_tRule(void)
 		"uCreatedBy=%u,"
 		"uCreatedDate=UNIX_TIMESTAMP(NOW())"
 			,TextAreaSave(cLabel)
+			,uCluster
 			,uPriority
 			,TextAreaSave(cPrefix)
 			,uInGroup
@@ -470,6 +488,7 @@ void Update_tRule(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tRule SET "
 		"cLabel='%s',"
+		"uCluster=%u,"
 		"uPriority=%u,"
 		"cPrefix='%s',"
 		"uInGroup=%u,"
@@ -480,6 +499,7 @@ void Update_tRule(char *cRowid)
 		"uModDate=UNIX_TIMESTAMP(NOW())"
 		" WHERE _rowid=%s"
 			,TextAreaSave(cLabel)
+			,uCluster
 			,uPriority
 			,TextAreaSave(cPrefix)
 			,uInGroup
@@ -578,6 +598,7 @@ void tRuleList(void)
 		"<td><font face=arial,helvetica color=white>uCreatedDate"
 		"<td><font face=arial,helvetica color=white>uModBy"
 		"<td><font face=arial,helvetica color=white>uModDate"
+		"<td><font face=arial,helvetica color=white>uCluster"
 		"</tr>");
 
 
@@ -608,7 +629,7 @@ void tRuleList(void)
 			ctime_r(&luTime11,cBuf11);
 		else
 			sprintf(cBuf11,"---");
-		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tRule&uRule=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><a class=darkLink href=unxsSPS.cgi?gcFunction=tRule&uRule=%s>%s</a><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
@@ -622,6 +643,7 @@ void tRuleList(void)
 			,cBuf9
 			,ForeignKey("tClient","cLabel",strtoul(field[10],NULL,10))
 			,cBuf11
+			,ForeignKey("tCluster","cLabel",strtoul(field[12],NULL,10))
 				);
 
 	}
@@ -646,7 +668,8 @@ void CreatetRule(void)
 		"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
 		"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
-		"uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+		"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+		"uCluster INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uCluster)");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

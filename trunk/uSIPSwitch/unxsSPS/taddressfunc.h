@@ -16,6 +16,9 @@ TEMPLATE VARS AND FUNCTIONS
 
 
 void tAddressNavList(void);
+//extern
+void tPBXtAddressNavList(unsigned uPBX);
+void tGatewaytAddressNavList(unsigned uGateway);
 
 void ExtProcesstAddressVars(pentry entries[], int x)
 {
@@ -34,7 +37,20 @@ void ExttAddressCommands(pentry entries[], int x)
 	if(!strcmp(gcFunction,"tAddressTools"))
 	{
 		
-		if(!strcmp(gcCommand,LANG_NB_NEW))
+		if(!strcmp(gcCommand,"Reset Uptime"))
+                {
+			if(guPermLevel>=12)
+			{
+				sprintf(gcQuery,"UPDATE tAddress SET uUptime=0");
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					tAddress("<blink>Error</blink>: Uptime reset mysql error");
+	                        tAddress("Uptime reset done");
+			}
+			else
+				tAddress("<blink>Error</blink>: Denied by permissions settings");
+                }
+		else if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
 			if(guPermLevel>=9)
 			{
@@ -142,11 +158,18 @@ void ExttAddressButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("Important: Make sure that your firewall allows traffic for all IPs listed here.");
+			printf("The table stores all IP addresses in use. IPs may originate from automated sources like"
+				" our DNS resolver subsystem.");
+			printf("<p>Important: Make sure that your firewalls are configured correctly.");
 			printf("<p><u>Record Context Info</u><br>");
+			if(uPBX)
+				tPBXtAddressNavList(uPBX);
+			if(uGateway)
+				tGatewaytAddressNavList(uGateway);
 			printf("<p><u>Operations</u><br>");
-			//printf("<br><input type=submit class=largeButton title='Sample button help'"
-			//		" name=gcCommand value='Sample Button'>");
+			if(guPermLevel>=12)
+				printf("<br><input type=submit class=largeButton title='Global uptime reset to zero for all IPs'"
+					" name=gcCommand value='Reset Uptime'>");
 			tAddressNavList();
 	}
 	CloseFieldSet();
