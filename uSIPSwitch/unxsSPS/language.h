@@ -321,6 +321,8 @@
 #define LANG_FT_tAddress_uHealthCheckedDate "Unix timestamp for last health check"
 #define LANG_FL_tAddress_uAvailable "uAvailable"
 #define LANG_FT_tAddress_uAvailable "IP is should not be used by uSIPSwitch if 0"
+#define LANG_FL_tAddress_uUptime "uUptime"
+#define LANG_FT_tAddress_uUptime "Simple health check counter"
 #define LANG_FL_tRule_uModDate "uModDate"
 #define LANG_FT_tRule_uModDate "Unix timestamp for last update"
 #define LANG_FL_tDID_uModDate "uModDate"

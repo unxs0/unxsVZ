@@ -123,7 +123,12 @@ void DashBoard(const char *cOptionalMsg)
 	mysql_free_result(mysqlRes);
 
 	OpenRow("Pending or Stuck Jobs (Last 20)","black");
-	sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tJob.cServer,tJobStatus.cLabel FROM tJob,tJobStatus WHERE tJob.uJobStatus=tJobStatus.uJobStatus AND tJob.uJobStatus!=3 ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 20");
+	sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tServer.cLabel,tJobStatus.cLabel"
+			" FROM tJob,tJobStatus,tServer"
+			" WHERE tJob.uJobStatus=tJobStatus.uJobStatus"
+			" AND tServer.uServer=tJob.uServer"
+			" AND tJob.uJobStatus!=3"
+			" ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 20");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -158,10 +163,10 @@ void ExtMainContent(void)
 	printf("<td>%s</td></tr>\n",gcBuildInfo);
 
 	OpenRow("RAD Status","black");
-	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);
+	printf("<td>%s %s. Now Forked.</td></tr>\n",gcRADStatus,REV);
 
 	OpenRow("Application Summary","black");
-	printf("<td></td></tr>\n");
+	printf("<td>Database backend web console for running one or more uSIPSwitch clusters.</td></tr>\n");
 
 	if(guPermLevel>9)
 	{
@@ -1057,6 +1062,51 @@ void UpdateSchema(void)
 
 	if(TextConnectDb())
 		exit(1);
+	//
+	//tRule
+	unsigned uCluster=0;
+	unsigned uClusterIndex=0;
+	sprintf(gcQuery,"SHOW COLUMNS IN tRule");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uCluster"))
+			uCluster=1;
+	}
+       	mysql_free_result(res);
+	sprintf(gcQuery,"SHOW INDEX IN tRule");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[2],"uCluster")) uClusterIndex=1;
+	}
+       	mysql_free_result(res);
+	if(!uCluster)
+	{
+		sprintf(gcQuery,"ALTER TABLE tRule ADD uCluster INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uCluster to tRule\n");
+	}
+	if(!uClusterIndex)
+	{
+		sprintf(gcQuery,"ALTER TABLE tRule ADD INDEX (uCluster)");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added INDEX uCluster tRule\n");
+	}
 
 	//
 	//tAddress

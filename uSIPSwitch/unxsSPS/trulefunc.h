@@ -299,7 +299,7 @@ void ExttRuleButtons(void)
 					"name=gcCommand value='Del Gateway'>");
 			}
 			tRuleNavList();
-			printf("<p><u>Test now() time and test DID optional inputs</u><br>");
+			printf("<p><u>Test now() time and test DID optional inputs. Using current tRule.uCluster</u><br>");
 			printf("<input type=text title='enter a valid SQL now() format date-time string (e.g. 2012-10-06 11:31:39) for testing'"
 					"name=cTestNow value='%s'> cTestNow",cTestNow);
 			printf("<br><input type=text title='enter a valid (e.g. 01133123485769) for routing simulation'"
@@ -649,12 +649,13 @@ void tRuleNowNavList(void)
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
 			" AND tGroupGlue.uGroupType=1"
+			" AND tRule.uCluster=%2$u"
 			" AND IF(tTimeInterval.cStartDate='',1,DATE('%1$s')>=tTimeInterval.cStartDate)"
 			" AND IF(tTimeInterval.cEndDate='',1,DATE('%1$s')<=tTimeInterval.cEndDate)"
 			" AND IF(tTimeInterval.cStartTime='',1,TIME('%1$s')>=tTimeInterval.cStartTime)"
 			" AND IF(tTimeInterval.cEndTime='',1,TIME('%1$s')<=tTimeInterval.cEndTime)"
 			" AND INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK('%1$s'))>0"
-			" ORDER BY HasPrefix DESC,tRule.uPriority",cTestNow);
+			" ORDER BY HasPrefix DESC,tRule.uPriority",cTestNow,uCluster);
 	else
 		sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,"
 				"tRule.cLabel,"
@@ -665,12 +666,13 @@ void tRuleNowNavList(void)
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
 			" AND tGroupGlue.uGroupType=1"
+			" AND tRule.uCluster=%u"
 			" AND IF(tTimeInterval.cStartDate='',1,DATE(NOW())>=tTimeInterval.cStartDate)"
 			" AND IF(tTimeInterval.cEndDate='',1,DATE(NOW())<=tTimeInterval.cEndDate)"
 			" AND IF(tTimeInterval.cStartTime='',1,TIME(NOW())>=tTimeInterval.cStartTime)"
 			" AND IF(tTimeInterval.cEndTime='',1,TIME(NOW())<=tTimeInterval.cEndTime)"
 			" AND INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK(NOW()))>0"
-			" ORDER BY HasPrefix DESC,tRule.uPriority");
+			" ORDER BY HasPrefix DESC,tRule.uPriority",uCluster);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -683,9 +685,9 @@ void tRuleNowNavList(void)
 	if(mysql_num_rows(res))
 	{
 		if(cTestNow[0])
-        		printf("<p><u>Rules that would be active at %s</u><br>\n",cTestNow);
+        		printf("<p><u>Rules that would be active at %s (uCluster=%u)</u><br>\n",cTestNow,uCluster);
 		else
-        		printf("<p><u>Rules that are active now()</u><br>\n");
+        		printf("<p><u>Rules that are active now() (uCluster=%u)</u><br>\n",uCluster);
 
 		unsigned uPriority;
 		unsigned uCount=0;
@@ -734,7 +736,7 @@ void tRuleNowNavList(void)
 	{
 		char *cMatch;
 	
-        	printf("<p><u>Routing simulation for %s</u><br>\n",cTestDID);
+        	printf("<p><u>Routing simulation for %s (uCluster=%u)</u><br>\n",cTestDID,uCluster);
 		for(i=0;i<32 && sRuleTest[i].cGatewayIP[0];i++)
 		{
 			if(!strncmp(cTestDID,sRuleTest[i].cPrefix,strlen(sRuleTest[i].cPrefix))|| sRuleTest[i].cPrefix[0]=='A')
