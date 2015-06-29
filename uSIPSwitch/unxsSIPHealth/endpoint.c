@@ -119,7 +119,9 @@ if(guLogLevel>3)
 	logfileLine("endpoint.c",gcQuery);
 }
 
-if(strstr(cFirstLine," 200 OK") && strstr(cCSeq," OPTIONS") && cGateway[0] && uGatewayPort)
+//any answer with OPTIONS means remote side is up and running for us.
+if( ( strstr(cFirstLine," 200 OK") || strstr(cFirstLine," 404 ") ) && 
+		strstr(cCSeq," OPTIONS") && cGateway[0] && uGatewayPort)
 {
 	sprintf(gcQuery,"UPDATE tAddress"
 			" SET uHealthCheckedDate=UNIX_TIMESTAMP(NOW()),"

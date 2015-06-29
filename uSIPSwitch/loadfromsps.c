@@ -617,12 +617,43 @@ int iSetupAndTestMemcached(void)
 }//int iSetupAndTestMemcached(void)
 
 
+unsigned uGetCluster(char const *cCluster)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uCluster=0;
+	sprintf(gcQuery,"SELECT uCluster FROM tCluster WHERE cLabel='%s'",cCluster);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf(gcQuery);
+		logfileLine("uGetCluster",mysql_error(&gMysql));
+		mysql_close(&gMysql);
+		exit(2);
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uCluster);
+	mysql_free_result(res);
+
+	return(uCluster);
+
+}//unsigned uGetCluster(char const *cCluster)
+
+
 void AddRules(char const *cCluster)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
         MYSQL_RES *res2;
         MYSQL_ROW field2;
+
+	unsigned uCluster=uGetCluster(cCluster);
+	if(!uCluster)
+	{
+		logfileLine("AddRules cluster not found",cCluster);
+		return;
+	}
 
 	if(!guSilent) printf("AddRules() start\n");
 	sprintf(gcQuery,"SELECT DISTINCT tRule.uRule,"
@@ -635,12 +666,13 @@ void AddRules(char const *cCluster)
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
 			" AND tGroupGlue.uGroupType=1"
+			" AND tRule.uCluster=%u"
 			" AND IF(tTimeInterval.cStartDate='',1,DATE(NOW())>=tTimeInterval.cStartDate)"
 			" AND IF(tTimeInterval.cEndDate='',1,DATE(NOW())<=tTimeInterval.cEndDate)"
 			" AND IF(tTimeInterval.cStartTime='',1,TIME(NOW())>=tTimeInterval.cStartTime)"
 			" AND IF(tTimeInterval.cEndTime='',1,TIME(NOW())<=tTimeInterval.cEndTime)"
 			" AND INSTR(tTimeInterval.cDaysOfWeek,DAYOFWEEK(NOW()))>0"
-			" ORDER BY HasPrefix DESC,tRule.uPriority");
+			" ORDER BY HasPrefix DESC,tRule.uPriority",uCluster);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1033,6 +1065,12 @@ void DelRules(char const *cCluster)
         MYSQL_ROW field;
 
 	if(!guSilent) printf("DelRules() start\n");
+	unsigned uCluster=uGetCluster(cCluster);
+	if(!uCluster)
+	{
+		logfileLine("DelRules cluster not found",cCluster);
+		return;
+	}
 	//We only need the large sum with the dayofweek, still testing...
 	sprintf(gcQuery,"SELECT tRule.uRule,"
 			" SUM( IF(tTimeInterval.cStartDate='',1,DATE(NOW())>=tTimeInterval.cStartDate)"
@@ -1055,7 +1093,8 @@ void DelRules(char const *cCluster)
 			" WHERE tTimeInterval.uTimeInterval=tGroupGlue.uKey"
 			" AND tGroupGlue.uGroup=tRule.uRule"
 			" AND tGroupGlue.uGroupType=1"
-			" GROUP BY tRule.uRule");
+			" AND tRule.uCluster=%u"
+			" GROUP BY tRule.uRule",uCluster);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
