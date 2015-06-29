@@ -482,7 +482,7 @@ void Initialize(char *cPasswd)
 
         for(i=0;cInitTableList[i][0];i++)
         {
-                sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsSPS/data/%s.txt' REPLACE INTO TABLE %s",
+                sprintf(gcQuery,"LOAD DATA INFILE '%s/uSIPSwitch/unxsSPS/data/%s.txt' REPLACE INTO TABLE %s",
 			cInstallDir,cInitTableList[i],cInitTableList[i]);
                 mysql_query(&gMysql,gcQuery);
                 if(mysql_errno(&gMysql))
