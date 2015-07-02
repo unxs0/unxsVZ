@@ -59,25 +59,40 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 		fi
 	fi
 
-	echo $uContainer;
-	cHostname=`/usr/sbin/vzlist -H $uContainer -o hostname`;
-	echo $cHostname;
+	#echo $uContainer;
+	#use short name if possible
+	cHostname=`/usr/sbin/vzlist -H $uContainer -o name`;
+	if [ "$cHostname" == "-" ] || [ "$cHostname" == "" ];then
+		cHostname=`/usr/sbin/vzlist -H $uContainer -o hostname`;
+	fi
+	#echo $cHostname;
+
 
 	for cIPClassC in `/usr/sbin/vzctl exec $uContainer "asterisk -r -x 'sip show peers'| grep -w OK" | grep "^[0-9]" |awk '{ print $2 }' | cut -f 1,2,3 -d '.' | sort -u`;do
-		uIP=`$cMySQLConnect -B -N -e "SELECT uIP FROM tIP WHERE cLabel='$cIPClassC.0' AND uIPType=1 AND uDatacenter=41 LIMIT 1"`;
+		uGeoIPCountryCode=`$cMySQLConnect -B -N -e "SELECT uGeoIPCountryCode FROM tGeoIPCountryCode WHERE uGeoIPCountryCode=(SELECT uGeoIPCountryCode FROM tGeoIP WHERE uEndIP>=INET_ATON('$cIPClassC.0') LIMIT 1)"`;
+		if [ $? != 0 ];then
+			fLog "SELECT uGeoIPCountryCode error";
+			continue;
+		fi
+		#echo uGeoIPCountryCode=$uGeoIPCountryCode;
+
+		uIP=`$cMySQLConnect -B -N -e "SELECT uIP FROM tIP WHERE cLabel='$cIPClassC.0' AND uIPType=11 AND uDatacenter=41 LIMIT 1"`;
 		if [ "$uIP" == "" ];then
-			echo add $cIPClassC.0;
+			#echo add $cIPClassC.0;
+			#customer premise = 41, whitelisted = 7 classc from unxsvzGatherPeerIPs.sh = 11
 			$cMySQLConnect -B -N -e \
-				"INSERT INTO tIP SET cLabel='$cIPClassC.0',uIPType=1,cComment='unxsvzGatherPeerIPs.sh $cHostname $uContainer',uDatacenter=41,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())";
+				"INSERT INTO tIP SET cLabel='$cIPClassC.0',uIPType=11,cComment='$cHostname',uDatacenter=41,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uFWStatus=7,uCountryCode=$uGeoIPCountryCode";
 			if [ $? != 0 ];then
 				fLog "INSERT INTO tIP error";
+				continue;
 			fi
 		else
-			echo $cIPClassC.0 already added as tIP.uIP=$uIP;
+			#echo $cIPClassC.0 update $uIP;
 			$cMySQLConnect -B -N -e \
-				"UPDATE tIP SET uModDate=UNIX_TIMESTAMP(NOW()),cComment='unxsvzGatherPeerIPs.sh $cHostname $uContainer' WHERE uIP=$uIP";
+				"UPDATE tIP SET uModDate=UNIX_TIMESTAMP(NOW()),cComment=IF(LOCATE('$cHostname',cComment),cComment,CONCAT(cComment,' $cHostname')),uFWStatus=7,uCountryCode=$uGeoIPCountryCode WHERE uIP=$uIP";
 			if [ $? != 0 ];then
 				fLog "UPDATE tIP error";
+				continue;
 			fi
 		fi
 	done
