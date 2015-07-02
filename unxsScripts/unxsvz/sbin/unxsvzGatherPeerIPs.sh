@@ -11,7 +11,7 @@
 #	GPLv3 license applies see root dir LICENSE
 
 if [ "$1" != "run" ];then
-	echo "usage: $0 run <uVEID>";
+	echo "usage: $0 run [<uVEID>]";
 	exit 0;
 fi
 
@@ -32,6 +32,17 @@ if [ "$cMySQLConnect" == "" ];then
 	fLog "no cMySQLConnect";
 	exit 1;
 fi
+
+uLoad=`/usr/sbin/unxsvzServerLoad.exe`;
+if [ $? != 0 ] || [ "$uLoad" == "" ];then
+	fLog "Load could not be measured";
+	exit;
+fi
+if (( $uLoad > 3 ));then
+	fLog "Load $uLoad too high";
+	exit;
+fi
+#echo $uLoad;
 
 cNode=`hostname -s`;
 if [ $? != 0 ];then
@@ -81,7 +92,7 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 			#echo add $cIPClassC.0;
 			#customer premise = 41, whitelisted = 7 classc from unxsvzGatherPeerIPs.sh = 11
 			$cMySQLConnect -B -N -e \
-				"INSERT INTO tIP SET cLabel='$cIPClassC.0',uIPType=11,cComment='$cHostname',uDatacenter=41,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uFWStatus=7,uCountryCode=$uGeoIPCountryCode";
+				"INSERT INTO tIP SET cLabel='$cIPClassC.0',uIPType=11,cComment='$cHostname',uDatacenter=41,uOwner=2,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),uFWStatus=7,uCountryCode=$uGeoIPCountryCode,uIPNum=INET_ATON('$cIPClassC.0')";
 			if [ $? != 0 ];then
 				fLog "INSERT INTO tIP error";
 				continue;
@@ -89,7 +100,7 @@ for uContainer in `echo "SELECT tContainer.uContainer FROM tContainer,tGroup,tGr
 		else
 			#echo $cIPClassC.0 update $uIP;
 			$cMySQLConnect -B -N -e \
-				"UPDATE tIP SET uModDate=UNIX_TIMESTAMP(NOW()),cComment=IF(LOCATE('$cHostname',cComment),cComment,CONCAT(cComment,' $cHostname')),uFWStatus=7,uCountryCode=$uGeoIPCountryCode WHERE uIP=$uIP";
+				"UPDATE tIP SET uModDate=UNIX_TIMESTAMP(NOW()),cComment=IF(LOCATE('$cHostname',cComment),cComment,CONCAT(cComment,' $cHostname')),uFWStatus=7,uCountryCode=$uGeoIPCountryCode,uIPNum=INET_ATON('$cIPClassC.0') WHERE uIP=$uIP";
 			if [ $? != 0 ];then
 				fLog "UPDATE tIP error";
 				continue;
