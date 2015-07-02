@@ -978,7 +978,7 @@ void ProcessBarnyard2(unsigned uPriority)
 
 		//Lets check backend for tIP.uFWStatus
 		//First see if ClassC is whitelisted
-		sprintf(gcQuery,"SELECT uFWStatus FROM tIP WHERE"
+		sprintf(gcQuery,"SELECT uFWStatus,cLabel FROM tIP WHERE"
 			" uIPNum=(%u&0xfffffff00)"
 			" AND uDatacenter=41"//CustomerPremise magic number fix ASAP
 			" AND uIPType=11"//Special magic number fix ASAP
@@ -986,13 +986,17 @@ void ProcessBarnyard2(unsigned uPriority)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine("ProcessBarnyard2-s1a",mysql_error(&gMysql));
+			logfileLine("ProcessBarnyard2-s1a0",mysql_error(&gMysql));
 			goto ProcessBarnyard2_exit1;
 		}
 		res=mysql_store_result(&gMysql);
 		unsigned uClassCFWStatus=0;//first job is master job
 		if((field=mysql_fetch_row(res)))
+		{
 			sscanf(field[0],"%u",&uClassCFWStatus);
+			logfileLine("ProcessBarnyard2 uClassCFWStatus",field[1]);
+			logfileLine("ProcessBarnyard2 uClassCFWStatus",field[0]);
+		}
 
 		sprintf(gcQuery,"SELECT uFWStatus FROM tIP WHERE"
 			" uIPNum=%u"
@@ -1001,7 +1005,7 @@ void ProcessBarnyard2(unsigned uPriority)
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
-			logfileLine("ProcessBarnyard2-s1a",mysql_error(&gMysql));
+			logfileLine("ProcessBarnyard2-s1a1",mysql_error(&gMysql));
 			goto ProcessBarnyard2_exit1;
 		}
 		res=mysql_store_result(&gMysql);
