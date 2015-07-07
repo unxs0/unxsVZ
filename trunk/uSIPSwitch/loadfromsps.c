@@ -9,6 +9,8 @@ AUTHOR
 	Gary Wallis for Unxiservice, LLC. (C) 2012.
 	GPLv2 License applies. See LICENSE file.
 NOTES
+	This preliminary alpha test version does not
+	support same-ip:different-ports gateways at this time
 */
 
 #include "sipproxy.h"
@@ -33,6 +35,7 @@ void logfileLine(const char *cFunction,const char *cLogline);
 int iSetupAndTestMemcached(void);
 void AddRules(char const *cCluster);
 void DelRules(char const *cCluster);
+void DelOldKeys(char const *cCluster);
 
 static FILE *gLfp=NULL;
 memcached_st *gsMemc;
@@ -90,6 +93,11 @@ int main(int iArgc, char *cArgv[])
 			DelRules(cArgv[2]);
 			goto CommonExit;
 		}
+		else if(!strncmp(cArgv[1],"DelOldKeys",10))
+		{
+			DelOldKeys(cArgv[2]);
+			goto CommonExit;
+		}
 		else if(!strncmp(cArgv[1],"AddAll",6))
 		{
 			AddPBXs(cArgv[2]);
@@ -101,7 +109,7 @@ int main(int iArgc, char *cArgv[])
 		}
 	}
 
-	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddRules, DelRules, AddAll, DNSUpdatePBX, DNSUpdateGW <cCluster> [silent]\n",gcProgram);
+	printf("Usage: %s AddPBXs, AddDIDs, AddGWs, AddRules, DelRules, DelOldKeys, AddAll, DNSUpdatePBX, DNSUpdateGW <cCluster> [silent]\n",gcProgram);
 
 CommonExit:
 	mysql_close(&gMysql);
@@ -279,7 +287,7 @@ void DNSUpdatePBX(char const *cCluster,unsigned uPBX)
 		if(mysql_errno(&gMysql))
 		{
 			printf(gcQuery);
-			logfileLine("DNSUpdateGW",mysql_error(&gMysql));
+			logfileLine("DNSUpdatePBX",mysql_error(&gMysql));
 			mysql_close(&gMysql);
 			exit(2);
 		}
@@ -573,7 +581,7 @@ int iSetupAndTestMemcached(void)
 	char *key= "unxsLoadFromSPS";
 	char *value= "$Id$";
 
-	memcached_server_st *memcached_servers_parse(const char *server_strings);
+	//memcached_server_st *memcached_servers_parse(const char *server_strings);
 	gsMemc=memcached_create(NULL);
 
 	servers=memcached_server_list_append(servers,"localhost",11211,&rc);
@@ -1146,3 +1154,132 @@ void DelRules(char const *cCluster)
 	if(!guSilent) printf("DelRules() end\n");
 
 }//void DelRules()
+
+
+//Remove -gw and -did keys that are no longer in db
+void DelOldKeys(char const *cCluster)
+{
+	memcached_return rc;
+
+	if(!guSilent) printf("DelOldKeys() start\n");
+	unsigned uCluster=uGetCluster(cCluster);
+	if(!uCluster)
+	{
+		logfileLine("DelOldKeys cluster not found",cCluster);
+		return;
+	}
+
+	void vKeyPrinter(const memcached_st *gsMemc, const char *cKey)
+	{
+        	MYSQL_RES *res;
+		char *cp;
+		unsigned uRc;
+		memcached_st *gsLocalMemc;
+		memcached_server_st *servers = NULL;
+		gsLocalMemc=memcached_create(NULL);
+		servers=memcached_server_list_append(servers,"localhost",11211,&rc);
+		rc=memcached_server_push(gsLocalMemc,servers);
+		if(rc!=MEMCACHED_SUCCESS)
+		{
+			sprintf(gcQuery,"couldn't add server: %s",memcached_strerror(gsLocalMemc,rc));
+			logfileLine("vKeyPrinter",gcQuery);
+			if(!guSilent) printf("%s\n",gcQuery);
+			return;
+		}
+
+		if(strstr(cKey,"-did"))
+		{
+			if((cp=strchr(cKey,'-')))
+				*cp=0;
+			if(!guSilent) printf("%s-did\n",cKey);
+			sprintf(gcQuery,"SELECT uDID FROM tDID WHERE cDID='%s' AND uCluster=%u",cKey,uCluster);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf(gcQuery);
+				logfileLine("DelOldKeys",mysql_error(&gMysql));
+				mysql_close(&gMysql);
+				exit(2);
+			}
+        		res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)<1)
+			{
+				*cp='-';
+				uRc=memcached_delete(gsLocalMemc,cKey,strlen(cKey),(time_t)0);
+				if(uRc!=MEMCACHED_SUCCESS)
+				{
+					if(guLogLevel>2)
+					{
+						logfileLine("DelOldKeys not found",cKey);
+					}
+					if(!guSilent) printf("DelOldKeys() %s not found\n",cKey);
+				}
+				else
+				{
+					if(guLogLevel>2)
+					{
+						logfileLine("DelOldKeys",cKey);
+					}
+					if(!guSilent) printf("DelOldKeys() %s\n",cKey);
+				}
+			}
+		}
+		else if(strstr(cKey,"-gw"))
+		{
+			if((cp=strchr(cKey,'-')))
+				*cp=0;
+			if(!guSilent) printf("%s-gw\n",cKey);
+			sprintf(gcQuery,"SELECT tAddress.uAddress FROM tAddress,tGateway,tPBX"
+					" WHERE tAddress.cIP='%s'"
+					" AND ("
+					" ( tAddress.uGateway=tGateway.uGateway"
+					" AND tGateway.uCluster=%u"
+					" ) OR ("
+					" ( tAddress.uPBX=tPBX.uPBX"
+					" AND tPBX.uCluster=%u) )"
+					" )",cKey,uCluster,uCluster);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf(gcQuery);
+				logfileLine("DelOldKeys",mysql_error(&gMysql));
+				mysql_close(&gMysql);
+				exit(2);
+			}
+        		res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)<1)
+			{
+				*cp='-';
+				uRc=memcached_delete(gsLocalMemc,cKey,strlen(cKey),(time_t)0);
+				if(uRc!=MEMCACHED_SUCCESS)
+				{
+					if(guLogLevel>2)
+					{
+						logfileLine("DelOldKeys not found",cKey);
+					}
+					if(!guSilent) printf("DelOldKeys() %s not found\n",cKey);
+				}
+				else
+				{
+					if(guLogLevel>2)
+					{
+						logfileLine("DelOldKeys",cKey);
+					}
+					if(!guSilent) printf("DelOldKeys() %s\n",cKey);
+				}
+			}
+		}
+	}
+
+	memcached_dump_func callbacks[1];
+	callbacks[0]= &vKeyPrinter;
+
+	rc=memcached_dump(gsMemc,callbacks,NULL,1);
+	if(rc!=MEMCACHED_SUCCESS)
+	{
+		if(!guSilent) printf("DelOldKeys() error\n");
+	}
+
+	if(!guSilent) printf("DelOldKeys() end\n");
+
+}//void DelOldKeys()
