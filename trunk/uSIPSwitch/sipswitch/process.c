@@ -330,7 +330,7 @@ void CallEndCIU(void)
 	char cKey[128]={""};
 	//char cSearch[128]={""};
 	if(uType==PBX)
-		sprintf(cKey,"%s:%u-ciu",cSourceIP,uGatewayPort);
+		sprintf(cKey,"%s:%u-ciu",cSourceIP,uSourcePort);
 	else
 		sprintf(cKey,"%s:%u-ciu",cDestinationIP,uGatewayPort);
 
@@ -393,7 +393,7 @@ int CallStartCIU(void)
 	char cKey2[128]={""};
 	char cData[256]={""};
 	if(uType==PBX)
-		sprintf(cKey,"%s:%u-ciu",cSourceIP,uGatewayPort);
+		sprintf(cKey,"%s:%u-ciu",cSourceIP,uSourcePort);
 	else
 		sprintf(cKey,"%s:%u-ciu",cDestinationIP,uGatewayPort);
 
@@ -408,7 +408,7 @@ int CallStartCIU(void)
 
 	//get uLines
 	if(uType==PBX)
-		sprintf(cKey2,"%s:%u-gw",cSourceIP,uGatewayPort);
+		sprintf(cKey2,"%s:%u-gw",cSourceIP,uSourcePort);
 	else
 		sprintf(cKey2,"%s:%u-gw",cDestinationIP,uGatewayPort);
 	sprintf(cData,"%.255s",memcached_get(gsMemc,cKey2,strlen(cKey),&sizeData,&flags,&rc));
@@ -481,14 +481,14 @@ int CallStartCIU(void)
 }//int CallStartCIU(void)
 
 
-if(guLogLevel>3)
-	logfileLine("readEv-process check source",cSourceIP);
 
 //Approve gateway and get type
 //Check to see if request or reply is coming from valid source
 //source can be carrier gateway or one of our SBC'd PBXs
 //PBXs and gateways are BOTH found in memcached as -gw keys
-sprintf(cKey,"%s:%u-gw",cSourceIP,uGatewayPort);
+sprintf(cKey,"%s:%u-gw",cSourceIP,uSourcePort);
+if(guLogLevel>3)
+	logfileLine("readEv-process check source",cKey);
 sprintf(cData,"%.255s",memcached_get(gsMemc,cKey,strlen(cKey),&sizeData,&flags,&rc));
 if(sizeData<=0)
 	logfileLine("readEv-process","sizeData error");
