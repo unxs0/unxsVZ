@@ -1,0 +1,141 @@
+#!/bin/bash
+#
+# $Id$
+#
+### BEGIN INIT INFO
+# Provides: uSIPSwitch
+# Short-Description: Starts a micro SIP switch daemon that is managed by unxsSPS
+# Description: Starts a micro SIP switch daemon that is normally managed by unxsSPS.
+#	Violates almost all of RFC 3261.
+#	It is a very focused type of SIP proxy for hosted PBX SBC use: HA clustering and high traffic.
+#	For use as DID front end and termination trunk provider for Asterisk.
+#	Works well with middle tier providers like Vitelity, Broadvox and Bandwidth.
+### END INIT INFO
+
+# chkconfig: - 64 36
+# config: /etc/sysconfig/usipswitch
+
+# Source function library.
+. /etc/init.d/functions
+. /etc/sysconfig/network
+
+#
+# Set default options.  Override the defaults and define 
+# custom options in /etc/sysconfig/usipswitch
+#
+cCluster="Cluster0"
+uSIPSwitchOptions="127.0.0.1 5060";
+LOCKFILE=/var/lock/subsys/usipswitch
+
+[ -f /etc/sysconfig/usipswitch ] && . /etc/sysconfig/usipswitch
+
+
+start() {
+	# Check that networking is configured.
+	[ ${NETWORKING} = "no" ] && exit 1
+
+	#load data into memcached
+	/usr/sbin/unxsLoadFromSPS DNSUpdateGW $cCluster silent;
+	if [ $? != 0 ];then
+	        echo "DNSUpdateGW error";
+	fi
+	/usr/sbin/unxsLoadFromSPS DNSUpdatePBX $cCluster silent;
+	if [ $? != 0 ];then
+	        echo "DNSUpdatePBX error";
+	fi
+	/usr/sbin/unxsLoadFromSPS AddAll $cCluster silent;
+		if [ $? != 0 ];then
+	        echo "AddAll error";
+	fi
+
+	echo -n $"Starting uSIPSwitch: "
+	if [ $UID -ne 0 ]; then
+                RETVAL=4
+                failure
+        else
+		/usr/sbin/uSIPSwitch $uSIPSwitchOptions
+		RETVAL=$?
+		[ $RETVAL -eq 0 ] && touch $LOCKFILE
+	fi;
+	echo
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Shutting down uSIPSwitch: "
+	if [ $UID -ne 0 ]; then
+                RETVAL=4
+                failure
+        else
+		if [ -f /var/run/uSIPSwitch.pid ];then
+			/bin/kill -SIGINT `cat /var/run/uSIPSwitch.pid` > /dev/null 2>&1;
+			if [ "$?" != "0" ];then
+				echo "/var/run/uSIPSwitch.pid file exists but kill failed";
+				rm /var/run/uSIPSwitch.pid;
+			fi
+		else
+			echo "/var/run/uSIPSwitch.pid does not exist";
+			/bin/ps -ef | /bin/grep uSIPSwitch | /bin/grep -v grep> /dev/null;
+			if [ "$?" == "0" ];then
+				echo "uSIPSwitch is still running";
+			fi
+		fi
+
+        	#killproc /usr/sbin/uSIPSwitch
+		RETVAL=$?
+	        [ $RETVAL -eq 0 ] && rm -f $LOCKFILE
+        fi;
+	echo
+	return $RETVAL
+}
+
+restart() {
+	stop
+	start
+}
+
+RETVAL=0
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  loglevelup)
+	/usr/bin/kill -USR2 `cat /var/run/uSIPSwitch.pid`;
+	tail /var/log/uSIPSwitch;
+	;;
+  logleveldown)
+	/usr/bin/kill -USR1 `cat /var/run/uSIPSwitch.pid`;
+	tail /var/log/uSIPSwitch;
+	;;
+  loadrules)
+	/usr/bin/kill -HUP `cat /var/run/uSIPSwitch.pid`;
+	;;
+  taillog)
+	tail -n 40 -f /var/log/uSIPSwitch;
+	;;
+  status)
+	status uSIPSwitch;
+	if [ -f /var/run/uSIPSwitch.pid ];then
+		 cat /var/run/uSIPSwitch.pid;
+	fi
+	;;
+  restart|reload)
+	restart
+	;;
+  condrestart)
+	if status uSIPSwitch > /dev/null; then
+	    stop
+	    start
+	fi
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|reload|condrestart|loglevelup|logleveldown|loadrules|taillog}"
+	exit 2
+esac
+
+exit $?

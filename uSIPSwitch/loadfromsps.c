@@ -347,7 +347,7 @@ void AddGWs(char const *cCluster)
 		char cValue[256];
 		unsigned rc;
 
-		sprintf(cKey,"%.90s-gw",field[0]);
+		sprintf(cKey,"%.32s:%.8s-gw",field[0],field[1]);
 		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=1;uPriority=%.5s;uWeight=%.5s;uGroup=0;uLines=0;cHostname=%s;",
 				field[0],field[1],field[2],field[3],field[4]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
@@ -516,7 +516,7 @@ void AddPBXs(char const *cCluster)
 		unsigned rc;
 
 		//PBXs are gateways too. This makes the server run faster.
-		sprintf(cKey,"%.90s-gw",field[0]);
+		sprintf(cKey,"%.32s:%.8s-gw",field[0],field[1]);
 		sprintf(cValue,"cDestinationIP=%.15s;uDestinationPort=%.5s;uType=2;uPriority=%.5s;uWeight=%.5s;uGroup=%s;uLines=%s;cHostname=%.64s;",
 				field[0],field[1],field[2],field[3],field[5],field[6],field[4]);
 		rc=memcached_set(gsMemc,cKey,strlen(cKey),cValue,strlen(cValue),(time_t)0,(uint32_t)0);
@@ -1226,18 +1226,31 @@ void DelOldKeys(char const *cCluster)
 		}
 		else if(strstr(cKey,"-gw"))
 		{
+			unsigned uPort=5060;
+			char *cp2=NULL;
 			if((cp=strchr(cKey,'-')))
 				*cp=0;
-			if(!guSilent) printf("%s-gw\n",cKey);
+			if((cp2=strchr(cKey,':')))
+			{
+				*cp2=0;
+				sscanf(cp2+1,"%u",&uPort);
+			}
+			if(!guSilent)
+			{
+				if(cp2)
+					printf("%s:%u-gw\n",cKey,uPort);
+				else
+					printf("%s-gw\n",cKey);
+			}
 			sprintf(gcQuery,"SELECT tAddress.uAddress FROM tAddress,tGateway,tPBX"
-					" WHERE tAddress.cIP='%s'"
+					" WHERE tAddress.cIP='%s' AND tAddress.uPort=%u"
 					" AND ("
 					" ( tAddress.uGateway=tGateway.uGateway"
 					" AND tGateway.uCluster=%u"
 					" ) OR ("
 					" ( tAddress.uPBX=tPBX.uPBX"
 					" AND tPBX.uCluster=%u) )"
-					" )",cKey,uCluster,uCluster);
+					" )",cKey,uPort,uCluster,uCluster);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -1250,6 +1263,8 @@ void DelOldKeys(char const *cCluster)
 			if(mysql_num_rows(res)<1)
 			{
 				*cp='-';
+				if(cp2)
+					*cp2=':';
 				uRc=memcached_delete(gsLocalMemc,cKey,strlen(cKey),(time_t)0);
 				if(uRc!=MEMCACHED_SUCCESS)
 				{
@@ -1272,7 +1287,7 @@ void DelOldKeys(char const *cCluster)
 	}
 
 	memcached_dump_func callbacks[1];
-	callbacks[0]= &vKeyPrinter;
+	callbacks[0]= (memcached_dump_func) &vKeyPrinter;
 
 	rc=memcached_dump(gsMemc,callbacks,NULL,1);
 	if(rc!=MEMCACHED_SUCCESS)
