@@ -214,7 +214,53 @@ if(cTo[0])
 			}
 		}
 	}
-}//cDID cGateway uGatewayPort
+}//cTo cGateway uGatewayPort
+
+
+#ifdef NOTUSED
+//Contact: <sip:3103566265@66.241.99.224:5060>
+char cContact[100]={""};
+if((cp=strstr(cMessage,"Contact: ")))
+{
+	if((cp1=strchr(cp+strlen("Contact: "),'\r')))
+	{
+		*cp1=0;
+		sprintf(cContact,"%.99s",cp+strlen("Contact: "));
+		*cp1='\r';
+	}
+	if(guLogLevel>3)
+		logfileLine("readEv-parse cContact",cContact);
+}//cContact
+unsigned uContactPort=0;
+char cContactGateway[100]={""};
+if(cContact[0])
+{
+	if((cp=strstr(cContact,"sip:")))
+	{
+		if((cp1=strchr(cContact,'@')))
+		{
+			*cp1=0;
+			if(sscanf(cp1+1,"%[0-9\\.]:%u",cContactGateway,&uContactPort)!=2)
+			{
+				if(guLogLevel>3)
+					logfileLine("readEv-parse","cContact sip: sscanf error");
+				if(sscanf(cp1+1,"%[0-9\\.]",cContactGateway)!=1)
+				{
+					if(guLogLevel>3)
+						logfileLine("readEv-parse","cContact sip: sscanf error");
+				}
+				else
+				{
+					uContactPort=5060;//default
+					if(guLogLevel>3)
+						logfileLine("readEv-parse","cContact sip: error fixed 5060 default");
+				}
+			}
+			*cp1='@';
+		}
+	}
+}//cContact cContactGateway uContactPort
+#endif
 
 //Always strip leading '1' from cDID
 if(cDID[0]=='1')
