@@ -6213,6 +6213,17 @@ void BlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 		return;
 	}
 
+	//setup for class C blocking
+	unsigned d=(-1);
+	if(sscanf(cIPv4,"%*u.%*u.%*u.%u",&d)!=1)
+	{
+		logfileLine("BlockAccess","cIPv4 format error");
+		tJobErrorUpdate(uJob,"cIPv4 format error");
+		return;
+	}
+	if(d==0)
+		strncat(cIPv4,"/24",3);
+
         MYSQL_RES *res;
         MYSQL_ROW field;
 
@@ -6316,6 +6327,17 @@ void UndoBlockAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,uns
 		tJobErrorUpdate(uJob,"cIPv4[0]==0");
 		return;
 	}
+
+	//setup for class C blocking
+	unsigned d=(-1);
+	if(sscanf(cIPv4,"%*u.%*u.%*u.%u",&d)!=1)
+	{
+		logfileLine("BlockAccess","cIPv4 format error");
+		tJobErrorUpdate(uJob,"cIPv4 format error");
+		return;
+	}
+	if(d==0)
+		strncat(cIPv4,"/24",3);
 
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -6543,15 +6565,26 @@ void RemoveAcceptFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatac
 		tJobErrorUpdate(uJob,"cIPv4[0]==0");
 		return;
 	}
+	//setup for class C blocking
+	unsigned d=(-1);
+	if(sscanf(cIPv4,"%*u.%*u.%*u.%u",&d)!=1)
+	{
+		logfileLine("BlockAccess","cIPv4 format error");
+		tJobErrorUpdate(uJob,"cIPv4 format error");
+		return;
+	}
+	if(d==0)
+		strncat(cIPv4,"/24",3);
 
         MYSQL_RES *res;
         MYSQL_ROW field;
 
 	//remove DROP and/or ACCEPT
 	char cTemplate[512]={
-			"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s | grep -w DROP > /dev/null; if [ $? == 0 ];then"
+			"/sbin/iptables -L UnxsVZ-FW -n | grep -w \"%1$s\" | grep -w DROP > /dev/null; if [ $? == 0 ];then"
 				" /sbin/iptables -D UnxsVZ-FW -s %1$s -j DROP;"
-			"/sbin/iptables -L UnxsVZ-FW -n | grep -w %1$s | grep -w ACCEPT > /dev/null; if [ $? == 0 ];then"
+			" fi;"
+			"/sbin/iptables -L UnxsVZ-FW -n | grep -w \"%1$s\" | grep -w ACCEPT > /dev/null; if [ $? == 0 ];then"
 				" /sbin/iptables -D UnxsVZ-FW -s %1$s -j ACCEPT;"
 			" fi;"
 									};
@@ -6590,6 +6623,7 @@ void RemoveAcceptFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatac
 	sprintf(gcQuery,cTemplate,cIPv4,cIPv4);
 	if(system(gcQuery))
 	{
+		//printf("gcQuery=(%s)\n",gcQuery);
 		logfileLine("RemoveAcceptFromIPTables","iptables command failed");
 		logfileLine("RemoveAcceptFromIPTables",cIPv4);
 		tJobErrorUpdate(uJob,"iptables command failed");
@@ -6642,6 +6676,16 @@ void RemoveDropFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatacen
 		tJobErrorUpdate(uJob,"cIPv4[0]==0");
 		return;
 	}
+	//setup for class C blocking
+	unsigned d=(-1);
+	if(sscanf(cIPv4,"%*u.%*u.%*u.%u",&d)!=1)
+	{
+		logfileLine("BlockAccess","cIPv4 format error");
+		tJobErrorUpdate(uJob,"cIPv4 format error");
+		return;
+	}
+	if(d==0)
+		strncat(cIPv4,"/24",3);
 
         MYSQL_RES *res;
         MYSQL_ROW field;
