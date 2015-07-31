@@ -553,8 +553,8 @@ void ProvisionDR(void)
 			if(field2[0][0])
 			{
 				sprintf(gcQuery,"SELECT id,scan_prefix,description FROM carrierroute"
-					" WHERE rewrite_host='%s' AND scan_prefix='%s'",
-						field[0],field2[0]);
+					" WHERE scan_prefix='%s'",
+						field2[0]);
 				mysql_query(&gMysqlExt,gcQuery);
 				if(mysql_errno(&gMysqlExt))
 				{
