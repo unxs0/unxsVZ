@@ -33,6 +33,26 @@ void ExtProcesstAuthorizeVars(pentry entries[], int x)
 
 void ExttAuthorizeCommands(pentry entries[], int x)
 {
+	void voidGencOTPSecret(void)
+	{
+		//generate a secret
+		size_t uSecretlen=0;
+		char *cSecret;
+		char cRandom[32];
+		int iRc;
+  		int fd=open("/dev/urandom",O_RDONLY);
+		if(fd<0)
+			tAuthorize("Failed to open \"/dev/urandom\"");
+		if(read(fd,cRandom,sizeof(cRandom))!=sizeof(cRandom))
+			tAuthorize("Failed to read from \"/dev/urandom\"");
+	
+		//oath_base32_encode(const char *in, size_t inlen, char **out, size_t *outlen);
+		iRc=oath_base32_encode(cRandom,sizeof(cRandom),&cSecret,&uSecretlen);
+		if(iRc!=OATH_OK)
+			tAuthorize("cOTPSecret base32 encoding failed");
+		sprintf(cOTPSecret,"%.16s",cSecret);
+	}
+
 	if(!strcmp(gcFunction,"tAuthorizeTools"))
 	{
 		if(!strcmp(gcCommand,LANG_NB_NEW))
@@ -42,6 +62,8 @@ void ExttAuthorizeCommands(pentry entries[], int x)
                 	        ProcesstAuthorizeVars(entries,x);
 				//Check global conditions for new record here
 				guMode=2000;
+				if(!cOTPSecret[0])
+					voidGencOTPSecret();
 				tAuthorize(LANG_NB_CONFIRMNEW);
 			}
                 }
@@ -82,6 +104,8 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 			if(uAllowMod(uOwner,uCreatedBy) && (guPermLevel>10 || uCertClient==guLoginClient || uCreatedBy==guLoginClient))
 			{
 				guMode=2002;
+				if(!cOTPSecret[0])
+					voidGencOTPSecret();
 				tAuthorize(LANG_NB_CONFIRMMOD);
 			}
 			else
