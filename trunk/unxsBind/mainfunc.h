@@ -146,9 +146,9 @@ void DashBoard(const char *cOptionalMsg)
 
 	OpenFieldSet("Dashboard",100);
 	
-	GetConfiguration("allzone.stats",cConfigBuffer,1);
-	if(cConfigBuffer[0])
-		printf("<img src='%s'>\n",cConfigBuffer);
+	//GetConfiguration("allzone.stats",cConfigBuffer,1);
+	//if(cConfigBuffer[0])
+	//	printf("<img src='%s'>\n",cConfigBuffer);
 
 	cConfigBuffer[0]=0;
 	GetConfiguration("mrcstatus",cConfigBuffer,1);
@@ -1486,7 +1486,6 @@ void UpdateSchema(void)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned ucClrPasswd=1;
 	unsigned ucMessage=1;
 	unsigned ucServer=1;
 	unsigned uNameServer=0;
@@ -1509,29 +1508,41 @@ void UpdateSchema(void)
 
 
 	//tAuthorize
+	//tAuthorize section
+	unsigned uAuthorizecOTPSecret=0;
+	unsigned uAuthorizeuOTPExpire=0;
 	sprintf(gcQuery,"SHOW COLUMNS IN tAuthorize");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
-	{
 		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
+	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
-		if(!strcmp(field[0],"cClrPasswd")) ucClrPasswd=0;
-       	mysql_free_result(res);
-	if(ucClrPasswd)
 	{
-		sprintf(gcQuery,"ALTER TABLE tAuthorize ADD cClrPasswd VARCHAR(32) NOT NULL DEFAULT ''");
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql)) 
-			printf("%s\n",mysql_error(&gMysql));
-		printf("%s\n",gcQuery);
+		if(!strcmp(field[0],"uOTPExpire"))
+			uAuthorizeuOTPExpire=1;
+		if(!strcmp(field[0],"cOTPSecret"))
+			uAuthorizecOTPSecret=1;
 	}
-	sprintf(gcQuery,"ALTER TABLE tAuthorize MODIFY cPasswd VARCHAR(35) NOT NULL DEFAULT ''");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql)) 
-		printf("%s\n",mysql_error(&gMysql));
+       	mysql_free_result(res);
+	if(!uAuthorizeuOTPExpire)
+	{
+		sprintf(gcQuery,"ALTER TABLE tAuthorize ADD uOTPExpire INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uOTPExpires to tAuthorize\n");
+	}
+	if(!uAuthorizecOTPSecret)
+	{
+		sprintf(gcQuery,"ALTER TABLE tAuthorize ADD cOTPSecret VARCHAR(64) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added cOTPSecret to tAuthorize\n");
+	}
 
 	//tView
 	sprintf(gcQuery,"SHOW COLUMNS IN tView");

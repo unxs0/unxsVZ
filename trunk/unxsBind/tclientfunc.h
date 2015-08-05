@@ -172,7 +172,7 @@ void ExttClientCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstClientVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(uAllowDel(uOwner,uCreatedBy) && (guPermLevel>10 || uCreatedBy==guLoginClient))
 			{
                         	guMode=2001;
                         	tClient(LANG_NB_CONFIRMDEL);
@@ -183,7 +183,7 @@ void ExttClientCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstClientVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(uAllowDel(uOwner,uCreatedBy) && (guPermLevel>10 || uCreatedBy==guLoginClient))
 			{
                         	guMode=2001;
 				//This must be customized
@@ -227,7 +227,7 @@ void ExttClientCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstClientVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) && (guPermLevel>10 || uClient==guLoginClient || uCreatedBy==guLoginClient))
 			{
 				guMode=2002;
 				tClient(LANG_NB_CONFIRMMOD);
@@ -238,7 +238,7 @@ void ExttClientCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstClientVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) && (guPermLevel>10 || uClient==guLoginClient || uCreatedBy==guLoginClient))
 			{
 				//Validate
 				guMode=2002;
@@ -628,10 +628,10 @@ void ExttClientNavBar(void)
 	if(guPermLevel>=10 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(uAllowMod(uOwner,uCreatedBy))
+	if(uAllowMod(uOwner,uCreatedBy) && (guPermLevel>10 || uClient==guLoginClient || uCreatedBy==guLoginClient))
 		printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy))
+	if(uAllowDel(uOwner,uCreatedBy) && (guPermLevel>10 || uCreatedBy==guLoginClient))
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)

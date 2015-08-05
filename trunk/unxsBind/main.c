@@ -52,6 +52,11 @@ char gcCookie[1024]={""};
 char gcLogin[100]={""};
 char gcPasswd[100]={""};
 unsigned guSSLCookieLogin=0;
+unsigned guRequireOTPLogin=0;
+unsigned guOTPExpired=0;
+char gcOTP[16]={""};
+char gcOTPInfo[64]={"Nothing yet"};
+char gcOTPSecret[65]={""};
 
 char gcFunction[100]={""};
 unsigned guListMode=0;
@@ -86,6 +91,7 @@ void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt);
 void EncryptPasswd(char *pw);
 void GetPLAndClient(char *cUser);
 void htmlSSLLogin(void);
+void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
 
 //mainfunc.h for symbolic links to this program
 void CalledByAlias(int iArgc,char *cArgv[]);
@@ -148,19 +154,28 @@ int main(int iArgc, char *cArgv[])
 				iDNS("");
 			else if(!strcmp(gcFunction,"Logout"))
 			{
-				printf("Set-Cookie: iDNSLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				printf("Set-Cookie: iDNSPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: iDNSLogin=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: iDNSPasswd=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
-						"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,"
-						"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
-				mysql_query(&gMysql,gcQuery);
+				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+				" uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE "
+				" cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
+				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+				" uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
+				MYSQL_RUN;
+				if(gcOTPSecret[0])
+				{
+					UpdateOTPExpire(0,guLoginClient);
+					guRequireOTPLogin=1;
+				}
 				gcCookie[0]=0;
                                 guPermLevel=0;
                                 guLoginClient=0;
                                 gcUser[0]=0;
                                 gcCompany[0]=0;
-				guSSLCookieLogin=0;
+                                guSSLCookieLogin=0;
                                 htmlSSLLogin();
 			}
 
@@ -265,6 +280,8 @@ int main(int iArgc, char *cArgv[])
 			sprintf(gcLogin,"%.99s",entries[x].val);
                 else if(!strcmp(entries[x].name,"gcPasswd"))
 			sprintf(gcPasswd,"%.99s",entries[x].val);
+                else if(!strcmp(entries[x].name,"gcOTP"))
+			sprintf(gcOTP,"%.15s",entries[x].val);
 	}
 
 	//SSLCookieLogin()
@@ -1914,14 +1931,14 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: iDNSLogin=%s;\n",gcLogin);
-		printf("Set-Cookie: iDNSPasswd=%s;\n",gcPasswd);
+		printf("Set-Cookie: iDNSLogin=%s; secure;\n",gcLogin);
+		printf("Set-Cookie: iDNSPasswd=%s; secure;\n",gcPasswd);
 		sprintf(gcUser,"%.99s",gcLogin);
 		GetPLAndClient(gcUser);
 		if(!guPermLevel || !guLoginClient || guPermLevel<7)
 		{
-			printf("Set-Cookie: iDNSLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			printf("Set-Cookie: iDNSPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: iDNSLogin=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: iDNSPasswd=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			iDNS("Access denied to backend by configuration.");
 		}
 		guSSLCookieLogin=1;
@@ -2011,10 +2028,8 @@ void SSLCookieLogin(void)
 	char *ptr,*ptr2;
 
 	//Parse out login and passwd from cookies
-#ifdef SSLONLY
 	if(getenv("HTTPS")==NULL) 
 		iDNS("Non SSL access denied");
-#endif
 
 	if(getenv("HTTP_COOKIE")!=NULL)
 		strncpy(gcCookie,getenv("HTTP_COOKIE"),1022);
@@ -2517,3 +2532,83 @@ int ReadPullDownOwner(const char *cTableName,const char *cFieldName,
         return(iRowid);
 
 }//ReadPullDownOwner()
+
+//OTP
+
+unsigned uValidOTP(char *cOTPSecret,char *cOTP)
+{
+	char *secret;
+	size_t secretlen = 0;
+	int rc;
+	char otp[10];
+	time_t now;
+
+	rc=oath_init();
+	if(rc!=OATH_OK)
+		return(0);
+
+	now=time(NULL);
+
+	rc=oath_base32_decode(cOTPSecret,strlen(cOTPSecret),&secret,&secretlen);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+
+	//2 min time skew window
+	rc=oath_totp_generate(secret,secretlen,now-60,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+	rc=oath_totp_generate(secret,secretlen,now-30,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+	rc=oath_totp_generate(secret,secretlen,now,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+	rc=oath_totp_generate(secret,secretlen,now+30,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+	rc=oath_totp_generate(secret,secretlen,now+60,30,0,6,otp);
+	if(rc!=OATH_OK)
+		goto gotoFail;
+	if(!strcmp(cOTP,otp))
+		goto gotoMatch;
+
+gotoFail:
+	free(secret);
+	oath_done();
+	return(0);
+
+gotoMatch:
+	free(secret);
+	oath_done();
+	return(1);
+
+}//unsigned uValidOTP(char *cOTPSecret,char *cOTP)
+
+
+//with uAuthorize==0 it expires the OTP for a given guLoginClient
+void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient)
+{
+
+	//OTP login OK for 4 more hours. Change to configurable TODO.
+	if(!uAuthorize)
+		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=0 WHERE uCertClient=%u",
+			uClient);
+	else
+		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=(UNIX_TIMESTAMP(NOW())+28800) WHERE uAuthorize=%u",
+			uAuthorize);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+}//void UpdateOTPExpire()
