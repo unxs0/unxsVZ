@@ -559,7 +559,18 @@ void tAuthorizeList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uAuthorize<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>cIpMask<td><font face=arial,helvetica color=white>uPerm<td><font face=arial,helvetica color=white>uCertClient<td><font face=arial,helvetica color=white>cPasswd<td><font face=arial,helvetica color=white>cClrPasswd<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uAuthorize"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>cIpMask"
+		"<td><font face=arial,helvetica color=white>uPerm"
+		"<td><font face=arial,helvetica color=white>uCertClient"
+		"<td><font face=arial,helvetica color=white>cPasswd"
+		"<td><font face=arial,helvetica color=white>cClrPasswd"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 
 
@@ -589,7 +600,8 @@ void tAuthorizeList(void)
 			ctime_r(&luTime11,cBuf11);
 		else
 			sprintf(cBuf11,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td><a class=darkLink href=iDNS.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
+                	" %s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
@@ -615,7 +627,23 @@ void tAuthorizeList(void)
 
 void CreatetAuthorize(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tAuthorize ( uAuthorize INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '',unique (cLabel,uOwner), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cIpMask VARCHAR(20) NOT NULL DEFAULT '', uPerm INT UNSIGNED NOT NULL DEFAULT 0, uCertClient INT UNSIGNED NOT NULL DEFAULT 0, cPasswd VARCHAR(100) NOT NULL DEFAULT '', cClrPasswd VARCHAR(32) NOT NULL DEFAULT '' )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tAuthorize ( "
+			"uAuthorize INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			"UNIQUE (cLabel,uOwner),"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,"
+			"INDEX (uOwner),"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"cIpMask VARCHAR(20) NOT NULL DEFAULT '',"
+			"uPerm INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCertClient INT UNSIGNED NOT NULL DEFAULT 0,"
+			"cPasswd VARCHAR(100) NOT NULL DEFAULT '',"
+			"cClrPasswd VARCHAR(32) NOT NULL DEFAULT '',"
+			"cOTPSecret VARCHAR(64) NOT NULL DEFAULT '',"
+			"uOTPExpire INT UNSIGNED NOT NULL DEFAULT 0 )");
 	macro_mySQLQueryHTMLError;
 
 }//CreatetAuthorize()

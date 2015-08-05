@@ -25,6 +25,7 @@ AUTHOR/LEGAL
 #include "cgi.h"
 
 #include <mysql/mysql.h>
+#include <liboath/oath.h>
 char *crypt(const char *key, const char *salt);
 
 //This creates a dependency on provided tRRType.txt table fie

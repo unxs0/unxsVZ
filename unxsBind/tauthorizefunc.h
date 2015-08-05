@@ -61,7 +61,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
                         ProcesstAuthorizeVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(uAllowDel(uOwner,uCreatedBy) && (guPermLevel>10 || uCreatedBy==guLoginClient))
 			{
 				guMode=2001;
 				tAuthorize(LANG_NB_CONFIRMDEL);
@@ -70,7 +70,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
                         ProcesstAuthorizeVars(entries,x);
-			if(uAllowDel(uOwner,uCreatedBy))
+			if(uAllowDel(uOwner,uCreatedBy) && (guPermLevel>10 || uCreatedBy==guLoginClient))
 			{
 				guMode=5;
 				DeletetAuthorize();
@@ -79,7 +79,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstAuthorizeVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) && (guPermLevel>10 || uCertClient==guLoginClient || uCreatedBy==guLoginClient))
 			{
 				guMode=2002;
 				tAuthorize(LANG_NB_CONFIRMMOD);
@@ -90,7 +90,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstAuthorizeVars(entries,x);
-			if(uAllowMod(uOwner,uCreatedBy))
+			if(uAllowMod(uOwner,uCreatedBy) && (guPermLevel>10 || uCertClient==guLoginClient || uCreatedBy==guLoginClient))
 			{
 				if(uPerm>guPermLevel) uPerm=guPermLevel;
 				if(uPerm<1 || uPerm>12)
@@ -278,10 +278,10 @@ void ExttAuthorizeNavBar(void)
 	if(guPermLevel>=12 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(uAllowMod(uOwner,uCreatedBy))
+	if(uAllowMod(uOwner,uCreatedBy) && (guPermLevel>10 || uCertClient==guLoginClient || uCreatedBy==guLoginClient))
 		printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy))
+	if(uAllowDel(uOwner,uCreatedBy) && (guPermLevel>10 || uCreatedBy==guLoginClient))
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
