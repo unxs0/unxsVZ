@@ -55,7 +55,7 @@ unsigned guSSLCookieLogin=0;
 unsigned guRequireOTPLogin=0;
 unsigned guOTPExpired=0;
 char gcOTP[16]={""};
-char gcOTPInfo[64]={"Nothing yet"};
+char gcOTPInfo[100]={"Nothing yet"};
 char gcOTPSecret[65]={""};
 
 char gcFunction[100]={""};
@@ -92,6 +92,7 @@ void EncryptPasswd(char *pw);
 void GetPLAndClient(char *cUser);
 void htmlSSLLogin(void);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
+char *cGetPasswd(char *gcLogin,char *cOTPSecret,unsigned long *luOTPExpire,unsigned long *luSQLNow,unsigned *uAuthorize);
 
 //mainfunc.h for symbolic links to this program
 void CalledByAlias(int iArgc,char *cArgv[]);
@@ -667,12 +668,16 @@ void Header_ism3(char *title, int iJs)
 	if(!guPermLevel)
 	{
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>Your IP address %s has been logged</font>",gcHost);
+		//printf("&nbsp;&nbsp;&nbsp;<font color=red>%s ",gcUser);
+		//if(strcmp(gcUser,gcCompany)) printf("(%s) ",gcCompany);
+		//printf("logged in from %s [%s/%u (%s)]</font>",gcHost,cUserLevel(guPermLevel),guReseller,gcOTPInfo);
 	}
 	else
 	{
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>%s ",gcUser);
 		if(strcmp(gcUser,gcCompany)) printf("(%s) ",gcCompany);
 		printf("logged in from %s [%s]</font>",gcHost,cUserLevel(guPermLevel));
+		//printf("logged in from %s [%s/%u (%s)]</font>",gcHost,cUserLevel(guPermLevel),guReseller,gcOTPInfo);
 	}
 
 	//Logout link
@@ -700,370 +705,374 @@ void Header_ism3(char *title, int iJs)
 		printf("\t\t\t<a title='Home start page' href=iDNS.cgi?gcFunction=Main>Main</a>\n");
 	printf("\t\t\t</li>\n");
 
-	//tZone
-	if(guPermLevel>=7)
+	if(guSSLCookieLogin)
 	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tZone") && strcmp(gcFunction,"tZoneTools") &&
-			strcmp(gcFunction,"tZoneList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='DNS Zones' href=iDNS.cgi?gcFunction=tZone>tZone</a>\n");
-	}
-	//tResource
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tResource") && strcmp(gcFunction,"tResourceTools") &&
-			strcmp(gcFunction,"tResourceList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Resource Records for a given Zone' href=iDNS.cgi?gcFunction=tResource>tResource</a>\n");
-	}
-	//tRRType
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tRRType") && strcmp(gcFunction,"tRRTypeTools") &&
-			strcmp(gcFunction,"tRRTypeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Resource Record Types' href=iDNS.cgi?gcFunction=tRRType>tRRType</a>\n");
-	}
-	//tMailServer
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tMailServer") && strcmp(gcFunction,"tMailServerTools") &&
-			strcmp(gcFunction,"tMailServerList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Mail server groups' href=iDNS.cgi?gcFunction=tMailServer>tMailServer</a>\n");
-	}
-	//tNSType
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tNSType") && strcmp(gcFunction,"tNSTypeTools") &&
-			strcmp(gcFunction,"tNSTypeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Type of name server' href=iDNS.cgi?gcFunction=tNSType>tNSType</a>\n");
-	}
-	//tNSSet
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tNSSet") && strcmp(gcFunction,"tNSSetTools") &&
-			strcmp(gcFunction,"tNSSetList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='For grouping related NSs to a zone' href=iDNS.cgi?gcFunction=tNSSet>tNSSet</a>\n");
-	}
-	//tNS
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tNS") && strcmp(gcFunction,"tNSTools") &&
-			strcmp(gcFunction,"tNSList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Individual NS set members' href=iDNS.cgi?gcFunction=tNS>tNS</a>\n");
-	}
-	//tServer
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tServer") && strcmp(gcFunction,"tServerTools") &&
-			strcmp(gcFunction,"tServerList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='For grouping NS sets to a server' href=iDNS.cgi?gcFunction=tServer>tServer</a>\n");
-	}
-	//tConfiguration
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tConfiguration") && strcmp(gcFunction,"tConfigurationTools") &&
-			strcmp(gcFunction,"tConfigurationList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Runtime configuration variables' href=iDNS.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
-	}
-	//tTemplate
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tTemplate") && strcmp(gcFunction,"tTemplateTools") &&
-			strcmp(gcFunction,"tTemplateList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplate' href=iDNS.cgi?gcFunction=tTemplate>tTemplate</a>\n");
-	}
-	//tTemplateSet
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tTemplateSet") && strcmp(gcFunction,"tTemplateSetTools") &&
-			strcmp(gcFunction,"tTemplateSetList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateSet' href=iDNS.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
-	}
-	//tTemplateType
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tTemplateType") && strcmp(gcFunction,"tTemplateTypeTools") &&
-			strcmp(gcFunction,"tTemplateTypeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tTemplateType' href=iDNS.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
-	}
-	//tLog
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tLog") && strcmp(gcFunction,"tLogTools") &&
-			strcmp(gcFunction,"tLogList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Audit Log' href=iDNS.cgi?gcFunction=tLog>tLog</a>\n");
-	}
-	//tLogType
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tLogType") && strcmp(gcFunction,"tLogTypeTools") &&
-			strcmp(gcFunction,"tLogTypeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Audit Log Type' href=iDNS.cgi?gcFunction=tLogType>tLogType</a>\n");
-	}
-	//tBlock
-	if(guPermLevel>=7)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tBlock") && strcmp(gcFunction,"tBlockTools") &&
-			strcmp(gcFunction,"tBlockList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='CIDR IP Block Control' href=iDNS.cgi?gcFunction=tBlock>tBlock</a>\n");
-	}
-	//tView
-	if(guPermLevel>=10)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tView") && strcmp(gcFunction,"tViewTools") &&
-			strcmp(gcFunction,"tViewList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='View details for tZone.uView' href=iDNS.cgi?gcFunction=tView>tView</a>\n");
-	}
-	//tRegistrar
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tRegistrar") && strcmp(gcFunction,"tRegistrarTools") &&
-			strcmp(gcFunction,"tRegistrarList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tRegistrar' href=iDNS.cgi?gcFunction=tRegistrar>tRegistrar</a>\n");
-	}
-	//tGlossary
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tGlossary") && strcmp(gcFunction,"tGlossaryTools") &&
-			strcmp(gcFunction,"tGlossaryList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Stores the Glossary definitions' href=iDNS.cgi?gcFunction=tGlossary>tGlossary</a>\n");
-	}
-	//tGroup
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tGroup") && strcmp(gcFunction,"tGroupTools") &&
-			strcmp(gcFunction,"tGroupList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tGroup' href=iDNS.cgi?gcFunction=tGroup>tGroup</a>\n");
-	}
-	//tGroupGlue
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tGroupGlue") && strcmp(gcFunction,"tGroupGlueTools") &&
-			strcmp(gcFunction,"tGroupGlueList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tGroupGlue' href=iDNS.cgi?gcFunction=tGroupGlue>tGroupGlue</a>\n");
-	}
-	//tGroupType
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tGroupType") && strcmp(gcFunction,"tGroupTypeTools") &&
-			strcmp(gcFunction,"tGroupTypeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tGroupType' href=iDNS.cgi?gcFunction=tGroupType>tGroupType</a>\n");
-	}
-	//tZoneImport
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tZoneImport") && strcmp(gcFunction,"tZoneImportTools") &&
-			strcmp(gcFunction,"tZoneImportList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='DNS Imported Zones' href=iDNS.cgi?gcFunction=tZoneImport>tZoneImport</a>\n");
-	}
-	//tResourceImport
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tResourceImport") && strcmp(gcFunction,"tResourceImportTools") &&
-			strcmp(gcFunction,"tResourceImportList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Resource Records for a given import zone' href=iDNS.cgi?gcFunction=tResourceImport>tResourceImport</a>\n");
-	}
-	//tMonthHit
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tMonthHit") && strcmp(gcFunction,"tMonthHitTools") &&
-			strcmp(gcFunction,"tMonthHitList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMonthHit' href=iDNS.cgi?gcFunction=tMonthHit>tMonthHit</a>\n");
-	}
-	//tMonth
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tMonth") && strcmp(gcFunction,"tMonthTools") &&
-			strcmp(gcFunction,"tMonthList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tMonth' href=iDNS.cgi?gcFunction=tMonth>tMonth</a>\n");
-	}
-	//tLogMonth
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tLogMonth") && strcmp(gcFunction,"tLogMonthTools") &&
-			strcmp(gcFunction,"tLogMonthList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Archived Audit Log' href=iDNS.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
-	}
-	//tHit
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tHit") && strcmp(gcFunction,"tHitTools") &&
-			strcmp(gcFunction,"tHitList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tHit' href=iDNS.cgi?gcFunction=tHit>tHit</a>\n");
-	}
-	//tHitMonth
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tHitMonth") && strcmp(gcFunction,"tHitMonthTools") &&
-			strcmp(gcFunction,"tHitMonthList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='tHitMonth' href=iDNS.cgi?gcFunction=tHitMonth>tHitMonth</a>\n");
-	}
-	//tDeletedZone
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tDeletedZone") && strcmp(gcFunction,"tDeletedZoneTools") &&
-			strcmp(gcFunction,"tDeletedZoneList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Deleted DNS Zones' href=iDNS.cgi?gcFunction=tDeletedZone>tDeletedZone</a>\n");
-	}
-	//tDeletedResource
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tDeletedResource") && strcmp(gcFunction,"tDeletedResourceTools") &&
-			strcmp(gcFunction,"tDeletedResourceList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Deleted Resource Records for a given Zone' href=iDNS.cgi?gcFunction=tDeletedResource>tDeletedResource</a>\n");
-	}
-	//tClient
-	if(guPermLevel>=7)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tClient") && strcmp(gcFunction,"tClientTools") &&
-			strcmp(gcFunction,"tClientList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Clients' href=iDNS.cgi?gcFunction=tClient>tClient</a>\n");
-	}
-	//tAuthorize
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tAuthorize") && strcmp(gcFunction,"tAuthorizeTools") &&
-			strcmp(gcFunction,"tAuthorizeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Login Authorization' href=iDNS.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
-	}
-	//tJob
-	if(guPermLevel>=10)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tJob") && strcmp(gcFunction,"tJobTools") &&
-			strcmp(gcFunction,"tJobList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Job Queue' href=iDNS.cgi?gcFunction=tJob>tJob</a>\n");
-	}
 
+		//tZone
+		if(guPermLevel>=7)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tZone") && strcmp(gcFunction,"tZoneTools") &&
+				strcmp(gcFunction,"tZoneList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='DNS Zones' href=iDNS.cgi?gcFunction=tZone>tZone</a>\n");
+		}
+		//tResource
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tResource") && strcmp(gcFunction,"tResourceTools") &&
+				strcmp(gcFunction,"tResourceList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Resource Records for a given Zone' href=iDNS.cgi?gcFunction=tResource>tResource</a>\n");
+		}
+		//tRRType
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tRRType") && strcmp(gcFunction,"tRRTypeTools") &&
+				strcmp(gcFunction,"tRRTypeList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Resource Record Types' href=iDNS.cgi?gcFunction=tRRType>tRRType</a>\n");
+		}
+		//tMailServer
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tMailServer") && strcmp(gcFunction,"tMailServerTools") &&
+				strcmp(gcFunction,"tMailServerList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Mail server groups' href=iDNS.cgi?gcFunction=tMailServer>tMailServer</a>\n");
+		}
+		//tNSType
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tNSType") && strcmp(gcFunction,"tNSTypeTools") &&
+				strcmp(gcFunction,"tNSTypeList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Type of name server' href=iDNS.cgi?gcFunction=tNSType>tNSType</a>\n");
+		}
+		//tNSSet
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tNSSet") && strcmp(gcFunction,"tNSSetTools") &&
+				strcmp(gcFunction,"tNSSetList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='For grouping related NSs to a zone' href=iDNS.cgi?gcFunction=tNSSet>tNSSet</a>\n");
+		}
+		//tNS
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tNS") && strcmp(gcFunction,"tNSTools") &&
+				strcmp(gcFunction,"tNSList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Individual NS set members' href=iDNS.cgi?gcFunction=tNS>tNS</a>\n");
+		}
+		//tServer
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tServer") && strcmp(gcFunction,"tServerTools") &&
+				strcmp(gcFunction,"tServerList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='For grouping NS sets to a server' href=iDNS.cgi?gcFunction=tServer>tServer</a>\n");
+		}
+		//tConfiguration
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tConfiguration") && strcmp(gcFunction,"tConfigurationTools") &&
+				strcmp(gcFunction,"tConfigurationList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Runtime configuration variables' href=iDNS.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
+		}
+		//tTemplate
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tTemplate") && strcmp(gcFunction,"tTemplateTools") &&
+				strcmp(gcFunction,"tTemplateList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tTemplate' href=iDNS.cgi?gcFunction=tTemplate>tTemplate</a>\n");
+		}
+		//tTemplateSet
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tTemplateSet") && strcmp(gcFunction,"tTemplateSetTools") &&
+				strcmp(gcFunction,"tTemplateSetList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tTemplateSet' href=iDNS.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
+		}
+		//tTemplateType
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tTemplateType") && strcmp(gcFunction,"tTemplateTypeTools") &&
+				strcmp(gcFunction,"tTemplateTypeList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tTemplateType' href=iDNS.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
+		}
+		//tLog
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tLog") && strcmp(gcFunction,"tLogTools") &&
+				strcmp(gcFunction,"tLogList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Audit Log' href=iDNS.cgi?gcFunction=tLog>tLog</a>\n");
+		}
+		//tLogType
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tLogType") && strcmp(gcFunction,"tLogTypeTools") &&
+				strcmp(gcFunction,"tLogTypeList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Audit Log Type' href=iDNS.cgi?gcFunction=tLogType>tLogType</a>\n");
+		}
+		//tBlock
+		if(guPermLevel>=7)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tBlock") && strcmp(gcFunction,"tBlockTools") &&
+				strcmp(gcFunction,"tBlockList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='CIDR IP Block Control' href=iDNS.cgi?gcFunction=tBlock>tBlock</a>\n");
+		}
+		//tView
+		if(guPermLevel>=10)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tView") && strcmp(gcFunction,"tViewTools") &&
+				strcmp(gcFunction,"tViewList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='View details for tZone.uView' href=iDNS.cgi?gcFunction=tView>tView</a>\n");
+		}
+		//tRegistrar
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tRegistrar") && strcmp(gcFunction,"tRegistrarTools") &&
+				strcmp(gcFunction,"tRegistrarList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tRegistrar' href=iDNS.cgi?gcFunction=tRegistrar>tRegistrar</a>\n");
+		}
+		//tGlossary
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tGlossary") && strcmp(gcFunction,"tGlossaryTools") &&
+				strcmp(gcFunction,"tGlossaryList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Stores the Glossary definitions' href=iDNS.cgi?gcFunction=tGlossary>tGlossary</a>\n");
+		}
+		//tGroup
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tGroup") && strcmp(gcFunction,"tGroupTools") &&
+				strcmp(gcFunction,"tGroupList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tGroup' href=iDNS.cgi?gcFunction=tGroup>tGroup</a>\n");
+		}
+		//tGroupGlue
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tGroupGlue") && strcmp(gcFunction,"tGroupGlueTools") &&
+				strcmp(gcFunction,"tGroupGlueList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tGroupGlue' href=iDNS.cgi?gcFunction=tGroupGlue>tGroupGlue</a>\n");
+		}
+		//tGroupType
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tGroupType") && strcmp(gcFunction,"tGroupTypeTools") &&
+				strcmp(gcFunction,"tGroupTypeList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tGroupType' href=iDNS.cgi?gcFunction=tGroupType>tGroupType</a>\n");
+		}
+		//tZoneImport
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tZoneImport") && strcmp(gcFunction,"tZoneImportTools") &&
+				strcmp(gcFunction,"tZoneImportList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='DNS Imported Zones' href=iDNS.cgi?gcFunction=tZoneImport>tZoneImport</a>\n");
+		}
+		//tResourceImport
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tResourceImport") && strcmp(gcFunction,"tResourceImportTools") &&
+				strcmp(gcFunction,"tResourceImportList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Resource Records for a given import zone' href=iDNS.cgi?gcFunction=tResourceImport>tResourceImport</a>\n");
+		}
+		//tMonthHit
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tMonthHit") && strcmp(gcFunction,"tMonthHitTools") &&
+				strcmp(gcFunction,"tMonthHitList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tMonthHit' href=iDNS.cgi?gcFunction=tMonthHit>tMonthHit</a>\n");
+		}
+		//tMonth
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tMonth") && strcmp(gcFunction,"tMonthTools") &&
+				strcmp(gcFunction,"tMonthList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tMonth' href=iDNS.cgi?gcFunction=tMonth>tMonth</a>\n");
+		}
+		//tLogMonth
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tLogMonth") && strcmp(gcFunction,"tLogMonthTools") &&
+				strcmp(gcFunction,"tLogMonthList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Archived Audit Log' href=iDNS.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
+		}
+		//tHit
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tHit") && strcmp(gcFunction,"tHitTools") &&
+				strcmp(gcFunction,"tHitList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tHit' href=iDNS.cgi?gcFunction=tHit>tHit</a>\n");
+		}
+		//tHitMonth
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tHitMonth") && strcmp(gcFunction,"tHitMonthTools") &&
+				strcmp(gcFunction,"tHitMonthList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tHitMonth' href=iDNS.cgi?gcFunction=tHitMonth>tHitMonth</a>\n");
+		}
+		//tDeletedZone
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tDeletedZone") && strcmp(gcFunction,"tDeletedZoneTools") &&
+				strcmp(gcFunction,"tDeletedZoneList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Deleted DNS Zones' href=iDNS.cgi?gcFunction=tDeletedZone>tDeletedZone</a>\n");
+		}
+		//tDeletedResource
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tDeletedResource") && strcmp(gcFunction,"tDeletedResourceTools") &&
+				strcmp(gcFunction,"tDeletedResourceList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Deleted Resource Records for a given Zone' href=iDNS.cgi?gcFunction=tDeletedResource>tDeletedResource</a>\n");
+		}
+		//tClient
+		if(guPermLevel>=7)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tClient") && strcmp(gcFunction,"tClientTools") &&
+				strcmp(gcFunction,"tClientList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Clients' href=iDNS.cgi?gcFunction=tClient>tClient</a>\n");
+		}
+		//tAuthorize
+		if(guPermLevel>=20)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tAuthorize") && strcmp(gcFunction,"tAuthorizeTools") &&
+				strcmp(gcFunction,"tAuthorizeList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Login Authorization' href=iDNS.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
+		}
+		//tJob
+		if(guPermLevel>=10)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tJob") && strcmp(gcFunction,"tJobTools") &&
+				strcmp(gcFunction,"tJobList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='Job Queue' href=iDNS.cgi?gcFunction=tJob>tJob</a>\n");
+		}
+	
+	}//if logged in
 	
 	printf("\t\t\t</ol>\n");
 
@@ -1926,178 +1935,6 @@ char *WordToLower(char *cInput)
 }//char *WordToLower(char *cInput)
 
 
-//SSLCookieLogin() Functions
-void SetLogin(void)
-{
-	if( iValidLogin(0) )
-	{
-		printf("Set-Cookie: iDNSLogin=%s; secure;\n",gcLogin);
-		printf("Set-Cookie: iDNSPasswd=%s; secure;\n",gcPasswd);
-		sprintf(gcUser,"%.99s",gcLogin);
-		GetPLAndClient(gcUser);
-		if(!guPermLevel || !guLoginClient || guPermLevel<7)
-		{
-			printf("Set-Cookie: iDNSLogin=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			printf("Set-Cookie: iDNSPasswd=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			iDNS("Access denied to backend by configuration.");
-		}
-		guSSLCookieLogin=1;
-		iDNS("DashBoard");
-	}
-	else
-	{
-		guSSLCookieLogin=0;
-		SSLCookieLogin();
-	}
-				
-}//void SetLogin(void)
-
-
-char *cGetPasswd(char *gcLogin);
-int iValidLogin(int mode)
-{
-	char cSalt[16]={""};
-	char cPassword[100]={""};
-
-	//Notes:
-	//Mode=1 means we have encrypted passwd from cookie
-
-	sprintf(cPassword,"%.99s",cGetPasswd(gcLogin));
-	if(cPassword[0])
-	{
-		if(!mode)
-		{
-			//MD5 vs DES salt determination
-			if(cPassword[0]=='$' && cPassword[2]=='$')
-				sprintf(cSalt,"%.12s",cPassword);
-			else
-				sprintf(cSalt,"%.2s",cPassword);
-			EncryptPasswdWithSalt(gcPasswd,cSalt);
-			if(!strcmp(gcPasswd,cPassword))
-			{
-				//tLogType.cLabel='backend login'->uLogType=6
-				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
-				mysql_query(&gMysql,gcQuery);
-				return(1);
-			}
-		}
-		else
-		{
-			if(!strcmp(gcPasswd,cPassword)) return(1);
-		}
-	}
-	if(!mode)
-	{
-		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
-		mysql_query(&gMysql,gcQuery);
-	}
-	return(0);
-
-}//iValidLogin()
-
-
-char *cGetPasswd(char *gcLogin)
-{
-	static char cPasswd[100]={""};
-        MYSQL_RES *mysqlRes;
-        MYSQL_ROW mysqlField;
-	char *cp;
-
-	//SQL injection code
-	if((cp=strchr(gcLogin,'\''))) *cp=0;
-
-	sprintf(gcQuery,"SELECT cPasswd FROM " TAUTHORIZE " WHERE cLabel='%s'",
-			gcLogin);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-	mysqlRes=mysql_store_result(&gMysql);
-	cPasswd[0]=0;
-	if((mysqlField=mysql_fetch_row(mysqlRes)))
-		sprintf(cPasswd,"%.99s",mysqlField[0]);
-	mysql_free_result(mysqlRes);
-
-	
-	return(cPasswd);
-
-}//char *cGetPasswd(char *gcLogin)
-
-
-void SSLCookieLogin(void)
-{
-	char *ptr,*ptr2;
-
-	//Parse out login and passwd from cookies
-	if(getenv("HTTPS")==NULL) 
-		iDNS("Non SSL access denied");
-
-	if(getenv("HTTP_COOKIE")!=NULL)
-		strncpy(gcCookie,getenv("HTTP_COOKIE"),1022);
-	
-	if(gcCookie[0])
-	{
-
-	if((ptr=strstr(gcCookie,"iDNSLogin=")))
-	{
-		ptr+=strlen("iDNSLogin=");
-		if((ptr2=strchr(ptr,';')))
-		{
-			*ptr2=0;
-			sprintf(gcLogin,"%.99s",ptr);
-			*ptr2=';';
-		}
-		else
-		{
-			sprintf(gcLogin,"%.99s",ptr);
-		}
-	}
-	if((ptr=strstr(gcCookie,"iDNSPasswd=")))
-	{
-		ptr+=strlen("iDNSPasswd=");
-		if((ptr2=strchr(ptr,';')))
-		{
-			*ptr2=0;
-			sprintf(gcPasswd,"%.99s",ptr);
-			*ptr2=';';
-		}
-		else
-		{
-			sprintf(gcPasswd,"%.99s",ptr);
-		}
-	}
-	
-	}//if gcCookie[0] time saver
-
-	if(!iValidLogin(1))
-		htmlSSLLogin();
-
-	sprintf(gcUser,"%.99s",gcLogin);
-	GetPLAndClient(gcUser);
-	if(!guPermLevel || !guLoginClient || guPermLevel<7)
-	{
-		printf("Set-Cookie: iDNSLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-		printf("Set-Cookie: iDNSPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-		iDNS("Access denied to backend by configuration.");
-	}
-	gcPasswd[0]=0;
-	guSSLCookieLogin=1;
-
-}//SSLCookieLogin()
-
-
-void htmlSSLLogin(void)
-{
-        Header_ism3("",0);
-
-	printf("<p>\n");
-	printf("Login: <input type=text size=20 maxlength=98 name=gcLogin>\n");
-	printf(" Passwd: <input type=password size=20 maxlength=20 name=gcPasswd>\n");
-	printf("<font size=1> <input type=submit name=gcFunction value=Login>\n");
-
-        Footer_ism3();
-
-}//void htmlSSLLogin(void)
-
 
 void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt)
 {
@@ -2533,7 +2370,35 @@ int ReadPullDownOwner(const char *cTableName,const char *cFieldName,
 
 }//ReadPullDownOwner()
 
-//OTP
+
+//
+//
+//OTP and login logic
+
+void SetLogin(void)
+{
+	if( iValidLogin(0) )
+	{
+		printf("Set-Cookie: iDNSLogin=%s; secure;\n",gcLogin);
+		printf("Set-Cookie: iDNSPasswd=%s; secure;\n",gcPasswd);
+		strncpy(gcUser,gcLogin,41);
+		GetPLAndClient(gcUser);
+		guSSLCookieLogin=1;
+		if(guPermLevel>6)
+			iDNS("DashBoard");
+		else if(guPermLevel==6)
+			iDNS("Welcome Organization Admin");
+		else
+			iDNS("Welcome");
+	}
+	else
+	{
+		guSSLCookieLogin=0;
+		SSLCookieLogin();
+	}
+				
+}//void SetLogin(void)
+
 
 unsigned uValidOTP(char *cOTPSecret,char *cOTP)
 {
@@ -2612,3 +2477,260 @@ void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient)
 	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
 }//void UpdateOTPExpire()
+
+
+char *cGetPasswd(char *gcLogin,char *cOTPSecret,unsigned long *luOTPExpire,unsigned long *luSQLNow,unsigned *uAuthorize)
+{
+	static char cPasswd[100]={""};
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+	char *cp;
+
+	//SQL injection code
+	if((cp=strchr(gcLogin,'\''))) *cp=0;
+
+	sprintf(gcQuery,"SELECT cPasswd,cOTPSecret,uOTPExpire,UNIX_TIMESTAMP(NOW()),uAuthorize"
+				" FROM " TAUTHORIZE " WHERE cLabel='%s'",gcLogin);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	mysqlRes=mysql_store_result(&gMysql);
+	cPasswd[0]=0;
+	if((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		sprintf(cPasswd,"%.99s",mysqlField[0]);
+
+		if(mysqlField[1])
+		{
+			sprintf(cOTPSecret,"%.64s",mysqlField[1]);
+			sscanf(mysqlField[2],"%lu",luOTPExpire);
+			sscanf(mysqlField[3],"%lu",luSQLNow);
+			sscanf(mysqlField[4],"%u",uAuthorize);
+		}
+	}
+	mysql_free_result(mysqlRes);
+	
+	return(cPasswd);
+
+}//char *cGetPasswd()
+
+
+int iValidLogin(int iMode)
+{
+	//private function
+	void UpdateLogLoginOk(void)
+	{
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
+			" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+			" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE"
+			" cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,"
+			" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+			" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
+				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
+		MYSQL_RUN;
+		//LoginFirewallJobs(guLoginClient);
+	}
+
+	char cSalt[16]={""};
+	char cPassword[100]={""};
+
+	//Notes:
+	//iMode=1 means we have encrypted passwd from cookie
+
+	unsigned uAuthorize=0;
+	long unsigned luOTPExpire=0;
+	long unsigned luSQLNow=0;
+	strncpy(cPassword,cGetPasswd(gcLogin,gcOTPSecret,&luOTPExpire,&luSQLNow,&uAuthorize),99);
+	//If user has OTP secret then they must login with OTP every so often.
+	if(luOTPExpire<=luSQLNow && gcOTPSecret[0])
+		guOTPExpired=1;
+	sprintf(gcOTPInfo,"{%s}/[%s] %u unexpected case %s/%s %u %u",gcOTPSecret,gcOTP,guOTPExpired,gcLogin,cPassword,uAuthorize,iMode);
+	//debug only
+	//iDNS(gcOTPInfo);
+	if(cPassword[0])
+	{
+		//No cookies!
+		if(!iMode)
+		{
+
+			//MD5 vs DES salt determination
+			if(cPassword[0]=='$' && cPassword[2]=='$')
+				sprintf(cSalt,"%.12s",cPassword);
+			else
+				sprintf(cSalt,"%.2s",cPassword);
+			EncryptPasswdWithSalt(gcPasswd,cSalt);
+			if(!strcmp(gcPasswd,cPassword)) 
+			{
+				guCompany=1;//If next line does not work
+				GetPLAndClient(gcLogin);
+				if(guOTPExpired && gcOTP[0] && gcOTPSecret[0])
+				{
+					if(!uValidOTP(gcOTPSecret,gcOTP))
+					{
+						guRequireOTPLogin=1;
+						sprintf(gcOTPInfo,"{%s}/[%s] %u login invalid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+						//LogoutFirewallJobs(guLoginClient);
+						return(0);
+					}
+					else
+					{
+						guRequireOTPLogin=0;
+						guOTPExpired=0;
+						UpdateOTPExpire(uAuthorize,0);
+						sprintf(gcOTPInfo,"{%s}/[%s] %u login valid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+						UpdateLogLoginOk();
+						return(1);
+					}
+				}
+				else if(guOTPExpired)
+				{
+					guRequireOTPLogin=1;
+					sprintf(gcOTPInfo,"{%s}/[%s] %u login valid but expired",gcOTPSecret,gcOTP,guOTPExpired);
+					//LogoutFirewallJobs(guLoginClient);
+					return(0);
+				}
+				sprintf(gcOTPInfo,"{%s}/[%s] %u login valid",gcOTPSecret,gcOTP,guOTPExpired);
+				UpdateLogLoginOk();
+				return(1);
+			}
+		}
+		//Cookies supplied gcPasswd
+		else
+		{
+			if(!strcmp(gcPasswd,cPassword))
+			{
+				if(guOTPExpired && gcOTP[0] && gcOTPSecret[0])
+				{
+					if(!uValidOTP(gcOTPSecret,gcOTP))
+					{
+						guRequireOTPLogin=1;
+						sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login expired invalid gcOTP (%s)",
+							gcOTPSecret,gcOTP,guOTPExpired,gcUser);
+						//LogoutFirewallJobs(guLoginClient);
+						return(0);
+					}
+					else
+					{
+						guOTPExpired=0;
+						guRequireOTPLogin=0;
+						UpdateOTPExpire(uAuthorize,0);
+						sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login valid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+						return(1);
+					}
+				}
+				else if(guOTPExpired)
+				{
+					guRequireOTPLogin=1;
+					sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login expired no gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
+					//LogoutFirewallJobs(guLoginClient);
+					return(0);
+				}
+				sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login valid",gcOTPSecret,gcOTP,guOTPExpired);
+				return(1);
+			}
+		}
+	}
+
+	//No cookies and passwords did not match OR no password at all
+	if(!iMode)
+	{
+		guCompany=1;//If next line does not work
+		GetPLAndClient(gcLogin);
+		//guPermLevel=0;
+		//guLoginClient=0;
+		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,"
+				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+				" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE"
+				" cLabel='login failed %.99s',uLogType=6,uPermLevel=%u,"
+				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
+				" uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
+					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
+		MYSQL_RUN;
+		//LogoutFirewallJobs(guLoginClient);
+	}
+
+	if(guOTPExpired)
+		guRequireOTPLogin=1;
+	sprintf(gcOTPInfo,"{%s}/[%s] %u invalid login",gcOTPSecret,gcOTP,guOTPExpired);
+	return 0;
+
+}//iValidLogin()
+
+
+void SSLCookieLogin(void)
+{
+	char *ptr,*ptr2;
+
+	//Parse out login and passwd from cookies
+	if(getenv("HTTPS")==NULL) 
+		iDNS("Non SSL access denied");
+
+	if(getenv("HTTP_COOKIE")!=NULL)
+		strncpy(gcCookie,getenv("HTTP_COOKIE"),1022);
+	
+	if(gcCookie[0])
+	{
+
+	if((ptr=strstr(gcCookie,"iDNSLogin=")))
+	{
+		ptr+=strlen("iDNSLogin=");
+		if((ptr2=strchr(ptr,';')))
+		{
+			*ptr2=0;
+			strncpy(gcLogin,ptr,99);
+			*ptr2=';';
+		}
+		else
+		{
+			strncpy(gcLogin,ptr,99);
+		}
+	}
+	if((ptr=strstr(gcCookie,"iDNSPasswd=")))
+	{
+		ptr+=strlen("iDNSPasswd=");
+		if((ptr2=strchr(ptr,';')))
+		{
+			*ptr2=0;
+			sprintf(gcPasswd,"%.99s",ptr);
+			*ptr2=';';
+		}
+		else
+		{
+			sprintf(gcPasswd,"%.99s",ptr);
+		}
+	}
+	
+	}//if gcCookie[0] time saver
+
+	if(!iValidLogin(1))
+		htmlSSLLogin();
+
+	strncpy(gcUser,gcLogin,41);
+	GetPLAndClient(gcUser);
+	if(!guPermLevel || !guLoginClient)
+		iDNS("Access denied");
+	gcPasswd[0]=0;
+	guSSLCookieLogin=1;
+
+}//SSLCookieLogin()
+
+
+void htmlSSLLogin(void)
+{
+        Header_ism3("",0);
+
+	printf("<p>\n");
+	printf("Login: <input type=text title='Enter your login name' size=20 maxlength=98 name=gcLogin >\n");
+	printf(" Passwd: <input type=password title='Enter your password' size=20 maxlength=20 name=gcPasswd >\n");
+	if(guRequireOTPLogin)
+		printf(" Validation code: <input type=text size=8 maxlength=8"
+			" title='Enter your 6 digit one time password. Download google authenticator"
+			" or similar. Ask your admin for the barcode or secret.' name=gcOTP autocomplete=off >\n");
+	printf("<font size=1> <input type=submit name=gcFunction value=Login>\n");
+
+        Footer_ism3();
+
+}//void htmlSSLLogin(void)
+
