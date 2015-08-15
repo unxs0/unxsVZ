@@ -639,6 +639,7 @@ void ExttClientNavBar(void)
 
 	printf(LANG_NBB_SKIPNEXT);
 	printf(LANG_NBB_SKIPLAST);
+	printf("&nbsp;&nbsp;&nbsp;\n");
 
 }//void ExttClientNavBar(void)
 
