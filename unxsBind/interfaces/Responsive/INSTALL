@@ -1,0 +1,26 @@
+#
+#FILE
+#	unxsBind/interfaces/Responsive/INSTALL
+#	$Id$
+#AUTHOR-LEGAL
+#	(C) 2010-2015 Gary Wallis for Unixservice LLC.
+#	GPLv2 license applies. See included LICENSE file.
+#NOTES
+#
+
+unxsBind Responsive Quick Install Instructions
+
+---
+Brief Introduction:
+
+The Rsponsive webconsole interface to unxsBind backend is a Bootstrap HTML/CSS/Javascript
+project.
+
+---
+Prerequisites:
+
+---
+Important notes about upgrading and other post install issues:
+
+---
+Instructions:
