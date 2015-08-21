@@ -467,13 +467,13 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 
 			char cPrivilegedZoneMenu[512]={""};
 			template.cpName[19]="cPrivilegedZoneMenu";
-			if(guPermLevel>=6)
-			{
-				sprintf(cPrivilegedZoneMenu,
-					"<li><a href=\"%1$.32s?gcPage=Repurpose&guZone=%2$u\">Repurpose</a></li>"
-					"<li><a href=\"%1$.32s?gcPage=Reseller&guZone=%2$u\">Reseller</a></li>"
-						,template.cpValue[1],guZone);
-			}
+			//if(guPermLevel>=6)
+			//{
+			//	sprintf(cPrivilegedZoneMenu,
+			//		"<li><a href=\"%1$.32s?gcPage=Repurpose&guZone=%2$u\">Repurpose</a></li>"
+			//		"<li><a href=\"%1$.32s?gcPage=Reseller&guZone=%2$u\">Reseller</a></li>"
+			//			,template.cpValue[1],guZone);
+			//}
 			template.cpValue[19]=cPrivilegedZoneMenu;
 
 			template.cpName[20]="";
@@ -518,6 +518,7 @@ void funcSelectZone(FILE *fp)
 			" (SELECT uClient FROM tClient WHERE"
 			" 	((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND cCode='Organization'))"
 			" OR tZone.uOwner=%u) AND"
+			" tZone.uView=2 AND"
 			" tZone.cZone LIKE '%s%%'"
 			" ORDER BY tZone.cZone LIMIT 301",guOrg,guOrg,guOrg,gcSearch);
 		else
@@ -525,18 +526,21 @@ void funcSelectZone(FILE *fp)
 			" (tZone.uOwner IN"
 			" (SELECT uClient FROM tClient WHERE ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)"
 			" 	OR uOwner=%u) AND " " 	cCode='Organization'))"
-			" OR tZone.uOwner=%u) "
+			" OR tZone.uOwner=%u) AND"
+			" tZone.uView=2 "
 			" ORDER BY tZone.cZone LIMIT 301",guOrg,guOrg,guOrg);
 	}
 	else
 	{
 		if(gcSearch[0])
 			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cZone FROM tZone WHERE"
-			" tZone.uCreatedBy=%u AND tZone.cZone LIKE '%s%%'"
+			" tZone.uCreatedBy=%u AND tZone.cZone LIKE '%s%%' AND"
+			" tZone.uView=2 "
 			" ORDER BY tZone.cZone LIMIT 301",guLoginClient,gcSearch);
 		else
 			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cZone FROM tZone WHERE"
-			" tZone.uCreatedBy=%u"
+			" tZone.uCreatedBy=%u AND "
+			" tZone.uView=2 "
 			" ORDER BY tZone.cZone LIMIT 301",guLoginClient);
 	}
 
@@ -639,6 +643,40 @@ void funcZoneInfo(FILE *fp)
 	if(mysql_num_rows(res)<1)
 		return;
 
+	//Serial
+	sprintf(gcQuery,"SELECT uSerial FROM tZone WHERE uZone=%u",guZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<li class=list-group-item ><span class=badge >%s</span>Serial Number</li>\n",field[0]);
+	}
+
+	//View
+	sprintf(gcQuery,"SELECT tView.cLabel FROM tZone,tView WHERE tZone.uView=tView.uView AND"
+			" tZone.uZone=%u",guZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<li class=list-group-item ><span class=badge >%s</span>View</li>\n",field[0]);
+	}
+
+	//TTL
+	sprintf(gcQuery,"SELECT uTTL FROM tZone WHERE uZone=%u",guZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<li class=list-group-item ><span class=badge >%s</span>TTL</li>\n",field[0]);
+	}
+
 	//Owner
 	sprintf(gcQuery,"SELECT tClient.cLabel FROM tZone,tClient WHERE tZone.uOwner=tClient.uClient AND"
 			" tZone.uZone=%u",guZone);
@@ -672,6 +710,40 @@ void funcZoneInfo(FILE *fp)
 	if((field=mysql_fetch_row(res)))
 	{
 		printf("<li class=list-group-item ><span class=badge >%s</span>Date Created</li>\n",field[0]);
+	}
+
+	//ModBy
+	sprintf(gcQuery,"SELECT tClient.cLabel FROM tZone,tClient WHERE tZone.uModBy>0 AND tZone.uModBy=tClient.uClient AND"
+			" tZone.uZone=%u",guZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<li class=list-group-item ><span class=badge >%s</span>Modified By</li>\n",field[0]);
+	}
+
+	//ModDate
+	sprintf(gcQuery,"SELECT FROM_UNIXTIME(uModDate,'%%a %%b %%d %%T %%Y') FROM tZone WHERE uZone=%u AND uModDate>0",guZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<li class=list-group-item ><span class=badge >%s</span>Date Modified</li>\n",field[0]);
+	}
+
+	//Resource records
+	sprintf(gcQuery,"SELECT cName,cParam1 FROM tResource WHERE uZone=%u AND uRRType=1",guZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("<li class=list-group-item ><span class=badge >%s %s</span>A Record</li>\n",field[0],field[1]);
 	}
 
 	//Show very little to unprivilged users
