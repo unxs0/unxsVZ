@@ -13,7 +13,7 @@ PURPOSE
 #include "interface.h"
 
 extern unsigned guBrowserFirefox;//main.c
-extern char gcCtHostname[];
+extern char gcZone[];
 static char cCurPasswd[32]={""};
 static char cPasswd[32]={""};
 static char cPasswd2[32]={""};
@@ -32,7 +32,7 @@ unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient);
 //extern
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
 void SetZoneFromSearchSet(void);
-char *cGetHostname(unsigned uZone);
+char *cGetZonename(unsigned uZone);
 void htmlOperationsInfo(void);
 void htmlLoginInfo(void);
 
@@ -48,8 +48,8 @@ void ProcessUserVars(pentry entries[], int x)
 			sprintf(cPasswd,"%.32s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cPasswd2"))
 			sprintf(cPasswd2,"%.32s",entries[i].val);
-		else if(!strcmp(entries[i].name,"gcCtHostname"))
-			sprintf(gcCtHostname,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"gcZone"))
+			sprintf(gcZone,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"guZone"))
 			sscanf(entries[i].val,"%u",&guZone);
 	}
@@ -249,10 +249,10 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[7]="gcMessage";
 			template.cpValue[7]=gcMessage;
 
-			template.cpName[8]="gcCtHostname";
+			template.cpName[8]="gcZone";
 			if(guZone)
-				sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guZone));
-			template.cpValue[8]=gcCtHostname;
+				sprintf(gcZone,"%.99s",(char *)cGetZonename(guZone));
+			template.cpValue[8]=gcZone;
 
 			char cguZone[16];
 			sprintf(cguZone,"%u",guZone);
@@ -267,11 +267,11 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 
 			char cPrivilegedZoneMenu[256]={""};
 			template.cpName[12]="cPrivilegedZoneMenu";
-			if(guPermLevel>=6)
-				sprintf(cPrivilegedZoneMenu,
-					"<li><a href=\"%1$.32s?gcPage=Repurpose&guZone=%2$u\">Repurpose</a></li>"
-					"<li><a href=\"%1$.32s?gcPage=Reseller&guZone=%2$u\">Reseller</a></li>"
-						,template.cpValue[1],guZone);
+			//if(guPermLevel>=6)
+			//	sprintf(cPrivilegedZoneMenu,
+			//		"<li><a href=\"%1$.32s?gcPage=Repurpose&guZone=%2$u\">Repurpose</a></li>"
+			//		"<li><a href=\"%1$.32s?gcPage=Reseller&guZone=%2$u\">Reseller</a></li>"
+			//			,template.cpValue[1],guZone);
 			template.cpValue[12]=cPrivilegedZoneMenu;
 
 			template.cpName[13]="";
@@ -303,8 +303,7 @@ void funcMOTD(FILE *fp)
 
 	fprintf(fp,"<!-- funcMOTD(fp) Start -->\n");
 
-	sprintf(gcQuery,"SELECT cComment FROM tConfiguration WHERE uDatacenter=0 AND uNode=0 AND uZone=0"
-			" AND cLabel='cOrg_NewMOTD' LIMIT 1");
+	sprintf(gcQuery,"SELECT cComment FROM tConfiguration WHERE cLabel='cOrg_NewMOTD' LIMIT 1");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

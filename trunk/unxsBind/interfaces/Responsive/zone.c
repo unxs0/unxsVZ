@@ -13,7 +13,7 @@ PURPOSE
 #include "interface.h"
 
 extern unsigned guBrowserFirefox;//main.c
-char gcCtHostname[100]={""};
+char gcZone[100]={""};
 static char gcSearch[100]={""};
 static char gcSearchAux[32]={""};
 static char *gcSearchName={""};
@@ -30,7 +30,6 @@ static char gcNewHostname[33]={""};
 static char gcNewHostParam0[33]={""};
 static char gcNewHostParam1[33]={""};
 static char gcServer[32]={""};
-static char gcDID[17]={""};
 static char *gcBulkData={""};
 static char gcCustomerName[33]={""};
 static char gcCustomerLimit[16]={""};
@@ -46,12 +45,7 @@ unsigned guMode;
 unsigned guZoneSubmit=0;
 unsigned guSearchSubmit=0;
 
-char gcDIDState[8]={""};
-char gcDIDRatecenter[64]={""};
-char gcDIDNew[32]={""};
 
-#define uMAX_DIDs_ALLOWED 128
-static char cReply[(33*uMAX_DIDs_ALLOWED)]={""};
 
 void EncryptPasswdWithSalt(char *pw, char *salt);
 
@@ -61,7 +55,7 @@ void htmlZoneList(void);
 void htmlZoneQOS(void);
 void htmlZoneBulk(void);
 void ZoneGetHook(entry gentries[],int x);
-char *cGetHostname(unsigned uZone);
+char *cGetZonename(unsigned uZone);
 char *cGetImageHost(unsigned uZone);
 void SelectZone(void);
 char *CustomerName(char *cInput);
@@ -134,8 +128,8 @@ void ProcessZoneVars(pentry entries[], int x)
 			UpdateSearchSet(guZoneSubmit);
 			if(guZoneSubmit) guZone=guZoneSubmit;
 		}
-		else if(!strcmp(entries[i].name,"gcCtHostname"))
-			sprintf(gcCtHostname,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"gcZone"))
+			sprintf(gcZone,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gcSearchSubmit"))
 		{
 			sprintf(gcSearch,"%.99s",entries[i].val);
@@ -157,8 +151,6 @@ void ProcessZoneVars(pentry entries[], int x)
 			sprintf(gcNewHostParam0,"%.32s",NameToLower(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcNewHostParam1"))
 			sprintf(gcNewHostParam1,"%.32s",CustomerName(entries[i].val));
-		else if(!strcmp(entries[i].name,"gcDID"))
-			sprintf(gcDID,"%.16s",cNumbersOnly(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcCustomerName"))
 			sprintf(gcCustomerName,"%.32s",CustomerName(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcCustomerLimit"))
@@ -175,12 +167,6 @@ void ProcessZoneVars(pentry entries[], int x)
 			gcBulkData=entries[i].val;
 		else if(!strcmp(entries[i].name,"gcNewEmail"))
 			sprintf(gcNewEmail,"%.99s",CustomerEmail(entries[i].val));
-		else if(!strcmp(entries[i].name,"gcDIDState"))
-			sprintf(gcDIDState,"%.7s",entries[i].val);
-		else if(!strcmp(entries[i].name,"gcDIDRatecenter"))
-			sprintf(gcDIDRatecenter,"%.63s",entries[i].val);
-		else if(!strcmp(entries[i].name,"gcDIDNew"))
-			sprintf(gcDIDNew,"%.31s",entries[i].val);
 	}
 
 }//void ProcessZoneVars(pentry entries[], int x)
@@ -318,10 +304,10 @@ void htmlAuxPage(char *cTitle, char *cTemplateName)
 			template.cpName[7]="gcMessage";
 			template.cpValue[7]=gcMessage;
 
-			template.cpName[8]="gcCtHostname";
-			//template.cpValue[8]=gcCtHostname;
+			template.cpName[8]="gcZone";
+			//template.cpValue[8]=gcZone;
 			if(!uNoShow)
-				template.cpValue[8]=(char *)cGetHostname(guZone) ;
+				template.cpValue[8]=(char *)cGetZonename(guZone) ;
 			else
 				template.cpValue[8]="no zone selected";
 
@@ -355,11 +341,11 @@ void htmlAuxPage(char *cTitle, char *cTemplateName)
 
 			char cPrivilegedZoneMenu[256]={""};
 			template.cpName[16]="cPrivilegedZoneMenu";
-			if(guPermLevel>=6)
-				sprintf(cPrivilegedZoneMenu,
-					"<li><a href=\"%1$.32s?gcPage=Repurpose&guZone=%2$u\">Repurpose</a></li>"
-					"<li><a href=\"%1$.32s?gcPage=Reseller&guZone=%2$u\">Reseller</a></li>"
-						,template.cpValue[1],guZone);
+			//if(guPermLevel>=6)
+				//sprintf(cPrivilegedZoneMenu,
+				//	"<li><a href=\"%1$.32s?gcPage=Repurpose&guZone=%2$u\">Repurpose</a></li>"
+				//	"<li><a href=\"%1$.32s?gcPage=Reseller&guZone=%2$u\">Reseller</a></li>"
+				//		,template.cpValue[1],guZone);
 			template.cpValue[16]=cPrivilegedZoneMenu;
 
 			template.cpName[17]="gcOTPSecretExists";
@@ -423,10 +409,10 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpName[7]="gcMessage";
 			template.cpValue[7]=gcMessage;
 
-			template.cpName[8]="gcCtHostname";
-			//template.cpValue[8]=gcCtHostname;
+			template.cpName[8]="gcZone";
+			//template.cpValue[8]=gcZone;
 			if(!uNoShow)
-				template.cpValue[8]=(char *)cGetHostname(guZone) ;
+				template.cpValue[8]=(char *)cGetZonename(guZone) ;
 			else
 				template.cpValue[8]="no zone selected";
 
@@ -450,17 +436,17 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpName[13]="gcSearchAux";
 			template.cpValue[13]=gcSearchAux;
 
-			MYSQL_RES *res0;
-			MYSQL_ROW field0;
-			char cQuery[128];
-			sprintf(cQuery,"SELECT cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName='cOrg_AdminPort'",guZone);
-			mysql_query(&gMysql,cQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			res0=mysql_store_result(&gMysql);
-			if((field0=mysql_fetch_row(res0)))
-				sprintf(gcAdminPort,":%.14s",field0[0]);
-			mysql_free_result(res0);
+			//MYSQL_RES *res0;
+			//MYSQL_ROW field0;
+			//char cQuery[128];
+			//sprintf(cQuery,"SELECT cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName='cOrg_AdminPort'",guZone);
+			//mysql_query(&gMysql,cQuery);
+			//if(mysql_errno(&gMysql))
+			//	htmlPlainTextError(mysql_error(&gMysql));
+			//res0=mysql_store_result(&gMysql);
+			//if((field0=mysql_fetch_row(res0)))
+			//	sprintf(gcAdminPort,":%.14s",field0[0]);
+			//mysql_free_result(res0);
 			template.cpName[14]="gcAdminPort";
 			template.cpValue[14]=gcAdminPort;
 
@@ -489,12 +475,8 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 						,template.cpValue[1],guZone);
 			}
 			template.cpValue[19]=cPrivilegedZoneMenu;
-			//DID
-			char cDIDMenu[512]={""};
-			template.cpName[20]="cDIDMenu";
-			template.cpValue[20]=cDIDMenu;
 
-			template.cpName[21]="";
+			template.cpName[20]="";
 
 			printf("\n<!-- Start htmlZonePage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
@@ -531,103 +513,31 @@ void funcSelectZone(FILE *fp)
 	if(guPermLevel>5)
 	{
 		if(gcSearch[0])
-			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cHostname FROM tZone,tNode WHERE"
-			" tZone.uNode=tNode.uNode AND tNode.uStatus=1 AND"
-			" (tZone.uSource=0 OR tZone.uStatus=1) AND"
+			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cZone FROM tZone WHERE"
 			" (tZone.uOwner IN"
 			" (SELECT uClient FROM tClient WHERE"
 			" 	((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND cCode='Organization'))"
 			" OR tZone.uOwner=%u) AND"
-			" tZone.cHostname LIKE '%s%%'"
-			" AND tZone.uStatus!=91"
-			" ORDER BY tZone.cHostname LIMIT 301",guOrg,guOrg,guOrg,gcSearch);
-/*
-		else if(guZone)
-			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cHostname FROM tZone,tNode WHERE"
-			" tZone.uNode=tNode.uNode AND tNode.uStatus=1 AND"
-			" (tZone.uSource=0 OR tZone.uStatus=1) AND"
+			" tZone.cZone LIKE '%s%%'"
+			" ORDER BY tZone.cZone LIMIT 301",guOrg,guOrg,guOrg,gcSearch);
+		else
+			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cZone FROM tZone WHERE"
 			" (tZone.uOwner IN"
 			" (SELECT uClient FROM tClient WHERE ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)"
 			" 	OR uOwner=%u) AND " " 	cCode='Organization'))"
-			" OR tZone.uOwner=%u) AND"
-			" tZone.uStatus!=91 AND"
-			" tZone.uZone=%u"
-			" ORDER BY tZone.cHostname LIMIT 301",guOrg,guOrg,guOrg,guZone);
-*/
-		else
-			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cHostname FROM tZone,tNode WHERE"
-			" tZone.uNode=tNode.uNode AND tNode.uStatus=1 AND"
-			" (tZone.uSource=0 OR tZone.uStatus=1) AND"
-			" (tZone.uOwner IN"
-			" (SELECT uClient FROM tClient WHERE ((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u)"
-			" 	OR uOwner=%u) AND " " 	cCode='Organization'))"
-			" OR tZone.uOwner=%u) AND"
-			" tZone.uStatus!=91"
-			" ORDER BY tZone.cHostname LIMIT 301",guOrg,guOrg,guOrg);
-	}
-	else if(guOrg!=2)//ASP uClient hack
-	{
-		if(gcSearch[0])
-			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cHostname FROM tZone,tNode WHERE"
-			" tZone.uNode=tNode.uNode AND tNode.uStatus=1 AND"
-			" tZone.uSource=0 AND"
-			" (tZone.uOwner IN"
-			" (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
-			" 	cCode='Organization')) OR uOwner=%u)"
-			" OR (tZone.uOwner=%u OR tZone.uCreatedBy=%u OR tZone.uCreatedBy=%u)) AND"
-			" tZone.cHostname LIKE '%s%%' AND"
-			" tZone.uStatus!=91"
-			" ORDER BY tZone.cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient,guOrg,gcSearch);
-/*
-		else if(guZone)
-			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cHostname FROM tZone,tNode WHERE"
-			" tZone.uNode=tNode.uNode AND tNode.uStatus=1 AND"
-			" tZone.uSource=0 AND"
-			" (tZone.uOwner IN"
-			" (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
-			" 	cCode='Organization')) OR uOwner=%u)"
-			" OR (tZone.uOwner=%u OR tZone.uCreatedBy=%u)) AND"
-			" tZone.uStatus!=91 AND"
-			" tZone.uZone=%u"
-			" ORDER BY tZone.cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient,guZone);
-*/
-		else
-			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cHostname FROM tZone,tNode WHERE"
-			" tZone.uNode=tNode.uNode AND tNode.uStatus=1 AND"
-			" tZone.uSource=0 AND"
-			" (tZone.uOwner IN"
-			" (SELECT uClient FROM tClient WHERE (((uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u) OR uOwner=%u) AND "
-			" 	cCode='Organization')) OR uOwner=%u)"
-			" OR (tZone.uOwner=%u OR tZone.uCreatedBy=%u OR tZone.uCreatedBy=%u)) AND"
-			" tZone.uStatus!=91"
-			" ORDER BY tZone.cHostname LIMIT 301",guOrg,guOrg,guOrg,guOrg,guLoginClient,guOrg);
+			" OR tZone.uOwner=%u) "
+			" ORDER BY tZone.cZone LIMIT 301",guOrg,guOrg,guOrg);
 	}
 	else
 	{
 		if(gcSearch[0])
-			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cHostname FROM tZone,tNode WHERE"
-			" tZone.uNode=tNode.uNode AND tNode.uStatus=1 AND"
-			" tZone.uSource=0 AND"
-			" tZone.uCreatedBy=%u AND tZone.cHostname LIKE '%s%%'"
-			" AND tZone.uStatus!=91"
-			" ORDER BY tZone.cHostname LIMIT 301",guLoginClient,gcSearch);
-/*
-		else if(guZone)
-			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cHostname FROM tZone,tNode WHERE"
-			" tZone.uNode=tNode.uNode AND tNode.uStatus=1 AND"
-			" tZone.uSource=0 AND"
-			" tZone.uCreatedBy=%u AND"
-			" tZone.uStatus!=91 AND"
-			" tZone.uZone=%u"
-			" ORDER BY tZone.cHostname LIMIT 301",guLoginClient,guZone);
-*/
+			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cZone FROM tZone WHERE"
+			" tZone.uCreatedBy=%u AND tZone.cZone LIKE '%s%%'"
+			" ORDER BY tZone.cZone LIMIT 301",guLoginClient,gcSearch);
 		else
-			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cHostname FROM tZone,tNode WHERE"
-			" tZone.uNode=tNode.uNode AND tNode.uStatus=1 AND"
-			" tZone.uSource=0 AND"
-			" tZone.uCreatedBy=%u AND"
-			" tZone.uStatus!=91"
-			" ORDER BY tZone.cHostname LIMIT 301",guLoginClient);
+			sprintf(gcQuery,"SELECT tZone.uZone,tZone.cZone FROM tZone WHERE"
+			" tZone.uCreatedBy=%u"
+			" ORDER BY tZone.cZone LIMIT 301",guLoginClient);
 	}
 
 	mysql_query(&gMysql,gcQuery);
@@ -657,21 +567,21 @@ void funcSelectZone(FILE *fp)
 }//void funcSelectZone(FILE *fp)
 
 
-char *cGetHostname(unsigned uZone)
+char *cGetZonename(unsigned uZone)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	static char cHostname[100]={""};
+	static char cZone[100]={""};
 
-	sprintf(gcQuery,"SELECT cHostname FROM tZone WHERE uZone=%u",uZone);
+	sprintf(gcQuery,"SELECT cZone FROM tZone WHERE uZone=%u",uZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		return((char *)mysql_error(&gMysql));
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
-		sprintf(cHostname,"%.99s",field[0]);
-	return(cHostname);
-}//char *cGetHostname(unsigned uZone)
+		sprintf(cZone,"%.99s",field[0]);
+	return(cZone);
+}//char *cGetZonename(unsigned uZone)
 
 
 void SelectZone(void)
@@ -679,7 +589,7 @@ void SelectZone(void)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cLabel FROM tZone WHERE uZone=%u",guZone);
+	sprintf(gcQuery,"SELECT cZone FROM tZone WHERE uZone=%u",guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -729,88 +639,6 @@ void funcZoneInfo(FILE *fp)
 	if(mysql_num_rows(res)<1)
 		return;
 
-	//Datacenter
-	sprintf(gcQuery,"SELECT tDatacenter.cLabel FROM tZone,tDatacenter WHERE tZone.uDatacenter=tDatacenter.uDatacenter"
-			" AND tZone.uZone=%u",guZone);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		printf("<li class=list-group-item ><span class=badge >%s</span>Datacenter</li>\n",field[0]);
-	}
-	mysql_free_result(res);
-
-	//Node
-	unsigned uAppliance=0;
-	sprintf(gcQuery,"SELECT tNode.cLabel FROM tZone,tNode WHERE tZone.uNode=tNode.uNode"
-			" AND tZone.uZone=%u",guZone);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		printf("<li class=list-group-item ><span class=badge >%s</span>Node</li>\n",field[0]);
-		if(!strncmp(field[0],"appliance",9))
-			uAppliance=1;
-	}
-	mysql_free_result(res);
-
-	//Status
-	sprintf(gcQuery,"SELECT tStatus.cLabel FROM tZone,tStatus WHERE tZone.uStatus=tStatus.uStatus"
-			" AND tZone.uZone=%u",guZone);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		printf("<li class=list-group-item ><span class=badge >%s</span>Status</li>\n",field[0]);
-	}
-	mysql_free_result(res);
-
-	//OSTemplate
-	sprintf(gcQuery,"SELECT tOSTemplate.cLabel FROM tZone,tOSTemplate WHERE tZone.uOSTemplate=tOSTemplate.uOSTemplate"
-			" AND tZone.uZone=%u",guZone);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		printf("<li class=list-group-item ><span class=badge >%s</span>OSTemplate</li>\n",field[0]);
-	}
-	mysql_free_result(res);
-
-	//IP
-	sprintf(gcQuery,"SELECT tIP.cLabel FROM tZone,tIP WHERE tIP.uIP=tZone.uIPv4 AND uZone=%u",guZone);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		printf("<li class=list-group-item ><span class=badge >%s</span>IPv4</li>\n",field[0]);
-	}
-	mysql_free_result(res);
-
-	//Groups
-	sprintf(gcQuery,"SELECT tGroup.cLabel FROM tGroup,tGroupGlue WHERE tGroup.uGroup=tGroupGlue.uGroup"
-			" AND tGroup.uGroupType=1 AND tGroupGlue.uZone=%u",
-		guZone);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		printf("<li class=list-group-item ><span class=badge >%s</span>Group</li>\n",field[0]);
-	}
-	mysql_free_result(res);
-
-/*
 	//Owner
 	sprintf(gcQuery,"SELECT tClient.cLabel FROM tZone,tClient WHERE tZone.uOwner=tClient.uClient AND"
 			" tZone.uZone=%u",guZone);
@@ -822,7 +650,6 @@ void funcZoneInfo(FILE *fp)
 	{
 		printf("<li class=list-group-item ><span class=badge >%s</span>Owner</li>\n",field[0]);
 	}
-*/
 
 	//CreatedBy
 	sprintf(gcQuery,"SELECT tClient.cLabel FROM tZone,tClient WHERE tZone.uCreatedBy=tClient.uClient AND"
@@ -847,70 +674,6 @@ void funcZoneInfo(FILE *fp)
 		printf("<li class=list-group-item ><span class=badge >%s</span>Date Created</li>\n",field[0]);
 	}
 
-	//BackupDate
-	sprintf(gcQuery,"SELECT FROM_UNIXTIME(tZone.uBackupDate,'%%a %%b %%d %%T %%Y'),tZone.cLabel,tDatacenter.uDatacenter"
-			" FROM tZone,tDatacenter"
-			" WHERE uZone IN (SELECT uZone FROM tZone WHERE uSource=%u)"
-			" AND tZone.uDatacenter=tDatacenter.uDatacenter",guZone);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)>0)
-	{
-		while((field=mysql_fetch_row(res)))
-		{
-			printf("<li class=list-group-item ><span class=badge >%s</span>Backup Date</li>\n",field[0]);
-		}
-	}
-	else
-	{
-		printf("<li class=list-group-item ><span class=badge >No backup available!</span>Backup Date</li>\n");
-	}
-
-	//cPasswd
-	if((!uAppliance || guPermLevel>=10) &&  (guPermLevel>=6 || guPermLevel==2) )
-	{
-		sprintf(gcQuery,"SELECT cName,cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName='cPasswd'",guZone);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		res=mysql_store_result(&gMysql);
-		while((field=mysql_fetch_row(res)))
-		{
-			printf("<li class=list-group-item ><span class=badge >%s</span>SSH Passwd</li>\n",field[1]);
-		}
-		mysql_free_result(res);
-	}
-
-	//SUBSTR based on 5 char cOrg_ prefix
-	sprintf(gcQuery,"SELECT SUBSTR(cName,6),cValue FROM tProperty WHERE uType=3 AND uKey=%u AND cName LIKE 'cOrg_%%'"
-			" AND cName!='cOrg_Extension' AND cName!='cOrg_OpenSIPS_DID' AND cName!='cOrg_SIPTrunk' AND cName NOT LIKE 'cOrg_Kamailio%%'"
-			" AND cName NOT LIKE 'cOrg_MCS%%' AND cName NOT LIKE 'cOrg_QOS%%' ORDER BY cName",guZone);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	char cName[32]={""};
-	while((field=mysql_fetch_row(res)))
-	{
-			
-		if(!strncmp(field[0],"FreePBX",7))
-			sprintf(cName,"%31s",field[0]+7);
-		else
-			sprintf(cName,"%31s",field[0]);
-		if( 
-			(strncmp(field[0],"FreePBXEngPasswd",16) || guPermLevel>=10 || guPermLevel==2) &&
-			(strncmp(field[0],"FreePBXOperatorPasswd",21) || guPermLevel>=1) &&
-			(strncmp(field[0],"MySQLAsteriskPasswd",19) || guPermLevel>=6 || guPermLevel==2) &&
-			(strncmp(field[0],"SSHPort",7) || guPermLevel>=6 || guPermLevel==2) &&
-			(strncmp(field[0],"FreePBXAdminPasswd",18) || guPermLevel>=5 || guPermLevel==2)
-		)
-		
-			printf("<li class=list-group-item ><span class=badge >%s</span>%s</li>\n",field[1],cName);
-	}
-	mysql_free_result(res);
-
 	//Show very little to unprivilged users
 	if(guPermLevel<6)
 	{
@@ -918,10 +681,6 @@ void funcZoneInfo(FILE *fp)
 		return;
 	}
 
-	if(uAppliance)
-	printf("<tr></tr><tr><td><a href=unxsDNS.cgi?gcPage=Zone&gcFunction=QOSReport&guZone=%u title='QOS Report'>"
-			"<img src=/images/plus.png border=0 ></a></td></tr>\n",
-			guZone);
 	fprintf(fp,"<!-- funcZoneInfo(fp) End -->\n");
 
 }//void funcZoneInfo(FILE *fp)

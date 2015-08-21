@@ -61,7 +61,7 @@
 		gcName: {{gcName}}<br>
 		gcOrgName: {{gcOrgName}}<br>
 		cUserLevel: {{cUserLevel}}<br>
-		gcCtHostname: {{gcCtHostname}}<br>
+		gcZone: {{gcZone}}<br>
 		gcSearch: {{gcSearch}}<br>
 		guZone: {{guZone}}<br>
 		gcLabel: {{gcLabel}}<br>
