@@ -15,7 +15,7 @@ fi
 if [ -e "${CGIDIR}iDNS.cgi" ]; then
     for cFile in `find ./templates.default -maxdepth 1 -type f`; do
     	if [[ $cFile != *.swp ]] && [[ $cFile != *.default ]];then
-        	${CGIDIR}iDNS.cgi ImportTemplateFile  `echo $cFile | cut -f 3 -d /`  ./$cFile plain "Responsive Interface";
+        	${CGIDIR}iDNS.cgi ImportTemplateFile  `echo $cFile | cut -f 3 -d /`  ./$cFile Plain "unxsDNS";
 	fi
     done
 else

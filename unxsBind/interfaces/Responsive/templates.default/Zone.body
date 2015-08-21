@@ -34,7 +34,7 @@
             <li class="active"><a href="{{cCGI}}?gcPage=Zone&guZone={{guZone}}">Zone</a></li>
             <li><a href="{{cCGI}}?gcPage=About&guZone={{guZone}}">About</a></li>
             <li><a href="{{cCGI}}?gcPage=Contact&guZone={{guZone}}">Contact</a></li>
-            {{cPrivilegedZoneMenu}} {{cDIDMenu}}
+            {{cPrivilegedZoneMenu}}
             <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
           </ul>
         </div><!--/nav-collapse-->
@@ -66,12 +66,6 @@
 		title='Enter first letter(s) of container hostname, or you can use the SQL wildcard "%" and the single place "_" pattern matching chars'
 			name="gcSearchSubmit" value='{{gcSearch}}' placeholder="Hostname search pattern" size=32 maxlength=32 onChange='submit()'>
 
-		<br><br>
-		<input type="hostname" class="form-control" id="searchZoneAux"
-			title='Enter DID or customer name pattern you can use "%" and "_" pattern matching chars'
-			name="gcSearchAux" value='{{gcSearchAux}}' placeholder="DID or customer name pattern" size=32 maxlength=32 >
-        	<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Search Customer' title='Search by customer name pattern or by DID pattern. Examples: "313%234%" "%acme%".'>Search</button>
-
 		  </form>
 	  </div><!--/list-group-->
 
@@ -90,17 +84,6 @@
           </div><!--/jumbotron-->
 
 <!-- start jquery collapse More Info -->
-<div class="panel panel-default" id="panel3">
-	<div class="panel-heading">
-		<h4 class="form-signin-heading">
-			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">DID Info</a>
-		</h4>
-	</div>
-	<div id="collapseThree" class="panel-collapse collapse">
-	<div class="panel-body">loading please wait...
-	</div>
-	</div>
-</div>
 <!-- end jquery collapse -->
 
 
@@ -124,10 +107,5 @@
     <script src="/bs/js/bootstrap.min.js"></script>
 
     <script src="/bs/js/offcanvas.js"></script>
-    <script>
-	$('#collapseThree').on('shown.bs.collapse', function () {
-		$("#collapseThree").load("{{cCGI}}?gcPage=Zone&gcFunction=DIDInfo&guZone={{guZone}}");
-	});
-    </script>
   </body>
 </html>

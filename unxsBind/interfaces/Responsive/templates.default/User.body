@@ -53,8 +53,8 @@
 		<h5>{{funcMOTD}}</h5>
 		<h3>Saved Session Data</h3>
 		<h5>
-		Zone hostname: {{gcCtHostname}}<br>
-		Zone VEID: {{guZone}}<br>
+		Zone cZone: {{gcZone}}<br>
+		Zone uZone: {{guZone}}<br>
 		</h5>
           </div><!-- "jumbotron" -->
 
@@ -100,7 +100,7 @@
 		<h5>{{gcMessage}}</h5>
       		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
 		<input type=hidden name="gcPage" value="User">
-		<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
+		<input type=hidden name="gcZone" value="{{gcZone}}">
 		<input type=hidden name="guZone" value="{{guZone}}">
 
         	<label for="inputEmail" class="sr-only">Login</label>

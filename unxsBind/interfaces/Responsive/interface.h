@@ -37,7 +37,7 @@ AUTHOR
 #define IP_BLOCK_DASH 2
 
 //Depend on correctly preconfigured tTemplateSet and tTemplateType:
-#define uPLAINSET	21
+#define uPLAINSET	1
 #define uDNS	22
 
 void InterfaceConnectDb(void);
