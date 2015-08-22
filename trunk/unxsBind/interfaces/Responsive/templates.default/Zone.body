@@ -81,11 +81,22 @@
          	 {{funcZoneInfo}}
 	  </ul>
             
-          </div><!--/jumbotron-->
 
-<!-- start jquery collapse More Info -->
+<!-- start jquery collapse resource records -->
+<div class="panel panel-default" id="panel3">
+	<div class="panel-heading">
+		<h4 class="form-signin-heading">
+			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">zone resource records</a>
+		</h4>
+	</div><!-- "panel-heading" -->
+	<div id="collapseThree" class="panel-collapse collapse">
+	<div class="panel-body">loading please wait...
+	</div><!-- "panel-body" -->
+	</div><!-- "collapseThree" -->
+</div><!-- "panel panel-default" -->
 <!-- end jquery collapse -->
 
+          </div><!--/jumbotron-->
 
         </div><!--/col-xs-12.col-sm-9-->
 
@@ -103,9 +114,14 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
+    <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="/bs/js/bootstrap.min.js"></script>
-
     <script src="/bs/js/offcanvas.js"></script>
+    <script>
+	$('#collapseThree').on('shown.bs.collapse', function () {
+		$("#collapseThree").load("{{cCGI}}?gcPage=Zone&guZone={{guZone}}&gcFunction=ResourceRecords");
+	});
+    </script>
   </body>
 </html>
