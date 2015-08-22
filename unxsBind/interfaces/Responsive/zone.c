@@ -79,6 +79,7 @@ unsigned uGetSearchGroupLocal(const char *gcUser,unsigned uGroupType);
 void UpdateSearchSet(unsigned guZone);
 unsigned uGetZoneFromSearchGroup(unsigned uSearchGroup);
 void SetZoneFromSearchSet(void);
+void htmlResourceRecords(void);
 
 
 unsigned uGetClientPermLevel(uClient)
@@ -197,6 +198,9 @@ void ZoneGetHook(entry gentries[],int x)
 		htmlAbout();
 	else if(!strcmp(gcPage,"Contact"))
 		htmlContact();
+
+	if(!strcmp(gcFunction,"ResourceRecords"))
+			htmlResourceRecords();
 
 	htmlZone();
 
@@ -735,17 +739,6 @@ void funcZoneInfo(FILE *fp)
 		printf("<li class=list-group-item ><span class=badge >%s</span>Date Modified</li>\n",field[0]);
 	}
 
-	//Resource records
-	sprintf(gcQuery,"SELECT cName,cParam1 FROM tResource WHERE uZone=%u AND uRRType=1",guZone);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		printf("<li class=list-group-item ><span class=badge >%s %s</span>A Record</li>\n",field[0],field[1]);
-	}
-
 	//Show very little to unprivilged users
 	if(guPermLevel<6)
 	{
@@ -1170,3 +1163,40 @@ void UpdateSearchSet(unsigned guZone)
 		return;
 
 }//void UpdateSearchSet(unsigned guZone)
+
+
+void htmlResourceRecords(void)
+{
+
+	htmlHeader("unxsDNS","ZoneHeader");
+
+	if(!guZone)
+		exit(0);
+
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	printf("<!-- htmlResourceRecords() Start -->\n");
+
+	//Resource records
+	sprintf(gcQuery,"SELECT cName,cParam1,tRRType.cLabel FROM tResource,tRRType WHERE uZone=%u AND tResource.uRRType=tRRType.uRRType",guZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		exit(0);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("<li class=list-group-item ><span class=badge >%.32s %.32s</span>%s</li>\n",field[0],field[1],field[2]);
+	}
+
+	//Show very little to unprivilged users
+	if(guPermLevel<6)
+	{
+		printf("<!-- htmlResourceRecords() low permissions end-->\n");
+		exit(0);
+	}
+
+	printf("<!-- htmlResourceRecords() End -->\n");
+	exit(0);
+
+}//void htmlResourceRecords(void)
