@@ -14,9 +14,10 @@ PURPOSE
 
 extern unsigned guBrowserFirefox;//main.c
 extern char gcZone[];
-static char cCurPasswd[32]={""};
+static char cCurrentPasswd[32]={""};
 static char cPasswd[32]={""};
 static char cPasswd2[32]={""};
+char gcInCollapseFive[16]={"out"};
 
 //TOC
 void ProcessUserVars(pentry entries[], int x);
@@ -28,7 +29,7 @@ unsigned uChangePassword(const char *cPasswd);
 void EncryptPasswdWithSalt(char *pw, char *salt);
 char *cGetPasswd(char *gcLogin);
 extern unsigned guZone;
-unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient);
+unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient,char *cUser);
 //extern
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
 void SetZoneFromSearchSet(void);
@@ -42,8 +43,8 @@ void ProcessUserVars(pentry entries[], int x)
 	
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(entries[i].name,"cCurPasswd"))
-			sprintf(cCurPasswd,"%.32s",entries[i].val);
+		if(!strcmp(entries[i].name,"cCurrentPasswd"))
+			sprintf(cCurrentPasswd,"%.32s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cPasswd"))
 			sprintf(cPasswd,"%.32s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cPasswd2"))
@@ -130,8 +131,9 @@ unsigned uChangePassword(const char *cPasswd)
 	sprintf(cBuffer,"%.99s",cPasswd);
 	EncryptPasswdWithSalt(cBuffer,cSalt);
 
-	sprintf(gcQuery,"UPDATE tAuthorize SET cPasswd='%.99s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel='%s'",
-			cBuffer,guLoginClient,gcLogin);
+	sprintf(gcQuery,"UPDATE tAuthorize SET cPasswd='%.99s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+			" WHERE cLabel='%s' AND uCertClient=%u",
+			cBuffer,guLoginClient,gcLogin,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		return(1);
@@ -149,47 +151,48 @@ void UserCommands(pentry entries[], int x)
 		ProcessUserVars(entries,x);
 		if(!strcmp(gcFunction,"Change Password"))
 		{
-			if(!cCurPasswd[0])
+			sprintf(gcInCollapseFive,"in");
+			if(!cCurrentPasswd[0] || !gcUser[0])
 			{
-				gcMessage="<blink>Error</blink>: Must enter 'Current Password'";
+				gcMessage="Must enter 'Current Password'";
 				htmlUser();
 			}
-			if(!uValidPasswd(cCurPasswd,guLoginClient))
+			if(!uValidPasswd(cCurrentPasswd,guLoginClient,gcUser))
 			{
-				gcMessage="<blink>Error</blink>: Invalid current password entered";
+				gcMessage="Invalid current password entered";
 				htmlUser();
 			}
 			if(!cPasswd[0] || !cPasswd2[0] || strcmp(cPasswd,cPasswd2))
 			{
-				gcMessage="<blink>Error</blink>: Must enter new 'Password' twice and they must match";
+				gcMessage="Must enter new 'Password' twice and they must match";
 				htmlUser();
 			}
-			if(!strcmp(cCurPasswd,cPasswd))
+			if(!strcmp(cCurrentPasswd,cPasswd))
 			{
-				gcMessage="<blink>Error</blink>: New 'Password' is the same as current password";
+				gcMessage="New 'Password' is the same as current password";
 				htmlUser();
 			}
 			if(strlen(cPasswd)<6)
 			{
-				gcMessage="<blink>Error</blink>: New 'Password' must be at least 6 chars long";
+				gcMessage="New 'Password' must be at least 6 chars long";
 				htmlUser();
 			}
 			if(strstr(cPasswd,gcLogin) || strstr(gcLogin,cPasswd) ||
 				strstr(cPasswd,gcName) || strstr(gcName,cPasswd) ||
 				strstr(gcOrgName,cPasswd) || strstr(cPasswd,gcOrgName))
 			{
-				gcMessage="<blink>Error</blink>: New 'Password' must not be related to your login or company";
+				gcMessage="New 'Password' must not be related to your login or company";
 				htmlUser();
 			}
 			if(uNoUpper(cPasswd) || uNoLower(cPasswd) || uNoDigit(cPasswd))
 			{
-				gcMessage="<blink>Error</blink>: New 'Password' must have some upper and lower case letters,"
+				gcMessage="New 'Password' must have some upper and lower case letters,"
 						" and at least one number";
 				htmlUser();
 			}
 			if(uChangePassword(cPasswd))
 			{
-				gcMessage="<blink>Error</blink>: Password not changed contact system admin";
+				gcMessage="Password not changed contact system admin";
 				htmlUser();
 			}
 			gcMessage="Password changed you will need to login again";
@@ -274,13 +277,11 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			//			,template.cpValue[1],guZone);
 			template.cpValue[12]=cPrivilegedZoneMenu;
 
-			template.cpName[13]="";
+			template.cpName[13]="gcInCollapseFive";//Change passwd div
+			template.cpValue[13]=gcInCollapseFive;
 
-//debug only
-//printf("Content-type: text/html\n\n");
-//printf("d6 %s",gcUser);
-//exit(0);
-	
+			template.cpName[14]="";
+
 			printf("\n<!-- Start htmlUserPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
 			printf("\n<!-- End htmlUserPage(%s) -->\n",cTemplateName); 
@@ -367,15 +368,15 @@ void funcLoginHistory(FILE *fp)
 }//void funcLoginHistory(FILE *fp)
 
 
-unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient)
+unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient,char *cUser)
 {
 	char cSalt[16]={""};
 	char cPassword[100]={""};
-	char gcPasswd[100]={""};
+	char cPasswdCopy[100]={""};
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cPasswd FROM tAuthorize WHERE uCertClient=%u",guLoginClient);
+	sprintf(gcQuery,"SELECT cPasswd FROM tAuthorize WHERE uCertClient=%u AND cLabel='%s'",guLoginClient,cUser);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		return(0);
@@ -384,22 +385,23 @@ unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient)
 		sprintf(cPassword,"%.99s",field[0]);
 	mysql_free_result(res);
 
-	sprintf(gcPasswd,"%.99s",cPasswd);
+	sprintf(cPasswdCopy,"%.99s",cPasswd);
 	if(cPassword[0])
 	{
+		//gcMessage=cPassword;
 		//MD5 vs DES salt determination
 		if(cPassword[0]=='$' && cPassword[2]=='$')
 			sprintf(cSalt,"%.12s",cPassword);
 		else
 			sprintf(cSalt,"%.2s",cPassword);
-		EncryptPasswdWithSalt(gcPasswd,cSalt);
-		if(!strcmp(gcPasswd,cPassword))
+		EncryptPasswdWithSalt(cPasswdCopy,cSalt);
+		if(!strcmp(cPasswdCopy,cPassword))
 			return(1);
 		else
 			return(0);
 	}
 	return(0);
-}//unsigned uValidPasswd(char *cPasswd)
+}//unsigned uValidPasswd()
 
 
 void htmlOperationsInfo(void)

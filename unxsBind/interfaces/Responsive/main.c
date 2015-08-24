@@ -67,9 +67,6 @@ int iValidLogin(int mode);
 void SSLCookieLogin(void);
 void SetLogin(void);
 void GetPLAndClient(char *cUser);
-#ifdef cLDAPURI
-void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization);
-#endif
 void htmlLogin(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
@@ -179,57 +176,6 @@ int main(int argc, char *argv[])
 				UpdateOTPExpire(0,guLoginClient);
 				guRequireOTPLogin=1;
 			}
-#define PERNODEFIREWALL 
-#ifdef PERNODEFIREWALL
-if(gcOTPSecret[0])
-{
-	//LogoutFirewallJobs(guLoginClient);
-	;
-}
-else
-{
-       	MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	//Note any status in case status changes ater an AllowAccess.
-	sprintf(gcQuery,"SELECT DISTINCT tZone.uNode,tZone.uDatacenter"
-				" FROM tZone,tNode,tDatacenter"
-				" WHERE tZone.uNode=tNode.uNode"
-				" AND tZone.uDatacenter=tDatacenter.uDatacenter"
-				" AND tDatacenter.uStatus=1"
-				" AND tNode.uStatus=1"
-				//Reseller control model
-				" AND (tZone.uOwner IN (SELECT uClient FROM tClient WHERE"
-				" 	((uOwner IN (SELECT uClient FROM tClient WHERE"
-				" 	uOwner=%1$u) OR uOwner=%1$u) AND cCode='Organization')) OR tZone.uOwner=%1$u)"
-				//
-				" AND tNode.cLabel!='appliance'",guOrg);
-
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		unsigned uNode=0;
-		unsigned uDatacenter=0;
-
-		sscanf(field[0],"%u",&uNode);
-		sscanf(field[1],"%u",&uDatacenter);
-
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DenyAccess %u',cJobName='DenyAccess'"
-					",uDatacenter=%u,uNode=%u,uZone=0"//All datacenters
-					",uJobDate=UNIX_TIMESTAMP(NOW())"
-					",uJobStatus=1"
-					",cJobData='cIPv4=%.15s;'"
-					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						guLoginClient,
-						uDatacenter,
-						uNode,
-						gcHost,
-						guOrg,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
-	}
-}
-#endif
         		guPermLevel=0;
 			gcUser[0]=0;
 			guLoginClient=0;
@@ -532,20 +478,7 @@ void SSLCookieLogin(void)
 	//First try tClient/tAuthorize system
 	if(!iValidLogin(1))
 	{
-#ifdef cLDAPURI
-		//Then LDAP system
-		if(!iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
-		{
-			htmlLogin();
-		}
-		else
-		{
-			sprintf(gcUser,"%.41s",gcLogin);
-			GetPLAndClientLDAP(gcUser,gcOrgName);
-		}
-#else
 		htmlLogin();
-#endif
 	}
 	else
 	{
@@ -607,55 +540,6 @@ void GetPLAndClient(char *cUser)
 
 }//void GetPLAndClient()
 
-
-#ifdef cLDAPURI
-void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization)
-{
-        MYSQL_RES *mysqlRes;
-        MYSQL_RES *mysqlRes2;
-        MYSQL_ROW mysqlField;
-        MYSQL_ROW mysqlField2;
-
-	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cOrganization);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	mysqlRes=mysql_store_result(&gMysql);
-	if((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		sscanf(mysqlField[0],"%u",&guOrg);
-		guLoginClient=guOrg;
-		sprintf(gcName,"%.100s",cLogin);
-		//Fixed LDAP perm level. Could be extended via optional LDAP attr
-		guPermLevel=8;
-
-		//Also add this LDAP cLogin to cOriganization if does already exist
-		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cLogin);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		mysqlRes2=mysql_store_result(&gMysql);
-		if((mysqlField2=mysql_fetch_row(mysqlRes2)))
-		{
-			sscanf(mysqlField2[0],"%u",&guLoginClient);
-		}
-		else
-		{
-			//Could extend this to add cInfo from optional LDAP attr. Same for cEmail
-			sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cInfo='LDAP',cCode='Contact',"
-				"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					cLogin,guOrg);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			guLoginClient=mysql_insert_id(&gMysql);
-		}
-		mysql_free_result(mysqlRes2);
-	}
-	mysql_free_result(mysqlRes);
-
-}//void GetPLAndClientLDAP()
-#endif
 
 void EncryptPasswdWithSalt(char *pw, char *salt)
 {
@@ -870,80 +754,7 @@ void SetLogin(void)
 				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 		mysql_query(&gMysql,gcQuery);
 
-#ifdef PERNODEFIREWALL
-if(gcOTPSecret[0])
-{
-	//LoginFirewallJobs(guLoginClient);
-	;
-}
-else
-{
-        MYSQL_RES *res;
-	MYSQL_ROW field;
-
-	//Allow access job for all active nodes that host active controlling company owned containers.
-	sprintf(gcQuery,"SELECT DISTINCT tZone.uNode,tZone.uDatacenter"
-				" FROM tZone,tNode,tDatacenter"
-				" WHERE tZone.uNode=tNode.uNode"
-				" AND tZone.uDatacenter=tDatacenter.uDatacenter"
-				" AND tDatacenter.uStatus=1"
-				" AND tNode.uStatus=1"
-				" AND tZone.uStatus=1"
-				//Reseller control model
-				" AND (tZone.uOwner IN (SELECT uClient FROM tClient WHERE"
-				" 	((uOwner IN (SELECT uClient FROM tClient WHERE"
-				" 	uOwner=%1$u) OR uOwner=%1$u) AND cCode='Organization')) OR tZone.uOwner=%1$u)"
-				//
-				" AND tNode.cLabel!='appliance'",guOrg);
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		unsigned uNode=0;
-		unsigned uDatacenter=0;
-
-		sscanf(field[0],"%u",&uNode);
-		sscanf(field[1],"%u",&uDatacenter);
-
-		//Allow access job for all nodes that host controlling company containers.
-		//The allow acces job should open FreePBX user and admin ports
-		//	it should also allow ssh port access and node ssh access based on perm level and tClient
-		//	hierarchy
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='AllowAccess %u',cJobName='AllowAccess'"
-				",uDatacenter=%u,uNode=%u,uZone=0"
-				",uJobDate=UNIX_TIMESTAMP(NOW())"
-				",uJobStatus=1"
-				",cJobData='cIPv4=%.15s;'"
-				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					guLoginClient,
-					uDatacenter,
-					uNode,
-					gcHost,
-					guOrg,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
 	}
-}
-#endif
-//PERNODEFIREWALL
-
-	}
-#ifdef cLDAPURI
-	else if(iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
-	{
-		//printf("Set-Cookie: unxsDNSLogin=%s; secure; max-age=300;\n",gcLogin);
-		printf("Set-Cookie: unxsDNSLogin=%s; secure;\n",gcLogin);
-		printf("Set-Cookie: unxsDNSPasswd=%s; secure;\n",gcPasswd);
-		sprintf(gcUser,"%.41s",gcLogin);
-		GetPLAndClientLDAP(gcUser,gcOrgName);
-		guSSLCookieLogin=1;
-		//tLogType.cLabel='org login'->uLogType=8
-		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login2 ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"
-				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
-		mysql_query(&gMysql,gcQuery);
-	}
-#endif
 	else
 	{
 		guSSLCookieLogin=0;
