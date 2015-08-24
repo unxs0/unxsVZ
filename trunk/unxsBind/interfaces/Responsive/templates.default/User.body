@@ -50,7 +50,7 @@
 
           <div class="jumbotron">
         	<h3 class="form-signin-heading">Info</h3>
-		<h5>{{funcMOTD}}</h5>
+		<h5>{{gcName}} {{funcMOTD}}</h5>
 		<h3>Saved Session Data</h3>
 		<h5>
 		Zone cZone: {{gcZone}}<br>
@@ -93,12 +93,12 @@
 			<a data-toggle="collapse" data-target="#collapseFive" href="#collapseFive" class="collapsed">Change Your Password</a>
 		</h4>
 	</div><!-- "panel-heading" -->
-	<div id="collapseFive" class="panel-collapse collapse">
+	<div id="collapseFive" class="panel-collapse collapse {{gcInCollapseFive}}">
 	<div class="panel-body">
 
           <div class="list-group">
 		<h5>{{gcMessage}}</h5>
-      		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
+      		<form name="changepasswd" class="form-signin" role="form" method="post" action="{{cCGI}}">
 		<input type=hidden name="gcPage" value="User">
 		<input type=hidden name="gcZone" value="{{gcZone}}">
 		<input type=hidden name="guZone" value="{{guZone}}">
@@ -108,17 +108,17 @@
 			type="login" id="inputEmail" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" >
 		<input type=hidden name=cLogin value='{{gcLogin}}'>
 
-       		<label for="inputPassword" class="sr-only">Current Password</label>
-       		<input maxlength="31" title='Input your current password'
-			type="password" id="inputPassword1" class="form-control" placeholder="Current Password" name="cCurPasswd" required>
+       		<label for="inputPassword11" class="sr-only">Current Password</label>
+       		<input autocomplete="off" maxlength="31" title='Input your current password'
+			type="password" id="inputPassword11" class="form-control" placeholder="" value="" name="cCurrentPasswd" required>
 
-       		<label for="inputPassword" class="sr-only">New Password</label>
+       		<label for="inputPassword12" class="sr-only">New Password</label>
        		<input maxlength="31" title='Input your new password. Must be at least 6 characters long'
-			type="password" id="inputPassword2" class="form-control" placeholder="New Password" name="cPasswd" required>
+			type="password" id="inputPassword12" class="form-control" placeholder="New Password" name="cPasswd" required>
 
-       		<label for="inputPassword" class="sr-only">New Password Again</label>
+       		<label for="inputPassword13" class="sr-only">New Password Again</label>
        		<input maxlength="31" title='Input your new password again please.'
-			type="password" id="inputPassword3" class="form-control" placeholder="New Password Again" name="cPasswd2" required>
+			type="password" id="inputPassword13" class="form-control" placeholder="New Password Again" name="cPasswd2" required>
 
 		<button class="btn btn-lg btn-primary btn-block" title="This will change your password and you will need to login again." type="submit" name=gcFunction value='Change Password'>Change Password</button>
 		</form>
