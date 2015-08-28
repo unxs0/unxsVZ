@@ -5,8 +5,12 @@
 #PURPOSE
 #       Change container status 
 #LEGAL
-#	Copyright (C) Ricardo Armas for Unixservice, LLC.
+#	Copyright (C) 2015 Ricardo Armas for Unixservice, LLC.
+#	Copyright (C) 2012-2015 Gary Wallis for Unixservice, LLC.
 #	GPLv2 license applies.
+#NOTES
+#	Maybe we should restrict to only containers running on this HN?
+
 
 if [ "$1" == "" ] || [ "$2" == "" ];then
         echo "usage: $0 <uVEID> <uStatus>";
@@ -44,5 +48,9 @@ if [ $? != 0 ] || [ "$uStatus" == "" ];then
 fi
 
 echo "UPDATE tContainer SET uStatus=$uStatus WHERE uContainer=$uContainer"|$cMySQLConnect;
+if [ $? != 0 ];then
+        fLog "UPDATE error";
+        exit 1;
+fi
 
-
+exit 0;
