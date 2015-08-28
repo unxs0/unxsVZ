@@ -80,6 +80,7 @@ void UpdateSearchSet(unsigned guZone);
 unsigned uGetZoneFromSearchGroup(unsigned uSearchGroup);
 void SetZoneFromSearchSet(void);
 void htmlResourceRecords(void);
+void htmlSearchCollapse(void);
 
 
 unsigned uGetClientPermLevel(uClient)
@@ -201,6 +202,8 @@ void ZoneGetHook(entry gentries[],int x)
 
 	if(!strcmp(gcFunction,"ResourceRecords"))
 			htmlResourceRecords();
+	if(!strcmp(gcFunction,"SearchCollapse"))
+			htmlSearchCollapse();
 
 	htmlZone();
 
@@ -358,7 +361,12 @@ void htmlAuxPage(char *cTitle, char *cTemplateName)
 				sprintf(cExists,"Yes");
 			template.cpValue[17]=cExists;
 
-			template.cpName[18]="";
+			template.cpName[18]="guLoginClient";
+			char cguLoginClient[16];
+			sprintf(cguLoginClient,"%u",guLoginClient);
+			template.cpValue[18]=cguLoginClient;
+
+			template.cpName[19]="";
 
 			printf("\n<!-- Start htmlAuxPage(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
@@ -1200,3 +1208,40 @@ void htmlResourceRecords(void)
 	exit(0);
 
 }//void htmlResourceRecords(void)
+
+
+void htmlSearchCollapse(void)
+{
+
+	htmlHeader("unxsDNS","ZoneHeader");
+
+	if(!guZone)
+		exit(0);
+
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	printf("<!-- htmlSearchCollapse() Start -->\n");
+
+	funcSelectZone(stdout);
+
+	printf("<!-- htmlSearchCollapse() End -->\n");
+	exit(0);
+
+}//void htmlSearchCollapse(void)
+
+
+/*
+          <div class="list-group">
+                <h5>{{gcMessage}}</h5>
+                <form method=post action={{cCGI}} style="margin:0px;">
+                      <input type=hidden name="gcPage" value="Zone">
+                      <input type=hidden name="guZone" value="{{guZone}}">
+
+                {{funcSelectZone}}
+                <input type="hostname" class="form-control" id="searchZone"
+                title='Enter first letter(s) of container hostname, or you can use the SQL wildcard "%" and the single place "_" pattern matching chars'
+                        name="gcSearchSubmit" value='{{gcSearch}}' placeholder="Hostname search pattern" size=32 maxlength=32 onChange='submit()'>
+                  </form>
+          </div><!--/list-group-->
+*/
