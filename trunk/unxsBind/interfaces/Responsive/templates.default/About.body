@@ -57,7 +57,7 @@
 
 		<h5>
 		cTitle: {{cTitle}}<br>
-		gcLogin: {{gcLogin}}<br>
+		gcLogin: {{gcLogin}} ({{guLoginClient}})<br>
 		gcName: {{gcName}}<br>
 		gcOrgName: {{gcOrgName}}<br>
 		cUserLevel: {{cUserLevel}}<br>
