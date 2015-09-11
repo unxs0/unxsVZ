@@ -74,6 +74,7 @@ void ExtMainShell(int argc, char *argv[]);
 void AddHardwareNode(char *cDatacenter);
 void GatherHardwareInfo(unsigned uNode);
 void AddContainers(void);
+void CreateDNSJobAPI(const char *cIPv4,const char *cHostname,const char *cuContainer);
 
 static char cRELEASE[64]={"$Id$"};
 
@@ -95,6 +96,8 @@ void ExtMainShell(int argc, char *argv[])
                 AddContainers();
         else if(argc==3 && !strcmp(argv[1],"TestJob"))
                 TestJob(argv[2]);
+        else if(argc==5 && !strcmp(argv[1],"CreateDNSJobAPI"))
+                CreateDNSJobAPI(argv[2],argv[3],argv[4]);
         else
 	{
 		printf("\n%s %s\nMenu\n",argv[0],cRELEASE);
@@ -102,6 +105,7 @@ void ExtMainShell(int argc, char *argv[])
 		printf("\tAddContainers\n");
 		printf("\tProcessJobQueue\n");
 		printf("\tProcessJobQueueDebug\n");
+		printf("\tCreateDNSJobAPI <cIPv4> <cHostname> <uVEID>\n");
 		printf("\tTestJob <special cJobname>\n");
 		printf("\n");
 	}
@@ -736,3 +740,66 @@ void AddContainers(void)
 	}
 
 }//void AddContainers(void)
+
+
+void CreateDNSJobAPI(const char *cIPv4,const char *cHostname,const char *cuContainer)
+{
+	char cNode[100]={""};
+	if(gethostname(cNode,99)!=0)
+	{
+		printf("gethostname() failed\n");
+		exit(1);
+	}
+
+	unsigned uContainer=0;
+	sscanf(cuContainer,"%u",&uContainer);
+	if(!uContainer)
+	{
+		printf("!uContainer\n");
+		exit(1);
+	}
+
+	if(TextConnectDb())
+	{
+		printf("!TextConnectDb()\n");
+		exit(1);
+	}
+
+	//Check for node
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uNode=0;
+	unsigned uDatacenter=0;
+	sprintf(gcQuery,"SELECT tNode.uNode,tNode.uDatacenter FROM tNode,tContainer"
+			" WHERE tContainer.uNode=tNode.uNode"
+			" AND tContainer.uContainer=%u"
+			" AND tNode.cLabel=SUBSTRING_INDEX('%s','.',1)",uContainer,cNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(2);
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uNode);
+		sscanf(field[1],"%u",&uDatacenter);
+	}
+
+	if(!uNode || !uDatacenter)
+	{
+		printf("Hardware node %s not found for VEID %u.\n",cNode,uContainer);
+		exit(1);
+	}
+
+	printf("CreateDNSJob(0,1,%s,%s,%u,1,%u,%u)",cIPv4,cHostname,uDatacenter,uContainer,uNode);
+	if(!CreateDNSJob(0,1,cIPv4,cHostname,uDatacenter,1,uContainer,uNode))
+	{
+		printf(" failed\n");
+		exit(1);
+        }
+	printf(" ok\n");
+	exit(0);
+}//void CreateDNSJobAPI(const char *cIPv4,const char *cHostname,const char *cuContainer)
+
