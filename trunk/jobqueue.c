@@ -7337,8 +7337,11 @@ void AlwaysRunTheseJobs(unsigned uNode)
 	//1 uACTIVE
 	//31 uSTOPPED
 	//logfileLine("ProcessCloneSyncJob","Start");
-	sprintf(gcQuery,"SELECT t1.uContainer,t2.uContainer,t1.uStatus FROM tContainer AS t1,tContainer AS t2"
+	//The ProcessCloneSyncJob() function must check node status if not active DO NOT CLONE
+	sprintf(gcQuery,"SELECT t1.uContainer,t2.uContainer,t1.uStatus FROM tContainer AS t1,tContainer AS t2,tNode"
 			" WHERE (t2.uStatus=1 OR t2.uStatus=31)"
+			" AND tNode.uNode=t2.uNode"
+			" AND tNode.uStatus=1"
 			" AND t1.uSource=t2.uContainer AND t2.uNode=%u",uNode);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
