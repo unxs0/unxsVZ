@@ -76,7 +76,7 @@ void ProcesstGroupVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"cuGroupTypePullDown"))
 		{
 			sprintf(cuGroupTypePullDown,"%.255s",entries[i].val);
-			uGroupType=ReadPullDownOwner("tGroupType","cLabel",cuGroupTypePullDown,uOwner);
+			uGroupType=ReadPullDown("tGroupType","cLabel",cuGroupTypePullDown);
 		}
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);

@@ -164,7 +164,14 @@ void ExttGroupCommands(pentry entries[], int x)
 				|| (guPermLevel>7 && guReseller==guLoginClient) )
 			{
                         	guMode=2002;
-				//Check entries here
+				if(!uGroupType)
+					tGroup("<blink>Error</blink>: uGroupType must be selected");
+				if(strlen(cLabel)<4)
+					tGroup("<blink>Error</blink>: cLabel too short");
+				//debug only
+				//char cData[256];
+				//sprintf(cData,"uGroup=%u uGroupType=%u",uGroup,uGroupType);
+				//tGroup(cData);
                         	guMode=0;
 
 				uModBy=guLoginClient;
