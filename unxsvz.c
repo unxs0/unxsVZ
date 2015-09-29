@@ -744,13 +744,6 @@ void AddContainers(void)
 
 void CreateDNSJobAPI(const char *cIPv4,const char *cHostname,const char *cuContainer)
 {
-	char cNode[100]={""};
-	if(gethostname(cNode,99)!=0)
-	{
-		printf("gethostname() failed\n");
-		exit(1);
-	}
-
 	unsigned uContainer=0;
 	sscanf(cuContainer,"%u",&uContainer);
 	if(!uContainer)
@@ -770,10 +763,8 @@ void CreateDNSJobAPI(const char *cIPv4,const char *cHostname,const char *cuConta
 	MYSQL_ROW field;
 	unsigned uNode=0;
 	unsigned uDatacenter=0;
-	sprintf(gcQuery,"SELECT tNode.uNode,tNode.uDatacenter FROM tNode,tContainer"
-			" WHERE tContainer.uNode=tNode.uNode"
-			" AND tContainer.uContainer=%u"
-			" AND tNode.cLabel=SUBSTRING_INDEX('%s','.',1)",uContainer,cNode);
+	sprintf(gcQuery,"SELECT tContainer.uNode,tContainer.uDatacenter,tContainer.cHostname FROM tContainer"
+			" WHERE tContainer.uContainer=%u",uContainer);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -789,7 +780,13 @@ void CreateDNSJobAPI(const char *cIPv4,const char *cHostname,const char *cuConta
 
 	if(!uNode || !uDatacenter)
 	{
-		printf("Hardware node %s not found for VEID %u.\n",cNode,uContainer);
+		printf("Container not found for VEID %u.\n",uContainer);
+		exit(1);
+	}
+
+	if(strcmp(cHostname,field[2]))
+	{
+		printf("Container not found for %s.\n",cHostname);
 		exit(1);
 	}
 
