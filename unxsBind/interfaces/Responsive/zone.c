@@ -136,6 +136,7 @@ void ProcessZoneVars(pentry entries[], int x)
 		{
 			sprintf(gcSearch,"%.99s",entries[i].val);
 			guSearchSubmit=1;
+			//sprintf(gcInCollapseFour,"in");
 		}
 		else if(!strcmp(entries[i].name,"gcSearch"))
 			sprintf(gcSearch,"%.99s",entries[i].val);
@@ -180,6 +181,7 @@ void ZoneGetHook(entry gentries[],int x)
 	
 	for(i=0;i<x;i++)
 	{
+		//Click on zone tab
 		if(!strcmp(gentries[i].name,"guZone"))
 		{
 			sscanf(gentries[i].val,"%u",&guZone);
@@ -188,6 +190,11 @@ void ZoneGetHook(entry gentries[],int x)
 		}
 		else if(!strcmp(gentries[i].name,"gcFunction"))
 			sprintf(gcFunction,"%.99s",gentries[i].val);
+		else if(!strcmp(gentries[i].name,"gcSearch"))
+		{
+			sprintf(gcSearch,"%.99s",gentries[i].val);
+			//sprintf(gcInCollapseFour,"in");
+		}
 	}
 
 	if(guZone && !gcFunction[0])
@@ -312,7 +319,7 @@ void htmlAuxPage(char *cTitle, char *cTemplateName)
 			template.cpValue[7]=gcMessage;
 
 			template.cpName[8]="gcZone";
-			//template.cpValue[8]=gcZone;
+			template.cpValue[8]=gcZone;
 			if(!uNoShow)
 				template.cpValue[8]=(char *)cGetZonename(guZone) ;
 			else
@@ -422,7 +429,7 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[7]=gcMessage;
 
 			template.cpName[8]="gcZone";
-			//template.cpValue[8]=gcZone;
+			template.cpValue[8]=gcZone;
 			if(!uNoShow)
 				template.cpValue[8]=(char *)cGetZonename(guZone) ;
 			else
@@ -469,7 +476,8 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpValue[16]=LOCALCOPYRIGHT;
 
 			template.cpName[17]="gcInCollapseFour";
-			//if(!guZoneSubmit && guZone) sprintf(gcInCollapseFour,"out");
+			if(guZoneSubmit) sprintf(gcInCollapseFour,"out");
+			//else if(gcSearch[0] || guSearchSubmit) sprintf(gcInCollapseFour,"in");
 			template.cpValue[17]=gcInCollapseFour;
 
 			char cCtHostnameLink[128]={"no zone selected"};
@@ -1218,30 +1226,25 @@ void htmlSearchCollapse(void)
 	if(!guZone)
 		exit(0);
 
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-
 	printf("<!-- htmlSearchCollapse() Start -->\n");
 
+	printf("<div class='list-group'>");
+	printf("<h5>%s</h5>",gcMessage);
+	printf("<form method=post action=unxsDNS.cgi style='margin:0px;'>");
+	printf("<input type=hidden name=gcPage value=Zone >");
+	printf("<input type=hidden name=guZone value=%u >",guZone);
+	printf("<input type=hidden name=gcZone value=%u >",gcZone);
+	printf("<input type=hidden name=gcSearch value=%u >",gcSearch);
+
 	funcSelectZone(stdout);
+
+	printf("<input type=hostname class=form-control id=searchZone"
+		" title='Enter first letter(s) of container hostname, or you can use the SQL wildcard \"%%\""
+		" and the single place \"_\" pattern matching chars'"
+		" name=gcSearchSubmit value='%s' placeholder='Hostname search pattern' size=32 maxlength=32 onChange='submit()'>",gcSearch);
+	printf("</form>");
 
 	printf("<!-- htmlSearchCollapse() End -->\n");
 	exit(0);
 
 }//void htmlSearchCollapse(void)
-
-
-/*
-          <div class="list-group">
-                <h5>{{gcMessage}}</h5>
-                <form method=post action={{cCGI}} style="margin:0px;">
-                      <input type=hidden name="gcPage" value="Zone">
-                      <input type=hidden name="guZone" value="{{guZone}}">
-
-                {{funcSelectZone}}
-                <input type="hostname" class="form-control" id="searchZone"
-                title='Enter first letter(s) of container hostname, or you can use the SQL wildcard "%" and the single place "_" pattern matching chars'
-                        name="gcSearchSubmit" value='{{gcSearch}}' placeholder="Hostname search pattern" size=32 maxlength=32 onChange='submit()'>
-                  </form>
-          </div><!--/list-group-->
-*/

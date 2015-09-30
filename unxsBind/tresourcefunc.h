@@ -81,7 +81,7 @@ void ExtProcesstResourceVars(pentry entries[], int x)
 			uClient=ReadPullDown("tClient","cLabel",
 					cCustomerDropDown);
 		}
-		else if(!strcmp(entries[i].name,"uSubmitJob"))
+		else if(!strcmp(entries[i].name,"uSubmitJobNoCA"))
 			uSubmitJob=1;			
 	}//for all name value pairs
 
@@ -1929,7 +1929,7 @@ void ExttResourceAuxTable(void)
 			OpenFieldSet("Set Operations",100);
 			printf("<input title='For supported set operations (like Group Delete)"
 				" create the appropiate jobs for changes to go into effect.'"
-				" type=checkbox name=uSubmitJob");
+				" type=checkbox name=uSubmitJobNoCA");
 			if(uSubmitJob)
 				printf(" checked");
 			printf("> uSubmitJob");
