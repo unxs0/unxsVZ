@@ -539,10 +539,16 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 
 void jsToggleCheckboxes(void)
 {
-        printf("<script> function checkAll(checkname, toggle){"
-		"for (i = 0; i < checkname.length; i++)"
-		"{if(checkname[i].name!=\"uSubmitJob\")"
-		"{checkname[i].checked=toggle.checked? true:false}}}</script>");
+        printf("<script>"
+		"function checkAll(checkname, toggle)"
+		"{"
+		"	for (i = 0; i < checkname.length; i++)"
+		"	if( checkname[i].name.indexOf(\"NoCA\")==(-1) )"
+		"	{"
+		"		checkname[i].checked = toggle.checked? true:false"
+		"	}"
+		"}"
+		"</script>");
 }//void jsToggleCheckboxes(void)
 
 
@@ -551,7 +557,7 @@ void Header_ism3(char *title, int iJs)
 	printf("Content-type: text/html\n\n");
 	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\""
 			" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/dns.ico?v=1>\n");
+	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/dns.ico?v=2>\n");
         printf("<html><head><title>unxsBind %s %s </title>",gcHostname,title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
 	StyleSheet();

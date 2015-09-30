@@ -75,6 +75,8 @@ static long uModDate=0;
 void Insert_tZone(void);
 void Update_tZone(char *cRowid);
 void ProcesstZoneListVars(pentry entries[], int x);
+static char cZoneSearch[64]={""};
+void tZoneSearchSet(unsigned uStep);
 
  //In tZonefunc.h file included below
 void ExtProcesstZoneVars(pentry entries[], int x);
@@ -169,6 +171,8 @@ void ProcesstZoneVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%lu",&uModDate);
 		else if(!strcmp(entries[i].name,"uClient"))
 			sscanf(entries[i].val,"%u",&uClient);
+		else if(!strcmp(entries[i].name,"cZoneSearch"))
+			sprintf(cZoneSearch,"%.63s",entries[i].val);
 
 	}
 
@@ -296,7 +300,7 @@ void tZone(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tZone",1);
+	Header_ism3(":: tZone",2);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -332,9 +336,14 @@ void tZone(const char *cResult)
 	//
 	OpenFieldSet("tZone Record Data",100);
 
-	if(guMode==2000 || guMode==2002)
+	//Custom right panel for creating search sets
+	if(guMode==12001)
+		tZoneSearchSet(1);
+	else if(guMode==12002)
+		tZoneSearchSet(2);
+	else if(guMode==2000 || guMode==2002)
 		tZoneInput(1);
-	else
+	else if(1)
 		tZoneInput(0);
 
 	//
@@ -347,6 +356,34 @@ void tZone(const char *cResult)
 	Footer_ism3();
 
 }//end of tZone();
+
+void tZoneSearchSet(unsigned uStep)
+{
+	printf("<tr><td><u>Set search parameters</u></td></tr>");
+
+	OpenRow("cZone pattern","black");
+	//Usability: Transfer from main tContainer page any current search pattern
+	if(cSearch[0])
+		sprintf(cZoneSearch,"%.31s",cSearch);
+	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cZoneSearch"
+			" value=\"%s\" size=40 maxlength=63 >",cZoneSearch);
+
+	OpenRow("NSSet","black");
+	tTablePullDown("tNSSet;cuNSSetPullDown","cLabel","cLabel",uSelectNSSet,1);
+
+	OpenRow("View","black");
+	tTablePullDown("tView;cuViewPullDown","cLabel","cLabel",uView,1);
+
+	if(uStep==1)
+	{
+		;
+	}
+	else if(uStep==2)
+	{
+		;
+	}
+
+}//void tZoneSearchSet(unsigned uStep)
 
 
 void tZoneInput(unsigned uMode)

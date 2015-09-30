@@ -39,6 +39,9 @@ static unsigned uSubmitJob=0;
 
 static char cTargetZone[100]={""};
 
+//static char cuNSSetPullDown[256]={""};
+static unsigned uSelectNSSet=0;
+
 //Aux checkboxes
 static unsigned uSearchSecOnly=0;
 
@@ -84,6 +87,7 @@ void htmlMasterZonesCheck(void);
 void htmlMasterNamedCheckZone(void);
 void tNSSetMembers(unsigned uNSSet);//tnssetfunc.h
 void CloneZone(char *cSourceZone,char *cTargetZone,unsigned uView);
+unsigned uGetZoneSearchGroup(const char *gcUser);
 
 //bind.c
 void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,const unsigned uCustId,
@@ -129,10 +133,15 @@ void ExtProcesstZoneVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uDelegationTTL);
 		else if(!strcmp(entries[i].name,"cNSList"))
 			cNSList=entries[i].val;
-		else if(!strcmp(entries[i].name,"uSubmitJob"))
+		else if(!strcmp(entries[i].name,"uSubmitJobNoCA"))
 			uSubmitJob=1;			
 		else if(!strcmp(entries[i].name,"cTargetZone"))
 			sprintf(cTargetZone,"%.99s",FQDomainName(entries[i].val));
+		else if(!strcmp(entries[i].name,"cuNSSetPullDown"))
+		{
+			sprintf(cuNSSetPullDown,"%.255s",entries[i].val);
+			uSelectNSSet=ReadPullDown("tNSSet","cLabel",cuNSSetPullDown);
+		}
 	}
 
 }//void ExtProcesstZoneVars(pentry entries[], int x)
@@ -558,12 +567,211 @@ void ExttZoneCommands(pentry entries[], int x)
 			ZoneCheck(2002);
 			GenerateArpaZones();
 		}
-		else if(!strcmp(gcCommand,"Search Set Operations"))
+		else if(!strcmp(gcCommand,"RR Search Set OPs"))
                 {
 			if(guPermLevel>=9)
 			{
                         	guMode=12001;
 	                        tResource("Search Set Operations");
+			}
+			else
+			{
+				tZone("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+		else if(!strcmp(gcCommand,"Zone Search Set OPs"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstZoneVars(entries,x);
+                        	guMode=12001;
+	                        tZone("Search Set Operations");
+			}
+			else
+			{
+				tZone("<blink>Error:</blink> Denied by permissions settings");
+			}
+                }
+		else if(!strcmp(gcCommand,"Reload Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstResourceVars(entries,x);
+                        	guMode=12002;
+	                        tZone("Search set reloaded");
+			}
+			else
+			{
+				tZone("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Fold A Records") || !strcmp(gcCommand,"Delete Checked"))
+                {
+			ProcesstZoneVars(entries,x);
+                        guMode=12002;
+			tZone(gcCommand);
+		}
+		else if(!strcmp(gcCommand,"Remove from Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstZoneVars(entries,x);
+                        	guMode=12002;
+				char cQuerySection[256];
+				unsigned uLink=0;
+				unsigned uGroup=0;
+
+				if(cZoneSearch[0]==0 &&uSelectNSSet==0 &&uView==0)
+	                        	tZone("You must specify at least one search parameter");
+
+				if((uGroup=uGetZoneSearchGroup(gcUser))==0)
+		                        tZone("No search set exists. Please create one first.");
+
+				//Initial query section
+				sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uZone IN"
+						" (SELECT uZone FROM tZone WHERE",uGroup);
+
+				//Build AND query section
+
+				if(cZoneSearch[0])
+				{
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE cZone LIKE '%s%%')",cZoneSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+				else
+				{
+					uLink=0;
+				}
+
+				if(uSelectNSSet)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE uNSSet=%u)",uSelectNSSet);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uView)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE uView=%u)",uView);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				strcat(gcQuery,")");
+				//debug only
+	                        //tZone(gcQuery);
+
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				unsigned uNumber=0;
+				if((uNumber=mysql_affected_rows(&gMysql))>0)
+				{
+	                        	sprintf(gcQuery,"%u zone records were removed from your search set",uNumber);
+	                        	tZone(gcQuery);
+				}
+				else
+				{
+	                        	tZone("No records were removed from your search set");
+				}
+			}
+			else
+			{
+				tZone("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
+		else if(!strcmp(gcCommand,"Add to Search Set") || !strcmp(gcCommand,"Create Search Set"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstZoneVars(entries,x);
+                        	guMode=12002;
+				char cQuerySection[256];
+				unsigned uLink=0;
+				unsigned uGroup=0;
+
+				if(cZoneSearch[0]==0 &&uSelectNSSet==0 &&uView==0)
+	                        	tZone("You must specify at least one search parameter");
+
+				if((uGroup=uGetZoneSearchGroup(gcUser))==0)
+				{
+					sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%sZone',uGroupType=2"
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcUser,guCompany,guLoginClient);//2=search set type TODO
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					if((uGroup=mysql_insert_id(&gMysql))==0)
+		                        	tZone("An error ocurred when attempting to create your search set");
+				}
+				else
+				{
+					if(!strcmp(gcCommand,"Create Search Set"))
+					{
+						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u",uGroup);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+							htmlPlainTextError(mysql_error(&gMysql));
+					}
+                		}
+
+				//Initial query section
+				sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroupGlue,uGroup,uZone,uResource)"
+						" SELECT 0,%u,uZone,0 FROM tZone WHERE",uGroup);
+
+				//Build AND query section
+
+				if(cZoneSearch[0])
+				{
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE cZone LIKE '%s%%')",cZoneSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+				else
+				{
+					uLink=0;
+				}
+
+				if(uSelectNSSet)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE uNSSet=%u)",uSelectNSSet);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uView)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uZone IN (SELECT uZone FROM tZone WHERE uView=%u)",uView);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+
+				//debug only
+	                        //tZone(gcQuery);
+
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				unsigned uNumber=0;
+				if((uNumber=mysql_affected_rows(&gMysql))>0)
+				{
+	                        	sprintf(gcQuery,"%u zone records were added to your search set",uNumber);
+	                        	tZone(gcQuery);
+				}
+				else
+				{
+	                        	tZone("No records were added to your search set. Filter returned 0 records");
+				}
 			}
 			else
 			{
@@ -1011,6 +1219,25 @@ void ExttZoneButtons(void)
 	
 	switch(guMode)
         {
+                case 12001:
+                case 12002:
+			printf("<u>Create or refine your user search set</u><br>");
+			printf("In the right panel you can select your search criteria. When refining you do not need"
+				" to reuse your initial search critieria. Your search set is persistent even across unxsVZ sessions.<p>");
+			printf("<input type=submit class=largeButton title='Create an initial or replace an existing search set'"
+				" name=gcCommand value='Create Search Set'>\n");
+			printf("<input type=submit class=largeButton title='Add the results to your current search set. Do not add the same search"
+				" over and over again it will not result in any change but may slow down processing.'"
+				" name=gcCommand value='Add to Search Set'>\n");
+			printf("<p><input type=submit class=largeButton title='Apply the right panel filter to refine your existing search set"
+				" by removing set elements that match the filter settings.'"
+				" name=gcCommand value='Remove from Search Set'>\n");
+			printf("<p><input type=submit class=largeButton title='Reload current search set. Good for checking for any new status updates'"
+				" name=gcCommand value='Reload Search Set'>\n");
+			printf("<input type=submit class=largeButton title='Return to main tZone tab page'"
+				" name=gcCommand value='Cancel'>\n");
+                break;
+
                 case 2000:
 			printf("<p><u>Enter required data into form</u><br>");
 			if(guPermLevel>9)
@@ -1022,7 +1249,7 @@ void ExttZoneButtons(void)
                         printf("<br>");
                         printf(LANG_NBB_CONFIRMNEW);
 			printf("<br>uSubmitJob <input title='If not checked, no job will "
-				"be created for the new zone ' type=checkbox name=uSubmitJob checked value=1>");
+				"be created for the new zone ' type=checkbox name=uSubmitJobNoCA checked value=1>");
                 break;
 
                 case 2001:
@@ -1130,8 +1357,12 @@ void ExttZoneButtons(void)
 				printf("<input type=submit class=largeButton title='Open RR search set page."
 					" There you can create search sets and operate"
 					" on selected resources of the loaded resource set.'"
-					" name=gcCommand value='Search Set Operations'>\n");
-				printf("<br><input class=largeButton title='Mass/Bulk operations' type=submit"
+					" name=gcCommand value='RR Search Set OPs'>\n");
+				printf("<br><input type=submit class=largeButton title='Open zone search set page."
+					" There you can create search sets and operate"
+					" on selected zones of the loaded zone set.'"
+					" name=gcCommand value='Zone Search Set OPs'>\n");
+				printf("<br><input class=largeButton title='Mass/Bulk operations. !Being deprecated!' type=submit"
 					" name=gcCommand value='Mass Operations'><br>\n");
 				printf("<p><u>Clone Zone</u><br>");
 				printf("<input type=text name=cTargetZone size=30 title='Enter the name of the zone you "
@@ -1155,9 +1386,173 @@ void ExttZoneButtons(void)
 
 void ExttZoneAuxTable(void)
 {
-	ResourceRecordList(uZone);
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uGroup=0;
+	unsigned uRow=0;
+	unsigned uNumRows=0;
+	//unsigned uOnlyOncePerSet=1;
+
+	switch(guMode)
+	{
+		case 12001:
+		case 12002:
+			//Set operation buttons
+			OpenFieldSet("Set Operations",100);
+			printf("<input title='For supported set operations (like Group Delete)"
+				" create the appropiate jobs for changes to go into effect.'"
+				" type=checkbox name=uSubmitJobNoCA");
+			if(uSubmitJob)
+				printf(" checked");
+			printf("> uSubmitJob");
+			printf("<p><input title='Delete checked resource records from your search set. They will still be visible but will"
+				" marked deleted and will not be used in any subsequent set operation'"
+				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
+			printf("&nbsp;<input title='Copy A records from this zone into the parent zone of same view if it exists'"
+				" type=submit class=lwarnButton name=gcCommand value='Fold A Records'>\n");
+			CloseFieldSet();
+
+			sprintf(gcQuery,"Search Set Contents");
+			OpenFieldSet(gcQuery,100);
+			uGroup=uGetZoneSearchGroup(gcUser);
+			//we need to use left joins here to allow for null uClient
+			sprintf(gcQuery,"SELECT"
+					" tZone.uZone,"
+					" tZone.cZone,"
+					" tView.cLabel,"
+					" tNSSet.cLabel,"
+					//not for display
+					" tView.uView,"
+					" tNSSet.uNSSet"
+					" FROM tZone,tView,tNSSet"
+					" WHERE tZone.uView=tView.uView"
+					" AND tZone.uNSSet=tNSSet.uNSSet"
+					" AND uZone IN (SELECT uZone FROM tGroupGlue WHERE uGroup=%u) ORDER BY tZone.cZone",uGroup);
+		        mysql_query(&gMysql,gcQuery);
+		        if(mysql_errno(&gMysql))
+				htmlPlainTextError(mysql_error(&gMysql));
+		        res=mysql_store_result(&gMysql);
+			if((uNumRows=mysql_num_rows(res)))
+			{
+				char cResult[256]={""};
+				char cCtLabel[100]={""};
+
+				printf("<table>");
+				printf("<tr>");
+				printf("<td valign=top>"
+					"<input title='Check all records' type=checkbox name=all onClick='checkAll(document.formMain,this)'></td>"
+					"<td><u>cZone</u></td>"
+					"<td><u>View</u></td>"
+					"<td><u>NSSet</u></td>"
+					"<td><u>Set operation result</u></td></tr>");
+//Reset margin start
+while((field=mysql_fetch_row(res)))
+{
+	if(guMode==12002)
+	{
+		register int i;
+		unsigned uCtZone=0;
+
+		cResult[0]=0;
+		sscanf(field[0],"%u",&uCtZone);
+		sprintf(cCtLabel,"Ct%u",uCtZone);
+		for(i=0;i<x;i++)
+		{
+			//insider xss protection
+			if(guPermLevel<10)
+				continue;
+
+			if(!strcmp(entries[i].name,cCtLabel))
+			{
+				if(!strcmp(gcCommand,"Delete Checked"))
+				{
+					sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u AND uZone=%u",uGroup,uCtZone);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"Deleted from set");
+					else
+						sprintf(cResult,"Unexpected non deletion");
+					break;
+				}//Delete Checked
+
+				else if(!strcmp(gcCommand,"Fold A Records"))
+				{
+					MYSQL_RES *res2;
+					MYSQL_ROW field2;
+
+					sprintf(gcQuery,"SELECT uZone,cZone FROM tZone WHERE INSTR('%s',cZone)>1 AND uView=%s",field[1],field[4]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						continue;
+					}
+					res2=mysql_store_result(&gMysql);
+					if((field2=mysql_fetch_row(res2)))
+					{
+						sprintf(cResult,"Fold into %s",field2[1]);
+					}
+					else
+					{
+						sprintf(cResult,"No parent zone for view %s/%s found",field[2],field[4]);
+					}
+					mysql_free_result(res2);
+					break;
+				}
+
+				else if(1)
+				{
+					sprintf(cResult,"Unexpected gcCommand=%.64s",gcCommand);
+					break;
+				}
+			}//end if Ct block
+		}//end for()
+	}
+
+	printf("<tr");
+	if((uRow++) % 2)
+		printf(" bgcolor=#E7F3F1 ");
+	else
+		printf(" bgcolor=#EFE7CF ");
+	printf(">");
+
+		printf("<td valign=top><input type=checkbox name=Ct%s ></td>"
+		"<td valign=top><a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%s>%s</a></td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.64s</td>"
+		"<td valign=top>%.255s</td>\n",
+			field[0],
+			field[0],field[1],
+			field[2],field[3],cResult);
+	printf("</tr>");
+
+}//while()
+//Reset margin end
+
+			printf("<tr><td valign=top>"
+				"<input title='Check all records' type=checkbox name=all onClick='checkAll(document.formMain,this)'></td>"
+				"<td valign=top colspan=3>Check all %u zone records</td></tr>\n",uNumRows);
+			printf("</table></form>");
+
+			}//If results
+			mysql_free_result(res);
+			CloseFieldSet();
+		break;
+
+		default:
+			ResourceRecordList(uZone);
+		break;
+
+	}//switch(guMode)
 
 }//void ExttZoneAuxTable(void)
+
 
 unsigned uPTRInBlock(unsigned uZone,unsigned uStart,unsigned uEnd)
 {
@@ -1215,7 +1610,7 @@ void DelegationTools(void)
 	printf("<u>cNSList</u><br><textarea  cols=40 wrap=hard rows=3 name=cNSList "
 		"title='List of NSs to which you are going to delegate the IP block'>%s</textarea><br>\n",cNSList);
 	printf("<u>uSubmitJob</u><br><input title='If not checked, no modify job will "
-		"be created for the zone upon delegation' type=checkbox name=uSubmitJob value=1 ");
+		"be created for the zone upon delegation' type=checkbox name=uSubmitJobCA value=1 ");
 	if(uSubmitJob)
 		printf("checked");
 	printf(">\n");
@@ -4110,3 +4505,25 @@ void PassDirectHtmlLineNum(char *file)
 
 }//void PassDirectHtmlLineNum(char *file)
 
+
+unsigned uGetZoneSearchGroup(const char *gcUser)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uGroup=0;
+
+	sprintf(gcQuery,"SELECT uGroup FROM tGroup WHERE cLabel='%sZone'",gcUser);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		if(field[0]!=NULL)
+			sscanf(field[0],"%u",&uGroup);
+	}
+	mysql_free_result(res);
+
+	return(uGroup);
+
+}//unsigned uGetZoneSearchGroup(const char *gcUser)

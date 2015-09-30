@@ -54,7 +54,7 @@
 			<a data-toggle="collapse" data-target="#collapseFour" href="#collapseFour" class="collapsed">Search</a>
 		</h4>
 	</div><!-- "panel-heading" -->
-	<div id="collapseFour" class="panel-collapse collapse">
+	<div id="collapseFour" class="panel-collapse collapse {{gcInCollapseFour}}">
 	<div class="panel-body">loading please wait...
 
 	</div><!-- "panel-body" -->
@@ -111,7 +111,7 @@
 		$("#collapseThree").load("{{cCGI}}?gcPage=Zone&guZone={{guZone}}&gcFunction=ResourceRecords");
 	});
 	$('#collapseFour').on('shown.bs.collapse', function () {
-		$("#collapseFour").load("{{cCGI}}?gcPage=Zone&guZone={{guZone}}&gcFunction=SearchCollapse");
+		$("#collapseFour").load("{{cCGI}}?gcPage=Zone&guZone={{guZone}}&gcFunction=SearchCollapse&gcSearch={{gcSearch}}");
 	});
     </script>
   </body>

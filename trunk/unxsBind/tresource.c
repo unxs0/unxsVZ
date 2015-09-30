@@ -325,7 +325,7 @@ void tResource(const char *cResult)
 
 void tResourceSearchSet(unsigned uStep)
 {
-	printf("<tr><td><u>Set search paramters</u></td></tr>");
+	printf("<tr><td><u>Set search parameters</u></td></tr>");
 
 	OpenRow("cZone pattern","black");
 	//Usability: Transfer from main tContainer page any current search pattern

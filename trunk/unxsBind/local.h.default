@@ -131,3 +131,10 @@ LEGAL
 //For openisp staff mod only. Staff: Remember to change makefile also.
 #define RELEASE "Release 3.1/rpm-3.1"
 #define REV "3.1/rpm-3.1"
+
+//For interfaces
+#define cMAILTO "noc@someisp.net"
+#define cBCC ""
+#define cFROM "noc@someisp.net"
+#define cSUBJECT "OneLogin system message"
+#define cUNXSVZORGLOGFILE "/var/log/unxsvzOrg.log"
