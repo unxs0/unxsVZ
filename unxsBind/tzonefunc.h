@@ -1486,17 +1486,107 @@ while((field=mysql_fetch_row(res)))
 					MYSQL_RES *res2;
 					MYSQL_ROW field2;
 
+					unsigned uSourceZone=0;
+					unsigned uDestinationZone=0;
+					sscanf(field[0],"%u",&uSourceZone);
+
 					sprintf(gcQuery,"SELECT uZone,cZone FROM tZone WHERE INSTR('%s',cZone)>1 AND uView=%s",field[1],field[4]);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
 						sprintf(cResult,"%.255s",mysql_error(&gMysql));
-						continue;
+						break;
 					}
 					res2=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res2)!=1)
+					{
+						sprintf(cResult,"More than one candidate zone.");
+						break;
+					}
 					if((field2=mysql_fetch_row(res2)))
 					{
-						sprintf(cResult,"Fold into %s",field2[1]);
+						MYSQL_RES *res3;
+						MYSQL_ROW field3;
+
+						if(!uSourceZone)
+						{
+							sprintf(cResult,"uSourceZone==0");
+							break;
+						}
+						sscanf(field2[0],"%u",&uDestinationZone);
+						if(!uDestinationZone)
+						{
+							sprintf(cResult,"uDestinationZone==0");
+							break;
+						}
+						//cp A RRs from field[0] (uZone) do not overwrite if exist
+						//if fully qualified remove parent zone part
+						sprintf(gcQuery,"SELECT CONCAT("
+										"IF(SUBSTR(cName,-1)='.',"
+											"SUBSTR(cName,1,INSTR(cName,'%s')-2),"
+											"cName)"
+										",'.','%s','.'),"
+									"cParam1,cComment,uOwner,uCreatedBy,uCreatedDate"
+								" FROM tResource WHERE uZone=%u AND uRRType=1",field2[1],field2[1],uSourceZone);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							sprintf(cResult,"%.255s",mysql_error(&gMysql));
+							break;
+						}
+						//debug
+						//sprintf(cResult,"%.255s",gcQuery);
+						//break;
+						res3=mysql_store_result(&gMysql);
+						unsigned uNumRows=0;
+						while((field3=mysql_fetch_row(res3)))
+						{
+							MYSQL_RES *res4;
+							sprintf(gcQuery,"SELECT uResource FROM tResource WHERE uZone=%u"
+									" AND cName='%s'"
+									" AND uRRType=1"
+										,uDestinationZone,field3[0]);
+							mysql_query(&gMysql,gcQuery);
+							if(mysql_errno(&gMysql))
+							{
+								sprintf(cResult,"%.255s",mysql_error(&gMysql));
+								break;
+							}
+							res4=mysql_store_result(&gMysql);
+							//only add if cName does not exist in parent zone (uDestinationZone)
+							if(mysql_num_rows(res4)==0)
+							{
+								sprintf(gcQuery,"INSERT INTO tResource"
+									" SET uZone=%u,"
+									"cName='%s',"
+									"uRRType=1,"
+									"cParam1='%s',"
+									"cComment='FoldARecords %s',"
+									"uOwner=%s,"
+									"uCreatedBy=%s,"
+									"uCreatedDate=%s,"
+									"uModDate=UNIX_TIMESTAMP(NOW()),"
+									"uModBy=%u"
+										,uDestinationZone,field3[0],field3[1],field3[2],
+										field3[3],field3[4],field3[5],guLoginClient);
+								mysql_query(&gMysql,gcQuery);
+								if(mysql_errno(&gMysql))
+								{
+									sprintf(cResult,"%.255s",mysql_error(&gMysql));
+									break;
+								}
+								if(mysql_affected_rows(&gMysql)>0)
+									uNumRows++;
+							}
+						}
+
+						//
+						//debug
+						//sprintf(cResult,"%s %s %s",field3[0],field3[1],field3[2]);
+						//sprintf(cResult,"%s",gcQuery);
+						//break;
+
+						sprintf(cResult,"Folded %u A records into %s",uNumRows,field2[1]);
 					}
 					else
 					{
