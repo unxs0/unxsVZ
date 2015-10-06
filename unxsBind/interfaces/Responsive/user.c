@@ -8,6 +8,8 @@ AUTHOR/LEGAL
 PURPOSE
 	unxsDNS program file.
 	User tab functions.
+WORK NOTES
+	Changing session info and removing get link data input.
 */
 
 #include "interface.h"
@@ -36,6 +38,7 @@ void SetZoneFromSearchSet(void);
 char *cGetZonename(unsigned uZone);
 void htmlOperationsInfo(void);
 void htmlLoginInfo(void);
+void GetZoneFromSessionGroup(void);//zone.c
 
 void ProcessUserVars(pentry entries[], int x)
 {
@@ -205,8 +208,8 @@ void UserCommands(pentry entries[], int x)
 
 void htmlUser(void)
 {
-	if(!guZone)
-		SetZoneFromSearchSet();
+	//zone search memory
+	GetZoneFromSessionGroup();
 
 	htmlHeader("unxsDNS","UserHeader");
 	htmlUserPage("unxsDNS","User.Body");

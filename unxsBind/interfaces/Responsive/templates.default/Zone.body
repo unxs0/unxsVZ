@@ -26,14 +26,14 @@
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{{cCGI}}?gcPage=Zone&guZone={{guZone}}">{{gcBrand}} unxsDNS</a>
+          <a class="navbar-brand" href="{{cCGI}}?gcPage=Zone">{{gcBrand}} unxsDNS</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li><a href="{{cCGI}}?gcPage=User&guZone={{guZone}}">User</a></li>
-            <li class="active"><a href="{{cCGI}}?gcPage=Zone&guZone={{guZone}}">Zone</a></li>
-            <li><a href="{{cCGI}}?gcPage=About&guZone={{guZone}}">About</a></li>
-            <li><a href="{{cCGI}}?gcPage=Contact&guZone={{guZone}}">Contact</a></li>
+            <li><a href="{{cCGI}}?gcPage=User">User</a></li>
+            <li class="active"><a href="{{cCGI}}?gcPage=Zone">Zone</a></li>
+            <li><a href="{{cCGI}}?gcPage=About">About</a></li>
+            <li><a href="{{cCGI}}?gcPage=Contact">Contact</a></li>
             {{cPrivilegedZoneMenu}}
             <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
           </ul>
@@ -48,17 +48,17 @@
         <div class="col-xs-12 col-sm-9">
 
 <!-- start jquery dynamic loading collapse search -->
-<div class="panel panel-default" id="panel3">
+<div class="panel panel-default" id="panel1">
 	<div class="panel-heading">
 		<h4 class="form-signin-heading">
-			<a data-toggle="collapse" data-target="#collapseFour" href="#collapseFour" class="collapsed">Search</a>
+			<a data-toggle="collapse" data-target="#collapseSearch" href="#collapseSearch" class="collapsed">Search</a>
 		</h4>
 	</div><!-- "panel-heading" -->
-	<div id="collapseFour" class="panel-collapse collapse {{gcInCollapseFour}}">
-	<div class="panel-body">loading please wait...
-
+	<div id="collapseSearch" class="panel-collapse collapse {{gcInCollapseSearch}}">
+	<div class="panel-body">
+		{{funcSearchSubmit}}
 	</div><!-- "panel-body" -->
-	</div><!-- "collapseFour" -->
+	</div><!-- "collapseSearch" -->
 </div><!-- "panel panel-default" -->
 <!-- end jquery dynmaic collapse search -->
 
@@ -71,16 +71,16 @@
             
 
 <!-- start jquery collapse resource records -->
-<div class="panel panel-default" id="panel3">
+<div class="panel panel-default" id="panel2">
 	<div class="panel-heading">
 		<h4 class="form-signin-heading">
-			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">zone resource records</a>
+			<a data-toggle="collapse" data-target="#collapseResourceRecords" href="#collapseResourceRecords" class="collapsed">zone resource records</a>
 		</h4>
 	</div><!-- "panel-heading" -->
-	<div id="collapseThree" class="panel-collapse collapse">
+	<div id="collapseResourceRecords" class="panel-collapse collapse">
 	<div class="panel-body">loading please wait...
 	</div><!-- "panel-body" -->
-	</div><!-- "collapseThree" -->
+	</div><!-- "collapseResourceRecords" -->
 </div><!-- "panel panel-default" -->
 <!-- end jquery collapse -->
 
@@ -102,16 +102,15 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="/bs/js/bootstrap.min.js"></script>
     <script src="/bs/js/offcanvas.js"></script>
     <script>
-	$('#collapseThree').on('shown.bs.collapse', function () {
-		$("#collapseThree").load("{{cCGI}}?gcPage=Zone&guZone={{guZone}}&gcFunction=ResourceRecords");
+	$('#collapseResourceRecords').on('shown.bs.collapse', function () {
+		$("#collapseResourceRecords").load("{{cCGI}}?gcPage=Zone&gcFunction=ResourceRecords");
 	});
-	$('#collapseFour').on('shown.bs.collapse', function () {
-		$("#collapseFour").load("{{cCGI}}?gcPage=Zone&guZone={{guZone}}&gcFunction=SearchCollapse&gcSearch={{gcSearch}}");
+	$('#collapseSearch').on('shown.bs.collapse', function () {
+		$("#collapseSearch").load("{{cCGI}}?gcPage=Zone&gcFunction=SearchCollapse");
 	});
     </script>
   </body>

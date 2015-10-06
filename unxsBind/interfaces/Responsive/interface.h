@@ -121,6 +121,7 @@ void funcZoneInfo(FILE *fp);
 void funcNewZone(FILE *fp);
 void funcZone(FILE *fp);
 void funcZoneList(FILE *fp);
+void funcSearchSubmit(FILE *fp);
 
 //user.c
 void ProcessUserVars(pentry entries[], int x);

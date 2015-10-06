@@ -380,6 +380,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcZone(fp);
 	else if(!strcmp(cFunction,"funcZoneList"))
 		funcZoneList(fp);
+	else if(!strcmp(cFunction,"funcSearchSubmit"))
+		funcSearchSubmit(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
