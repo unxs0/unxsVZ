@@ -27,14 +27,14 @@
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{{cCGI}}?gcPage=User&guZone={{guZone}}">{{gcBrand}} unxsDNS</a>
+          <a class="navbar-brand" href="{{cCGI}}?gcPage=User">{{gcBrand}} unxsDNS</a>
         </div><!--/navbar-header-->
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="{{cCGI}}?gcPage=User&guZone={{guZone}}">User</a></li>
-            <li><a href="{{cCGI}}?gcPage=Zone&guZone={{guZone}}">Zone</a></li>
-            <li><a href="{{cCGI}}?gcPage=About&guZone={{guZone}}">About</a></li>
-            <li><a href="{{cCGI}}?gcPage=Contact&guZone={{guZone}}">Contact</a></li>
+            <li class="active"><a href="{{cCGI}}?gcPage=User">User</a></li>
+            <li><a href="{{cCGI}}?gcPage=Zone">Zone</a></li>
+            <li><a href="{{cCGI}}?gcPage=About">About</a></li>
+            <li><a href="{{cCGI}}?gcPage=Contact">Contact</a></li>
             {{cPrivilegedZoneMenu}}
             <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
           </ul>
@@ -100,8 +100,6 @@
 		<h5>{{gcMessage}}</h5>
       		<form name="changepasswd" class="form-signin" role="form" method="post" action="{{cCGI}}">
 		<input type=hidden name="gcPage" value="User">
-		<input type=hidden name="gcZone" value="{{gcZone}}">
-		<input type=hidden name="guZone" value="{{guZone}}">
 
         	<label for="inputEmail" class="sr-only">Login</label>
         	<input disabled maxlength="31" title='Your login'

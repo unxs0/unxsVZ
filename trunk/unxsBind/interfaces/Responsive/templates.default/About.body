@@ -27,14 +27,14 @@
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{{cCGI}}?gcPage=Zone&guZone={{guZone}}">{{gcBrand}} unxsDNS</a>
+          <a class="navbar-brand" href="{{cCGI}}?gcPage=Zone">{{gcBrand}} unxsDNS</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li><a href="{{cCGI}}?gcPage=User&guZone={{guZone}}">User</a></li>
-            <li><a href="{{cCGI}}?gcPage=Zone&guZone={{guZone}}">Zone</a></li>
-            <li class="active"><a href="{{cCGI}}?gcPage=About&guZone={{guZone}}">About</a></li>
-            <li><a href="{{cCGI}}?gcPage=Contact&guZone={{guZone}}">Contact</a></li>
+            <li><a href="{{cCGI}}?gcPage=User">User</a></li>
+            <li><a href="{{cCGI}}?gcPage=Zone">Zone</a></li>
+            <li class="active"><a href="{{cCGI}}?gcPage=About">About</a></li>
+            <li><a href="{{cCGI}}?gcPage=Contact">Contact</a></li>
             {{cPrivilegedZoneMenu}}
             <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
           </ul>
@@ -64,7 +64,6 @@
 		gcZone: {{gcZone}}<br>
 		gcSearch: {{gcSearch}}<br>
 		guZone: {{guZone}}<br>
-		gcLabel: {{gcLabel}}<br>
 		gcOTPSecret: {{gcOTPSecretExists}}<br>
 		</h5>
 

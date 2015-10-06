@@ -8,6 +8,17 @@ AUTHOR/LEGAL
 PURPOSE
 	unxsDNS program file.
 	Zone and related tab functions.
+WORK NOTES
+	Moving from get arg for zone and zone search pattern to backend tGroup,tGroupGlue and tGroupType
+	saved data.
+	Current zone: tGroupType.uGroupType=21 "selected zone"
+	Current zone search pattern: A tConfiguration entry for uOwner=guLoginClient
+	Nothing comes from get link passed data.
+
+	Session data:
+		guZone
+		gcSearch
+		
 */
 
 #include "interface.h"
@@ -16,20 +27,20 @@ extern unsigned guBrowserFirefox;//main.c
 char gcZone[100]={""};
 static char gcSearch[100]={""};
 static char gcSearchAux[32]={""};
-static char *gcSearchName={""};
+//static char *gcSearchName={""};
 unsigned guStatus=0;
 unsigned guNewZone=0;
 unsigned guReseller=0;
 static char gcNewZoneTZ[64]={"PST8PDT"};
-static unsigned guNode=0;
-static unsigned guDatacenter=0;
+//static unsigned guNode=0;
+//static unsigned guDatacenter=0;
 //Zone details
 //static unsigned guFlag=0;
 static char gcLabel[33]={""};
 static char gcNewHostname[33]={""};
 static char gcNewHostParam0[33]={""};
 static char gcNewHostParam1[33]={""};
-static char gcServer[32]={""};
+//static char gcServer[32]={""};
 static char *gcBulkData={""};
 static char gcCustomerName[33]={""};
 static char gcCustomerLimit[16]={""};
@@ -39,7 +50,7 @@ static char gcNewPasswd[33]={""};
 static char gcAuthCode[33]={""};
 static char *gcShowDetails="";
 char gcAdminPort[16]=":3321";
-char gcInCollapseFour[16]="in";
+char gcInCollapseSearch[16]="out";
 
 unsigned guMode;
 unsigned guZoneSubmit=0;
@@ -71,14 +82,21 @@ char *random_pw(char *dest);
 void GetConfigurationValue(char const *cName,char *cValue,unsigned uDatacenter,unsigned uNode,unsigned uZone);
 unsigned uGetPrimaryZoneGroup(unsigned uZone);
 void GetZonePropertyValue(char const *cName,char *cValue,unsigned uZone);
+void htmlSearchCollapseText(FILE *fp);
 
 void htmlAuxPage(char *cTitle, char *cTemplateName);
 void htmlAbout(void);
 void htmlContact(void);
-unsigned uGetSearchGroupLocal(const char *gcUser,unsigned uGroupType);
-void UpdateSearchSet(unsigned guZone);
-unsigned uGetZoneFromSearchGroup(unsigned uSearchGroup);
-void SetZoneFromSearchSet(void);
+
+//session related
+void GetZoneFromSessionGroup(void);
+unsigned uGetSessionGroup(const char *gcUser,unsigned uGroupType);
+unsigned uGetSessionGroupZone(void);
+unsigned uGetZoneFromZoneGroup(unsigned uGroup);
+unsigned uGetZoneSearch(unsigned guLoginClient);
+void UpdateSessionZone(unsigned guZone);
+void UpdateSessionZoneSearch(char *gcSearch);
+
 void htmlResourceRecords(void);
 void htmlSearchCollapse(void);
 
@@ -122,13 +140,16 @@ void ProcessZoneVars(pentry entries[], int x)
 		if(!strcmp(entries[i].name,"guZone"))
 		{
 			sscanf(entries[i].val,"%u",&guZone);
-			UpdateSearchSet(guZone);
+			UpdateSessionZone(guZone);
 		}
 		else if(!strcmp(entries[i].name,"guZoneSubmit"))
 		{
 			sscanf(entries[i].val,"%u",&guZoneSubmit);
-			UpdateSearchSet(guZoneSubmit);
-			if(guZoneSubmit) guZone=guZoneSubmit;
+			if(guZoneSubmit)
+			{
+				guZone=guZoneSubmit;
+				UpdateSessionZone(guZoneSubmit);
+			}
 		}
 		else if(!strcmp(entries[i].name,"gcZone"))
 			sprintf(gcZone,"%.99s",entries[i].val);
@@ -136,7 +157,9 @@ void ProcessZoneVars(pentry entries[], int x)
 		{
 			sprintf(gcSearch,"%.99s",entries[i].val);
 			guSearchSubmit=1;
-			//sprintf(gcInCollapseFour,"in");
+			UpdateSessionZoneSearch(gcSearch);
+			sprintf(gcInCollapseSearch,"%.15s","in");
+			//Need to use function in template connected to in state
 		}
 		else if(!strcmp(entries[i].name,"gcSearch"))
 			sprintf(gcSearch,"%.99s",entries[i].val);
@@ -177,31 +200,6 @@ void ProcessZoneVars(pentry entries[], int x)
 
 void ZoneGetHook(entry gentries[],int x)
 {
-	register int i;
-	
-	for(i=0;i<x;i++)
-	{
-		//Click on zone tab
-		if(!strcmp(gentries[i].name,"guZone"))
-		{
-			sscanf(gentries[i].val,"%u",&guZone);
-			UpdateSearchSet(guZone);
-			sprintf(gcInCollapseFour,"out");
-		}
-		else if(!strcmp(gentries[i].name,"gcFunction"))
-			sprintf(gcFunction,"%.99s",gentries[i].val);
-		else if(!strcmp(gentries[i].name,"gcSearch"))
-		{
-			sprintf(gcSearch,"%.99s",gentries[i].val);
-			//sprintf(gcInCollapseFour,"in");
-		}
-	}
-
-	if(guZone && !gcFunction[0])
-	{
-		SelectZone();
-	}
-
 	if(!strcmp(gcPage,"About"))
 		htmlAbout();
 	else if(!strcmp(gcPage,"Contact"))
@@ -231,6 +229,8 @@ void ZoneCommands(pentry entries[], int x)
 void htmlAbout(void)
 {
 	htmlHeader("unxsDNS","ZoneHeader");
+	GetZoneFromSessionGroup();
+	uGetZoneSearch(guLoginClient);
 	htmlAuxPage("unxsDNS","About.Body");
 	htmlFooter("ZoneFooter");
 
@@ -245,22 +245,23 @@ void htmlContact(void)
 
 }//void htmlContact(void)
 
+#define uSELECTEDZONE 21
 
-void SetZoneFromSearchSet(void)
+void GetZoneFromSessionGroup(void)
 {
-	unsigned uSearchGroup=0;
-	if((uSearchGroup=uGetSearchGroupLocal(gcUser,2)))
+	unsigned uGroup=0;
+	if((uGroup=uGetSessionGroup(gcUser,uSELECTEDZONE)))
 	{
-		guZone=uGetZoneFromSearchGroup(uSearchGroup);
+		guZone=uGetZoneFromZoneGroup(uGroup);
 	}
-}//void SetZoneFromSearchSet(void)
+}//void GetZoneFromSessionGroup(void)
 
 
 void htmlZone(void)
 {
 	//zone search memory
-	if(!guZone)
-		SetZoneFromSearchSet();
+	GetZoneFromSessionGroup();
+	uGetZoneSearch(guLoginClient);
 
 	htmlHeader("unxsDNS","ZoneHeader");
 	if(guZone)
@@ -475,10 +476,8 @@ void htmlZonePage(char *cTitle, char *cTemplateName)
 			template.cpName[16]="gcCopyright";
 			template.cpValue[16]=LOCALCOPYRIGHT;
 
-			template.cpName[17]="gcInCollapseFour";
-			if(guZoneSubmit) sprintf(gcInCollapseFour,"out");
-			//else if(gcSearch[0] || guSearchSubmit) sprintf(gcInCollapseFour,"in");
-			template.cpValue[17]=gcInCollapseFour;
+			template.cpName[17]="gcInCollapseSearch";
+			template.cpValue[17]=gcInCollapseSearch;
 
 			char cCtHostnameLink[128]={"no zone selected"};
 			sprintf(cCtHostnameLink,"<a href=https://%s%s/admin >%s</a>",template.cpValue[8],gcAdminPort,template.cpValue[8]);
@@ -519,6 +518,21 @@ void funcZoneImageTag(FILE *fp)
 		return;
 
 }//void funcZoneImageTag(FILE *fp)
+
+
+void funcSearchSubmit(FILE *fp)
+{
+	fprintf(fp,"<!-- funcSearchSubmit(fp) Start -->\n");
+	if(gcInCollapseSearch[0]=='i')
+	{
+		htmlSearchCollapseText(fp);
+	}
+	else
+	{
+		fprintf(fp,"loading...\n");
+	}
+	fprintf(fp,"<!-- funcSearchSubmit(fp) End -->\n");
+}//void funcSearchSubmit(FILE *fp)
 
 
 void funcSelectZone(FILE *fp)
@@ -1099,7 +1113,7 @@ char *ToLower(char *cInput)
 }//char *ToLower(char *cInput)
 
 
-unsigned uGetSearchGroupLocal(const char *gcUser,unsigned uGroupType)
+unsigned uGetSessionGroup(const char *gcUser,unsigned uGroupType)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -1119,16 +1133,16 @@ unsigned uGetSearchGroupLocal(const char *gcUser,unsigned uGroupType)
 
 	return(uGroup);
 
-}//unsigned uGetSearchGroupLocal()
+}//unsigned uGetSessionGroup()
 
 
-unsigned uGetZoneFromSearchGroup(unsigned uSearchGroup)
+unsigned uGetZoneFromZoneGroup(unsigned uGroup)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uZone=0;
 
-	sprintf(gcQuery,"SELECT uZone FROM tGroupGlue WHERE uGroup=%u LIMIT 1",uSearchGroup);
+	sprintf(gcQuery,"SELECT uZone FROM tGroupGlue WHERE uGroup=%u LIMIT 1",uGroup);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1142,21 +1156,86 @@ unsigned uGetZoneFromSearchGroup(unsigned uSearchGroup)
 
 	return(uZone);
 
-}//unsigned uGetZoneFromSearchGroup(unsigned uSearchGroup)
+}//unsigned uGetZoneFromZoneGroup(unsigned uGroup)
 
 
-void UpdateSearchSet(unsigned guZone)
+//set global gcSearch from tConfiguration
+unsigned uGetZoneSearch(unsigned guLoginClient)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	unsigned uRetVal=1;//error
+
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='gcSearch' AND uOwner=%u",guLoginClient);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		if(field[0]!=NULL)
+		{
+			if(field[0][0])
+			{
+				sprintf(gcSearch,"%.99s",field[0]);
+				uRetVal=0;
+			}
+		}
+	}
+	mysql_free_result(res);
+
+	return(uRetVal);
+
+}//unsigned uGetZoneSearch(unsigned guLoginClient)
+
+
+void UpdateSessionZoneSearch(char *gcSearch)
+{
+	if(!gcSearch[0]) return;
+
+	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uConfiguration FROM tConfiguration WHERE cLabel='gcSearch' AND uOwner=%u",guLoginClient);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tConfiguration"
+				" SET cValue='%s',uModBy=%u,"
+				" uModDate=UNIX_TIMESTAMP(NOW()) WHERE uConfiguration=%s",gcSearch,guLoginClient,field[0]);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tConfiguration"
+				" SET cValue='%s',cLabel='gcSearch',uOwner=%u,uCreatedBy=%u,"
+				" uCreatedDate=UNIX_TIMESTAMP(NOW())",gcSearch,guLoginClient,guLoginClient);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+	}
+
+}//void UpdateSessionZoneSearch(unsigned guZone)
+
+
+void UpdateSessionZone(unsigned guZone)
 {
 	if(!guZone) return;
 
-	unsigned uSearchGroup=0;
+	unsigned uSessionZoneGroup=0;
 	//If search group exists check to see if a zone exists
-	if((uSearchGroup=uGetSearchGroupLocal(gcUser,2)))
+	if((uSessionZoneGroup=uGetSessionGroup(gcUser,uSELECTEDZONE)))
 	{
 		unsigned guZoneFromGroup=0;
-		guZoneFromGroup=uGetZoneFromSearchGroup(uSearchGroup);
+		guZoneFromGroup=uGetZoneFromZoneGroup(uSessionZoneGroup);
 		if(guZoneFromGroup==guZone) return;
-		sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u",uSearchGroup);
+		sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uGroup=%u",uSessionZoneGroup);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			return;
@@ -1164,27 +1243,29 @@ void UpdateSearchSet(unsigned guZone)
 	//else create the initial search group
 	else
 	{
-		sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=2"//2 is search group
+		sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=%u"
 						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-							gcUser,guOrg,guLoginClient);//2=search set type TODO
+							gcUser,uSELECTEDZONE,guOrg,guLoginClient);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			return;
-		if((uSearchGroup=mysql_insert_id(&gMysql))==0)
+		if((uSessionZoneGroup=mysql_insert_id(&gMysql))==0)
 			return;
 	}
-	sprintf(gcQuery,"INSERT INTO tGroupGlue SET uGroup=%u,uZone=%u",uSearchGroup,guZone);
+	sprintf(gcQuery,"INSERT INTO tGroupGlue SET uGroup=%u,uZone=%u",uSessionZoneGroup,guZone);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		return;
 
-}//void UpdateSearchSet(unsigned guZone)
+}//void UpdateSessionZone(unsigned guZone)
 
 
 void htmlResourceRecords(void)
 {
 
 	htmlHeader("unxsDNS","ZoneHeader");
+	
+	GetZoneFromSessionGroup();
 
 	if(!guZone)
 		exit(0);
@@ -1218,33 +1299,45 @@ void htmlResourceRecords(void)
 }//void htmlResourceRecords(void)
 
 
+void htmlSearchCollapseText(FILE *fp)
+{
+	fprintf(fp,"<!-- htmlSearchCollapse() Start -->\n");
+
+	fprintf(fp,"<div class='list-group'>");
+	fprintf(fp,"<h5>%s</h5>",gcMessage);
+	fprintf(fp,"<form method=post action=unxsDNS.cgi style='margin:0px;'>");
+	fprintf(fp,"<input type=hidden name=gcPage value=Zone >");
+	fprintf(fp,"<input type=hidden name=guZone value=%u >",guZone);
+	fprintf(fp,"<input type=hidden name=gcZone value=%s >",gcZone);
+	fprintf(fp,"<input type=hidden name=gcSearch value=%s >",gcSearch);
+
+	funcSelectZone(stdout);
+
+	fprintf(fp,"<input type=hostname class=form-control id=searchZone"
+		" title='Enter first letter(s) of container hostname, or you can use the SQL wildcard \"%%\""
+		" and the single place \"_\" pattern matching chars'"
+		" name=gcSearchSubmit value='%s' placeholder='Hostname search pattern' size=32 maxlength=32 onChange='submit()'>",gcSearch);
+	fprintf(fp,"</form>");
+	fprintf(fp,"</div>");
+
+	fprintf(fp,"<!-- htmlSearchCollapse() End -->\n");
+}//void htmlSearchCollapseText(FILE *fp)
+
+
 void htmlSearchCollapse(void)
 {
 
 	htmlHeader("unxsDNS","ZoneHeader");
 
+	GetZoneFromSessionGroup();
+	uGetZoneSearch(guLoginClient);
+
 	if(!guZone)
 		exit(0);
 
-	printf("<!-- htmlSearchCollapse() Start -->\n");
+	htmlSearchCollapseText(stdout);
 
-	printf("<div class='list-group'>");
-	printf("<h5>%s</h5>",gcMessage);
-	printf("<form method=post action=unxsDNS.cgi style='margin:0px;'>");
-	printf("<input type=hidden name=gcPage value=Zone >");
-	printf("<input type=hidden name=guZone value=%u >",guZone);
-	printf("<input type=hidden name=gcZone value=%u >",gcZone);
-	printf("<input type=hidden name=gcSearch value=%u >",gcSearch);
 
-	funcSelectZone(stdout);
-
-	printf("<input type=hostname class=form-control id=searchZone"
-		" title='Enter first letter(s) of container hostname, or you can use the SQL wildcard \"%%\""
-		" and the single place \"_\" pattern matching chars'"
-		" name=gcSearchSubmit value='%s' placeholder='Hostname search pattern' size=32 maxlength=32 onChange='submit()'>",gcSearch);
-	printf("</form>");
-
-	printf("<!-- htmlSearchCollapse() End -->\n");
 	exit(0);
 
 }//void htmlSearchCollapse(void)
