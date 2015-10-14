@@ -36,6 +36,8 @@ static char cIPBlock[100]={""};
 static unsigned uDelegationTTL=0;
 static char *cNSList={""};
 static unsigned uSubmitJob=0;
+static unsigned uOverwriteRRs=0;
+static char cExcludePattern[64]={""};
 
 static char cTargetZone[100]={""};
 
@@ -135,6 +137,10 @@ void ExtProcesstZoneVars(pentry entries[], int x)
 			cNSList=entries[i].val;
 		else if(!strcmp(entries[i].name,"uSubmitJobNoCA"))
 			uSubmitJob=1;			
+		else if(!strcmp(entries[i].name,"uOverwriteRRsNoCA"))
+			uOverwriteRRs=1;			
+		if(!strcmp(entries[i].name,"cExcludePattern"))
+			sprintf(cExcludePattern,"%.63s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cTargetZone"))
 			sprintf(cTargetZone,"%.99s",FQDomainName(entries[i].val));
 		else if(!strcmp(entries[i].name,"cuNSSetPullDown"))
@@ -596,7 +602,7 @@ void ExttZoneCommands(pentry entries[], int x)
                 {
 			if(guPermLevel>=9)
 			{
-	                        ProcesstResourceVars(entries,x);
+	                        ProcesstZoneVars(entries,x);
                         	guMode=12002;
 	                        tZone("Search set reloaded");
 			}
@@ -1405,6 +1411,15 @@ void ExttZoneAuxTable(void)
 			if(uSubmitJob)
 				printf(" checked");
 			printf("> uSubmitJob");
+			printf(" &nbsp;<input title='For supported set operations (like Fold A Records)"
+				" overwrite existing resource records.'"
+				" type=checkbox name=uOverwriteRRsNoCA");
+			if(uOverwriteRRs)
+				printf(" checked");
+			printf("> uOverwriteRRs");
+			printf(" &nbsp;<input type=text size=30 title='For supported set operations (like Fold A Records)"
+					" you can specify a MySQL exclude pattern (E.g. %%.backup%%) for A records names'"
+					" name=cExcludePattern value='%s'> cExcludePattern\n",cExcludePattern);
 			printf("<p><input title='Delete checked resource records from your search set. They will still be visible but will"
 				" marked deleted and will not be used in any subsequent set operation'"
 				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
@@ -1488,9 +1503,10 @@ while((field=mysql_fetch_row(res)))
 
 					unsigned uSourceZone=0;
 					unsigned uDestinationZone=0;
+					unsigned uNSSet=0;
 					sscanf(field[0],"%u",&uSourceZone);
 
-					sprintf(gcQuery,"SELECT uZone,cZone FROM tZone WHERE INSTR('%s',cZone)>1 AND uView=%s",field[1],field[4]);
+					sprintf(gcQuery,"SELECT uZone,cZone,uNSSet FROM tZone WHERE INSTR('%s',cZone)>1 AND uView=%s",field[1],field[4]);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
@@ -1498,7 +1514,7 @@ while((field=mysql_fetch_row(res)))
 						break;
 					}
 					res2=mysql_store_result(&gMysql);
-					if(mysql_num_rows(res2)!=1)
+					if(mysql_num_rows(res2)>1)
 					{
 						sprintf(cResult,"More than one candidate zone.");
 						break;
@@ -1514,6 +1530,7 @@ while((field=mysql_fetch_row(res)))
 							break;
 						}
 						sscanf(field2[0],"%u",&uDestinationZone);
+						sscanf(field2[2],"%u",&uNSSet);
 						if(!uDestinationZone)
 						{
 							sprintf(cResult,"uDestinationZone==0");
@@ -1521,7 +1538,17 @@ while((field=mysql_fetch_row(res)))
 						}
 						//cp A RRs from field[0] (uZone) do not overwrite if exist
 						//if fully qualified remove parent zone part
-						sprintf(gcQuery,"SELECT CONCAT("
+						if(cExcludePattern[0])
+							sprintf(gcQuery,"SELECT CONCAT("
+										"IF(SUBSTR(cName,-1)='.',"
+											"SUBSTR(cName,1,INSTR(cName,'%s')-2),"
+											"cName)"
+										",'.','%s','.'),"
+									"cParam1,cComment,uOwner,uCreatedBy,uCreatedDate"
+								" FROM tResource WHERE uZone=%u AND uRRType=1 AND cName NOT LIKE '%s'",
+										field2[1],field2[1],uSourceZone,cExcludePattern);
+						else
+							sprintf(gcQuery,"SELECT CONCAT("
 										"IF(SUBSTR(cName,-1)='.',"
 											"SUBSTR(cName,1,INSTR(cName,'%s')-2),"
 											"cName)"
@@ -1539,9 +1566,11 @@ while((field=mysql_fetch_row(res)))
 						//break;
 						res3=mysql_store_result(&gMysql);
 						unsigned uNumRows=0;
+						cResult[0]=0;
 						while((field3=mysql_fetch_row(res3)))
 						{
 							MYSQL_RES *res4;
+							MYSQL_ROW field4;
 							sprintf(gcQuery,"SELECT uResource FROM tResource WHERE uZone=%u"
 									" AND cName='%s'"
 									" AND uRRType=1"
@@ -1554,9 +1583,13 @@ while((field=mysql_fetch_row(res)))
 							}
 							res4=mysql_store_result(&gMysql);
 							//only add if cName does not exist in parent zone (uDestinationZone)
-							if(mysql_num_rows(res4)==0)
+							unsigned uRows=0;
+							if(((uRows=mysql_num_rows(res4))==0) || uOverwriteRRs)
 							{
-								sprintf(gcQuery,"INSERT INTO tResource"
+								if(!uRows)
+								{
+							
+									sprintf(gcQuery,"INSERT INTO tResource"
 									" SET uZone=%u,"
 									"cName='%s',"
 									"uRRType=1,"
@@ -1569,14 +1602,56 @@ while((field=mysql_fetch_row(res)))
 									"uModBy=%u"
 										,uDestinationZone,field3[0],field3[1],field3[2],
 										field3[3],field3[4],field3[5],guLoginClient);
-								mysql_query(&gMysql,gcQuery);
-								if(mysql_errno(&gMysql))
-								{
-									sprintf(cResult,"%.255s",mysql_error(&gMysql));
-									break;
+									mysql_query(&gMysql,gcQuery);
+									if(mysql_errno(&gMysql))
+									{
+										sprintf(cResult,"%.255s",mysql_error(&gMysql));
+										break;
+									}
+									if(mysql_affected_rows(&gMysql)>0)
+										uNumRows++;
 								}
-								if(mysql_affected_rows(&gMysql)>0)
-									uNumRows++;
+								else
+								{
+									if(!(field4=mysql_fetch_row(res4)))
+									{
+										sprintf(cResult,"field4 error");
+										break;
+									}
+									
+									sprintf(gcQuery,"UPDATE tResource SET"
+									" cParam1='%s',"
+									" cComment='FoldARecords update %s',"
+									" uModDate=UNIX_TIMESTAMP(NOW()),"
+									" uModBy=%u WHERE uResource=%s",
+										field3[1],
+										field3[2],
+										guLoginClient,field4[0]);
+									mysql_query(&gMysql,gcQuery);
+									if(mysql_errno(&gMysql))
+									{
+										sprintf(cResult,"%.255s",mysql_error(&gMysql));
+										break;
+									}
+									if(mysql_affected_rows(&gMysql)>0)
+										uNumRows++;
+								}
+								if(uSubmitJob && uNSSet)
+								{
+									time_t clock;
+									time(&clock);
+									UpdateSerialNum(uDestinationZone);                      	
+									if(SubmitJob("Modify",uNSSet,field2[1],0,clock+60))
+									{
+										strncat(cResult,mysql_error(&gMysql),31);
+										break;
+									}
+								}
+							}
+							else
+							{
+								sprintf(cResult,"RR exists.");
+								break;
 							}
 						}
 
@@ -1586,7 +1661,8 @@ while((field=mysql_fetch_row(res)))
 						//sprintf(cResult,"%s",gcQuery);
 						//break;
 
-						sprintf(cResult,"Folded %u A records into %s",uNumRows,field2[1]);
+						if(cResult[0]==0)
+							sprintf(cResult,"Folded %u A records into %s",uNumRows,field2[1]);
 					}
 					else
 					{
