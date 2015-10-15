@@ -611,7 +611,8 @@ void ExttZoneCommands(pentry entries[], int x)
 				tZone("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
-                else if(!strcmp(gcCommand,"Fold A Records") || !strcmp(gcCommand,"Delete Checked"))
+                else if(!strcmp(gcCommand,"Fold A Records") || !strcmp(gcCommand,"Delete Checked")
+                	|| (!strcmp(gcCommand,"Backup")) || (!strcmp(gcCommand,"Restore")))
                 {
 			ProcesstZoneVars(entries,x);
                         guMode=12002;
@@ -1405,19 +1406,19 @@ void ExttZoneAuxTable(void)
 		case 12002:
 			//Set operation buttons
 			OpenFieldSet("Set Operations",100);
-			printf("<input title='For supported set operations (like Group Delete)"
+			printf("<input title='For supported set operations (like [Fold A Records])"
 				" create the appropiate jobs for changes to go into effect.'"
 				" type=checkbox name=uSubmitJobNoCA");
 			if(uSubmitJob)
 				printf(" checked");
 			printf("> uSubmitJob");
-			printf(" &nbsp;<input title='For supported set operations (like Fold A Records)"
+			printf(" &nbsp;<input title='For supported set operations (like [Fold A Records])"
 				" overwrite existing resource records.'"
 				" type=checkbox name=uOverwriteRRsNoCA");
 			if(uOverwriteRRs)
 				printf(" checked");
 			printf("> uOverwriteRRs");
-			printf(" &nbsp;<input type=text size=30 title='For supported set operations (like Fold A Records)"
+			printf(" &nbsp;<input type=text size=30 title='For supported set operations (like [Fold A Records)]"
 					" you can specify a MySQL exclude pattern (E.g. %%.backup%%) for A records names'"
 					" name=cExcludePattern value='%s'> cExcludePattern\n",cExcludePattern);
 			printf("<p><input title='Delete checked resource records from your search set. They will still be visible but will"
@@ -1425,6 +1426,12 @@ void ExttZoneAuxTable(void)
 				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
 			printf("&nbsp;<input title='Copy A records from this zone into the parent zone of same view if it exists'"
 				" type=submit class=lwarnButton name=gcCommand value='Fold A Records'>\n");
+			printf("&nbsp;<input title='Backup zone and all resource records into tZoneBackup and tResourceBackup tables."
+				" Any existing backup records will be deleted or replaced!'"
+				" type=submit class=lwarnButton name=gcCommand value='Backup'>\n");
+			printf("&nbsp;<input title='Restore zone from tZoneBackup and tResourceBackup tables."
+				" Any existing tZone and tResource records will be deleted or replaced!'"
+				" type=submit class=lwarnButton name=gcCommand value='Restore'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -1495,6 +1502,169 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Unexpected non deletion");
 					break;
 				}//Delete Checked
+
+				else if(!strcmp(gcCommand,"Restore"))
+				{
+					MYSQL_RES *res2;
+
+					sprintf(gcQuery,"SELECT uZone FROM tZoneBackup WHERE uZone=%s",field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					res2=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res2)<1)
+					{
+						sprintf(cResult,"No tZoneBackup records!");
+						break;
+					}
+					sprintf(gcQuery,"SELECT uZone FROM tResourceBackup WHERE uZone=%s",field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					res2=mysql_store_result(&gMysql);
+					if(mysql_num_rows(res2)<1)
+					{
+						sprintf(cResult,"No tResourceBackup records!");
+						break;
+					}
+					//sprintf(cResult,"d1");
+					//break;
+
+					sprintf(gcQuery,"DELETE FROM tZone WHERE uZone=%s",field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					sprintf(gcQuery,"DELETE FROM tResource WHERE uZone=%s",field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					sprintf(gcQuery,"INSERT tZone SELECT * FROM tZoneBackup WHERE uZone=%s",field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					//Mark restore modby
+					sprintf(gcQuery,"UPDATE tZone SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u WHERE uZone=%s",
+							guLoginClient,field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					sprintf(gcQuery,"INSERT tResource SELECT * FROM tResourceBackup WHERE uZone=%s",field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					if(mysql_affected_rows(&gMysql)>0)
+					{
+						sprintf(cResult,"Restore done");
+					}
+					else
+					{
+						sprintf(cResult,"No resource records?");
+						break;
+					}
+					if(uSubmitJob)
+					{
+						unsigned uZone=0;
+						sscanf(field[0],"%u",&uZone);
+						unsigned uNSSet=0;
+						sscanf(ForeignKey("tZone","uNSSet",uZone),"%u",&uNSSet);
+						if(uNSSet && uZone)
+						{
+							time_t clock;
+							time(&clock);
+							UpdateSerialNum(uZone);                      	
+							if(SubmitJob("Modify",uNSSet,field[1],0,clock+60))
+								strncat(cResult,mysql_error(&gMysql),31);
+							else
+								strncat(cResult," +uSubmitJob",31);
+						}
+					}
+					break;
+				}//Restore
+
+				else if(!strcmp(gcCommand,"Backup"))
+				{
+					//CREATE TABLE newtable LIKE oldtable; 
+					//INSERT newtable SELECT * FROM oldtable;
+
+					sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tZoneBackup LIKE tZone");
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tResourceBackup LIKE tResource");
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+
+					sprintf(gcQuery,"DELETE FROM tZoneBackup WHERE uZone=%s",field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					sprintf(gcQuery,"DELETE FROM tResourceBackup WHERE uZone=%s",field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					sprintf(gcQuery,"INSERT tZoneBackup SELECT * FROM tZone WHERE uZone=%s",field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					//Mark restore modby
+					sprintf(gcQuery,"UPDATE tZoneBackup SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u WHERE uZone=%s",
+							guLoginClient,field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					sprintf(gcQuery,"INSERT tResourceBackup SELECT * FROM tResource WHERE uZone=%s",field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cResult,"%.255s",mysql_error(&gMysql));
+						break;
+					}
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"Backup done");
+					else
+						sprintf(cResult,"No resource records?");
+					break;
+				}//Backup
 
 				else if(!strcmp(gcCommand,"Fold A Records"))
 				{
