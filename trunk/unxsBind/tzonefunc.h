@@ -1676,7 +1676,11 @@ while((field=mysql_fetch_row(res)))
 					unsigned uNSSet=0;
 					sscanf(field[0],"%u",&uSourceZone);
 
-					sprintf(gcQuery,"SELECT uZone,cZone,uNSSet FROM tZone WHERE INSTR('%s',cZone)>1 AND uView=%s",field[1],field[4]);
+					sprintf(gcQuery,"SELECT uZone,cZone,uNSSet FROM tZone"
+							" WHERE cZone=SUBSTR('%s',INSTR('%s','.')+1)"
+							" AND uView=%s",
+								field[1],field[1],
+								field[4]);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{

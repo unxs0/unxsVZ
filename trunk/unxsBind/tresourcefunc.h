@@ -235,7 +235,8 @@ void RRCheck(int uMode)
 		sprintf(cParam1,"%u.%u.%u.%u",a,b,c,d);
 
 		cParam2[0]=0;
-		if(!a || !d)
+		//we now allow for .0 IP numbers
+		if(!a)
 		{
 			guMode=uMode;
 			tResource("Invalid IP Number for cParam1");
@@ -1950,8 +1951,9 @@ void ExttResourceAuxTable(void)
 				" type=submit class=lwarnButton name=gcCommand value='Group Append cName'>\n");
 			printf("<input title='Delete selected resource records from tResource -no undo available'"
 				" type=submit class=lwarnButton name=gcCommand value='Group Delete'>\n");
-			printf("<input title='Delete all resource records and the parent zone from tZone and tResource -no undo available'"
-				" type=submit class=lwarnButton name=gcCommand value='Group Zone Delete'>\n");
+			// move this very dangerous button to tZone seearch set OPs
+			//printf("<input title='Delete all resource records and the parent zone from tZone and tResource -no undo available'"
+			//	" type=submit class=lwarnButton name=gcCommand value='Group Zone Delete'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
