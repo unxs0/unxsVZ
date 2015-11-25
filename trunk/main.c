@@ -351,6 +351,8 @@ void unxsVZ(const char *cResult)
 			CapacityReport(cResult);
 		else if(!strcmp(cResult,"NodeMapReport"))
 			NodeMapReport(cResult);
+		else if(!strcmp(cResult,"HardwareReport"))
+			HardwareReport(cResult);
 		else if(!strcmp(cResult,"SessionReport"))
 			SessionReport(cResult);
 		else

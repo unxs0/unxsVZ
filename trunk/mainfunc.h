@@ -121,6 +121,10 @@ int iExtMainCommands(pentry entries[], int x)
 		{
 			unxsVZ("NodeMapReport");
 		}
+		else if(!strcmp(gcCommand,"HardwareReport"))
+		{
+			unxsVZ("HardwareReport");
+		}
 	}
 	return(0);
 }
@@ -202,6 +206,7 @@ void CloneReport(const char *cOptionalMsg)
 	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td>\n",uCount);
 
 
+#ifdef NOTDEF
 	OpenRow("<u>Containers with no remote backup clone</u>","black");
 	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tContainer.uContainer,"
 			"tNode.cLabel,tDatacenter.cLabel,tDatacenter.uDatacenter"
@@ -235,6 +240,7 @@ void CloneReport(const char *cOptionalMsg)
 	//Lets add a count
 	printf("<tr><td>Total %u</td><td></td><td></td><td></td><td></td>\n",uCount);
 	//no remote backup clone
+#endif
 
 
 	//1=Active
@@ -1067,7 +1073,9 @@ void ExtMainContent(void)
 		printf(" <input title='Find out how many containers can be deployed'"
 			" class=largeButton type=submit name=gcCommand value=CapacityReport > \n");
 		printf(" <input title='Check confguration against business logic for current clone and backup system'"
-			" class=largeButton type=submit name=gcCommand value=NodeMapReport ></td></tr>\n");
+			" class=largeButton type=submit name=gcCommand value=NodeMapReport > \n");
+		printf(" <input title='Hardware csv report'"
+			" class=largeButton type=submit name=gcCommand value=HardwareReport ></td></tr>\n");
 	}
 
 	CloseFieldSet();
@@ -1239,6 +1247,8 @@ void UpdateSchema(void)
 
 	//
 	//tIP
+void CreatetIPType(void);
+	CreatetIPType();
 	unsigned uIPNum=0;
 	unsigned uFWStatus=0;
 	unsigned uFWRule=0;
@@ -5301,3 +5311,39 @@ void NodeMapReport(const char *cOptionalMsg)
 
 }//void NodeMapReport(const char *cOptionalMsg)
 
+
+void HardwareReport(const char *cOptionalMsg)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	OpenFieldSet("HardwareReport",100);
+	OpenRow("<u>Hardware Nodes","black");
+	sprintf(gcQuery,"SELECT tDatacenter.cLabel,tNode.cLabel,tProperty.cName,tProperty.cValue"
+					" FROM tNode,tDatacenter,tProperty"
+					" WHERE tProperty.uKey=tNode.uNode AND tProperty.uType=2"
+					" AND tNode.uStatus=1"
+					" AND tNode.uDatacenter=tDatacenter.uDatacenter"
+					" AND ("
+					" tProperty.cName LIKE 'cdmi%%'"
+					" OR tProperty.cName LIKE 'luInstalled%%'"
+					")"
+					" AND tNode.cLabel!='appliance'"
+					" ORDER BY tDatacenter.uDatacenter,tNode.uNode,tProperty.cName");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("<tr>%s\n",mysql_error(&gMysql));
+		CloseFieldSet();
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("<tr><td>%s,%s,%s,%s\n",field[0],field[1],field[2],field[3]);
+	}
+	mysql_free_result(res);
+	CloseFieldSet();
+
+
+}//void HardwareReport(const char *cOptionalMsg)

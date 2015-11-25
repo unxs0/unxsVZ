@@ -351,7 +351,7 @@ void ExttIPCommands(pentry entries[], int x)
 
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
 						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0 
-						&& uFWStatusSearch==0 && uFWStatusAnySearch==0 && uCountryCodeSearch==0)
+						&& uFWStatusSearch==0 && uFWStatusAnySearch==0 && uCountryCodeSearch==0 && uIPType==0)
 	                        	tIP("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,31))==0)
@@ -424,6 +424,15 @@ void ExttIPCommands(pentry entries[], int x)
 					if(uLink)
 						strcat(gcQuery," AND");
 					sprintf(cQuerySection," uDatacenter=%u",uDatacenterSearch);
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uIPType)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uIPType=%u",uIPType);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -966,7 +975,7 @@ void ExttIPAuxTable(void)
 					" IF(tIP.uCreatedDate>0,FROM_UNIXTIME(tIP.uCreatedDate,'%%a %%b %%d %%T %%Y'),''),"
 					" IF(tIP.uModDate>0,FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),''),"
 					" IFNULL(tFWStatus.cLabel,''),"
-					" IFNULL(tFWRules.cRuleName,'No rule. Most likely added by NOC staff.'),"
+					" IFNULL(tFWRules.cRuleName,'NOC Action/Script'),"
 					" IFNULL(tGeoIPCountryCode.cCountryCode,''),"
 					" tIP.cComment"
 					" FROM tIP"
@@ -2316,8 +2325,9 @@ void AddIPRange(char *cIPRange)
 			if(uD==0 || uD==1 || uD==255)
 				uAvailable=0;
 		}
+		//uIPType==1 backend added gral IPs
 		sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uIPNum=INET_ATON('%s'),uOwner=%u,uCreatedBy=%u,uAvailable=%u"
-				",uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u",
+				",uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,uIPType=1",
 					cIPs[i],cIPs[i],guCompany,guLoginClient,uAvailable,uDatacenter);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
@@ -2528,6 +2538,7 @@ void tIPFirewallSubnetReport()
 		{
 			//printf("%s.0/24 %s<br>\n",field[0],field[1]);
 			//sprintf(gcQuery,"SELECT COUNT(uIP)"
+			//do not count implict .0 /24 block IPs
 			sprintf(gcQuery,"SELECT cLabel"
 				" FROM tIP"
 				" WHERE uIPNum>INET_ATON('%s.0') AND uIPNum<INET_ATON('%s.0')+255",field[0],field[0]);
