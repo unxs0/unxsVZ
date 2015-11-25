@@ -37,6 +37,8 @@ static time_t uModDate=0;
 //uDatacenter: Belongs to this Datacenter
 static unsigned uDatacenter=0;
 static char cuDatacenterPullDown[256]={""};
+//tIPType new table
+static char cuIPTypePullDown[256]={""};
 
 //cComment
 static char *cComment={""};
@@ -47,7 +49,13 @@ static unsigned uIPNum=0;
 static unsigned uFWStatus=0;
 static unsigned uFWRule=0;
 static unsigned uCountryCode=0;
-static unsigned uIPType=0;//For rfc1918, for hardware, containers, IPMI, etc.
+//For rfc1918, for hardware, containers, IPMI, etc.
+//Just started figuring this out and planning.
+//1 backend created
+//11 asterisk extension
+//7 snort agent
+//17 backend firewall
+static unsigned uIPType=0;
 
 //Extensions for searching
 static char cIPv4Search[16]={""};
@@ -149,6 +157,11 @@ void ProcesstIPVars(pentry entries[], int x)
 		{
 			sprintf(cuDatacenterPullDown,"%.255s",entries[i].val);
 			uDatacenter=ReadPullDown("tDatacenter","cLabel",cuDatacenterPullDown);
+		}
+		else if(!strcmp(entries[i].name,"cuIPTypePullDown"))
+		{
+			sprintf(cuIPTypePullDown,"%.255s",entries[i].val);
+			uIPType=ReadPullDown("tIPType","cLabel",cuIPTypePullDown);
 		}
 		else if(!strcmp(entries[i].name,"uOwnerSearch"))
 			sscanf(entries[i].val,"%u",&uOwnerSearch);
@@ -452,6 +465,10 @@ void tIPSearchSet(unsigned uStep)
 	OpenRow("Comment pattern","black");
 	printf("<input title='SQL search pattern %% and _ allowed' type=text name=cCommentSearch"
 			" value=\"%s\" size=40 maxlength=15 >",cCommentSearch);
+
+	OpenRow("uIPType","black");
+	printf("<input title='uIPType code. E.g. \"11\" ClassC IP from Asterisk' type=text name=uIPType"
+			" value=\"%u\" size=40 maxlength=15 >",uIPType);
 	if(uStep==1)
 	{
 		;
@@ -513,7 +530,7 @@ void tIPInput(unsigned uMode)
 	printf("<input type=hidden name=uIPNum value=%u >\n",uIPNum);
 //uFWStatus
 	OpenRow("uFWStatus","black");
-	printf("<input title='tFWStatus.uFWStatus' type=text name=uFWStatus value=%u size=16 maxlength=10 ",uFWStatus);
+	printf("<input title='tFWStatus.uFWStatus' type=text name=uFWStatus value='%s' size=16 maxlength=10 ",ForeignKey("tFWStatus","cLabel",uFWStatus));
 	printf("disabled></td></tr>\n");
 	printf("<input type=hidden name=uFWStatus value=%u >\n",uFWStatus);
 //uFWRule
@@ -523,15 +540,16 @@ void tIPInput(unsigned uMode)
 	printf("<input type=hidden name=uFWRule value=%u >\n",uFWRule);
 //uCountryCode
 	OpenRow("uCountryCode","black");
-	printf("<input title='Internal country code' type=text name=uCountryCode value=%u size=16 maxlength=10 ",uCountryCode);
+	printf("<input title='Internal country code' type=text name=uCountryCode value='%s' size=16 maxlength=10 ",
+				ForeignKey("tGeoIPCountryCode","cCountryCode",uCountryCode));
 	printf("disabled></td></tr>\n");
 	printf("<input type=hidden name=uCountryCode value=%u >\n",uCountryCode);
 //uIPType
 	OpenRow("uIPType","black");
-	printf("<input title='Our IP type code' type=text name=uIPType value=%u size=16 maxlength=10 ",uIPType);
-	printf("disabled></td></tr>\n");
-	printf("<input type=hidden name=uIPNum value=%u >\n",uIPType);
-
+	if(guPermLevel>=7 && uMode)
+		tTablePullDown("tIPType;cuIPTypePullDown","cLabel","cLabel",uIPType,1);
+	else
+		tTablePullDown("tIPType;cuIPTypePullDown","cLabel","cLabel",uIPType,0);
 //cComment
 	OpenRow("cComment","black");
 	printf("<textarea title='Additional information about IP use' cols=80 wrap=hard rows=4 name=cComment ");
@@ -642,7 +660,7 @@ void DeletetIP(void)
 void Insert_tIP(void)
 {
 	sprintf(gcQuery,"INSERT INTO tIP SET uIP=%u,uIPNum=INET_ATON('%s'),cLabel='%s',uAvailable=%u,uOwner=%u,uCreatedBy=%u,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s'",
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s',uIPType=%u",
 			uIP
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cLabel)
@@ -650,7 +668,7 @@ void Insert_tIP(void)
 			,uOwner
 			,uCreatedBy
 			,uDatacenter
-			,cComment);
+			,cComment,uIPType);
 	MYSQL_RUN;
 
 }//void Insert_tIP(void)
@@ -659,7 +677,7 @@ void Insert_tIP(void)
 void Update_tIP(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tIP SET uIP=%u,uIPNum=INET_ATON('%s'),cLabel='%s',uAvailable=%u,uModBy=%u,"
-				"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s' WHERE _rowid=%s",
+				"uModDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,cComment='%s',uIPType=%u WHERE _rowid=%s",
 			uIP
 			,TextAreaSave(cLabel)
 			,TextAreaSave(cLabel)
@@ -667,6 +685,7 @@ void Update_tIP(char *cRowid)
 			,uModBy
 			,uDatacenter
 			,cComment
+			,uIPType
 			,cRowid);
 	MYSQL_RUN;
 
@@ -833,4 +852,18 @@ void CreatetIP(void)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 }//CreatetIP()
+
+
+void CreatetIPType(void)
+{
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tIPType ("
+			" uType INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+	mysql_query(&gMysql,gcQuery);
+}//CreatetIPType()
 
