@@ -215,6 +215,61 @@ void ExttDatacenterCommands(pentry entries[], int x)
 			else
 				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
                 }
+                else if(!strcmp(gcCommand,"!Datacenter Shutdown!"))
+                {
+                        ProcesstDatacenterVars(entries,x);
+			if(uStatus==1 && uAllowMod(uOwner,uCreatedBy) && guPermLevel>11)
+			{
+                        	guMode=0;
+
+				sscanf(ForeignKey("tDatacenter","uModDate",uDatacenter),"%lu",&uActualModDate);
+				if(uModDate!=uActualModDate)
+					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
+				
+				sprintf(gcQuery,"UPDATE tDatacenter SET uStatus=%u WHERE uDatacenter=%u",
+						uOFFLINE,uDatacenter);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+                				htmlPlainTextError(mysql_error(&gMysql));
+        			MYSQL_RES *res;
+        			MYSQL_ROW field;
+				sprintf(gcQuery,"SELECT uNode FROM tNode WHERE uDatacenter=%u AND uStatus!=%u",
+						uDatacenter,uOFFLINE);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+                				htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				unsigned uJobs=0;
+				while((field=mysql_fetch_row(res)))
+				{
+					sprintf(gcQuery,"INSERT INTO tJob"
+						" SET cLabel='ShutdownNode tDatacenter',"
+						" cJobName='ShutdownNode',"
+						" uJobStatus=1,"
+						" uDatacenter=%u,"
+						" uNode=%s,"
+						" uJobDate=UNIX_TIMESTAMP(NOW())+300,"
+						" uOwner=%u,"
+						" uCreatedBy=%u,"
+						" uCreatedDate=UNIX_TIMESTAMP(NOW())",
+								uDatacenter,field[0],guCompany,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+        				if(mysql_errno(&gMysql))
+                				htmlPlainTextError(mysql_error(&gMysql));
+					if(mysql_affected_rows(&gMysql)) uJobs++;
+				}
+				uStatus=uOFFLINE;
+				ModtDatacenter();
+			}
+			else if(uAllowMod(uOwner,uCreatedBy))
+			{
+				tDatacenter("<blink>Error</blink>: Denied by node status");
+			}
+			else
+			{
+				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
+			}
+		}
                 else if(!strcmp(gcCommand,"Datacenter Offline"))
                 {
                         ProcesstDatacenterVars(entries,x);
@@ -370,6 +425,10 @@ void ExttDatacenterButtons(void)
 			{
 					printf("<p><input type=submit class=lwarnButton title='Change datacenter status to offline.'"
 						" name=gcCommand value='Datacenter Offline'><br>");
+					printf("<p><input type=submit class=lwarnButton"
+						" title='DANGER!!! Change datacenter and all member nodes status to offline."
+						" And shutdown halt all member hardware compute nodes, not already in offline status, in 5 minutes!'"
+						" name=gcCommand value='!Datacenter Shutdown!'><br>");
 				printf("<p><input type=submit class=lwarnButton title='Create firewall restart jobs for all"
 					" active datacenter nodes. Uses tIP FW and login session data'"
 					" name=gcCommand value='Activate Firewalls'><br>");
