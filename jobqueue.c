@@ -116,6 +116,7 @@ void RestartContainer(unsigned uJob,unsigned uContainer);
 void GetGroupBasedPropertyValue(unsigned uContainer,char const *cName,char *cValue);
 void ActivateNATContainer(unsigned uJob,unsigned uContainer,unsigned uNode);
 void ActivateNATNode(unsigned uJob,unsigned uContainer,unsigned uNode);
+void ShutdownNode(unsigned uJob,unsigned uNode);
 void AlwaysRunTheseJobs(unsigned uNode);
 
 //extern protos
@@ -476,6 +477,10 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		else if(!strcmp(cJobName,"ActivateNATContainer"))
 		{
 			ActivateNATContainer(uJob,uContainer,uNode);
+		}
+		else if(!strcmp(cJobName,"ShutdownNode"))
+		{
+			ShutdownNode(uJob,uNode);
 		}
 		else if(!strcmp(cJobName,"ActivateNATNode"))
 		{
@@ -7966,3 +7971,29 @@ unsigned ProcessApplianceSyncJob(unsigned uNode,unsigned uContainer,unsigned uCl
 
 }//void ProcessApplianceSyncJob()
 
+
+void ShutdownNode(unsigned uJob,unsigned uNode)
+{
+	logfileLine("ShutdownNode","start");
+	
+	if(system("/sbin/shutdown -h now"))
+	{
+		logfileLine("ShutdownNode","shutdown error");
+		tJobErrorUpdate(uJob,"shutdown error");
+		return;
+	}
+	logfileLine("ShutdownNode","shutdown ok");
+	sprintf(gcQuery,"UPDATE tNode SET uStatus=(SELECT uStatus FROM tStatus WHERE cLabel='Offline' LIMIT 1) WHERE uNode=%u",uNode);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ShutdownNode",mysql_error(&gMysql));
+		tJobErrorUpdate(uJob,"mysql error 1");
+		return;
+	}
+	logfileLine("ShutdownNode","end");
+
+	//Everything ok
+	tJobDoneUpdate(uJob);
+
+}//void ShutdownNode()
