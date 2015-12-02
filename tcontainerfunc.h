@@ -3628,6 +3628,10 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Seperate backup container from source, e.g. for independent/internal sync'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group BackupDisconnect'>\n");
+			printf("&nbsp; <input title='Change status to active for awaiting failover containers and other transient states."
+				" If done for awaiting failover containers then any existing waiting FailoverFrom jobs will be canceled also.'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Group Status Active'>\n");
 			CloseFieldSet();
 
 			//Delete all of these
@@ -5594,6 +5598,61 @@ while((field=mysql_fetch_row(res)))
 								sprintf(cResult,"%.31s",mysql_error(&gMysql));
 						}
 						sprintf(cResult,"status changed to stopped");
+					}
+					else
+					{
+						sprintf(cResult,"group status change request ignored");
+					}
+					break;
+				}//Group Status Stopped
+
+				else if(!strcmp(gcCommand,"Group Status Active"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+
+/* Transient States
+#define uAWAITMOD       4
+#define uAWAITDEL       5
+#define uAWAITACT       6
+#define uAWAITMIG       21
+#define uAWAITSTOP      41
+#define uAWAITTML       51
+#define uAWAITHOST      61
+#define uAWAITIP        71
+#define uAWAITCLONE     81
+#define uAWAITFAIL      91
+#define uAWAITRESTART   111
+#define uAWAITDNSMIG    121
+*/
+					if( (sContainer.uStatus==uAWAITFAIL || 
+						sContainer.uStatus==uAWAITMOD ||
+						sContainer.uStatus==uAWAITDEL ||
+						sContainer.uStatus==uAWAITACT ||
+						sContainer.uStatus==uAWAITSTOP ||
+						sContainer.uStatus==uAWAITMIG ||
+						sContainer.uStatus==uAWAITTML ||
+						sContainer.uStatus==uAWAITHOST ||
+						sContainer.uStatus==uAWAITIP ||
+						sContainer.uStatus==uAWAITCLONE ||
+						sContainer.uStatus==uAWAITRESTART ||
+						sContainer.uStatus==uAWAITDNSMIG )
+						&& (sContainer.uOwner==guCompany || guCompany==1))
+					{
+						SetContainerStatus(uCtContainer,uACTIVE);
+						
+						if(sContainer.uStatus==uAWAITFAIL)
+						{
+							sprintf(gcQuery,"UPDATE tJob SET uJobStatus=%u WHERE uJobStatus=%u AND uContainer=%u"
+								" AND cJobName='FailoverFrom'"
+									,uCANCELED,uWAITING,uCtContainer);
+		        				mysql_query(&gMysql,gcQuery);
+		        				if(mysql_errno(&gMysql))
+								sprintf(cResult,"%.31s",mysql_error(&gMysql));
+						}
+						sprintf(cResult,"status changed to active");
 					}
 					else
 					{
