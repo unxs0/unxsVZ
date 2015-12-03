@@ -418,16 +418,371 @@ void tZoneInput(unsigned uMode)
 	}
 //cZone
 	OpenRow(LANG_FL_tZone_cZone,EmptyString(cZone));
-	printf("<input title='%s' type=text name=cZone value=\"%s\" size=40 maxlength=99 "
+	printf("<input title='%s' type=text name=cZone value=\"%s\" size=48 maxlength=99 "
 ,LANG_FT_tZone_cZone,EncodeDoubleQuotes(cZone));
 	if(guPermLevel>=0 && uMode)
 	{
-		printf("></td></tr>\n");
+		printf(">\n");
 	}
 	else
 	{
-		printf("disabled></td></tr>\n");
+		printf("disabled>\n");
 		printf("<input type=hidden name=cZone value=\"%s\">\n",EncodeDoubleQuotes(cZone));
+	}
+	if(strstr(cZone,"ip6.arpa"))
+	{
+
+char *cOptimizeIPv6Notation(char *cIPv6NumberOrCIDR)
+{
+	register int i;
+	unsigned h1=0;
+	unsigned h2=0;
+	unsigned h3=0;
+	unsigned h4=0;
+	unsigned h5=0;
+	unsigned h6=0;
+	unsigned h7=0;
+	unsigned h8=0;
+	unsigned uCIDR=0;
+	char *cp;
+	unsigned uColonCount=0;
+	unsigned uRead=0;
+	static char cReturn[100]={"unexpected error"};
+
+	if((cp=strstr(cIPv6NumberOrCIDR,"/")))
+	{
+		sscanf(cp+1,"%u",&uCIDR);
+		*cp=0;
+	}
+
+	if((cp=strstr(cIPv6NumberOrCIDR,"::")))
+	{
+		if(strstr(cp+2,"::"))
+		{
+			sprintf(cReturn,"more than two double colon");
+			return(cReturn);
+		}
+	}
+
+	for(i=0;cIPv6NumberOrCIDR[i];i++)
+	{
+		if(cIPv6NumberOrCIDR[i]==':')
+				uColonCount++;
+		if(cIPv6NumberOrCIDR[i]!=':' && !isxdigit(cIPv6NumberOrCIDR[i]))
+		{
+			sprintf(cReturn,"%.99s",
+				"IPv6 number can only have hexadecimal digits, colons and optional trailing /CIDR");
+			return(cReturn);
+		}
+	}
+
+	switch(uColonCount)
+	{
+		case 0:
+		case 1:
+			sprintf(cReturn,"%s","IPv6 too few colons: Min is 2!");
+			return(cReturn);
+		break;
+
+		case 2:
+			uRead=sscanf(cIPv6NumberOrCIDR,"%x::%x",&h1,&h8);
+			if(uRead!=2)
+			{
+				uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x",&h1,&h2,&h3);
+				if(uRead!=3)
+				{
+					sprintf(cReturn,"%s %s","IPv6 format 2 error",cIPv6NumberOrCIDR);
+					return(cReturn);
+				}
+			}
+		break;
+
+		case 3:
+			uRead=sscanf(cIPv6NumberOrCIDR,"%x::%x:%x",&h1,&h7,&h8);
+			if(uRead!=3)
+			{
+				uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x::%x",&h1,&h2,&h8);
+				if(uRead!=3)
+				{
+					uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x:%x",&h1,&h2,&h3,&h4);
+					if(uRead!=4)
+					{
+						sprintf(cReturn,"%s %s","IPv6 format 3 error",cIPv6NumberOrCIDR);
+						return(cReturn);
+					}
+				}
+			}
+		break;
+
+		case 4:
+			uRead=sscanf(cIPv6NumberOrCIDR,"%x::%x:%x:%x",&h1,&h6,&h7,&h8);
+			if(uRead!=4)
+			{
+				uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x::%x:%x",&h1,&h2,&h7,&h8);
+				if(uRead!=4)
+				{
+					uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x::%x",&h1,&h2,&h3,&h8);
+					if(uRead!=4)
+					{
+						uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5);
+						if(uRead!=5)
+						{
+							sprintf(cReturn,"%s %s","IPv6 format 4 error",cIPv6NumberOrCIDR);
+							return(cReturn);
+						}
+					}
+				}
+			}
+		break;
+
+		case 5:
+			uRead=sscanf(cIPv6NumberOrCIDR,"%x::%x:%x:%x:%x",&h1,&h5,&h6,&h7,&h8);
+			if(uRead!=5)
+			{
+				uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x::%x:%x:%x",&h1,&h2,&h6,&h7,&h8);
+				if(uRead!=5)
+				{
+					uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x::%x:%x",&h1,&h2,&h3,&h7,&h8);
+					if(uRead!=5)
+					{
+						uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x:%x::%x",&h1,&h2,&h3,&h4,&h8);
+						if(uRead!=5)
+						{
+							uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6);
+							if(uRead!=6)
+							{
+								sprintf(cReturn,"%s %s","IPv6 format 5 error",cIPv6NumberOrCIDR);
+								return(cReturn);
+							}
+						}
+					}
+				}
+			}
+		break;
+
+		case 6:
+			uRead=sscanf(cIPv6NumberOrCIDR,"%x::%x:%x:%x:%x:%x",&h1,&h4,&h5,&h6,&h7,&h8);
+			if(uRead!=6)
+			{
+				uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x::%x:%x:%x:%x",&h1,&h2,&h5,&h6,&h7,&h8);
+				if(uRead!=6)
+				{
+					uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x::%x:%x:%x",&h1,&h2,&h3,&h6,&h7,&h8);
+					if(uRead!=6)
+					{
+						uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x:%x::%x:%x",&h1,&h2,&h3,&h4,&h7,&h8);
+						if(uRead!=6)
+						{
+							uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x:%x:%x::%x",
+										&h1,&h2,&h3,&h4,&h5,&h8);
+							if(uRead!=6)
+							{
+								//forgot last part fix it for them subcase
+								uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x:%x:%x:%x:%x",
+										&h1,&h2,&h3,&h4,&h5,&h6,&h7);
+								if(uRead!=7)
+								{
+									sprintf(cReturn,"%s %s","IPv6 format 6 error",cIPv6NumberOrCIDR);
+									return(cReturn);
+								}
+							}
+						}
+					}
+				}
+			}
+		break;
+
+		case 7:
+			uRead=sscanf(cIPv6NumberOrCIDR,"%x:%x:%x:%x:%x:%x:%x:%x",&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8);
+			if(uRead!=8)
+			{
+				sprintf(cReturn,"%s","IPv6 format 7 error");
+				return(cReturn);
+			}
+		break;
+
+		default:
+			guMode=uMode;
+			sprintf(cReturn,"%s","IPv6 too many colons: Max is 7!");
+			return(cReturn);
+			
+	}//switch
+
+	if(!h1)
+	{
+		sprintf(cReturn,"%s","IPv6 number can not have a 0 in first 16 bit hex word");
+		return(cReturn);
+	}
+
+	//Mandatory rewrite in shortest possible IPv6 format.
+	//Should follow RFC 5952 canonical format
+	//This is needed to speed up DNSSEC and reduce BIND zone file size.
+	//This may not be a good idea. Need to research further: If someone wants to
+	//write a bunch of 0's why not?
+	//Compress empty words: Double colon. Can only be used once.
+	//Trying KISS method here. sprintf does the leading 0 removal for us.
+	//6 consecutive 0 case
+	char cIPv6[64]={""};
+	if(!h2 && !h3 && !h4 && !h5 && !h6 && !h7)
+		sprintf(cIPv6,"%x::%x",h1,h8);
+	//5 consecutive 0 cases
+	else if(!h2 && !h3 && !h4 && !h5 && !h6)
+		sprintf(cIPv6,"%x::%x:%x",h1,h7,h8);
+	else if(!h3 && !h4 && !h5 && !h6 && !h7)
+		sprintf(cIPv6,"%x:%x::%x",h1,h2,h8);
+	//4 consecutive 0 cases
+	else if(!h2 && !h3 && !h4 && !h5)
+		sprintf(cIPv6,"%x::%x:%x:%x",h1, h6,h7,h8);
+	else if(!h3 && !h4 && !h5 && !h6)
+		sprintf(cIPv6,"%x:%x::%x:%x",h1,h2, h7,h8);
+	else if(!h4 && !h5 && !h6 && !h7)
+		sprintf(cIPv6,"%x:%x:%x::%x",h1,h2,h3, h8);
+	//3 consecutive 0 cases
+	else if(!h2 && !h3 && !h4)
+		sprintf(cIPv6,"%x::%x:%x:%x:%x",h1, h5,h6,h7,h8);
+	else if(!h3 && !h4 && !h5)
+		sprintf(cIPv6,"%x:%x::%x:%x:%x",h1,h2, h6,h7,h8);
+	else if(!h4 && !h5 && !h6)
+		sprintf(cIPv6,"%x:%x:%x::%x:%x",h1,h2,h3, h7,h8);
+	else if(!h5 && !h6 && !h7)
+		sprintf(cIPv6,"%x:%x:%x:%x::%x",h1,h2,h3,h4, h8);
+	//2 consecutive 0 cases
+	//RFC 5952 issue spotted here
+	else if(!h2 && !h3)
+		sprintf(cIPv6,"%x::%x:%x:%x:%x:%x",h1, h4,h5,h6,h7,h8);
+	else if(!h3 && !h4)
+		sprintf(cIPv6,"%x:%x::%x:%x:%x:%x",h1,h2, h5,h6,h7,h8);
+	else if(!h4 && !h5)
+		sprintf(cIPv6,"%x:%x:%x::%x:%x:%x",h1,h2,h3, h6,h7,h8);
+	else if(!h5 && !h6)
+		sprintf(cIPv6,"%x:%x:%x:%x::%x:%x",h1,h2,h3,h4, h7,h8);
+	else if(!h6 && !h7)
+		sprintf(cIPv6,"%x:%x:%x:%x:%x::%x",h1,h2,h3,h4,h5, h8);
+	//0 consecutive 0 case, i.e. no double colon case
+	else if(1)
+		sprintf(cIPv6,"%x:%x:%x:%x:%x:%x:%x:%x",h1,h2,h3,h4,h5,h6,h7,h8);
+
+	if(uCIDR)
+		sprintf(cReturn,"%.63s/%u",cIPv6,uCIDR);
+	else
+		sprintf(cReturn,"%.63s",cIPv6);
+	return(cReturn);
+
+}//char *cOptimizeIPv6Notation(char *cIPv6NumberOrCIDR)
+
+char *cConvertIP6ArpaZoneLabelTocIPv6CIDR(char *cZone)
+{
+	static char cReturn[64]={"unexpected error"};
+	char *cp;
+	if((cp=(strstr(cZone,".ip6.arpa"))))
+	{
+		*cp=0;//chomp
+		unsigned uCount=0,i;
+		for(i=0;cZone[i];i++)
+		{
+			if(cZone[i]=='.')
+				uCount++;
+			if(cZone[i]!='.' && !isxdigit(cZone[i]))
+			{
+				guMode=uMode;
+				sprintf(cReturn,"format error %c\n",cZone[i]);
+				return(cReturn);
+			}
+		}
+
+		unsigned uDigitCount=0;
+		unsigned h1=0,h2=0,h3=0,h4=0,h5=0,h6=0,h7=0,h8=0,h9=0,h10=0,h11=0,h12=0,h13=0,h14=0,h15=0,h16=0;
+		unsigned h17=0,h18=0,h19=0,h20=0,h21=0,h22=0,h23=0,h24=0,h25=0,h26=0,h27=0,h28=0;
+		switch(uCount)
+		{
+			case 11://12 digits
+				uDigitCount=sscanf(cZone,"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x",
+									&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&h9,&h10,&h11,&h12);
+				if(uDigitCount!=12)
+				{
+					sprintf(cReturn,"format error 12");
+					return(cReturn);
+				}
+				sprintf(cReturn,"%x%x%x%x:%x%x%x%x:%x%x%x%x/48",h12,h11,h10,h9,h8,h7,h6,h5,h4,h3,h2,h1);
+			break;
+
+			case 15://16 digits
+				uDigitCount=sscanf(cZone,"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x",
+									&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&h9,&h10,&h11,&h12,
+									&h13,&h14,&h15,&h16);
+				if(uDigitCount!=16)
+				{
+					sprintf(cReturn,"format error 16");
+					return(cReturn);
+				}
+				sprintf(cReturn,"%x%x%x%x:%x%x%x%x:%x%x%x%x:%x%x%x%x/64",h16,h15,h14,h13,h12,h11,h10,h9,h8,h7,h6,h5,h4,h3,h2,h1);
+			break;
+
+			case 19://20 digits
+				uDigitCount=sscanf(cZone,"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x",
+									&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&h9,&h10,&h11,&h12,
+									&h13,&h14,&h15,&h16,
+									&h17,&h18,&h19,&h20);
+				if(uDigitCount!=20)
+				{
+					sprintf(cReturn,"format error 20");
+					return(cReturn);
+				}
+				sprintf(cReturn,"%x%x%x%x:%x%x%x%x:%x%x%x%x:%x%x%x%x:%x%x%x%x/80",
+									h20,h19,h18,h17,h16,h15,h14,h13,h12,
+									h11,h10,h9,h8,h7,h6,h5,h4,h3,h2,h1);
+			break;
+
+			case 23://24 digits
+				uDigitCount=sscanf(cZone,"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x",
+									&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&h9,&h10,&h11,&h12,
+									&h13,&h14,&h15,&h16,
+									&h17,&h18,&h19,&h20,
+									&h21,&h22,&h23,&h24);
+				if(uDigitCount!=24)
+				{
+					sprintf(cReturn,"format error 24");
+					return(cReturn);
+				}
+				sprintf(cReturn,"%x%x%x%x:%x%x%x%x:%x%x%x%x:%x%x%x%x:%x%x%x%x:%x%x%x%x/96",
+									h24,h23,h22,h21,h20,h19,h18,h17,h16,h15,h14,h13,h12,
+									h11,h10,h9,h8,h7,h6,h5,h4,h3,h2,h1);
+			break;
+
+			case 27://28 digits
+				uDigitCount=sscanf(cZone,"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x",
+									&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&h9,&h10,&h11,&h12,
+									&h13,&h14,&h15,&h16,
+									&h17,&h18,&h19,&h20,
+									&h21,&h22,&h23,&h24,
+									&h25,&h26,&h27,&h28);
+				if(uDigitCount!=28)
+				{
+					sprintf(cReturn,"format error 28");
+					return(cReturn);
+				}
+				sprintf(cReturn,"%x%x%x%x:%x%x%x%x:%x%x%x%x:%x%x%x%x:%x%x%x%x:%x%x%x%x:%x%x%x%x/112",
+									h28,h27,h26,h25,h24,h23,h22,h21,h20,h19,h18,h17,h16,h15,h14,h13,h12,
+									h11,h10,h9,h8,h7,h6,h5,h4,h3,h2,h1);
+			break;
+
+			default:
+				sprintf(cReturn,"(ip6 notation not supported)");
+				return(cReturn);
+		}
+	}
+	else
+	{
+		return(cReturn);
+	}
+	return(cOptimizeIPv6Notation(cReturn));
+}//char *cConvertIP6ArpaZoneLabelTocIPv6CIDR(char *cZone)
+
+		//print ipv6 cidr that corresponds to zone name.
+		char cIPv6CIDR[64]={""};
+		sprintf(cIPv6CIDR,"%.63s",cConvertIP6ArpaZoneLabelTocIPv6CIDR(cZone));
+		printf("[ip6 notation: %s]\n",cIPv6CIDR);
+		printf("</td></tr>\n");
 	}
 //uNSSet
 	OpenRow(LANG_FL_tZone_uNSSet,"black");
