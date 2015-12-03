@@ -102,6 +102,68 @@ void ExttIPCommands(pentry entries[], int x)
 				tIP("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
+		else if(!strcmp(gcCommand,"Add Search IPv4"))
+                {
+			if(guPermLevel>=9)
+			{
+	                        ProcesstIPVars(entries,x);
+				guMode=12002;
+				unsigned uGroup=0;
+				unsigned uIgnore;
+				if(uInIpv4Format(cIPv4Search,&uIgnore))
+				{
+					MYSQL_RES *res;
+					MYSQL_ROW field;
+
+					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE cLabel='%s'",cIPv4Search);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+        				res=mysql_store_result(&gMysql);
+	        			if((field=mysql_fetch_row(res)))
+					{
+						mysql_free_result(res);
+	                        		tIP("IPv4 already in tIP");
+					}
+
+					sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uIPNum=INET_ATON('%s'),uOwner=%u,uCreatedBy=%u,uAvailable=0"
+					",uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+					"uDatacenter=(SELECT uDatacenter FROM tDatacenter WHERE cLabel='CustomerPremise' LIMIT 1),"
+					"uIPType=0",
+						cIPv4Search,cIPv4Search,guCompany,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+
+					if((uGroup=uGetSearchGroup(gcUser,31))==0)
+					{
+						sprintf(gcQuery,"INSERT INTO tGroup SET cLabel='%s',uGroupType=31"//2 is search group
+						",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcUser,guCompany,guLoginClient);//2=search set type TODO
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+								tIP("Insert error");
+						if((uGroup=mysql_insert_id(&gMysql))==0)
+		                       	 		tIP("An error ocurred when attempting to create your search set");
+					}
+
+					sprintf(gcQuery,"INSERT INTO tGroupGlue (uGroup,uIP)"
+							" SELECT %u,uIP FROM tIP WHERE cLabel='%s'",uGroup,cIPv4Search);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+	                        	tIP("IPv4 added");
+				}
+				else
+				{
+					tIP("<blink>Error:</blink> cIPv4Search not a valid IPv4");
+				}
+			}
+			else
+			{
+				tIP("<blink>Error:</blink> Denied by permissions settings");
+			}
+		}
 		else if(!strcmp(gcCommand,"IP Report Single"))
                 {
 			if(guPermLevel>=9)
@@ -802,6 +864,9 @@ void ExttIPButtons(void)
 			printf("<input type=submit class=largeButton title='Return to main tContainer tab page'"
 				" name=gcCommand value='Cancel'>");
 			printf("<p><u>Set Operation Options</u>");
+			if(uFirewallMode && cIPv4Search[0])
+			printf("<p><input type=submit class=largeButton title='Attempt to add the IPv4 pattern to tIP and current search set'"
+				" name=gcCommand value='Add Search IPv4'>");
 
                 break;
 
