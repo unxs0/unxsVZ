@@ -35,6 +35,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 {
 	void voidGencOTPSecret(void)
 	{
+#ifdef LIBOATH
 		//generate a secret
 		size_t uSecretlen=0;
 		char *cSecret;
@@ -51,6 +52,8 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 		if(iRc!=OATH_OK)
 			tAuthorize("cOTPSecret base32 encoding failed");
 		sprintf(cOTPSecret,"%.16s",cSecret);
+
+#endif
 	}
 
 	if(!strcmp(gcFunction,"tAuthorizeTools"))
