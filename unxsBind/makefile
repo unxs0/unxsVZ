@@ -12,7 +12,8 @@
 CFLAGS= -Wall
 
 #LIBS= -L/usr/lib/mysql -L/usr/lib64/mysql -L/usr/lib/openisp -lz -lcrypt -lm -lssl -lucidr -lmysqlclient
-LIBS=-L/usr/lib/mysql -L/usr/lib64/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate -loath
+#LIBS=-L/usr/lib/mysql -L/usr/lib64/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate -loath
+LIBS=-L/usr/lib/mysql -L/usr/lib64/mysql -L/usr/lib/openisp -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate
 
 all: iDNS.cgi
 

@@ -2409,6 +2409,7 @@ void SetLogin(void)
 
 unsigned uValidOTP(char *cOTPSecret,char *cOTP)
 {
+#ifdef LIBOATH
 	char *secret;
 	size_t secretlen = 0;
 	int rc;
@@ -2465,6 +2466,9 @@ gotoMatch:
 	free(secret);
 	oath_done();
 	return(1);
+#else
+	return(1);//fake match
+#endif
 
 }//unsigned uValidOTP(char *cOTPSecret,char *cOTP)
 
@@ -2472,6 +2476,8 @@ gotoMatch:
 //with uAuthorize==0 it expires the OTP for a given guLoginClient
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient)
 {
+
+#ifdef LIBOATH
 
 	//OTP login OK for 4 more hours. Change to configurable TODO.
 	if(!uAuthorize)
@@ -2483,6 +2489,7 @@ void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
+#endif
 }//void UpdateOTPExpire()
 
 
@@ -2496,8 +2503,13 @@ char *cGetPasswd(char *gcLogin,char *cOTPSecret,unsigned long *luOTPExpire,unsig
 	//SQL injection code
 	if((cp=strchr(gcLogin,'\''))) *cp=0;
 
+#ifdef LIBOATH
 	sprintf(gcQuery,"SELECT cPasswd,cOTPSecret,uOTPExpire,UNIX_TIMESTAMP(NOW()),uAuthorize"
 				" FROM " TAUTHORIZE " WHERE cLabel='%s'",gcLogin);
+#else
+	sprintf(gcQuery,"SELECT cPasswd,UNIX_TIMESTAMP(NOW()),uAuthorize"
+				" FROM " TAUTHORIZE " WHERE cLabel='%s'",gcLogin);
+#endif
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -2509,10 +2521,15 @@ char *cGetPasswd(char *gcLogin,char *cOTPSecret,unsigned long *luOTPExpire,unsig
 
 		if(mysqlField[1])
 		{
+#ifdef LIBOATH
 			sprintf(cOTPSecret,"%.64s",mysqlField[1]);
 			sscanf(mysqlField[2],"%lu",luOTPExpire);
 			sscanf(mysqlField[3],"%lu",luSQLNow);
 			sscanf(mysqlField[4],"%u",uAuthorize);
+#else
+			sscanf(mysqlField[1],"%lu",luSQLNow);
+			sscanf(mysqlField[2],"%u",uAuthorize);
+#endif
 		}
 	}
 	mysql_free_result(mysqlRes);

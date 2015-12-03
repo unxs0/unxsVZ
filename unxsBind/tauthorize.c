@@ -411,6 +411,7 @@ void tAuthorizeInput(unsigned uMode)
 	else
 		printf("---\n\n");
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
+#ifdef LIBOATH
 //cOTPSecret
 	OpenRow("cOTPSecret","black");
 	if(guPermLevel<12 && uPerm>10)
@@ -469,6 +470,7 @@ void tAuthorizeInput(unsigned uMode)
 	}
 	else
 		printf("---\n\n");
+#endif
 	printf("</tr>\n");
 
 

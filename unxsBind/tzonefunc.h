@@ -946,11 +946,6 @@ void ExttZoneCommands(pentry entries[], int x)
 		}
 		else if(!strcmp(gcCommand,"Confirm Delegation") && guPermLevel>=10)
 		{
-#define IP_BLOCK_CIDR 1
-#define IP_BLOCK_DASH 2
-			unsigned uA,uB,uC,uD,uE,uNumIPs;
-			unsigned uMa,uMb,uMc;
-			unsigned uIPBlockFormat;
 			char cNS[100]={""};
 			char cName[100]={""};
 			char cParam1[100]={""};
@@ -976,6 +971,71 @@ void ExttZoneCommands(pentry entries[], int x)
 			sscanf(cIPBlock,"%s",gcQuery);
 			sprintf(cIPBlock,"%.99s",gcQuery);
 			
+			char *cpZone;
+			char cIPv6ZonePart[100]={""};
+			sprintf(cIPv6ZonePart,"%.99s",cZone);
+			if((cpZone=strstr(cIPv6ZonePart,".ip6.arpa")))
+			{
+				*cpZone=0;
+				char *cp;
+				if((cp=strchr(cIPBlock,'/')))
+				{
+					char cIPv6FromBlock[64]={""};
+					unsigned h1=0,h2=0,h3=0,h4=0,h5=0,h6=0,h7=0,h8=0,h9=0,h10=0,h11=0,h12=0,h13=0,h14=0,h15=0,h16=0,uCIDR=0;
+					if(!uInCIDR6Format32(cIPBlock,&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&uCIDR))
+					{
+						guMode=4001;
+						tZone("<blink>Error:</blink> The entered ip6 block is not in a valid ip6 format.");
+					}
+					sprintf(cIPv6FromBlock,"%x:%x:%x:%x:%x:%x:%x:%x",h1,h2,h3,h4,h5,h6,h7,h8);
+					//guMode=4001;
+					//tZone(cIPv6FromBlock);
+
+					//CIDR only checks and calculations
+					///48, /52, /56, /60 or /64
+					if(uCIDR!=48 && uCIDR!=52 && uCIDR!=56 && uCIDR!=60 && uCIDR!=64)
+					{
+						guMode=4001;
+						tZone("<blink>ip6 CIDR nibble blocks /48 - /64 are supported only</blink>");
+					}
+				
+					unsigned uDigitCount=sscanf(cIPv6ZonePart,"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x",
+									&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&h9,&h10,&h11,&h12,&h13);
+					if(uDigitCount!=13)
+					{
+						guMode=4001;
+						sprintf(cIPv6ZonePart,"%u",uDigitCount);
+						tZone(cIPv6ZonePart);
+						tZone("<blink>Error:</blink> This zone is not suited for automated delegation at this time.");
+					}
+					char cIPv6BlockFromZone[64]={""};
+					//sprintf(cIPv6BlockFromZone,"%x%x%x%x:%x%x%x%x:%x%x%x%x:%x::/48",h13,h12,h11,h10,h9,h8,h7,h6,h5,h4,h3,h2,h1);
+					sprintf(cIPv6BlockFromZone,"%x%x%x%x:%x%x%x%x:%x%x%x%x::/48",h13,h12,h11,h10,h9,h8,h7,h6,h5,h4,h3,h2);
+					//guMode=4001;
+					//tZone(cIPv6BlockFromZone);
+					if(!uIpv6InCIDR632(cIPv6FromBlock,cIPv6BlockFromZone))
+					{
+						guMode=4001;
+						tZone("<blink>Error:</blink> The entered ip6 block is not inside the loaded zone.");
+					}
+
+					guMode=4001;
+					tZone("IPv6 block delegation being installed please wait...");
+				}
+				else
+				{
+					guMode=4001;
+					tZone("<blink>Error:</blink> The entered block has no /.");
+				}
+			}
+			else
+			{
+#define IP_BLOCK_CIDR 1
+#define IP_BLOCK_DASH 2
+			unsigned uA,uB,uC,uD,uE,uNumIPs;
+			unsigned uMa,uMb,uMc;
+			unsigned uIPBlockFormat;
+
 			sscanf(cZone,"%u.%u.%u.in-addr.arpa",&uMc,&uMb,&uMa);
 			
 			if(strchr(cIPBlock,'/'))
@@ -1064,7 +1124,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			if(uDelegationTTL>uTTL)
 			{
 				guMode=4001;
-				tZone("<blink>uDelegationTTL out iof range</blink>");
+				tZone("<blink>uDelegationTTL out of range</blink>");
 			}
 			if(!uDelegationTTL)
 				uDelegationTTL=uTTL;
@@ -1140,7 +1200,9 @@ void ExttZoneCommands(pentry entries[], int x)
 			sprintf(cLogEntry,"%s Delegation",cIPBlock);
 			iDNSLog(uZone,"tZone",cLogEntry);
 
-			tZone("IP block delegation done");
+			tZone("IPv4 block delegation done");
+
+			}
 			
 		}
 		else if(!strcmp(gcCommand,"Remove Delegation") && guPermLevel>9)
@@ -1274,8 +1336,8 @@ void ExttZoneButtons(void)
 		
 		case 4000:
 			printf("<p><u>Delegation Tools</u></p>\n");
-			printf("<p>Enter below the IP block in CIDR format (e.g. 217.23.24.0/24) "
-				"or in dash format (e.g. 217.125.32.17-25) that you wish to delegate. "
+			printf("<p>Enter below the IP block in CIDR format (e.g. 217.23.24.0/24 or for ip6 2001:4a78:500:200::/56) "
+				"or in dash format -only for ipv4- (e.g. 217.125.32.17-25) that you wish to delegate. "
 				"In the textarea you must place a list (one per line) with the fully qualified domain "
 				"name(s) of the nameserver(s) for the delegation. An optional parameter "
 				"is uTTL, if not set the default zone TTL will be used. The uSubmitJob "
@@ -1354,7 +1416,7 @@ void ExttZoneButtons(void)
 				printf("<br><input class=largeButton title='Verify that cZone has no errors that "
 					"may cause it not to load or propagate' type=submit name=gcFind"
 					" value='Run named-checkzone'>"); 
-				if(guPermLevel>9&&strstr(cZone,".in-addr.arpa"))
+				if(guPermLevel>9&&(strstr(cZone,".in-addr.arpa")||strstr(cZone,".ip6.arpa")))
 					printf("<br><input class=largeButton title='IP Block Delegation Tools' "
 						"type=submit name=gcCommand value='Delegation Tools'>\n");
 			}
