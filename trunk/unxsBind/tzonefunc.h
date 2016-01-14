@@ -3080,10 +3080,10 @@ void htmlMassUpdate(void)
 		if((cp=strstr(cZone,"cNSSet=")))
 		{
 			char *cp2;
-			if((cp2=strchr(cp+12,';')))
+			if((cp2=strchr(cp+strlen("cNSSet="),';')))
 			{
 				*cp2=0;
-				sprintf(cNSSet,"%.99s",cp+12);
+				sprintf(cNSSet,"%.99s",cp+strlen("cNSSet="));
 				//NSs selection
 				sprintf(gcQuery,"SELECT uNSSet,cMasterIPs FROM tNSSet WHERE cLabel='%s'",
 						cNSSet);
@@ -3100,6 +3100,8 @@ void htmlMassUpdate(void)
 
 				if(uAssignedNSSet)
 					printf("cNSSet assigned:%s\n",cNSSet);
+				else
+					printf("cNSSet not assigned:%s\n",cNSSet);
 				continue;
 			}
 		}
