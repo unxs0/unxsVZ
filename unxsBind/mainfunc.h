@@ -1765,7 +1765,8 @@ void UpdateSchema(void)
 		if(!strcmp(field[0],"tNameServer")) utNameServer=1;
 	}
        	mysql_free_result(res);
-	if(utNameServer && uNameServer)//uNameServer set in tZone check above
+	//if(utNameServer && uNameServer)//uNameServer set in tZone check above
+	if(0)//Off!
 	{
 		unsigned uNSSet=0;
 
