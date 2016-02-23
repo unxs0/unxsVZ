@@ -85,6 +85,7 @@ unsigned uPTRInCIDR(unsigned uZone,char *cIPBlock);
 unsigned uPTRInBlock(unsigned uZone,unsigned uStart,unsigned uEnd);
 void htmlCheckSOA(void);
 void htmlMasterZoneFile(void);
+void htmlExternalNSRecords(void);
 void htmlMasterZonesCheck(void);
 void htmlMasterNamedCheckZone(void);
 void tNSSetMembers(unsigned uNSSet);//tnssetfunc.h
@@ -981,7 +982,9 @@ void ExttZoneCommands(pentry entries[], int x)
 				if((cp=strchr(cIPBlock,'/')))
 				{
 					char cIPv6FromBlock[64]={""};
-					unsigned h1=0,h2=0,h3=0,h4=0,h5=0,h6=0,h7=0,h8=0,h9=0,h10=0,h11=0,h12=0,h13=0,h14=0,h15=0,h16=0,uCIDR=0;
+					unsigned h1=0,h2=0,h3=0,h4=0,h5=0,h6=0,h7=0,h8=0,h9=0,h10=0,h11=0,h12=0,h13=0;
+					//unsigned h14=0,h15=0,h16=0,uCIDR=0;
+					unsigned uCIDR=0;
 					if(!uInCIDR6Format32(cIPBlock,&h1,&h2,&h3,&h4,&h5,&h6,&h7,&h8,&uCIDR))
 					{
 						guMode=4001;
@@ -1264,6 +1267,11 @@ void ExttZoneCommands(pentry entries[], int x)
 			ProcesstZoneVars(entries,x);
 			htmlMasterZoneFile();
 		}
+		else if(!strcmp(gcFind,"External NS Records") && guPermLevel>9)
+		{
+			ProcesstZoneVars(entries,x);
+			htmlExternalNSRecords();
+		}
 		else if(!strcmp(gcFind,"Check master.zones") && guPermLevel>9)
 		{
 			ProcesstZoneVars(entries,x);
@@ -1419,6 +1427,8 @@ void ExttZoneButtons(void)
 				if(guPermLevel>9&&(strstr(cZone,".in-addr.arpa")||strstr(cZone,".ip6.arpa")))
 					printf("<br><input class=largeButton title='IP Block Delegation Tools' "
 						"type=submit name=gcCommand value='Delegation Tools'>\n");
+				printf("<br><input class=largeButton title='Check external via resolv.conf NS records' "
+					"type=submit name=gcFind value='External NS Records'>"); 
 			}
 			if(guPermLevel>9)
 			{
@@ -4396,6 +4406,34 @@ void htmlMasterZoneFile(void)
 	}
 
 }//void htmlMasterZoneFile(void)
+
+
+void htmlExternalNSRecords(void)
+{
+	char cCommand[256]={""};
+
+	sprintf(cCommand,"/usr/bin/dig @8.8.8.8 %s > /tmp/htmlExternalNSRecords.txt 2>&1",cZone);
+
+	if(!system(cCommand))
+	{
+
+			Header_ism3("htmlExternalNSRecords()",0);
+			printf("<pre><blockquote>");
+			printf("</center><pre>%s<blockquote>",cCommand);
+			PassDirectHtml("/tmp/htmlExternalNSRecords.txt");
+			printf("</blockquote></pre>");
+			printf("<input type=hidden name=gcFunction value=tZoneTools>");
+			printf("Back w/search link: <a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%u&cSearch=%s>%s</a><br>\n",
+				uZone
+				,cURLEncode(cSearch)
+				,cZone);
+			Footer_ism3();
+	}
+	else
+	{
+		tZone("<blink>Error</blink>: /usr/bin/dig");
+	}
+}//void htmlExternalNSRecords(void)
 
 
 //hard coded default install path should be replaced by GetConfiguration someday
