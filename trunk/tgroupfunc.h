@@ -47,6 +47,75 @@ void ExttGroupCommands(pentry entries[], int x)
 	                        tGroup(LANG_NB_CONFIRMNEW);
 			}
                 }
+		else if(!strcmp(gcCommand,"Add Monitor Group"))
+                {
+			if(guPermLevel>=10)
+			{
+                        	ProcesstGroupVars(entries,x);
+				
+                        	guMode=0;
+				if(!uGroup)
+					tGroup("<blink>Error</blink>: uGroup must be selected");
+				if(!uGroupType==1)
+					tGroup("<blink>Error</blink>: uGroupType must be container");
+				char cMonitorAddGroupScript[256]={""};
+				char cSystemCall[512]={""};
+				GetConfiguration("cMonitorAddGroupScript",cMonitorAddGroupScript,0,0,0,0);
+				if(!cMonitorAddGroupScript[0])
+					tGroup("<blink>Error</blink>: tConfiguration cMonitorAddGroupScript does not exist");
+				sprintf(cSystemCall,"%.255s \"%.31s\" > /dev/null 2>&1",cMonitorAddGroupScript,cLabel);
+				unsigned uRetVal=0;
+				char cMsg[256];
+				//reverse exit logic script
+				uRetVal=system(cSystemCall);
+				if(uRetVal==(-1) || uRetVal==0)
+				{
+					sprintf(cMsg,"<blink>Error</blink>: %s %u",cMonitorAddGroupScript,uRetVal);
+					tGroup(cMsg);
+				}
+				uRetVal=uRetVal>>8;
+        			MYSQL_RES *res;
+        			MYSQL_ROW field;
+				sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='uMonitorGroupID' AND uType="
+						PROP_GROUP
+						" AND uKey=%u",uGroup);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					htmlPlainTextError(mysql_error(&gMysql));
+        			res=mysql_store_result(&gMysql);
+				if((field=mysql_fetch_row(res)))
+				{
+					sprintf(gcQuery,"UPDATE tProperty SET"
+						" cValue='%u',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+						" WHERE uProperty=%s",
+							uRetVal,guLoginClient,
+							field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						sprintf(cMsg,"%.240s:%u",mysql_error(&gMysql),uRetVal);
+						tGroup(cMsg);
+					}
+				}
+				else
+				{
+					sprintf(gcQuery,"INSERT INTO tProperty SET"
+						" cName='uMonitorGroupID',cValue='%u',uType="
+						PROP_GROUP
+						",uKey=%u,uOwner=%u,"
+						"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							uRetVal,
+							uGroup,guCompany,
+							guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+				}
+        			mysql_free_result(res);
+				sprintf(cMsg,"%s %s:%u",cMonitorAddGroupScript,cLabel,uRetVal);
+				tGroup(cMsg);
+			}
+		}
 		else if(!strcmp(gcCommand,"Create Property"))
                 {
 			if(guPermLevel>=10)
@@ -216,6 +285,17 @@ void ExttGroupButtons(void)
 				" These groups can then be used for organizational and/or autonomic purposes.");
 			if(uGroup) tGroupMemberNavList();
 			tGroupNavList();
+			if(guPermLevel>=10 && uGroupType==1)
+			{
+				char cMonitorAddGroupScript[256]={""};
+				GetConfiguration("cMonitorAddGroupScript",cMonitorAddGroupScript,0,0,0,0);
+				if(cMonitorAddGroupScript[0])
+				{
+					printf("<p><input title='Add this container group to external configured monitoring system'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Add Monitor Group'>\n");
+				}
+			}
 	}
 	CloseFieldSet();
 
