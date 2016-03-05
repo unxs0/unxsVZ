@@ -2725,6 +2725,32 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<blink>Error:</blink> Denied by permissions settings");
 			}
 		}
+		else if(!strcmp(gcCommand,"Add Monitor Host"))
+                {
+			if(guPermLevel>=10)
+			{
+                        	ProcesstContainerVars(entries,x);
+				
+                        	guMode=0;
+				if(!uContainer)
+					tContainer("<blink>Error</blink>: uContainer must be selected");
+				if(!uStatus==1)
+					tContainer("<blink>Error</blink>: uStatus must be active");
+				char cMonitorAddHostScript[256]={""};
+				char cSystemCall[512]={""};
+				GetConfiguration("cMonitorAddHostScript",cMonitorAddHostScript,0,0,0,0);
+				if(!cMonitorAddHostScript[0])
+					tContainer("<blink>Error</blink>: tConfiguration cMonitorAddHostScript does not exist");
+				sprintf(cSystemCall,"%.255s %.63s",cMonitorAddHostScript,cHostname);
+				if(system(cSystemCall))
+				{
+					char cMsg[256];
+					sprintf(cMsg,"<blink>Error</blink>: %s",cMonitorAddHostScript);
+					tContainer(cMsg);
+				}
+				tContainer(cSystemCall);
+			}
+		}
                 else if(!strncmp(gcCommand,"Confirm Switchover",18))
                 {
                         ProcesstContainerVars(entries,x);
@@ -3413,6 +3439,17 @@ void ExttContainerButtons(void)
 					" Creates and installs OS and VZ conf templates on all nodes.'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Template Wizard'><br>\n");
+					if(guPermLevel>=10 && uStatus==1)
+					{
+						char cMonitorAddHostScript[256]={""};
+						GetConfiguration("cMonitorAddHostScript",cMonitorAddHostScript,0,0,0,0);
+						if(cMonitorAddHostScript[0])
+						{
+							printf("<input title='Add this container host to external configured monitoring system'"
+							" type=submit class=largeButton"
+							" name=gcCommand value='Add Monitor Host'><br>\n");
+						}
+					}
 				}
 
 				char cVEIDMount[256]={""};
