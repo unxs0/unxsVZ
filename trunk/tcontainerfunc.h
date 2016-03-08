@@ -204,6 +204,7 @@ void htmlLatestJobInfo(unsigned uContainer);
 void GetGroupProperty(unsigned uGroup,char const *cName,char *cValue);
 unsigned unxsBindRemoveContainer(unsigned uDatacenter,unsigned uNode,unsigned uContainer,const char *cJobData,
 	unsigned uOwner,unsigned uCreatedBy);
+void InsertOrUpdateMonitorHostID(unsigned uContainer,unsigned uMonitorHostID);
 
 
 //extern
@@ -2737,18 +2738,42 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(!uStatus==1)
 					tContainer("<blink>Error</blink>: uStatus must be active");
 				char cMonitorAddHostScript[256]={""};
-				char cSystemCall[512]={""};
 				GetConfiguration("cMonitorAddHostScript",cMonitorAddHostScript,0,0,0,0);
 				if(!cMonitorAddHostScript[0])
 					tContainer("<blink>Error</blink>: tConfiguration cMonitorAddHostScript does not exist");
-				sprintf(cSystemCall,"%.255s %.63s",cMonitorAddHostScript,cHostname);
-				if(system(cSystemCall))
+				unsigned uGroup=uGetPrimaryContainerGroup(uContainer);
+				if(!uGroup)
+					tContainer("<blink>Error</blink>: Container must belong to a configured group");
+				unsigned uMonitorGroupID=0;
+				char cuMonitorGroupID[256]={""};
+				GetGroupProperty(uGroup,"uMonitorGroupID",cuMonitorGroupID);
+				sscanf(cuMonitorGroupID,"%u",&uMonitorGroupID);
+				if(!uMonitorGroupID)
+					tContainer("<blink>Error</blink>: Container must belong to a group with a uMonitorGroupID");
+				char cSystemCall[512]={""};
+				sprintf(cSystemCall,"%.255s %.63s %u %.16s",
+						cMonitorAddHostScript,cHostname,uMonitorGroupID,ForeignKey("tIP","cLabel",uIPv4));
+				char cMsg[256];
+				unsigned uMonitorHostID=0;
+				FILE *pp;
+				if((pp=popen(cSystemCall,"r"))==NULL)
 				{
-					char cMsg[256];
-					sprintf(cMsg,"<blink>Error</blink>: %s",cMonitorAddHostScript);
+					sprintf(cMsg,"<blink>Error 1</blink>: %s",cSystemCall);
 					tContainer(cMsg);
 				}
-				tContainer(cSystemCall);
+				char cResponse[256]={""};
+				if(fscanf(pp,"%255s",cResponse)>0)
+					sscanf(cResponse,"%u",&uMonitorHostID);
+				if(!uMonitorHostID)	
+				{
+					sprintf(cMsg,"<blink>Error 2</blink>: %s",cSystemCall);
+					tContainer(cMsg);
+				}
+				pclose(pp);
+
+				InsertOrUpdateMonitorHostID(uContainer,uMonitorHostID);
+				sprintf(cMsg,"%s %s %u (%u)",cMonitorAddHostScript,cHostname,uMonitorGroupID,uMonitorHostID);
+				tContainer(cMsg);
 			}
 		}
                 else if(!strncmp(gcCommand,"Confirm Switchover",18))
@@ -3669,6 +3694,9 @@ void ExttContainerAuxTable(void)
 				" If done for awaiting failover containers then any existing waiting FailoverFrom jobs will be canceled also.'"
 				" type=submit class=lwarnButton"
 				" name=gcCommand value='Group Status Active'>\n");
+			printf("&nbsp; <input title='Add container host to the configured monitoring system.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Add Monitoring'>\n");
 			CloseFieldSet();
 
 			//Delete all of these
@@ -6077,6 +6105,67 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Group BackupDisconnect
 
+				else if(!strcmp(gcCommand,"Group Add Monitoring"))
+				{
+					struct structContainer sContainer;
+
+					InitContainerProps(&sContainer);
+					GetContainerProps(uCtContainer,&sContainer);
+					if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uREMOTEAPPLIANCE)
+						&& (sContainer.uOwner==guCompany || guCompany==1) )
+					{
+						//Only once
+						static char cMonitorAddHostScript[256]={""};
+						if(!cMonitorAddHostScript[0])
+							GetConfiguration("cMonitorAddHostScript",cMonitorAddHostScript,0,0,0,0);
+						if(!cMonitorAddHostScript[0])
+						{
+							sprintf(cResult,"No cMonitorAddHostScript");
+							break;
+						}
+						unsigned uGroup=uGetPrimaryContainerGroup(uCtContainer);
+						if(!uGroup)
+						{
+							sprintf(cResult,"No configured group");
+							break;
+						}
+						unsigned uMonitorGroupID=0;
+						char cuMonitorGroupID[256]={""};
+						GetGroupProperty(uGroup,"uMonitorGroupID",cuMonitorGroupID);
+						sscanf(cuMonitorGroupID,"%u",&uMonitorGroupID);
+						if(!uMonitorGroupID)
+						{
+							sprintf(cResult,"No uMonitorGroupID");
+							break;
+						}
+						char cSystemCall[512]={""};
+						sprintf(cSystemCall,"%.255s %.63s %u %.16s",
+							cMonitorAddHostScript,sContainer.cHostname,uMonitorGroupID,
+								ForeignKey("tIP","cLabel",sContainer.uIPv4));
+						unsigned uMonitorHostID=0;
+						FILE *pp;
+						if((pp=popen(cSystemCall,"r"))==NULL)
+						{
+							sprintf(cResult,"Bad cSystemCall");
+							break;
+						}
+						char cResponse[256]={""};
+						if(fscanf(pp,"%255s",cResponse)>0)
+							sscanf(cResponse,"%u",&uMonitorHostID);
+						if(!uMonitorHostID)	
+						{
+							sprintf(cResult,"uMonitorHostID==0");
+							break;
+						}
+						pclose(pp);
+						InsertOrUpdateMonitorHostID(uCtContainer,uMonitorHostID);
+						sprintf(cResult,"Done %u/%u",uMonitorGroupID,uMonitorHostID);
+					}
+					else
+					{
+						sprintf(cResult,"Group Add Monitoring ignored");
+					}
+				}//Group Add Monitoring
 
 				else if(strcmp(gcCommand,"Reload Search Set"))
 				{
@@ -9509,3 +9598,50 @@ void GetGroupProperty(unsigned uGroup,char const *cName,char *cValue)
 	mysql_free_result(res);
 
 }//void GetGroupProperty(unsigned uGroup,char const *cName,char *cValue)
+
+
+void InsertOrUpdateMonitorHostID(unsigned uContainer,unsigned uMonitorHostID)
+{
+	char cMsg[256];
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='uMonitorHostID' AND uType="
+			PROP_CONTAINER
+			" AND uKey=%u",uContainer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+       	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tProperty SET"
+			" cValue='%u',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+			" WHERE uProperty=%s",
+				uMonitorHostID,guLoginClient,
+				field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			sprintf(cMsg,"%.240s:%u",mysql_error(&gMysql),uMonitorHostID);
+			tContainer(cMsg);
+		}
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tProperty SET"
+			" cName='uMonitorHostID',cValue='%u',uType="
+			PROP_CONTAINER
+			",uKey=%u,uOwner=%u,"
+			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uMonitorHostID,
+					uContainer,guCompany,
+					guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				sprintf(cMsg,"%.240s:%u",mysql_error(&gMysql),uMonitorHostID);
+				tContainer(cMsg);
+			}
+	}
+       	mysql_free_result(res);
+}//void InsertOrUpdateMonitorHostID(unsigned uContainer,unsigned uMonitorHostID)

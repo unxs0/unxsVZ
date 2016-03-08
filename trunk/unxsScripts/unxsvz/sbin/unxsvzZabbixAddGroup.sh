@@ -8,32 +8,32 @@
 #	(C) 2011-2016 Gary Wallis for Unixservice, LLC.
 #	GPLv3 license applies see root dir LICENSE
 #NOTES
-#	Using reverse exit value logic. We return the group ID
+#	For use with popen();
 
 if [ "$1" == "" ];then
 	echo "usage: $0 <cGroup>";
-	exit 0;
+	exit 1;
 fi
 if [ -f "/etc/unxsvz/zabbix.local.sh" ];then
 	source /etc/unxsvz/zabbix.local.sh;
 else
 	echo "no /etc/unxsvz/zabbix.local.sh";
-	exit 0;
+	exit 2;
 fi
 
 if [ "$cZabbixPassword" == "" ];then
 	echo "no cZabbixPassword";
-	exit 0;
+	exit 3;
 fi
 if [ "$cZabbixServer" == "" ];then
 	echo "no cZabbixServer";
-	exit 0;
+	exit 4;
 fi
 
 
 #Set for your user and password
 #login
-cat << EOF > /tmp/login.json
+cat << EOF > /tmp/logingroup.json
 {
 	"jsonrpc":"2.0",
 	"method":"user.login",
@@ -45,16 +45,16 @@ cat << EOF > /tmp/login.json
 }
 EOF
 
-cAuth=`/usr/bin/wget --quiet --no-check-certificate --post-file=/tmp/login.json --output-document=-\
+cAuth=`/usr/bin/wget --quiet --no-check-certificate --post-file=/tmp/logingroup.json --output-document=-\
 	 --header='Content-Type: application/json-rpc'\
 	 https://$cZabbixServer/zabbix/api_jsonrpc.php | cut -f 3 -d : | cut -f 2 -d \"`;
 if [ $? != 0 ];then
 	echo "wget error 0";
-	exit 0;
+	exit 5;
 fi
 if [ "$cAuth" == "" ] || [ "$cAuth" == "code" ];then
 	echo "Could not login";
-	exit 0;
+	exit 6;
 fi
 #echo $cAuth;
 
@@ -80,7 +80,7 @@ uHostGroupID=`/usr/bin/wget --quiet --no-check-certificate --post-file=/tmp/host
 	 https://$cZabbixServer/zabbix/api_jsonrpc.php | cut -f 4 -d : | cut -f 2 -d \"`;
 if [ $? != 0 ];then
 	echo "wget error 1";
-	exit 1;
+	exit 7;
 fi
 #debug only
 #echo $uHostGroupID;
@@ -103,8 +103,8 @@ EOF
 		 --header='Content-Type: application/json-rpc'\
 		 https://$cZabbixServer/zabbix/api_jsonrpc.php | cut -f 4 -d : | cut -f 2 -d \"`;
 	if [ $? != 0 ];then
-		echo "wget error 1";
-		exit 1;
+		echo "wget error 2";
+		exit 8;
 	fi
 	#debug only
 	#echo $uHostGroupID;
@@ -115,23 +115,24 @@ EOF
 		if [ $? != 0 ];then
 			echo "/tmp/hostgroup.json";
 		fi
-		rm -f /tmp/login.json;
+		rm -f /tmp/logingroup.json;
 			if [ $? != 0 ];then
-			echo "/tmp/login.json";
+			echo "/tmp/logingroup.json";
 		fi
-		exit 0;
+		exit 9;
 	fi
 fi
 
 rm -f /tmp/hostgroup.json;
 if [ $? != 0 ];then
 	echo "/tmp/hostgroup.json";
-	exit 0;
+	exit 10;
 fi
-rm -f /tmp/login.json;
+rm -f /tmp/logingroup.json;
 if [ $? != 0 ];then
-	echo "/tmp/login.json";
-	exit 0;
+	echo "/tmp/logingroup.json";
+	exit 11;
 fi
 
-exit $uHostGroupID;
+echo $uHostGroupID;
+exit 0;

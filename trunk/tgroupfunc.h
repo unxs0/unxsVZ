@@ -63,17 +63,24 @@ void ExttGroupCommands(pentry entries[], int x)
 				GetConfiguration("cMonitorAddGroupScript",cMonitorAddGroupScript,0,0,0,0);
 				if(!cMonitorAddGroupScript[0])
 					tGroup("<blink>Error</blink>: tConfiguration cMonitorAddGroupScript does not exist");
-				sprintf(cSystemCall,"%.255s \"%.31s\" > /dev/null 2>&1",cMonitorAddGroupScript,cLabel);
-				unsigned uRetVal=0;
+				sprintf(cSystemCall,"%.255s \"%.31s\"",cMonitorAddGroupScript,cLabel);
 				char cMsg[256];
-				//reverse exit logic script
-				uRetVal=system(cSystemCall);
-				if(uRetVal==(-1) || uRetVal==0)
+				unsigned uRetVal=0;
+				FILE *pp;
+				if((pp=popen(cSystemCall,"r"))==NULL)
 				{
-					sprintf(cMsg,"<blink>Error</blink>: %s %u",cMonitorAddGroupScript,uRetVal);
+					sprintf(cMsg,"<blink>Error 1</blink>: %s",cSystemCall);
 					tGroup(cMsg);
 				}
-				uRetVal=uRetVal>>8;
+				char cResponse[256]={""};
+				if(fscanf(pp,"%255s",cResponse)>0)
+					sscanf(cResponse,"%u",&uRetVal);
+				if(!uRetVal)	
+				{
+					sprintf(cMsg,"<blink>Error 2</blink>: %s",cSystemCall);
+					tGroup(cMsg);
+				}
+				pclose(pp);
         			MYSQL_RES *res;
         			MYSQL_ROW field;
 				sprintf(gcQuery,"SELECT uProperty FROM tProperty WHERE cName='uMonitorGroupID' AND uType="
