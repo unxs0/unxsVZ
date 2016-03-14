@@ -209,6 +209,8 @@ int main(int iArgc, char *cArgv[])
 				ExttPropertyGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tType"))
 				ExttTypeGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tContainerType"))
+				ExttContainerTypeGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tPerm"))
 				ExttPermGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tOSTemplate"))
@@ -302,6 +304,7 @@ int main(int iArgc, char *cArgv[])
 	tContainerCommands(entries,x);
 	tPropertyCommands(entries,x);
 	tTypeCommands(entries,x);
+	tContainerTypeCommands(entries,x);
 	tPermCommands(entries,x);
 	tOSTemplateCommands(entries,x);
 	tNameserverCommands(entries,x);
@@ -579,6 +582,9 @@ void Header_ism3(const char *title, int iJs)
 	else if(!strcmp(gcFunction,"tType") || !strcmp(gcFunction,"tTypeTools") ||
 			!strcmp(gcFunction,"tTypeList"))
 		ExttTypeNavBar();
+	else if(!strcmp(gcFunction,"tContainerType") || !strcmp(gcFunction,"tContainerTypeTools") ||
+			!strcmp(gcFunction,"tContainerTypeList"))
+		ExttContainerTypeNavBar();
 	else if(!strcmp(gcFunction,"tPerm") || !strcmp(gcFunction,"tPermTools") ||
 			!strcmp(gcFunction,"tPermList"))
 		ExttPermNavBar();
@@ -749,6 +755,17 @@ if(guSSLCookieLogin)
 	  else
 		  printf(" id=current>\n");
 	  printf("\t\t\t<a title='Property Type' href=unxsVZ.cgi?gcFunction=tType>tType</a>\n");
+	}
+	//tContainerType
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tContainerType") && strcmp(gcFunction,"tContainerTypeTools") &&
+			strcmp(gcFunction,"tContainerTypeList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='Property Type' href=unxsVZ.cgi?gcFunction=tContainerType>tContainerType</a>\n");
 	}
 	//tPerm
 	if(guPermLevel>=20)

@@ -3745,7 +3745,7 @@ void ExttContainerAuxTable(void)
 				printf("<td valign=top><input type=checkbox name=all onClick='checkAll(document.formMain,this)'></td>"
 					"<td valign=top><u>cLabel</u></td>"
 					"<td valign=top><u>cHostname</u></td>"
-					"<td valign=top><u>Status</u></td>"
+					"<td valign=top><u>Status(/MonID)</u></td>"
 					"<td valign=top><u>IPv4(*NAT)</u></td>"
 					"<td valign=top><u>Node</u></td>"
 					"<td valign=top><u>Datacenter</u></td>"
@@ -6247,12 +6247,18 @@ while((field=mysql_fetch_row(res)))
 	cValue[0]=0;
 	unsigned uRowContainer=0;
 	sscanf(field[0],"%u",&uRowContainer);
-	//if(!uRowContainer) uRowContainer=uCtContainer;
 	GetContainerProp(uRowContainer,"cOrg_PublicIP",cValue);
 	if(cValue[0])
 		cNAT="*";
 	else
 		cNAT="";
+			
+	//monitored containers
+	char cuMonitorHostID[32]={""};
+	cValue[0]=0;
+	GetContainerProp(uRowContainer,"uMonitorHostID",cValue);
+	if(cValue[0])
+		sprintf(cuMonitorHostID,"/%.30s",cValue);
 			
 	printf("<tr");
 	if((uRow++) % 2)
@@ -6265,7 +6271,7 @@ while((field=mysql_fetch_row(res)))
 		"<td valign=top><input type=checkbox name=Ct%s ></td>"
 		"<td valign=top><a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
 		"<td valign=top>%s</td>"
-		"<td valign=top>%s</td>"
+		"<td valign=top>%s%s</td>"
 		"<td valign=top>%s%s</td>"
 		"<td valign=top><a class=darkLink href=unxsVZ.cgi?gcFunction=tNode&uNode=%u>%s</a></td>"
 		"<td valign=top>%s</td>"
@@ -6281,7 +6287,7 @@ while((field=mysql_fetch_row(res)))
 			field[0],
 			field[0],field[1],
 			field[2],
-			field[3],
+			field[3],cuMonitorHostID,
 			field[4],cNAT,
 			uCtNode,
 			field[5],
