@@ -39,7 +39,7 @@ void SetContainerStatus(unsigned uContainer,unsigned uStatus);
 void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue.c
 char *strptime(const char *s, const char *format, struct tm *tm);
 
-static char cTableList[64][32]={ "tAuthorize", "tClient", "tConfig", "tConfiguration", "tContainer",
+static char cTableList[64][32]={ "tAuthorize", "tClient", "tConfig", "tConfiguration", "tContainer", "tContainerType",
 		"tDatacenter", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tIP", "tJob",
 		"tJobStatus", "tLog", "tLogMonth", "tLogType", "tMonth", "tNameserver", "tNode",
 		"tOSTemplate", "tPerm", "tProperty", "tSearchdomain", "tStatus", "tTemplate", "tTemplateSet",
@@ -1180,9 +1180,6 @@ void UpdateSchema(void)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uVeth=0;
-	unsigned uBackupDate=0;
-	unsigned uSource=0;
 
 	unsigned uOSTemplateDatacenter=0;
 	unsigned uConfigDatacenter=0;
@@ -1190,9 +1187,6 @@ void UpdateSchema(void)
 	unsigned uSearchdomainDatacenter=0;
 	unsigned uGroupGlueIP=0;
 
-	unsigned uIncorrectSource=0;
-	unsigned uIncorrectVeth=0;
-	unsigned uSourceIndex=0;
 	unsigned uPropertyNameIndex=0;
 	unsigned uTemplateLabelIndex=0;
 	unsigned uGlossaryLabelIndex=0;
@@ -1204,6 +1198,14 @@ void UpdateSchema(void)
 
 	//
 	//tContainer
+	unsigned uVeth=0;
+	unsigned uSource=0;
+	unsigned uIncorrectSource=0;
+	unsigned uIncorrectVeth=0;
+	unsigned uBackupDate=0;
+	unsigned uContainerType=0;
+	unsigned ucComment=0;
+	unsigned uSourceIndex=0;
 	sprintf(gcQuery,"SHOW COLUMNS IN tContainer");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1227,6 +1229,14 @@ void UpdateSchema(void)
 		if(!strcmp(field[0],"uBackupDate"))
 		{
 			uBackupDate=1;
+		}
+		if(!strcmp(field[0],"uContainerType"))
+		{
+			uContainerType=1;
+		}
+		if(!strcmp(field[0],"cComment"))
+		{
+			ucComment=1;
 		}
 	}
        	mysql_free_result(res);
@@ -1465,6 +1475,15 @@ void CreatetIPType(void);
 		else
 			printf("Added uVeth to tContainer\n");
 	}
+	if(!uContainerType)
+	{
+		sprintf(gcQuery,"ALTER TABLE tContainer ADD uContainerType INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uContainerType to tContainer\n");
+	}
 	if(!uBackupDate)
 	{
 		sprintf(gcQuery,"ALTER TABLE tContainer ADD uBackupDate INT UNSIGNED NOT NULL DEFAULT 0");
@@ -1473,6 +1492,15 @@ void CreatetIPType(void);
 			printf("%s\n",mysql_error(&gMysql));
 		else
 			printf("Added uBackupDate to tContainer\n");
+	}
+	if(!ucComment)
+	{
+		sprintf(gcQuery,"ALTER TABLE tContainer ADD cComment TEXT NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added cComment to tContainer\n");
 	}
 	if(uIncorrectSource)
 	{

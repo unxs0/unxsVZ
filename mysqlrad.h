@@ -348,6 +348,21 @@ void DeletetType(void);
 void ExttTypeGetHook(entry gentries[], int x);
 void ExttTypeNavBar(void);
 
+//tContainerType
+int tContainerTypeCommands(pentry entries[], int x);
+void tContainerType(const char *results);
+void ProcesstContainerTypeVars(pentry entries[], int x);
+void tContainerTypeContent(void);
+void tContainerTypeInputContent(void);
+void tContainerTypeInput(unsigned uMode);
+void tContainerTypeList(void);
+void NewtContainerType(unsigned uMode);
+void ModtContainerType(void);
+void CreatetContainerType(void);
+void DeletetContainerType(void);
+void ExttContainerTypeGetHook(entry gentries[], int x);
+void ExttContainerTypeNavBar(void);
+
 //tPerm
 int tPermCommands(pentry entries[], int x);
 void tPerm(const char *results);

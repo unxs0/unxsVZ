@@ -63,10 +63,14 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
-//uSource semi HIDDEN for now
+//uSource: Container parent or backup source
 static unsigned uSource=0;
 //uBackupDate: Unix seconds date last insert
 static time_t uBackupDate=0;
+//uContainerType: VZ or Google Compute Engine VM
+static unsigned uContainerType=0;
+//cComment: Container notes
+static char *cComment={""};
 
 //Extensions for searching
 //uStatus: Container tStatus.uStatus
@@ -90,7 +94,7 @@ static unsigned uEnableNAT=0;
 
 static char *cCommands={""};
 
-#define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource,tContainer.uBackupDate"
+#define VAR_LIST_tContainer "tContainer.uContainer,tContainer.cLabel,tContainer.cHostname,tContainer.uVeth,tContainer.uIPv4,tContainer.uOSTemplate,tContainer.uConfig,tContainer.uNameserver,tContainer.uSearchdomain,tContainer.uDatacenter,tContainer.uNode,tContainer.uStatus,tContainer.uOwner,tContainer.uCreatedBy,tContainer.uCreatedDate,tContainer.uModBy,tContainer.uModDate,tContainer.uSource,tContainer.uBackupDate,tContainer.uContainerType,tContainer.cComment"
 
  //Local only
 void tContainerSearchSet(unsigned uStep);
@@ -230,6 +234,10 @@ void ProcesstContainerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%lu",&uModDate);
 		else if(!strcmp(entries[i].name,"uSource"))
 			sscanf(entries[i].val,"%u",&uSource);
+		else if(!strcmp(entries[i].name,"uContainerType"))
+			sscanf(entries[i].val,"%u",&uContainerType);
+		else if(!strcmp(entries[i].name,"cComment"))
+			cComment=entries[i].val;
 		else if(!strcmp(entries[i].name,"uBackupDate"))
 			sscanf(entries[i].val,"%lu",&uBackupDate);
 		else if(!strcmp(entries[i].name,"gcNewContainerTZ"))
@@ -366,6 +374,8 @@ void tContainer(const char *cResult)
 		sscanf(field[16],"%lu",&uModDate);
 		sscanf(field[17],"%u",&uSource);
 		sscanf(field[18],"%lu",&uBackupDate);
+		sscanf(field[19],"%u",&uContainerType);
+		cComment=field[20];
 
 		}
 
@@ -841,6 +851,10 @@ void tContainerInput(unsigned uMode)
 		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
 	else
 		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
+//uContainerType
+	OpenRow(LANG_FL_tContainer_uContainerType,"black");
+	printf("%s<input type=hidden name=uContainerType value=%u >\n",
+		ForeignKey("tContainerType","cLabel",uContainerType),uContainerType);
 //uStatus
 	OpenRow(LANG_FL_tContainer_uStatus,"black");
 	printf("%s<input type=hidden name=uStatus value=%u >\n",
@@ -883,6 +897,18 @@ void tContainerInput(unsigned uMode)
 		printf("---\n\n");
 	printf("<input type=hidden name=uBackupDate value=%lu >\n",uBackupDate);
 	printf("</tr>\n");
+//cComment
+	OpenRow(LANG_FL_tContainer_cComment,"black");
+	printf("<textarea title='%s' cols=100 wrap=none rows=8 name=cComment ",LANG_FT_tContainer_cComment);
+	if(guPermLevel>=8 && uMode)
+	{
+		printf(">%s</textarea></td></tr>\n",cComment);
+	}
+	else
+	{
+		printf("disabled>%s</textarea></td></tr>\n",cComment);
+		printf("<input type=hidden name=cComment value=\"%s\" >\n",EncodeDoubleQuotes(cComment));
+	}
 
 }//void tContainerInput(unsigned uMode)
 
