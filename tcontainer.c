@@ -8,7 +8,7 @@ PURPOSE
 	Program app functionality in tcontainerfunc.h while 
 	RAD is still to be used.
 AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 */
 
@@ -69,6 +69,7 @@ static unsigned uSource=0;
 static time_t uBackupDate=0;
 //uContainerType: VZ or Google Compute Engine VM
 static unsigned uContainerType=0;
+static char cuContainerTypePullDown[256]={""};
 //cComment: Container notes
 static char *cComment={""};
 
@@ -109,6 +110,7 @@ void tTablePullDownOwnerAnyAvailDatacenter(const char *cTableName, const char *c
 void tTablePullDownActiveColorCoded(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
 void voidGetDatacenterSlots(unsigned *uMaxContainers,unsigned *uActiveContainers,unsigned uDatacenter);
+void voidPullDownGoogleNodes(unsigned uSelector,unsigned uMode,unsigned uDatacenter,char *cLabel);
 
  //In tContainerfunc.h file included below
 void ExtProcesstContainerVars(pentry entries[], int x);
@@ -234,8 +236,6 @@ void ProcesstContainerVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%lu",&uModDate);
 		else if(!strcmp(entries[i].name,"uSource"))
 			sscanf(entries[i].val,"%u",&uSource);
-		else if(!strcmp(entries[i].name,"uContainerType"))
-			sscanf(entries[i].val,"%u",&uContainerType);
 		else if(!strcmp(entries[i].name,"cComment"))
 			cComment=entries[i].val;
 		else if(!strcmp(entries[i].name,"uBackupDate"))
@@ -256,6 +256,13 @@ void ProcesstContainerVars(pentry entries[], int x)
 		{
 			sprintf(cYesNouSearchSource,"%.31s",entries[i].val);
 			uSearchSource=ReadYesNoPullDownTriState(cYesNouSearchSource);
+		}
+		else if(!strcmp(entries[i].name,"uContainerType"))
+			sscanf(entries[i].val,"%u",&uContainerType);
+		else if(!strcmp(entries[i].name,"cuContainerTypePullDown"))
+		{
+			sprintf(cuContainerTypePullDown,"%.255s",entries[i].val);
+			uContainerType=ReadPullDown("tContainerType","cLabel",cuContainerTypePullDown);
 		}
 
 	}
@@ -518,6 +525,21 @@ void tContainerSearchSet(unsigned uStep)
 }//void tContainerSearchSet(unsigned uStep)
 
 
+void tContainerNewStepGCE(unsigned uStep)
+{
+	//uOSTemplate
+	OpenRow(LANG_FL_tContainer_uOSTemplate,"black");
+	tTablePullDownDatacenter("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1,
+		cuDatacenterPullDown,uPROP_OSTEMPLATE,0,uContainerType);
+
+	//uConfig
+	OpenRow(LANG_FL_tContainer_uConfig,"black");
+	tTablePullDownDatacenter("tConfig;cuConfigPullDown","cLabel","cLabel",uConfig,1,
+		cuDatacenterPullDown,uPROP_CONFIG,0,uContainerType);
+
+}//void tContainerNewStepGCE(unsigned uStep)
+
+
 void tContainerNewStep(unsigned uStep)
 {
 
@@ -531,6 +553,8 @@ void tContainerNewStep(unsigned uStep)
 		OpenRow("Select an organization","black");
 		uForClient=uOwner;
 		tTablePullDownResellers(uForClient,0);
+		OpenRow("Select container type","black");
+		tTablePullDown("tContainerType;cuContainerTypePullDown","cLabel","cLabel",uContainerType,1);
 		//Helper
 		if(uOwner)
 			printf("<input type=hidden name=uOwner value=%u >\n",uOwner);
@@ -543,9 +567,16 @@ void tContainerNewStep(unsigned uStep)
 		OpenRow("Selected organization","black");
 		tTablePullDown("tClient;cuClientPullDown","cLabel","cLabel",uForClient,0);
 
+		OpenRow("Selected container type","black");
+		tTablePullDown("tContainerType;cuContainerTypePullDown","cLabel","cLabel",uContainerType,0);
+
 		OpenRow("Select an available node","black");
-		tTablePullDownDatacenter("tNode;cuNodePullDown","cLabel","cLabel",uNode,1,
-			cuDatacenterPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+#define uGCEVM 11
+		if(uContainerType!=uGCEVM)
+			tTablePullDownDatacenter("tNode;cuNodePullDown","cLabel","cLabel",uNode,1,
+				cuDatacenterPullDown,0,uDatacenter,0);//0 does not use tProperty, uses uDatacenter
+		else
+			voidPullDownGoogleNodes(uNode,1,uDatacenter,"cuNodePullDown");//mode 1
 	}
 	else if(uStep==3 || uStep==4)
 	{
@@ -554,6 +585,9 @@ void tContainerNewStep(unsigned uStep)
 
 		OpenRow("Selected organization","black");
 		tTablePullDown("tClient;cuClientPullDown","cLabel","cLabel",uForClient,0);
+
+		OpenRow("Selected container type","black");
+		tTablePullDown("tContainerType;cuContainerTypePullDown","cLabel","cLabel",uContainerType,0);
 
 		OpenRow("Selected node","black");
 		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
@@ -578,6 +612,13 @@ void tContainerNewStep(unsigned uStep)
 			,LANG_FT_tContainer_cHostname,EncodeDoubleQuotes(cHostname));
 		printf("></td></tr>\n");
 
+		if(uContainerType==uGCEVM)
+		{
+			tContainerNewStepGCE(uStep);
+		}
+		else
+		{
+
 		//uIPv4
 		OpenRow(LANG_FL_tContainer_uIPv4,"black");
 		tTablePullDownOwnerAvailDatacenter("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1,uDatacenter,uForClient);
@@ -585,22 +626,24 @@ void tContainerNewStep(unsigned uStep)
 		//uOSTemplate
 		OpenRow(LANG_FL_tContainer_uOSTemplate,"black");
 		tTablePullDownDatacenter("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1,
-			cuDatacenterPullDown,uPROP_OSTEMPLATE,0);
+			cuDatacenterPullDown,uPROP_OSTEMPLATE,0,uContainerType);
 
 		//uConfig
 		OpenRow(LANG_FL_tContainer_uConfig,"black");
 		tTablePullDownDatacenter("tConfig;cuConfigPullDown","cLabel","cLabel",uConfig,1,
-			cuDatacenterPullDown,uPROP_CONFIG,0);
+			cuDatacenterPullDown,uPROP_CONFIG,0,uContainerType);
 
 		//uNameserver
 		OpenRow(LANG_FL_tContainer_uNameserver,"black");
 		tTablePullDownDatacenter("tNameserver;cuNameserverPullDown","cLabel","cLabel",uNameserver,1,
-			cuDatacenterPullDown,uPROP_NAMESERVER,0);
+			cuDatacenterPullDown,uPROP_NAMESERVER,0,0);
 
 		//uSearchdomain
 		OpenRow(LANG_FL_tContainer_uSearchdomain,"black");
 		tTablePullDownDatacenter("tSearchdomain;cuSearchdomainPullDown","cLabel","cLabel",uSearchdomain,1,
-			cuDatacenterPullDown,uPROP_SEARCHDOMAIN,0);
+			cuDatacenterPullDown,uPROP_SEARCHDOMAIN,0,0);
+
+		}
 
 		//Select group or allow creation of new one.
 		OpenRow("Select group","black");
@@ -647,6 +690,14 @@ void tContainerNewStep(unsigned uStep)
 		}
 		mysql_free_result(res);
 		printf("</select>\n");
+
+		if(uContainerType==uGCEVM)
+		{
+			OpenRow("Number of containers","black");
+			printf("<input title='Number of containers to be created'"
+				" type=text name=cService2 value='%s' maxlength=2>",cService2);
+			return;
+		}
 
 		if(cAutoCloneNode[0])
 		{
@@ -815,28 +866,28 @@ void tContainerInput(unsigned uMode)
 	OpenRow(LANG_FL_tContainer_uOSTemplate,"black");
 	if(guPermLevel>=7 && uMode)
 		tTablePullDownDatacenter("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1,
-			cuDatacenterPullDown,uPROP_OSTEMPLATE,0);
+			cuDatacenterPullDown,uPROP_OSTEMPLATE,0,uContainerType);
 	else
 		tTablePullDown("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,0);
 //uConfig
 	OpenRow(LANG_FL_tContainer_uConfig,"black");
 	if(guPermLevel>=7 && uMode)
 		tTablePullDownDatacenter("tConfig;cuConfigPullDown","cLabel","cLabel",uConfig,1,
-			cuDatacenterPullDown,uPROP_CONFIG,0);
+			cuDatacenterPullDown,uPROP_CONFIG,0,uContainerType);
 	else
 		tTablePullDown("tConfig;cuConfigPullDown","cLabel","cLabel",uConfig,0);
 //uNameserver
 	OpenRow(LANG_FL_tContainer_uNameserver,"black");
 	if(guPermLevel>=7 && uMode)
 		tTablePullDownDatacenter("tNameserver;cuNameserverPullDown","cLabel","cLabel",uNameserver,1,
-			cuDatacenterPullDown,uPROP_NAMESERVER,0);
+			cuDatacenterPullDown,uPROP_NAMESERVER,0,0);
 	else
 		tTablePullDown("tNameserver;cuNameserverPullDown","cLabel","cLabel",uNameserver,0);
 //uSearchdomain
 	OpenRow(LANG_FL_tContainer_uSearchdomain,"black");
 	if(guPermLevel>=7 && uMode)
 		tTablePullDownDatacenter("tSearchdomain;cuSearchdomainPullDown","cLabel","cLabel",uSearchdomain,1,
-			cuDatacenterPullDown,uPROP_SEARCHDOMAIN,0);
+			cuDatacenterPullDown,uPROP_SEARCHDOMAIN,0,0);
 	else
 		tTablePullDown("tSearchdomain;cuSearchdomainPullDown","cLabel","cLabel",uSearchdomain,0);
 //uDatacenter
@@ -900,15 +951,8 @@ void tContainerInput(unsigned uMode)
 //cComment
 	OpenRow(LANG_FL_tContainer_cComment,"black");
 	printf("<textarea title='%s' cols=100 wrap=none rows=8 name=cComment ",LANG_FT_tContainer_cComment);
-	if(guPermLevel>=8 && uMode)
-	{
-		printf(">%s</textarea></td></tr>\n",cComment);
-	}
-	else
-	{
-		printf("disabled>%s</textarea></td></tr>\n",cComment);
-		printf("<input type=hidden name=cComment value=\"%s\" >\n",EncodeDoubleQuotes(cComment));
-	}
+	printf("disabled>%s</textarea></td></tr>\n",cComment);
+	printf("<input type=hidden name=cComment value=\"%s\" >\n",EncodeDoubleQuotes(cComment));
 
 }//void tContainerInput(unsigned uMode)
 
@@ -1182,7 +1226,8 @@ void CreatetContainer(void)
 			"uSearchdomain INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uConfig INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uVeth INT UNSIGNED NOT NULL DEFAULT 0,"
-			"uSource INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uSource) )");
+			"uSource INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uSource),"
+			"uContainerType INT UNSIGNED NOT NULL DEFAULT 0)");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1396,7 +1441,7 @@ void tTablePullDownOwnerAvail(const char *cTableName, const char *cFieldName,
 
 void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 		const char *cOrderby, unsigned uSelector, unsigned uMode, const char *cDatacenter,
-		unsigned uType, unsigned uDatacenter)
+		unsigned uType, unsigned uDatacenter,unsigned uContainerType)
 {
         register int i,n;
         char cLabel[256];
@@ -1436,7 +1481,15 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 
 	if(uSelector && !uMode)
 	{
-		if(uType)
+		if(uType && uContainerType)
+			//UBC safe
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
+				" _rowid IN"
+				" (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND"
+				" uType=%u AND (cValue='All Datacenters' OR LOCATE('%s',cValue)>0))"
+				" AND _rowid=%u AND uContainerType=%u",
+					cFieldName,cLocalTableName,uType,cDatacenter,uSelector,uContainerType);
+		else if(uType)
 			//UBC safe
 	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
 				" _rowid IN"
@@ -1444,8 +1497,11 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 				" uType=%u AND (cValue='All Datacenters' OR LOCATE('%s',cValue)>0))"
 				" AND _rowid=%u",
 					cFieldName,cLocalTableName,uType,cDatacenter,uSelector);
-		else if(uDatacenter && (utDatacenter || utNode))
+		else if(uDatacenter && utDatacenter)
 	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u AND uStatus=1 AND _rowid=%u",
+				cFieldName,cLocalTableName,uDatacenter,uSelector);
+		else if(uDatacenter && utNode)
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u AND uStatus=1 AND uContainerType!=11 AND _rowid=%u",
 				cFieldName,cLocalTableName,uDatacenter,uSelector);
 		else if(uDatacenter)
 	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u AND _rowid=%u",
@@ -1456,7 +1512,15 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 	}
 	else
 	{
-		if(uType)
+		if(uType && uContainerType)
+			//UBC safe
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
+				" _rowid IN"
+				" (SELECT uKey FROM tProperty WHERE cName='cDatacenter' AND"
+				" uType=%u AND (cValue='All Datacenters' OR LOCATE('%s',cValue)>0)) AND uContainerType=%u"
+				" ORDER BY %s",
+					cFieldName,cLocalTableName,uType,cDatacenter,uContainerType,cOrderby);
+		else if(uType)
 			//UBC safe
 	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE"
 				" _rowid IN"
@@ -1464,8 +1528,11 @@ void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 				" uType=%u AND (cValue='All Datacenters' OR LOCATE('%s',cValue)>0))"
 				" ORDER BY %s",
 					cFieldName,cLocalTableName,uType,cDatacenter,cOrderby);
-		else if(uDatacenter && (utDatacenter || utNode))
-	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u and uStatus=1 ORDER BY %s",
+		else if(uDatacenter && utDatacenter)
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u AND uStatus=1 ORDER BY %s",
+				cFieldName,cLocalTableName,uDatacenter,cOrderby);
+		else if(uDatacenter && utNode)
+	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u AND uStatus=1 AND uContainerType!=11 ORDER BY %s",
 				cFieldName,cLocalTableName,uDatacenter,cOrderby);
 		else if(uDatacenter)
 	       		sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uDatacenter=%u ORDER BY %s",
@@ -2167,3 +2234,79 @@ void voidGetDatacenterSlots(unsigned *uMaxContainers,unsigned *uActiveContainers
 	mysql_free_result(res);
 
 }//void voidGetDatacenterSlots(unsigned *uMaxContainers,unsigned *uActiveContainers,unsigned uDatacenter)
+
+
+void voidPullDownGoogleNodes(unsigned uSelector,unsigned uMode,unsigned uDatacenter,char *cLabel)
+{
+        register int i,n;
+        MYSQL_RES *mysqlRes;         
+        MYSQL_ROW mysqlField;
+
+	char cHidden[100]={""};
+	char *cMode="";
+
+	if(!uMode)
+		cMode="disabled";
+	else if(uMode==2)
+		cMode="onChange='submit()'";
+      
+
+	sprintf(gcQuery,"SELECT _rowid,cLabel FROM tNode"
+			" WHERE uDatacenter=%u AND uStatus=1 AND uContainerType=11 ORDER BY cLabel",uDatacenter);
+
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		return;
+	}
+	mysqlRes=mysql_store_result(&gMysql);
+	i=mysql_num_rows(mysqlRes);
+
+        if(i>0)
+        {
+		int unsigned uField0;
+
+		printf("<select title='No title content at this time' name=%s %s>\n",cLabel,cMode);
+		//Default no selection
+       		printf("<option title='No selection'>---</option>\n");
+
+                for(n=0;n<i;n++)
+                {
+			uField0=0;
+                        mysqlField=mysql_fetch_row(mysqlRes);
+                        sscanf(mysqlField[0],"%u",&uField0);
+
+			//Preselect if only one option.
+                        if(uSelector==0 && i==1)
+                        {
+                             printf("<option selected>%s</option>\n",mysqlField[1]);
+			     if(!uMode)
+			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
+			     		cLabel,mysqlField[1]);
+                        }
+                        else if(uSelector != uField0)
+                        {
+                             printf("<option>%s</option>\n",mysqlField[1]);
+                        }
+                        else if(1)
+                        {
+                             printf("<option selected>%s</option>\n",mysqlField[1]);
+			     if(!uMode)
+			     sprintf(cHidden,"<input type=hidden name=%.99s value='%.99s'>\n",
+			     		cLabel,mysqlField[1]);
+                        }
+                }
+        }
+        else
+        {
+		printf("<select name=%s %s><option title='No selection'>---</option></select>\n"
+                        ,cLabel,cMode);
+		if(!uMode)
+		sprintf(cHidden,"<input type=hidden name=%99s value='0'>\n",cLabel);
+        }
+        printf("</select>\n");
+	if(cHidden[0])
+		printf("%s",cHidden);
+
+}//void voidPullDownGoogleNodes(unsigned uSelector,unsigned uMode,unsigned uDatacenter,char *cLabel)

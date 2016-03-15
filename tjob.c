@@ -444,7 +444,7 @@ void tJobNewStep(unsigned uStep)
 		{
 			OpenRow("Optionally restrict to node","black");
 			tTablePullDownDatacenter("tNode;cuNodePullDown","cLabel","cLabel",uNode,1,
-				cuDatacenterPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+				cuDatacenterPullDown,0,uDatacenter,0);//0 does not use tProperty, uses uDatacenter
 		}
 		else
 		{
@@ -461,13 +461,13 @@ void tJobNewStep(unsigned uStep)
 		{
 			OpenRow("Optionally restrict to node container","black");
 			tTablePullDownDatacenter("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,1,
-				cuContainerPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+				cuContainerPullDown,0,uDatacenter,0);//0 does not use tProperty, uses uDatacenter
 		}
 		else if(uContainer==0)
 		{
 			OpenRow("Optionally restrict to container","black");
 			tTablePullDownDatacenter("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,1,
-				cuContainerPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+				cuContainerPullDown,0,uDatacenter,0);//0 does not use tProperty, uses uDatacenter
 		}
 
 		OpenRow("Selected jobs","black");
@@ -517,11 +517,11 @@ void tJobNewStep(unsigned uStep)
 
 		OpenRow("Optionally assign to node","black");
 		tTablePullDownDatacenter("tNode;cuNodePullDown","cLabel","cLabel",uNode,1,
-			cuDatacenterPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+			cuDatacenterPullDown,0,uDatacenter,0);//0 does not use tProperty, uses uDatacenter
 
 		OpenRow("Optionally assign to container","black");
 		tTablePullDownDatacenter("tContainer;cuContainerPullDown","cLabel","cLabel",uContainer,1,
-			cuContainerPullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+			cuContainerPullDown,0,uDatacenter,0);//0 does not use tProperty, uses uDatacenter
 
 		OpenRow("Select Recurring Job","black");
 		RecurringJobDropDown(uRecurringJob,1);

@@ -4,11 +4,8 @@ FILE
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id$
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tostemplatefunc.h while 
-	RAD is still to be used.
 AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 */
 
@@ -31,9 +28,12 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//uContainerType: VZ or Google Compute Engine VM
+static unsigned uContainerType=0;
+static char cuContainerTypePullDown[256]={""};
 
 
-#define VAR_LIST_tOSTemplate "tOSTemplate.uOSTemplate,tOSTemplate.cLabel,tOSTemplate.uOwner,tOSTemplate.uCreatedBy,tOSTemplate.uCreatedDate,tOSTemplate.uModBy,tOSTemplate.uModDate"
+#define VAR_LIST_tOSTemplate "tOSTemplate.uOSTemplate,tOSTemplate.cLabel,tOSTemplate.uOwner,tOSTemplate.uCreatedBy,tOSTemplate.uCreatedDate,tOSTemplate.uModBy,tOSTemplate.uModDate,tOSTemplate.uContainerType"
 
  //Local only
 void Insert_tOSTemplate(void);
@@ -76,6 +76,13 @@ void ProcesstOSTemplateVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uContainerType"))
+			sscanf(entries[i].val,"%u",&uContainerType);
+		else if(!strcmp(entries[i].name,"cuContainerTypePullDown"))
+		{
+			sprintf(cuContainerTypePullDown,"%.255s",entries[i].val);
+			uContainerType=ReadPullDown("tContainerType","cLabel",cuContainerTypePullDown);
+		}
 	}
 
 	//After so we can overwrite form data if needed.
@@ -179,6 +186,7 @@ void tOSTemplate(const char *cResult)
 			sscanf(field[4],"%lu",&uCreatedDate);
 			sscanf(field[5],"%u",&uModBy);
 			sscanf(field[6],"%lu",&uModDate);
+			sscanf(field[7],"%u",&uContainerType);
 		}
 
 	}//Internal Skip
@@ -265,6 +273,12 @@ void tOSTemplateInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
 	}
+//uContainerType
+	OpenRow(LANG_FL_tContainer_uContainerType,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tContainerType;cuContainerTypePullDown","cLabel","cLabel",uContainerType,1);
+	else
+		tTablePullDown("tContainerType;cuContainerTypePullDown","cLabel","cLabel",uContainerType,0);
 //uOwner
 	OpenRow(LANG_FL_tOSTemplate_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
@@ -367,11 +381,12 @@ void DeletetOSTemplate(void)
 
 void Insert_tOSTemplate(void)
 {
-	sprintf(gcQuery,"INSERT INTO tOSTemplate SET uOSTemplate=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,"
+	sprintf(gcQuery,"INSERT INTO tOSTemplate SET uOSTemplate=%u,cLabel='%s',uOwner=%u,uContainerType=%u,uCreatedBy=%u,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uOSTemplate
 			,TextAreaSave(cLabel)
 			,uOwner
+			,uContainerType
 			,uCreatedBy);
 	MYSQL_RUN;
 
@@ -380,10 +395,11 @@ void Insert_tOSTemplate(void)
 
 void Update_tOSTemplate(char *cRowid)
 {
-	sprintf(gcQuery,"UPDATE tOSTemplate SET uOSTemplate=%u,cLabel='%s',uModBy=%u,"
+	sprintf(gcQuery,"UPDATE tOSTemplate SET uOSTemplate=%u,cLabel='%s',uModBy=%u,uContainerType=%u"
 			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uOSTemplate
 			,TextAreaSave(cLabel)
+			,uContainerType
 			,uModBy
 			,cRowid);
 	MYSQL_RUN;
@@ -457,6 +473,7 @@ void tOSTemplateList(void)
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uOSTemplate"
 		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>uContainerType"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
 		"<td><font face=arial,helvetica color=white>uCreatedDate"
@@ -492,8 +509,9 @@ void tOSTemplateList(void)
 		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tOSTemplate&uOSTemplate=%s>%s</a>"
 			,field[0]
 			,field[0]);
-		printf("<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[1]
+			,ForeignKey("tContainerType","cLabel",strtoul(field[7],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
 			,cBuf4
@@ -518,6 +536,7 @@ void CreatetOSTemplate(void)
 			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uContainerType INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

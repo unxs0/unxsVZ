@@ -212,7 +212,7 @@ void tTablePullDownOwnerAvail(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector, unsigned uMode);
 void tTablePullDownDatacenter(const char *cTableName, const char *cFieldName,
 		const char *cOrderby, unsigned uSelector, unsigned uMode, const char *cDatacenter,
-		unsigned uType, unsigned uDatacenter);
+		unsigned uType, unsigned uDatacenter,unsigned uContainerType);
 void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFieldName,
 	const char *cOrderby, unsigned uSelector, unsigned uMode,unsigned uDatacenter,unsigned uClient);
 

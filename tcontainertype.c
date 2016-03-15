@@ -14,8 +14,8 @@ AUTHOR
 
 //Table Variables
 //Table Variables
-//uType: Primary Key
-static unsigned uType=0;
+//uContainerType: Primary Key
+static unsigned uContainerType=0;
 //cLabel: Short label
 static char cLabel[33]={""};
 //uOwner: Record owner
@@ -32,7 +32,7 @@ static time_t uModDate=0;
 
 
 
-#define VAR_LIST_tContainerType "tContainerType.uType,tContainerType.cLabel,tContainerType.uOwner,tContainerType.uCreatedBy,tContainerType.uCreatedDate,tContainerType.uModBy,tContainerType.uModDate"
+#define VAR_LIST_tContainerType "tContainerType.uContainerType,tContainerType.cLabel,tContainerType.uOwner,tContainerType.uCreatedBy,tContainerType.uCreatedDate,tContainerType.uModBy,tContainerType.uModDate"
 
  //Local only
 void Insert_tContainerType(void);
@@ -61,8 +61,8 @@ void ProcesstContainerTypeVars(pentry entries[], int x)
 
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(entries[i].name,"uType"))
-			sscanf(entries[i].val,"%u",&uType);
+		if(!strcmp(entries[i].name,"uContainerType"))
+			sscanf(entries[i].val,"%u",&uContainerType);
 		else if(!strcmp(entries[i].name,"cLabel"))
 			sprintf(cLabel,"%.32s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
@@ -92,7 +92,7 @@ void ProcesstContainerTypeListVars(pentry entries[], int x)
         {
                 if(!strncmp(entries[i].name,"ED",2))
                 {
-                        sscanf(entries[i].name+2,"%u",&uType);
+                        sscanf(entries[i].name+2,"%u",&uContainerType);
                         guMode=2002;
                         tContainerType("");
                 }
@@ -162,8 +162,8 @@ void tContainerType(const char *cResult)
 		{
 			if(guMode==6)
 			{
-			sprintf(gcQuery,"SELECT _rowid FROM tContainerType WHERE uType=%u"
-						,uType);
+			sprintf(gcQuery,"SELECT _rowid FROM tContainerType WHERE uContainerType=%u"
+						,uContainerType);
 				MYSQL_RUN_STORE(res2);
 				field=mysql_fetch_row(res2);
 				sscanf(field[0],"%lu",&gluRowid);
@@ -172,7 +172,7 @@ void tContainerType(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
-		sscanf(field[0],"%u",&uType);
+		sscanf(field[0],"%u",&uContainerType);
 		sprintf(cLabel,"%.32s",field[1]);
 		sscanf(field[2],"%u",&uOwner);
 		sscanf(field[3],"%u",&uCreatedBy);
@@ -240,10 +240,10 @@ void tContainerType(const char *cResult)
 void tContainerTypeInput(unsigned uMode)
 {
 
-//uType
+//uContainerType
 	OpenRow(LANG_FL_tContainerType_uType,"black");
-	printf("<input title='%s' type=text name=uType value=%u size=16 maxlength=10 "
-,LANG_FT_tContainerType_uType,uType);
+	printf("<input title='%s' type=text name=uContainerType value=%u size=16 maxlength=10 "
+,LANG_FT_tContainerType_uType,uContainerType);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -251,7 +251,7 @@ void tContainerTypeInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=uType value=%u >\n",uType);
+		printf("<input type=hidden name=uContainerType value=%u >\n",uContainerType);
 	}
 //cLabel
 	OpenRow(LANG_FL_tContainerType_cLabel,"black");
@@ -322,9 +322,9 @@ void NewtContainerType(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uType FROM tContainerType\
-				WHERE uType=%u"
-							,uType);
+	sprintf(gcQuery,"SELECT uContainerType FROM tContainerType\
+				WHERE uContainerType=%u"
+							,uContainerType);
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -336,15 +336,15 @@ void NewtContainerType(unsigned uMode)
 	Insert_tContainerType();
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
-	uType=mysql_insert_id(&gMysql);
+	uContainerType=mysql_insert_id(&gMysql);
 #ifdef ISM3FIELDS
-	uCreatedDate=luGetCreatedDate("tContainerType",uType);
-	unxsVZLog(uType,"tContainerType","New");
+	uCreatedDate=luGetCreatedDate("tContainerType",uContainerType);
+	unxsVZLog(uContainerType,"tContainerType","New");
 #endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uType);
+	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uContainerType);
 	tContainerType(gcQuery);
 	}
 
@@ -354,25 +354,25 @@ void NewtContainerType(unsigned uMode)
 void DeletetContainerType(void)
 {
 #ifdef ISM3FIELDS
-	sprintf(gcQuery,"DELETE FROM tContainerType WHERE uType=%u AND ( uOwner=%u OR %u>9 )"
-					,uType,guLoginClient,guPermLevel);
+	sprintf(gcQuery,"DELETE FROM tContainerType WHERE uContainerType=%u AND ( uOwner=%u OR %u>9 )"
+					,uContainerType,guLoginClient,guPermLevel);
 #else
-	sprintf(gcQuery,"DELETE FROM tContainerType WHERE uType=%u"
-					,uType);
+	sprintf(gcQuery,"DELETE FROM tContainerType WHERE uContainerType=%u"
+					,uContainerType);
 #endif
 	MYSQL_RUN;
 	//tContainerType("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
 #ifdef ISM3FIELDS
-		unxsVZLog(uType,"tContainerType","Del");
+		unxsVZLog(uContainerType,"tContainerType","Del");
 #endif
 		tContainerType(LANG_NBR_RECDELETED);
 	}
 	else
 	{
 #ifdef ISM3FIELDS
-		unxsVZLog(uType,"tContainerType","DelError");
+		unxsVZLog(uContainerType,"tContainerType","DelError");
 #endif
 		tContainerType(LANG_NBR_RECNOTDELETED);
 	}
@@ -384,8 +384,8 @@ void Insert_tContainerType(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tContainerType SET uType=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			uType
+	sprintf(gcQuery,"INSERT INTO tContainerType SET uContainerType=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			uContainerType
 			,TextAreaSave(cLabel)
 			,uOwner
 			,uCreatedBy
@@ -400,8 +400,8 @@ void Update_tContainerType(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tContainerType SET uType=%u,cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
-			uType
+	sprintf(gcQuery,"UPDATE tContainerType SET uContainerType=%u,cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+			uContainerType
 			,TextAreaSave(cLabel)
 			,uModBy
 			,cRowid);
@@ -421,21 +421,21 @@ void ModtContainerType(void)
 
 	//Mod select gcQuery
 	if(guPermLevel<10)
-	sprintf(gcQuery,"SELECT tContainerType.uType,\
+	sprintf(gcQuery,"SELECT tContainerType.uContainerType,\
 				tContainerType.uModDate\
 				FROM tContainerType,tClient\
-				WHERE tContainerType.uType=%u\
+				WHERE tContainerType.uContainerType=%u\
 				AND tContainerType.uOwner=tClient.uClient\
 				AND (tClient.uOwner=%u OR tClient.uClient=%u)"
-			,uType,guLoginClient,guLoginClient);
+			,uContainerType,guLoginClient,guLoginClient);
 	else
-	sprintf(gcQuery,"SELECT uType,uModDate FROM tContainerType\
-				WHERE uType=%u"
-						,uType);
+	sprintf(gcQuery,"SELECT uContainerType,uModDate FROM tContainerType\
+				WHERE uContainerType=%u"
+						,uContainerType);
 #else
-	sprintf(gcQuery,"SELECT uType FROM tContainerType\
-				WHERE uType=%u"
-						,uType);
+	sprintf(gcQuery,"SELECT uContainerType FROM tContainerType\
+				WHERE uContainerType=%u"
+						,uContainerType);
 #endif
 
 	MYSQL_RUN_STORE(res);
@@ -457,8 +457,8 @@ void ModtContainerType(void)
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
 #ifdef ISM3FIELDS
-	uModDate=luGetModDate("tContainerType",uType);
-	unxsVZLog(uType,"tContainerType","Mod");
+	uModDate=luGetModDate("tContainerType",uContainerType);
+	unxsVZLog(uContainerType,"tContainerType","Mod");
 #endif
 	tContainerType(gcQuery);
 
@@ -485,7 +485,7 @@ void tContainerTypeList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uType<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uContainerType<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 
 
@@ -515,7 +515,7 @@ void tContainerTypeList(void)
 			ctime_r(&luTime6,cBuf6);
 		else
 			sprintf(cBuf6,"---");
-		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tContainerType&uType=%s>%s</a>"
+		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tContainerType&uContainerType=%s>%s</a>"
 			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
@@ -538,7 +538,7 @@ void tContainerTypeList(void)
 void CreatetContainerType(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tContainerType ("
-			" uType INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" uContainerType INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
 			" cLabel VARCHAR(32) NOT NULL DEFAULT '',"
 			" uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
 			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"

@@ -4,9 +4,9 @@ FILE
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id$
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tnodefunc.h while 
-	RAD is still to be used.
+AUTHOR/LEGAL
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
 
 
@@ -25,6 +25,9 @@ static char cuDatacenterPullDown[256]={""};
 //uStatus: Status of Hardware Node
 static unsigned uStatus=0;
 static char cuStatusPullDown[256]={""};
+//uContainerType: VZ or Google Compute Engine VM
+static unsigned uContainerType=0;
+static char cuContainerTypePullDown[256]={""};
 //uOwner: Record owner
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
@@ -57,7 +60,7 @@ static char cNewContainerMode[32]={"Active"};
 
 
 
-#define VAR_LIST_tNode "tNode.uNode,tNode.cLabel,tNode.uDatacenter,tNode.uStatus,tNode.uOwner,tNode.uCreatedBy,tNode.uCreatedDate,tNode.uModBy,tNode.uModDate"
+#define VAR_LIST_tNode "tNode.uNode,tNode.cLabel,tNode.uDatacenter,tNode.uStatus,tNode.uOwner,tNode.uCreatedBy,tNode.uCreatedDate,tNode.uModBy,tNode.uModDate,tNode.uContainerType"
 
  //Local only
 void Insert_tNode(void);
@@ -110,6 +113,13 @@ void ProcesstNodeVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uContainerType"))
+			sscanf(entries[i].val,"%u",&uContainerType);
+		else if(!strcmp(entries[i].name,"cuContainerTypePullDown"))
+		{
+			sprintf(cuContainerTypePullDown,"%.255s",entries[i].val);
+			uContainerType=ReadPullDown("tContainerType","cLabel",cuContainerTypePullDown);
+		}
 		else if(!strcmp(entries[i].name,"cuStatusPullDown"))
 		{
 			sprintf(cuStatusPullDown,"%.255s",entries[i].val);
@@ -221,6 +231,7 @@ void tNode(const char *cResult)
 		sscanf(field[6],"%lu",&uCreatedDate);
 		sscanf(field[7],"%u",&uModBy);
 		sscanf(field[8],"%lu",&uModDate);
+		sscanf(field[9],"%u",&uContainerType);
 
 		}
 
@@ -561,6 +572,12 @@ void tNodeInput(unsigned uMode)
 		tTablePullDown("tStatus;cuStatusPullDown","cLabel","cLabel",uStatus,1);
 	else
 		tTablePullDown("tStatus;cuStatusPullDown","cLabel","cLabel",uStatus,0);
+//uContainerType
+	OpenRow(LANG_FL_tContainer_uContainerType,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tContainerType;cuContainerTypePullDown","cLabel","cLabel",uContainerType,1);
+	else
+		tTablePullDown("tContainerType;cuContainerTypePullDown","cLabel","cLabel",uContainerType,0);
 //uOwner
 	OpenRow(LANG_FL_tNode_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
@@ -688,11 +705,13 @@ void Insert_tNode(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tNode SET uNode=%u,cLabel='%s',uDatacenter=%u,uStatus=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tNode SET uNode=%u,cLabel='%s',uDatacenter=%u,uStatus=%u,uContainerType=%u,"
+			"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uNode
 			,TextAreaSave(cLabel)
 			,uDatacenter
 			,uStatus
+			,uContainerType
 			,uOwner
 			,uCreatedBy
 			);
@@ -706,11 +725,13 @@ void Update_tNode(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tNode SET uNode=%u,cLabel='%s',uDatacenter=%u,uStatus=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tNode SET uNode=%u,cLabel='%s',uDatacenter=%u,uStatus=%u,uContainerType=%u,"
+			"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uNode
 			,TextAreaSave(cLabel)
 			,uDatacenter
 			,uStatus
+			,uContainerType
 			,uModBy
 			,cRowid);
 
@@ -793,7 +814,18 @@ void tNodeList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uNode<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uDatacenter<td><font face=arial,helvetica color=white>uStatus<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black>"
+			"<td><font face=arial,helvetica color=white>uNode"
+			"<td><font face=arial,helvetica color=white>cLabel"
+			"<td><font face=arial,helvetica color=white>uDatacenter"
+			"<td><font face=arial,helvetica color=white>uStatus"
+			"<td><font face=arial,helvetica color=white>uContainerType"
+			"<td><font face=arial,helvetica color=white>uOwner"
+			"<td><font face=arial,helvetica color=white>uCreatedBy"
+			"<td><font face=arial,helvetica color=white>uCreatedDate"
+			"<td><font face=arial,helvetica color=white>uModBy"
+			"<td><font face=arial,helvetica color=white>uModDate"
+		"</tr>");
 
 
 
@@ -825,10 +857,11 @@ void tNodeList(void)
 			sprintf(cBuf8,"---");
 		//printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tNode&uNode=%s>%s",field[0],field[1]);
-		printf("<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[1]
 			,ForeignKey("tDatacenter","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tStatus","cLabel",strtoul(field[3],NULL,10))
+			,ForeignKey("tContainerType","cLabel",strtoul(field[9],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[4],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[5],NULL,10))
 			,cBuf6
@@ -846,7 +879,17 @@ void tNodeList(void)
 
 void CreatetNode(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tNode ( uNode INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, uDatacenter INT UNSIGNED NOT NULL DEFAULT 0,unique (cLabel,uDatacenter), uStatus INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tNode ("
+			"uNode INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
+			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0,UNIQUE (cLabel,uDatacenter),"
+			"uStatus INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uContainerType INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

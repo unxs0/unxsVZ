@@ -47,7 +47,7 @@ void ExttContainerTypeCommands(pentry entries[], int x)
 				//Check entries here
                         	guMode=0;
 
-				uType=0;
+				uContainerType=0;
 				uCreatedBy=guLoginClient;
 				uOwner=guCompany;
 				uModBy=0;//Never modified
@@ -122,8 +122,7 @@ void ExttContainerTypeButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("These are usually fixed uType value entries used internally for our <i>big table</i>"
-				" tProperty.");
+			printf("These are usually fixed uContainerType value entries used internally.");
 			printf("<p><u>Record Context Info</u><br>");
 			tContainerTypeNavList();
 	}
@@ -144,9 +143,9 @@ void ExttContainerTypeGetHook(entry gentries[], int x)
 
 	for(i=0;i<x;i++)
 	{
-		if(!strcmp(gentries[i].name,"uType"))
+		if(!strcmp(gentries[i].name,"uContainerType"))
 		{
-			sscanf(gentries[i].val,"%u",&uType);
+			sscanf(gentries[i].val,"%u",&uContainerType);
 			guMode=6;
 		}
 	}
@@ -164,7 +163,7 @@ void ExttContainerTypeSelect(void)
 
 void ExttContainerTypeSelectRow(void)
 {
-	ExtSelectRowPublic("tContainerType",VAR_LIST_tContainerType,uType);
+	ExtSelectRowPublic("tContainerType",VAR_LIST_tContainerType,uContainerType);
 
 }//void ExttContainerTypeSelectRow(void)
 
@@ -176,18 +175,18 @@ void ExttContainerTypeListSelect(void)
 	ExtListSelectPublic("tContainerType",VAR_LIST_tContainerType);
 	
 	//Changes here must be reflected below in ExttContainerTypeListFilter()
-        if(!strcmp(gcFilter,"uType"))
+        if(!strcmp(gcFilter,"uContainerType"))
         {
-                sscanf(gcCommand,"%u",&uType);
-		sprintf(cCat," WHERE tContainerType.uType=%u ORDER BY uType",
-						uType);
+                sscanf(gcCommand,"%u",&uContainerType);
+		sprintf(cCat," WHERE tContainerType.uContainerType=%u ORDER BY uContainerType",
+						uContainerType);
 		strcat(gcQuery,cCat);
         }
         else if(1)
         {
                 //None NO FILTER
                 strcpy(gcFilter,"None");
-		strcat(gcQuery," ORDER BY uType");
+		strcat(gcQuery," ORDER BY uContainerType");
         }
 
 }//void ExttContainerTypeListSelect(void)
@@ -198,10 +197,10 @@ void ExttContainerTypeListFilter(void)
         //Filter
         printf("&nbsp;&nbsp;&nbsp;Filter on ");
         printf("<select name=gcFilter>");
-        if(strcmp(gcFilter,"uType"))
-                printf("<option>uType</option>");
+        if(strcmp(gcFilter,"uContainerType"))
+                printf("<option>uContainerType</option>");
         else
-                printf("<option selected>uType</option>");
+                printf("<option selected>uContainerType</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
@@ -243,7 +242,7 @@ void tContainerTypeNavList(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 
-	ExtSelectPublicOrder("tContainerType","uType,cLabel","cLabel");
+	ExtSelectPublicOrder("tContainerType","uContainerType,cLabel","cLabel");
 
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -259,7 +258,7 @@ void tContainerTypeNavList(void)
         	printf("<p><u>tContainerTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainerType&uType=%s>%s</a><br>\n",
+			printf("<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainerType&uContainerType=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}
         mysql_free_result(res);

@@ -2885,7 +2885,7 @@ void ExttContainerButtons(void)
 				uDatacenter,uOwner);
 			printf("<p>Or swap IPs with this container<br>");
 			tTablePullDownDatacenter("tContainer;cuWizContainerPullDown","cLabel","cLabel",uWizContainer,1,
-					cuWizContainerPullDown,0,uDatacenter);
+					cuWizContainerPullDown,0,uDatacenter,0);
 			printf("<br><input title='Do not select swap container with above select. Type in the exact cLabel here for swap.'"
 					" type=text name=cuWizContainerPullDown size=40 maxlength=32 > ");
 			printf("<p><input title='Create an IP change job for the current container'"
@@ -3023,7 +3023,7 @@ void ExttContainerButtons(void)
 				" value via the 'cuSyncPeriod' entry below.");
 			printf("<p>Select target node<br>");
 			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
-				cuTargetNodePullDown,0,uDatacenter);//0 does not use tProperty, uses uDatacenter
+				cuTargetNodePullDown,0,uDatacenter,0);//0 does not use tProperty, uses uDatacenter
 			printf("<p>Select new IPv4<br>");
 			tTablePullDownOwnerAnyAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
 				uDatacenter,uOwner);
@@ -3084,7 +3084,7 @@ void ExttContainerButtons(void)
 			tTablePullDown("tDatacenter;cuTargetDatacenterPullDown","cLabel","cLabel",uTargetDatacenter,0);
 			printf("<p>Select target node<br>");
 			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
-				cuTargetNodePullDown,0,uTargetDatacenter);//0 does not use tProperty, uses uDatacenter
+				cuTargetNodePullDown,0,uTargetDatacenter,0);//0 does not use tProperty, uses uDatacenter
 			printf("<p>Select new IPv4<br>");
 			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
 				uTargetDatacenter,uOwner);
@@ -3195,7 +3195,9 @@ void ExttContainerButtons(void)
 			printf("In conjunction with your master plan; review datacenter location, usage, traffic"
 				" and problem stats, in order to make an optimal datacenter selection."
 				" You must also chose the organization (a company, NGO or similar) that will own this"
-				" resource.<p>");
+				" resource.<p>And finally, select the container type.<p>For Google Compute Engine VMs: The datacenter"
+				" is the unxsVZ host datacenter that will host any hybrid cloud containers. The"
+				" hardware node will refer to the Google zone.<p>");
 			printf("<input type=submit class=largeButton title='Select datacenter and organization'"
 				" name=gcCommand value='Select Datacenter/Org'>\n");
 			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
@@ -3220,64 +3222,79 @@ void ExttContainerButtons(void)
                 break;
 
                 case 9003:
-			printf("<u>New Container Setup</u><br>");
-			printf("Set container creation parameters. Choices are limited based on selected datacenter, node,"
+			if(uContainerType==11)
+			{
+				printf("<u>New VM Setup</u><br>");
+				printf("Set VM creation parameters.<p>If you specify more than one VM the cLabel and the cHostname will"
+					" be constructed for you based on the cLabel prefix and the cHostname suffix your provide."
+					"<p>E.g. for 8 new VMs with cLabel=vmlab and cHostname=.isp.net you will create 8 VMs named"
+					" vmlab0.isp.net ... vmlab7.isp.net");
+
+				printf("<p><input type=submit class=largeButton"
+					" title='Configure VM and create single or multiple instances'"
+					" name=gcCommand value='VM Creation'>\n");
+			}
+			else
+			{
+				printf("<u>New Container Setup</u><br>");
+				printf("Set container creation parameters. Choices are limited based on selected datacenter, node,"
 				" and the organization that the container is being created for. We now require that the cLabel"
 				" be the first part (first stop) of the cHostname (for multiple container creation this is automatic.)<p>");
-			printf("The appliance container is a place holder container for an actual container (or non virtual server)"
+				printf("The appliance container is a place holder container for an actual container (or non virtual server)"
 				" than runs on a remote node (or appliance) not part of this unxsVZ system. The clone is kept sync'd,"
 				" and it's uSource is, as usual, the uContainer of the container created."
 				" This new type of container is identified, for now, via a special uStatus.");
-			GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
-			if(cAutoCloneNode[0])
-				printf("<p>Auto-clone subsystem is enabled for selected datacenter/node: Clone target node"
-					" must not match selected node.");
-			GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,uNode,0,0);
-			if(cAutoCloneNodeRemote[0])
-				printf("<p>Auto-clone-remote subsystem is enabled for selected datacenter/node. Will use tConfiguration"
+				GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
+				if(cAutoCloneNode[0])
+					printf("<p>Auto-clone subsystem is enabled for selected datacenter/node: Clone target node"
+						" must not match selected node.");
+				GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,uNode,0,0);
+				if(cAutoCloneNodeRemote[0])
+					printf("<p>Auto-clone-remote subsystem is enabled for selected datacenter/node. Will use tConfiguration"
 					" entries for automatic setup.");
-			GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
-			if(cunxsBindARecordJobZone[0])
-				printf("<p>unxsBind interface is configured for selected datacenter and <i>%s</i> zone: DNS will be setup"
+				GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
+				if(cunxsBindARecordJobZone[0])
+					printf("<p>unxsBind interface is configured for selected datacenter and <i>%s</i> zone: DNS will be setup"
 					" automatically for you, unless you opt-out by un-checking the <i>Create job...</i>"
 					" checkbox in the right data panel.",cunxsBindARecordJobZone);
 
-			printf("<p><u>%s target node information</u><br>",cuNodePullDown);
-			SelectedNodeInformation(uNode,1);
-			uTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
-			if(uTargetNode)
-			{
-				printf("<p><u>%s clone target node information</u><br>",cAutoCloneNode);
-				SelectedNodeInformation(uTargetNode,1);
+				printf("<p><u>%s target node information</u><br>",cuNodePullDown);
+				SelectedNodeInformation(uNode,1);
+				uTargetNode=ReadPullDown("tNode","cLabel",cAutoCloneNode);
+				if(uTargetNode)
+				{
+					printf("<p><u>%s clone target node information</u><br>",cAutoCloneNode);
+					SelectedNodeInformation(uTargetNode,1);
+				}
+				uRemoteNode=ReadPullDown("tNode","cLabel",cAutoCloneNodeRemote);
+							if(uRemoteNode)
+				{
+					printf("<p><u>%s remote clone target node information</u><br>",cAutoCloneNodeRemote);
+					SelectedNodeInformation(uRemoteNode,1);
+				}
+	
+				printf("<p><input type=submit class=largeButton"
+					" title='Configure container and create a single container'"
+					" name=gcCommand value='Single Container Creation'>\n");
+				printf("<p><input type=submit class=largeButton"
+					" title='Configure container and create a single container override any remote container creation'"
+					" name=gcCommand value='Single Container NoRemote'>\n");
+				printf("<p><input type=submit class=largeButton"
+					" title='Configure base container and continue to create multiple containers'"
+					" name=gcCommand value='Multiple Container Creation'>\n");
+				printf("<p><input type=submit class=largeButton"
+					" title='Configure and create special remote appliance container set. Appliance creation"
+       	                         " creates two (2) containers a dummy placeholder container -for the"
+       	                         " remote CPE appliance- and a managed infrastructure container.'"
+					" name=gcCommand value='Appliance Creation'>\n");
+				printf("<br><input type=text"
+					" title='Appliance creation requires a valid IPv4 IP number be entered."
+					" This IP is the IP of the remote appliance it may already exist in tIP"
+					" but belong to special CustomerPremise datacenter. Appliance creation"
+					" creates two (2) containers a dummy placeholder container -for the"
+					" remote CPE appliance- and a managed infrastructure container.'"
+					" name=gcIPv4 value='%s'> Appliance gcIPv4\n",gcIPv4);
 			}
-			uRemoteNode=ReadPullDown("tNode","cLabel",cAutoCloneNodeRemote);
-			if(uRemoteNode)
-			{
-				printf("<p><u>%s remote clone target node information</u><br>",cAutoCloneNodeRemote);
-				SelectedNodeInformation(uRemoteNode,1);
-			}
-
-			printf("<p><input type=submit class=largeButton"
-				" title='Configure container and create a single container'"
-				" name=gcCommand value='Single Container Creation'>\n");
-			printf("<p><input type=submit class=largeButton"
-				" title='Configure container and create a single container override any remote container creation'"
-				" name=gcCommand value='Single Container NoRemote'>\n");
-			printf("<p><input type=submit class=largeButton"
-				" title='Configure base container and continue to create multiple containers'"
-				" name=gcCommand value='Multiple Container Creation'>\n");
-			printf("<p><input type=submit class=largeButton"
-				" title='Configure and create special remote appliance container set. Appliance creation"
-                                " creates two (2) containers a dummy placeholder container -for the"
-                                " remote CPE appliance- and a managed infrastructure container.'"
-				" name=gcCommand value='Appliance Creation'>\n");
-			printf("<br><input type=text"
-				" title='Appliance creation requires a valid IPv4 IP number be entered."
-				" This IP is the IP of the remote appliance it may already exist in tIP"
-				" but belong to special CustomerPremise datacenter. Appliance creation"
-				" creates two (2) containers a dummy placeholder container -for the"
-				" remote CPE appliance- and a managed infrastructure container.'"
-				" name=gcIPv4 value='%s'> Appliance gcIPv4\n",gcIPv4);
 			printf("<p><input type=submit class=largeButton title='Cancel this operation'"
 				" name=gcCommand value='Cancel'>\n");
                 break;
@@ -3511,10 +3528,10 @@ void ExttContainerAuxTable(void)
 			//Set operation settings
 			printf("Target node ");
 			//tTablePullDown("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1);
-			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,"",0,0);
+			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,"",0,0,0);
 			printf("&nbsp;&nbsp;Clone target node ");
 			//tTablePullDown("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1);
-			tTablePullDownDatacenter("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1,"",0,0);
+			tTablePullDownDatacenter("tNode;cuCloneTargetNodePullDown","cLabel","cLabel",guCloneTargetNode,1,"",0,0,0);
 			printf("&nbsp;&nbsp;Group ");
 			tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
 
