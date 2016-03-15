@@ -1196,6 +1196,65 @@ void UpdateSchema(void)
 	if(TextConnectDb())
 		exit(1);
 
+	//tOSTemplate
+	//
+	unsigned uOSTemplateContainerType=0;
+	sprintf(gcQuery,"SHOW COLUMNS IN tOSTemplate");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uContainerType"))
+			uOSTemplateContainerType=1;
+	}
+       	mysql_free_result(res);
+	if(!uOSTemplateContainerType)
+	{
+		sprintf(gcQuery,"ALTER TABLE tOSTemplate ADD uContainerType INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uContainerType to tOSTemplate\n");
+	}
+	//
+	//tOSTemplate
+
+	
+	//tConfig
+	//
+	unsigned uConfigContainerType=0;
+	sprintf(gcQuery,"SHOW COLUMNS IN tConfig");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uContainerType"))
+			uConfigContainerType=1;
+	}
+       	mysql_free_result(res);
+	if(!uConfigContainerType)
+	{
+		sprintf(gcQuery,"ALTER TABLE tConfig ADD uContainerType INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uContainerType to tConfig\n");
+	}
+	sprintf(gcQuery,"ALTER TABLE tConfig MODIFY cLabel VARCHAR(100) NOT NULL DEFAULT ''");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	//
+	//tConfig
+	
 	//
 	//tContainer
 	unsigned uVeth=0;
@@ -1314,6 +1373,33 @@ void CreatetIPType(void);
 	//tIP
 	//
 
+	//
+	//tNode
+	unsigned uNodeContainerType=0;
+	sprintf(gcQuery,"SHOW COLUMNS IN tNode");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uContainerType"))
+			uNodeContainerType=1;
+	}
+       	mysql_free_result(res);
+	if(!uNodeContainerType)
+	{
+		sprintf(gcQuery,"ALTER TABLE tNode ADD uContainerType INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uContainerType to tNode\n");
+	}
+	//tNode
+	//
+	
 	sprintf(gcQuery,"SHOW COLUMNS IN tOSTemplate");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

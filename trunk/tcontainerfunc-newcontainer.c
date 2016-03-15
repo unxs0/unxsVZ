@@ -41,6 +41,8 @@ else if(!strcmp(gcCommand,"Select Datacenter/Org"))
 			tContainer("<blink>Error:</blink> Selected datacenter is full or not active. Select another.");
 		if(!uForClient)
 			tContainer("<blink>Error:</blink> Must select an organization (company, NGO or similar.)");
+		if(!uContainerType)
+			tContainer("<blink>Error:</blink> Must select container type.");
 
 		guMode=9002;
 		tContainer("New container step 2");
@@ -65,6 +67,8 @@ else if(!strcmp(gcCommand,"Select Node"))
 			tContainer("<blink>Error:</blink> Must select an organization (company, NGO or similar.)");
 		if(!uNode)
 			tContainer("<blink>Error:</blink> Must select a node.");
+		if(!uContainerType)
+			tContainer("<blink>Error:</blink> Must select container type.");
 
 		GetDatacenterProp(uDatacenter,"NewContainerMode",cNCMDatacenter);
 		if(cNCMDatacenter[0] && !strstr(cNCMDatacenter,"Active"))
@@ -116,6 +120,9 @@ else if(!strcmp(gcCommand,"Single Container Creation")
 		char cCloneLabel[100]={""};
 
 		ProcesstContainerVars(entries,x);
+
+		if(uContainerType!=1)
+			tContainer("Only OpenVZ container creation is currently supported.");
 
 		if(!strcmp(gcCommand,"Single Container NoRemote"))
 			uRemote=0;

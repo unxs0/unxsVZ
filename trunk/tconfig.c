@@ -4,11 +4,8 @@ FILE
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id$
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tconfigfunc.h while 
-	RAD is still to be used.
 AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 */
 
@@ -20,7 +17,7 @@ AUTHOR/LEGAL
 //uConfig: Primary Key
 static unsigned uConfig=0;
 //cLabel: Short label
-static char cLabel[33]={""};
+static char cLabel[100]={""};
 //uOwner: Record owner
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
@@ -31,10 +28,13 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//uContainerType: VZ or Google Compute Engine VM
+static unsigned uContainerType=0;
+static char cuContainerTypePullDown[256]={""};
 
 
 
-#define VAR_LIST_tConfig "tConfig.uConfig,tConfig.cLabel,tConfig.uOwner,tConfig.uCreatedBy,tConfig.uCreatedDate,tConfig.uModBy,tConfig.uModDate"
+#define VAR_LIST_tConfig "tConfig.uConfig,tConfig.cLabel,tConfig.uOwner,tConfig.uCreatedBy,tConfig.uCreatedDate,tConfig.uModBy,tConfig.uModDate,tConfig.uContainerType"
 
  //Local only
 void Insert_tConfig(void);
@@ -66,7 +66,7 @@ void ProcesstConfigVars(pentry entries[], int x)
 		if(!strcmp(entries[i].name,"uConfig"))
 			sscanf(entries[i].val,"%u",&uConfig);
 		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.32s",entries[i].val);
+			sprintf(cLabel,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uOwner"))
 			sscanf(entries[i].val,"%u",&uOwner);
 		else if(!strcmp(entries[i].name,"uCreatedBy"))
@@ -77,6 +77,13 @@ void ProcesstConfigVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uContainerType"))
+			sscanf(entries[i].val,"%u",&uContainerType);
+		else if(!strcmp(entries[i].name,"cuContainerTypePullDown"))
+		{
+			sprintf(cuContainerTypePullDown,"%.255s",entries[i].val);
+			uContainerType=ReadPullDown("tContainerType","cLabel",cuContainerTypePullDown);
+		}
 
 	}
 
@@ -175,12 +182,13 @@ void tConfig(const char *cResult)
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
 		sscanf(field[0],"%u",&uConfig);
-		sprintf(cLabel,"%.32s",field[1]);
+		sprintf(cLabel,"%.99s",field[1]);
 		sscanf(field[2],"%u",&uOwner);
 		sscanf(field[3],"%u",&uCreatedBy);
 		sscanf(field[4],"%lu",&uCreatedDate);
 		sscanf(field[5],"%u",&uModBy);
 		sscanf(field[6],"%lu",&uModDate);
+		sscanf(field[7],"%u",&uContainerType);
 
 		}
 
@@ -257,7 +265,7 @@ void tConfigInput(unsigned uMode)
 	}
 //cLabel
 	OpenRow(LANG_FL_tConfig_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=99 "
 ,LANG_FT_tConfig_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -268,6 +276,12 @@ void tConfigInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
 	}
+//uContainerType
+	OpenRow(LANG_FL_tContainer_uContainerType,"black");
+	if(guPermLevel>=10 && uMode)
+		tTablePullDown("tContainerType;cuContainerTypePullDown","cLabel","cLabel",uContainerType,1);
+	else
+		tTablePullDown("tContainerType;cuContainerTypePullDown","cLabel","cLabel",uContainerType,0);
 //uOwner
 	OpenRow(LANG_FL_tConfig_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
@@ -373,12 +387,13 @@ void Insert_tConfig(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tConfig SET uConfig=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,"
+	sprintf(gcQuery,"INSERT INTO tConfig SET uConfig=%u,cLabel='%s',uOwner=%u,uCreatedBy=%u,uContainerType=%u,"
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uConfig
 			,TextAreaSave(cLabel)
 			,uOwner
 			,uCreatedBy
+			,uContainerType
 		);
 	MYSQL_RUN;
 
@@ -389,10 +404,11 @@ void Update_tConfig(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tConfig SET uConfig=%u,cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tConfig SET uConfig=%u,cLabel='%s',uModBy=%u,uContainerType=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uConfig
 			,TextAreaSave(cLabel)
 			,uModBy
+			,uContainerType
 			,cRowid);
 
 	MYSQL_RUN;
@@ -466,6 +482,7 @@ void tConfigList(void)
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uConfig"
 		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>uContainerType"
 		"<td><font face=arial,helvetica color=white>uOwner"
 		"<td><font face=arial,helvetica color=white>uCreatedBy"
 		"<td><font face=arial,helvetica color=white>uCreatedDate"
@@ -501,8 +518,9 @@ void tConfigList(void)
 		printf("<td><a class=darkLink href=unxsVZ.cgi?gcFunction=tConfig&uConfig=%s>%s</a>"
 			,field[0]
 			,field[0]);
-		printf("<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+		printf("<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[1]
+			,ForeignKey("tContainerType","cLabel",strtoul(field[7],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[2],NULL,10))
 			,ForeignKey("tClient","cLabel",strtoul(field[3],NULL,10))
 			,cBuf4
@@ -521,12 +539,13 @@ void CreatetConfig(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tConfig ( "
 			"uConfig INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-			"cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			"cLabel VARCHAR(100) NOT NULL DEFAULT '',"
 			"uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
 			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uContainerType INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uDatacenter INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

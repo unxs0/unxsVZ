@@ -643,7 +643,7 @@ void ExttNodeButtons(void)
 			tTablePullDown("tDatacenter;cuTargetDatacenterPullDown","cLabel","cLabel",uTargetDatacenter,0);
 			printf("<p>Select target node<br>");
 			tTablePullDownDatacenter("tNode;cuTargetNodePullDown","cLabel","cLabel",uTargetNode,1,
-				cuTargetNodePullDown,0,uTargetDatacenter);//0 does not use tProperty, uses uDatacenter
+				cuTargetNodePullDown,0,uTargetDatacenter,0);//0 does not use tProperty, uses uDatacenter
 			printf("<p>Select start uIPv4<br>");
 			tTablePullDownOwnerAvailDatacenter("tIP;cuWizIPv4PullDown","cLabel","cLabel",uWizIPv4,1,
 				uTargetDatacenter,uOwner);
