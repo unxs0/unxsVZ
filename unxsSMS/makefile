@@ -12,8 +12,15 @@
 
 CFLAGS= -Wall
 LIBS= -L/usr/lib/mysql -lmysqlclient -lssl -lm -lcurl
+LIBS2= -lssl -lm -lcurl
 
-all: unxsSMS
+all: unxsSMS unxsDOApi
+
+unxsDOApi: digitalocean.api.o
+	cc digitalocean.api.o -o unxsDOApi $(LIBS2) 
+
+digitalocean.api.o: digitalocean.api.c local.h
+	cc -c digitalocean.api.c -o digitalocean.api.o $(CFLAGS)
 
 unxsSMS: sms.o mysqlconnect.o
 	cc sms.o mysqlconnect.o -o unxsSMS $(LIBS) 
