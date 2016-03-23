@@ -33,24 +33,26 @@ body {
 	<div class = "col-sm-9 col-md-6 col-lg-4" style = "background-color: #ffffff;
 				box-shadow: inset 1px -1px 1px #444, inset -1px 1px 1px #444;">
 		{{gcBrand}}
-		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="Login">
-			<input maxlength="31" title='Input your login'
+		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="newaccountcreated">
+			<input maxlength="31" title='Selected login'
 				type="login" id="inputLogin" class="form-control" 
-				placeholder="Login id" value="{{gcLogin}}" name="gcLogin" required autofocus>
-			<input maxlength="31" title='Input your password'
-		 		type="password" id="inputPassword" class="form-control"
-				placeholder="Password" name="gcPasswd" required>
-			<input maxlength="6" title='Input your one time passcode -it is a six digit number'
-				type="code" id="inputCode" class="form-control"
-				placeholder="Code" name="gcOTP" required>
-			<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Sign in</button>
+				value="{{gcNewLogin}}" name="gcLogin" disabled>
+			<input maxlength="99" title='A valid and working email address'
+				type="login" id="inputEmail" class="form-control" 
+				value="{{gcNewEmail}}" name="gcEmail" disabled>
+			<input maxlength="64" title='Emailed token'
+				type="login" id="inputToken" class="form-control" 
+				value="{{gcNewToken}}" name="gcNewToken" required autofocus>
+			<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Activate'>Activate</button>
+		</form>
+		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="Return">
+			<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Return'>Return</button>
 		</form>
 	</div>
 
 	<div class = "col-sm-9 col-md-6 col-lg-6" style = "box-shadow: inset 1px -1px 1px #444, inset -1px 1px 1px #444;">
-		{{funcTemplate:Page1Text}}
+		{{funcTemplate:NewAccountCreatedText}}
 		<p><h5>{{gcMessage}}</h5>
-		<p><h5>{{gcOTPInfo}}</h5>
 	</div>
 
 

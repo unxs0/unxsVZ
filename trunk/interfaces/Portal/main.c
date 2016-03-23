@@ -35,6 +35,13 @@ char gcDelStep[32]={""};
 //SSLLoginCookie()
 char gcCookie[1024]={""};
 char gcLogin[100]={""};
+
+//Create new account
+static char gcNewEmail[100]={""};
+static char gcNewLogin[100]={""};
+static char gcNewPasswd[100]={""};
+static char gcNewPasswd2[100]={""};
+
 char cLogKey[16]={"Ksdj458jssdUjf79"};
 char gcPasswd[100]={""};
 unsigned guSSLCookieLogin=0;
@@ -66,9 +73,14 @@ void SSLCookieLogin(void);
 void SetLogin(void);
 void GetPLAndClient(char *cUser);
 void htmlLogin(void);
+unsigned uCreateAccount(void);
+void htmlNewAccount(void);
+void htmlCreateNewAccount(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
-
+unsigned uNoUpper(const char *cPasswd);
+unsigned uNoLower(const char *cPasswd);
+unsigned uNoDigit(const char *cPasswd);
 
 
 int main(int argc, char *argv[])
@@ -141,6 +153,14 @@ int main(int argc, char *argv[])
 				sprintf(gcPasswd,"%.99s",entries[i].val);
                 	else if(!strcmp(entries[i].name,"gcOTP"))
 				sprintf(gcOTP,"%.15s",entries[i].val);
+			else if(!strcmp(entries[i].name,"gcNewLogin"))
+				sprintf(gcNewLogin,"%.99s",entries[i].val);
+			else if(!strcmp(entries[i].name,"gcNewEmail"))
+				sprintf(gcNewEmail,"%.99s",entries[i].val);
+			else if(!strcmp(entries[i].name,"gcNewPasswd"))
+				sprintf(gcNewPasswd,"%.99s",entries[i].val);
+			else if(!strcmp(entries[i].name,"gcNewPasswd2"))
+				sprintf(gcNewPasswd2,"%.99s",entries[i].val);
 		}
 	}
 
@@ -171,6 +191,10 @@ int main(int argc, char *argv[])
 
         if(!strcmp(gcFunction,"Login")) 
 		SetLogin();
+        else if(!strcmp(gcFunction,"NewAccount")) 
+		htmlNewAccount();
+        else if(!strcmp(gcFunction,"CreateNewAccount")) 
+		htmlCreateNewAccount();
 
         if(!guPermLevel || !gcUser[0] || !guLoginClient)
                 SSLCookieLogin();
@@ -187,6 +211,65 @@ int main(int argc, char *argv[])
 	return(0);
 
 }//end of main()
+
+
+unsigned uCreateAccount(void)
+{
+	if(!gcNewLogin[0])
+	{
+		gcMessage="Login is required";
+		return(1);
+	}
+	if(!gcNewEmail[0])
+	{
+		gcMessage="Email is required";
+		return(1);
+	}
+	if(!gcNewPasswd[0] || !gcNewPasswd2[0])
+	{
+		gcMessage="Passwords are required";
+		return(1);
+	}
+	if(strcmp(gcNewPasswd,gcNewPasswd2))
+	{
+		gcMessage="Passwords do not match";
+		return(1);
+	}
+	if(strlen(gcNewPasswd)<6)
+	{
+		gcMessage="New 'Password' must be at least 6 chars long";
+		return(1);
+	}
+	if(uNoUpper(gcNewPasswd) || uNoLower(gcNewPasswd) || uNoDigit(gcNewPasswd))
+	{
+		gcMessage="New 'Password' must have some upper and lower case letters,"
+						" and at least one number";
+		return(1);
+	}
+	return(0);
+}//unsigned uCreateAccount(void)
+
+
+void htmlCreateNewAccount(void)
+{
+	htmlHeader("unxsPortal","LoginHeader");
+	if(uCreateAccount())
+		htmlLoginPage("unxsPortal","NewAccount.Body");
+	else
+		htmlLoginPage("unxsPortal","NewAccountCreated.Body");
+	htmlFooter("LoginFooter");
+
+}//void htmlCreateNewAccount(void)
+
+
+void htmlNewAccount(void)
+{
+	htmlHeader("unxsPortal","LoginHeader");
+	htmlLoginPage("unxsPortal","NewAccount.Body");
+	htmlFooter("LoginFooter");
+
+}//void htmlLogin(void)
+
 
 void htmlLogin(void)
 {
@@ -219,17 +302,25 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 			template.cpName[1]="cCGI";
 			template.cpValue[1]="";
 			
-			template.cpName[2]="cMessage";
+			template.cpName[2]="gcMessage";
 			template.cpValue[2]=gcMessage;
 
 			template.cpName[3]="gcBrand";
 			template.cpValue[3]=INTERFACE_HEADER_TITLE;
 
 			template.cpName[4]="gcLogin";
-			if(!gcLogin[0]) sprintf(gcLogin,"Login id");
 			template.cpValue[4]=gcLogin;
 
-			template.cpName[5]="";
+			template.cpName[5]="gcNewLogin";
+			template.cpValue[5]=gcNewLogin;
+
+			template.cpName[6]="gcNewEmail";
+			template.cpValue[6]=gcNewEmail;
+
+			template.cpName[7]="gcOTPInfo";
+			template.cpValue[7]=gcOTPInfo;
+
+			template.cpName[8]="";
 
 			printf("\n<!-- Start htmlLoginPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -347,11 +438,47 @@ void htmlFooter(char *cTemplateName)
 
 }//void htmlFooter()
 
+void funcPrintTemplateDirect(FILE *fp,char *cTemplateName);
+void funcPrintTemplateDirect(FILE *fp,char *cTemplateName)
+{
+	if(cTemplateName[0])
+	{
+        	MYSQL_RES *res;
+	        MYSQL_ROW field;
+
+		TemplateSelectInterface(cTemplateName,uPLAINSET,uPortal);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			struct t_template template;
+
+			template.cpName[0]="";
+
+			printf("\n<!-- Start funcPrintTemplateDirect(%s) -->\n",cTemplateName); 
+			Template(field[0],&template,stdout);
+			printf("\n<!-- End funcPrintTemplateDirect(%s) -->\n",cTemplateName); 
+		}
+		else
+		{
+			printf(" %s \n",cTemplateName);
+		}
+		mysql_free_result(res);
+	}
+
+}//void funcPrintTemplateDirect(FILE *fp,char *cTemplateName)
+
 
 //libtemplate.a required
 void AppFunctions(FILE *fp,char *cFunction)
 {
-	
+	unsigned uLen=0;
+	if(!strncmp(cFunction,"funcTemplate:",uLen=strlen("funcTemplate:")))
+	{
+		if(cFunction[uLen]!=0)
+		{
+			funcPrintTemplateDirect(fp,cFunction+uLen);
+		}
+	}
 }//void AppFunctions(FILE *fp,char *cFunction)
 
 
