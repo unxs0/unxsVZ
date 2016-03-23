@@ -33,22 +33,33 @@ body {
 	<div class = "col-sm-9 col-md-6 col-lg-4" style = "background-color: #ffffff;
 				box-shadow: inset 1px -1px 1px #444, inset -1px 1px 1px #444;">
 		{{gcBrand}}
-		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="Login">
-			<input maxlength="31" title='Input your login'
+		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="newaccount">
+
+			<input maxlength="31" title='Select a login'
 				type="login" id="inputLogin" class="form-control" 
-				placeholder="Login id" value="{{gcLogin}}" name="gcLogin" required autofocus>
-			<input maxlength="31" title='Input your password'
-		 		type="password" id="inputPassword" class="form-control"
-				placeholder="Password" name="gcPasswd" required>
-			<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Sign in</button>
+				placeholder="LoginName" value="{{gcNewLogin}}" name="gcNewLogin" required autofocus>
+
+			<input maxlength="99" title='Provide a valid and working email address'
+				type="email" id="inputEmail" class="form-control" 
+				placeholder="yourvalid@emailaddress.com" value="{{gcNewEmail}}" name="gcNewEmail" required>
+
+			<input maxlength="31" title='Input a password with upper and lower case letters and numbers' autocomplete="off"
+		 		type="password" id="inputNewPassword" class="form-control"
+				placeholder="password" name="gcNewPasswd" required>
+
+			<input maxlength="31" title='Input your password again' autocomplete="off"
+		 		type="password" id="inputNewPassword2" class="form-control"
+				placeholder="password again" name="gcNewPasswd2" required>
+
+			<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='CreateNewAccount'>Create new account</button>
 		</form>
-		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="StartCreate">
-			<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='NewAccount'>Create new account</button>
+		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="cancel">
+			<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Cancel'>Cancel</button>
 		</form>
 	</div>
 
 	<div class = "col-sm-9 col-md-6 col-lg-6" style = "box-shadow: inset 1px -1px 1px #444, inset -1px 1px 1px #444;">
-		{{funcTemplate:Page1Text}}
+		{{funcTemplate:NewAccountText}}
 		<p><h5>{{gcMessage}}</h5>
 	</div>
 
