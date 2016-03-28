@@ -36,29 +36,19 @@ body {
 		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="newaccountcreated">
 			<input maxlength="31" title='Selected login'
 				type="login" id="inputLogin" class="form-control" 
-				value="{{gcNewLogin}}" name="gcNewLogin" disabled>
-			<input hidden value="{{gcNewLogin}}" name="gcNewLogin">
+				value="{{gcNewLogin}}" name="gcLogin" disabled>
 			<input maxlength="99" title='A valid and working email address'
 				type="login" id="inputEmail" class="form-control" 
-				value="{{gcNewEmail}}" name="gcNewEmail" disabled>
-			<input hidden value="{{gcNewEmail}}" name="gcNewEmail">
+				value="{{gcNewEmail}}" name="gcEmail" disabled>
 			<input maxlength="64" title='Your full name'
 				type="login" id="inputFullName" class="form-control" 
 				value="{{gcFullName}}" name="gcFullName" disabled>
-			<input hidden value="{{gcFullName}}" name="gcFullName">
 			<input maxlength="64" title='An optional company name'
 				type="login" id="inputCompany" class="form-control" 
 				value="{{gcCompany}}" name="gcCompany" disabled>
-			<input hidden value="{{gcCompany}}" name="gcCompany">
 			<input maxlength="64" title='A valid and working SMS capable phone number'
 				type="phone" id="inputPhone" class="form-control" 
 				value="{{gcPhone}}" name="gcPhone" disabled>
-			<input hidden value="{{gcPhone}}" name="gcPhone">
-			<input maxlength="64" title='Emailed token'
-				type="login" id="inputToken" class="form-control" 
-				value="{{gcNewToken}}" name="gcNewToken" required autofocus>
-			<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction 
-					value='ActivateNewAccount'>Activate New Account</button>
 		</form>
 		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="Return">
 			<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Return'>Return</button>
@@ -66,7 +56,7 @@ body {
 	</div>
 
 	<div class = "col-sm-9 col-md-6 col-lg-6" style = "box-shadow: inset 1px -1px 1px #444, inset -1px 1px 1px #444;">
-		{{funcTemplate:NewAccountCreatedText}}
+		{{funcTemplate:NewAccountActivatedText}}
 		<h5><font color=red>{{gcMessage}}</font></h5>
 	</div>
 

@@ -49,7 +49,7 @@ body {
 
 	<div class = "col-sm-9 col-md-6 col-lg-6" style = "box-shadow: inset 1px -1px 1px #444, inset -1px 1px 1px #444;">
 		{{funcTemplate:Page1Text}}
-		<p><h5>{{gcMessage}}</h5>
+		<h5><font color=red>{{gcMessage}}</font></h5>
 	</div>
 
 
