@@ -26,6 +26,7 @@ void UserGetHook(entry gentries[],int x);
 unsigned uNoUpper(const char *cPasswd);
 unsigned uNoDigit(const char *cPasswd);
 unsigned uNoLower(const char *cPasswd);
+unsigned uValidPhoneNumber(const char *cPhone);
 unsigned uChangePassword(const char *cPasswd);
 void EncryptPasswdWithSalt(char *pw, char *salt);
 char *cGetPasswd(char *gcLogin);
@@ -98,20 +99,15 @@ unsigned uNoDigit(const char *cPasswd)
 }//unsigned uNoDigit(const char *cPasswd)
 
 
-//Passwd stuff
-static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
-        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-void to64(s, v, n)
-  register char *s;
-  register long v;
-  register int n;
+unsigned uValidPhoneNumber(const char *cPhone)
 {
-    while (--n >= 0) {
-        *s++ = itoa64[v&0x3f];
-        v >>= 6;
-    }
-}//void to64(s, v, n)
+	register int i;
+	for(i=0;cPhone[i];i++)
+	{
+		if(!isdigit(cPhone[i]) && cPhone[i]!='+' && cPhone[i]!=' ' && cPhone[i]!='-' && cPhone[i]!='.') return(0);
+	}
+	return(1);
+}//unsigned uValidPhoneNumber(const char *cPhone)
 
 
 unsigned uChangePassword(const char *cPasswd)

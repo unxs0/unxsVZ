@@ -41,12 +41,17 @@ static char gcNewEmail[100]={""};
 static char gcNewLogin[100]={""};
 static char gcNewPasswd[100]={""};
 static char gcNewPasswd2[100]={""};
+static char gcPhone[64]={""};
+static char gcCompany[64]={""};
+static char gcFullName[64]={""};
+static char gcNewToken[64]={""};
 
 char cLogKey[16]={"Ksdj458jssdUjf79"};
 char gcPasswd[100]={""};
 unsigned guSSLCookieLogin=0;
 unsigned guRequireOTPLogin=0;
 unsigned guOTPExpired=0;
+unsigned guForked=0;
 char gcOTP[16]={""};
 char gcOTPInfo[64]={"Nothing yet"};
 char gcOTPSecret[65]={""};
@@ -76,11 +81,16 @@ void htmlLogin(void);
 unsigned uCreateAccount(void);
 void htmlNewAccount(void);
 void htmlCreateNewAccount(void);
+void htmlActivateNewAccount(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
 unsigned uNoUpper(const char *cPasswd);
 unsigned uNoLower(const char *cPasswd);
 unsigned uNoDigit(const char *cPasswd);
+unsigned uValidPhoneNumber(const char *cPhone);
+char *WordToLower(char *cInput);
+char *EmailInput(char *cInput);
+void SendEmail(char *cEmail,char *cSubject,char *cMsg);
 
 
 int main(int argc, char *argv[])
@@ -161,6 +171,14 @@ int main(int argc, char *argv[])
 				sprintf(gcNewPasswd,"%.99s",entries[i].val);
 			else if(!strcmp(entries[i].name,"gcNewPasswd2"))
 				sprintf(gcNewPasswd2,"%.99s",entries[i].val);
+			else if(!strcmp(entries[i].name,"gcPhone"))
+				sprintf(gcPhone,"%.63s",entries[i].val);
+			else if(!strcmp(entries[i].name,"gcCompany"))
+				sprintf(gcCompany,"%.63s",entries[i].val);
+			else if(!strcmp(entries[i].name,"gcFullName"))
+				sprintf(gcFullName,"%.63s",entries[i].val);
+			else if(!strcmp(entries[i].name,"gcNewToken"))
+				sprintf(gcNewToken,"%.63s",entries[i].val);
 		}
 	}
 
@@ -195,6 +213,8 @@ int main(int argc, char *argv[])
 		htmlNewAccount();
         else if(!strcmp(gcFunction,"CreateNewAccount")) 
 		htmlCreateNewAccount();
+        else if(!strcmp(gcFunction,"ActivateNewAccount")) 
+		htmlActivateNewAccount();
 
         if(!guPermLevel || !gcUser[0] || !guLoginClient)
                 SSLCookieLogin();
@@ -213,8 +233,71 @@ int main(int argc, char *argv[])
 }//end of main()
 
 
+unsigned uActivateNewAccount(void)
+{
+	if(!gcNewToken[0])
+	{
+		gcMessage="Token is required. Copy and paste from Email.";
+		return(1);
+	}
+	if(strlen(gcNewToken)<20)
+	{
+		gcMessage="Token is missing characters";
+		return(1);
+	}
+	if(strlen(gcNewToken)>20)
+	{
+		gcMessage="Token has extra characters";
+		return(1);
+	}
+
+	sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s' AND cIPMask='%s' AND uPerm=0",
+				gcNewLogin,gcNewToken);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		gcMessage="System error try again later (1)";
+		return(1);
+	}
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uAuthorize=0;
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)!=1)
+	{
+		gcMessage="Token not recognized. Or account already activated.";
+		return(1);
+	}
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uAuthorize);
+	mysql_free_result(res);
+
+	if(uAuthorize)
+	{
+		sprintf(gcQuery,"UPDATE tAuthorize SET cIPMask='0.0.0.0',uPerm=6,uModBy=1,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uAuthorize=%u",
+				uAuthorize);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+		{
+			gcMessage="System error try again later (2)";
+			return(1);
+		}
+	}
+	else
+	{
+		gcMessage="System error try again later (3)";
+		return(1);
+	}
+
+	return(0);
+}//unsigned uActivateNewAccount(void)
+
+
 unsigned uCreateAccount(void)
 {
+	EmailInput(gcNewEmail);
+	WordToLower(gcNewLogin);
+
 	if(!gcNewLogin[0])
 	{
 		gcMessage="Login is required";
@@ -223,6 +306,16 @@ unsigned uCreateAccount(void)
 	if(!gcNewEmail[0])
 	{
 		gcMessage="Email is required";
+		return(1);
+	}
+	if(!gcPhone[0])
+	{
+		gcMessage="Valid phone number is required";
+		return(1);
+	}
+	if(!gcFullName[0])
+	{
+		gcMessage="Your full name is required";
 		return(1);
 	}
 	if(!gcNewPasswd[0] || !gcNewPasswd2[0])
@@ -246,8 +339,156 @@ unsigned uCreateAccount(void)
 						" and at least one number";
 		return(1);
 	}
+	if(uNoUpper(gcFullName))
+	{
+		gcMessage="Your full name must have at least a first and last name capitalized";
+		return(1);
+	}
+	if(!strchr(gcFullName,' '))
+	{
+		gcMessage="Your full name must have at least a first and last name capitalized";
+		return(1);
+	}
+	if(!gcCompany[0])
+	{
+		sprintf(gcCompany,"%.63s",gcFullName);
+	}
+	if(strlen(gcPhone)<11)
+	{
+		gcMessage="Telephone number must be at least 11 chars long (E.g. 13105551212)";
+		return(1);
+	}
+	if(!uValidPhoneNumber(gcPhone))
+	{
+		gcMessage="Your phone number can contain only digits, '+.-' characters and spaces.";
+		return(1);
+	}
+
+
+
+	//do not allow same email or same login accounts
+	MYSQL_RES *res;
+	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s' OR cLabel='%s' OR cEmail='%s' OR cLabel='%s'",
+				gcFullName,gcNewLogin,gcNewEmail,gcCompany);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		gcMessage="System error try again later (1)";
+		return(1);
+	}
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{
+		gcMessage="Login, company name and/or email already in use";
+		return(1);
+	}
+	mysql_free_result(res);
+
+	//do not allow same login in tAuthorize
+	sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s'",gcNewLogin);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		gcMessage="System error try again later (1)";
+		return(1);
+	}
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{
+		gcMessage="Login already in use";
+		return(1);
+	}
+	mysql_free_result(res);
+
+	//create account as potential reseller
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',"
+			"cCode='Organization',cInfo='gcNewLogin=%s;\ngcFullName=%s;\ngcPhone=%s;\n',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				gcCompany,gcNewLogin,gcFullName,gcPhone);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		gcMessage="System error try again later (2)";
+		return(1);
+	}
+	unsigned uOwner=mysql_insert_id(&gMysql);
+	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cEmail='%s',"
+			"cCode='Contact',cInfo='gcCompany=%s;\ngcFullName=%s;\ngcPhone=%s;\n',"
+				"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				gcNewLogin,gcNewEmail,
+				gcCompany,gcFullName,gcPhone,
+				uOwner);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		gcMessage="System error try again later";
+		//roll back
+		sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%u",uOwner);
+        	mysql_query(&gMysql,gcQuery);
+		return(1);
+	}
+
+	//passwd encryption
+	unsigned uClient=mysql_insert_id(&gMysql);
+	char cBuffer[100]={""};
+	char cSalt[16]={"$1$23abc123$"};
+	(void)srand((int)time((time_t *)NULL));
+	to64(&cSalt[3],rand(),8);
+	sprintf(cBuffer,"%.99s",gcNewPasswd);
+	EncryptPasswdWithSalt(cBuffer,cSalt);
+
+	//uPerm=0 until token is input
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',cPasswd='%s',uPerm=0,uCertClient=%u,uOwner=%u,"
+				"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cIPMask=SHA1(RAND());",
+					gcNewLogin,cBuffer,uClient,uOwner);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		gcMessage="System error try again later (3)";
+		//roll back
+		sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%u",uOwner);
+        	mysql_query(&gMysql,gcQuery);
+		sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%u",uClient);
+        	mysql_query(&gMysql,gcQuery);
+		return(1);
+	}
+
+	//send email with token and link 
+	sprintf(gcQuery,"SELECT cIPMask FROM tAuthorize WHERE uAuthorize=%lu",(long unsigned) mysql_insert_id(&gMysql));
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		gcMessage="System error try again later (4)";
+		//roll back
+		sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%u",uOwner);
+        	mysql_query(&gMysql,gcQuery);
+		sprintf(gcQuery,"DELETE FROM tClient WHERE uClient=%u",uClient);
+        	mysql_query(&gMysql,gcQuery);
+		sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient=%u",uClient);
+        	mysql_query(&gMysql,gcQuery);
+		return(1);
+	}
+	res=mysql_store_result(&gMysql);
+	static char cToken[32]={""};
+	MYSQL_ROW field;
+	if((field=mysql_fetch_row(res)))
+		sprintf(cToken,"%.31s",field[0]);
+	mysql_free_result(res);
+	SendEmail(gcNewEmail,"New account token",cToken);
+	
 	return(0);
 }//unsigned uCreateAccount(void)
+
+
+void htmlActivateNewAccount(void)
+{
+	htmlHeader("unxsPortal","LoginHeader");
+	if(uActivateNewAccount())
+		htmlLoginPage("unxsPortal","NewAccountCreated.Body");
+	else
+		htmlLoginPage("unxsPortal","NewAccountActivated.Body");
+	htmlFooter("LoginFooter");
+
+}//void htmlActivateNewAccount(void)
 
 
 void htmlCreateNewAccount(void)
@@ -275,9 +516,17 @@ void htmlLogin(void)
 {
 	htmlHeader("unxsPortal","LoginHeader");
 	if(guRequireOTPLogin)
+	{
+		if(strstr(gcOTPInfo,"invalid gcOTP"))
+			gcMessage="Two factor authentication six digit one time passcode incorrect or expired";
 		htmlLoginPage("unxsPortal","ZLoginOTP.Body");
+	}
 	else
+	{
+		if(strstr(gcOTPInfo,"invalid login") && !strcmp(gcFunction,"Login"))
+			gcMessage="Invalid login and/or password";
 		htmlLoginPage("unxsPortal","ZLogin.Body");
+	}
 	htmlFooter("LoginFooter");
 
 }//void htmlLogin(void)
@@ -317,10 +566,19 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 			template.cpName[6]="gcNewEmail";
 			template.cpValue[6]=gcNewEmail;
 
-			template.cpName[7]="gcOTPInfo";
-			template.cpValue[7]=gcOTPInfo;
+			template.cpName[7]="gcFullName";
+			template.cpValue[7]=gcFullName;
 
-			template.cpName[8]="";
+			template.cpName[8]="gcCompany";
+			template.cpValue[8]=gcCompany;
+
+			template.cpName[9]="gcPhone";
+			template.cpValue[9]=gcPhone;
+
+			template.cpName[10]="gcOTPInfo";
+			template.cpValue[10]=gcOTPInfo;
+
+			template.cpName[11]="";
 
 			printf("\n<!-- Start htmlLoginPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -360,6 +618,8 @@ void htmlPlainTextError(const char *cError)
 
 void htmlHeader(char *cTitle, char *cTemplateName)
 {
+	if(guForked)
+		exit(0);
 	printf("Content-type: text/html\n\n");
 
 	if(cTemplateName[0])
@@ -1074,3 +1334,77 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
 	}
 
 }//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+
+
+char *WordToLower(char *cInput)
+{
+	register int i;
+
+	for(i=0;cInput[i];i++)
+	{
+	
+		if(!isalnum(cInput[i]) && cInput[i]!='_' && cInput[i]!='-'
+				&& cInput[i]!='@' && cInput[i]!='.' ) break;
+		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
+	}
+	cInput[i]=0;
+
+	return(cInput);
+
+}//char *WordToLower(char *cInput)
+
+
+char *EmailInput(char *cInput)
+{
+	register int i;
+
+	for(i=0;cInput[i];i++)
+	{
+	
+		if(!isalnum(cInput[i]) && cInput[i]!='.'  && cInput[i]!='-' 
+				&& cInput[i]!='@' && cInput[i]!='_')
+			break;
+		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
+	}
+	cInput[i]=0;
+
+	return(cInput);
+
+}//char *EmailInput(char *cInput)
+
+
+void to64(register char *s,register long v,register int n)
+{
+	unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
+        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    while (--n >= 0) {
+        *s++ = itoa64[v&0x3f];
+        v >>= 6;
+    }
+}//void to64(register char *s,register long v,register int n)
+
+
+void SendEmail(char *cEmail,char *cSubject,char *cMsg)
+{
+	pid_t pidChild;
+
+	pidChild=fork();
+	if(pidChild!=0)
+		return;
+
+	FILE *fp;
+	char cFrom[100]={"support@unixservice.com"};
+
+	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
+	{
+		fprintf(fp,"To: %s\n",cEmail);
+		fprintf(fp,"From: %s\n",cFrom);
+		fprintf(fp,"Subject: %s\n\n",cSubject);
+		fprintf(fp,"%s\n",cMsg);
+	}
+	pclose(fp);
+	close(1);
+	exit(0);
+
+}//void SendEmail()

@@ -127,3 +127,7 @@ void htmlGlossary(void);
 void htmlGlossaryPage(char *cTitle, char *cTemplateName);
 
 void logfileLine(const char *cFunction,const char *cLogline);
+
+//main.c
+void to64(register char *s,register long v,register int n);
+void EncryptPasswdWithSalt(char *pw, char *salt);

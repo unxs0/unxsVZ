@@ -40,17 +40,17 @@ body {
 			<input maxlength="31" title='Input your password'
 		 		type="password" id="inputPassword" class="form-control"
 				placeholder="Password" name="gcPasswd" required>
-			<input maxlength="6" title='Input your one time passcode -it is a six digit number'
+			<input maxlength="6" 
+				title='Your account requires two factor authentication please input your one time passcode -it is a six digit number'
 				type="code" id="inputCode" class="form-control"
-				placeholder="Code" name="gcOTP" required>
+				placeholder="Six digit number" name="gcOTP" required>
 			<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Sign in</button>
 		</form>
 	</div>
 
 	<div class = "col-sm-9 col-md-6 col-lg-6" style = "box-shadow: inset 1px -1px 1px #444, inset -1px 1px 1px #444;">
 		{{funcTemplate:Page1Text}}
-		<p><h5>{{gcMessage}}</h5>
-		<p><h5>{{gcOTPInfo}}</h5>
+		<h5><font color=red>{{gcMessage}}</font></h5>
 	</div>
 
 
