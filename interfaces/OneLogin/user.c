@@ -263,7 +263,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpValue[10]=INTERFACE_HEADER_TITLE;
 
 			template.cpName[11]="gcCopyright";
-			template.cpValue[11]=LOCALCOPYRIGHT;
+			template.cpValue[11]=INTERFACE_COPYRIGHT;
 
 			char cPrivilegedContainerMenu[256]={""};
 			template.cpName[12]="cPrivilegedContainerMenu";

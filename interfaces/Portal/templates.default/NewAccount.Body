@@ -52,11 +52,11 @@ body {
 				placeholder="password again" name="gcNewPasswd2" required>
 
 			<input maxlength="63" title='Enter your full name'
-				type="login" id="inputFullName" class="form-control" 
+				type="text" id="inputFullName" class="form-control" 
 				placeholder="Full name" value="{{gcFullName}}" name="gcFullName" required>
 
 			<input maxlength="63" title='Optionally enter your company or organization name'
-				type="login" id="inputCompany" class="form-control" 
+				type="text" id="inputCompany" class="form-control" 
 				placeholder="Company/Organization Name" value="{{gcCompany}}" name="gcCompany" >
 
 			<input maxlength="63" title='Enter your SMS capable phone number with +1 or +country-code prefix'

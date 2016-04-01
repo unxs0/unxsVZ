@@ -91,6 +91,7 @@ unsigned uValidPhoneNumber(const char *cPhone);
 char *WordToLower(char *cInput);
 char *EmailInput(char *cInput);
 void SendEmail(char *cEmail,char *cSubject,char *cMsg);
+unsigned uGetConfiguration(const char *cName,char *cValue);
 
 
 int main(int argc, char *argv[])
@@ -117,8 +118,6 @@ int main(int argc, char *argv[])
 
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{
-		//Get	
-		SSLCookieLogin();
 		
 		gcl = getenv("QUERY_STRING");
 		for(i=0;gcl[0] != '\0' && i<MAXGETVARS;i++)
@@ -132,7 +131,16 @@ int main(int argc, char *argv[])
 				sprintf(gcFunction,"%.99s",gentries[i].val);
 			else if(!strcmp(gentries[i].name,"gcPage"))
 				sprintf(gcPage,"%.99s",gentries[i].val);
+			else if(!strcmp(gentries[i].name,"gcNewToken"))
+				sprintf(gcNewToken,"%.63s",gentries[i].val);
 		}
+
+		//Pre login links
+		if(!strcmp(gcFunction,"Activate")) 
+				htmlActivateNewAccount();
+		//Get	
+		SSLCookieLogin();
+
 		if(gcPage[0])
 		{
 			if(!strcmp(gcPage,"Glossary"))
@@ -251,8 +259,7 @@ unsigned uActivateNewAccount(void)
 		return(1);
 	}
 
-	sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cLabel='%s' AND cIPMask='%s' AND uPerm=0",
-				gcNewLogin,gcNewToken);
+	sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize WHERE cIPMask='%s' AND uPerm=0",gcNewToken);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -473,7 +480,14 @@ unsigned uCreateAccount(void)
 	if((field=mysql_fetch_row(res)))
 		sprintf(cToken,"%.31s",field[0]);
 	mysql_free_result(res);
-	SendEmail(gcNewEmail,"New account token",cToken);
+	char cMsg[256];
+	char cPortalActivateLink[256]={""};
+	if(uGetConfiguration("cPortalActivateLink",cPortalActivateLink))
+		sprintf(cMsg,"Please activate your account by entering this token: %s\n"
+				"If you left our site here is a link: %s&gcNewToken=%s\n\nThank you!\n",cToken,cPortalActivateLink,cToken);
+	else
+		sprintf(cMsg,"Please activate your account by entering this token: %s\n\nThank you!\n",cToken);
+	SendEmail(gcNewEmail,"New account token",cMsg);
 	
 	return(0);
 }//unsigned uCreateAccount(void)
@@ -578,7 +592,10 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 			template.cpName[10]="gcOTPInfo";
 			template.cpValue[10]=gcOTPInfo;
 
-			template.cpName[11]="";
+			template.cpName[11]="gcNewToken";
+			template.cpValue[11]=gcNewToken;
+
+			template.cpName[12]="";
 
 			printf("\n<!-- Start htmlLoginPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -1399,6 +1416,7 @@ void SendEmail(char *cEmail,char *cSubject,char *cMsg)
 	if((fp=popen("/usr/lib/sendmail -t > /dev/null","w")))
 	{
 		fprintf(fp,"To: %s\n",cEmail);
+		fprintf(fp,"Cc: %s\n",cFrom);
 		fprintf(fp,"From: %s\n",cFrom);
 		fprintf(fp,"Subject: %s\n\n",cSubject);
 		fprintf(fp,"%s\n",cMsg);
@@ -1408,3 +1426,29 @@ void SendEmail(char *cEmail,char *cSubject,char *cMsg)
 	exit(0);
 
 }//void SendEmail()
+
+
+unsigned uGetConfiguration(const char *cName,char *cValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+        char cQuery[512];
+	unsigned uConfiguration=0;
+
+        sprintf(cQuery,"SELECT cValue,uConfiguration FROM tConfiguration WHERE cLabel='%s'",
+			cName);
+        mysql_query(&gMysql,cQuery);
+        if(mysql_errno(&gMysql))
+		return(0);
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+	{
+        	sprintf(cValue,"%.255s",field[0]);
+        	sscanf(field[1],"%u",&uConfiguration);
+	}
+        mysql_free_result(res);
+
+	return(uConfiguration);
+
+}//unsigned uGetConfiguration(...)

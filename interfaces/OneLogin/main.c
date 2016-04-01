@@ -389,7 +389,7 @@ void htmlFooter(char *cTemplateName)
 			template.cpName[1]="cIspUrl";
 			template.cpValue[1]=ISPURL;
 			template.cpName[2]="cCopyright";
-			template.cpValue[2]=LOCALCOPYRIGHT;
+			template.cpValue[2]=INTERFACE_COPYRIGHT;
 			template.cpName[3]="";
 
 			printf("\n<!-- Start htmlFooter(%s) -->\n",cTemplateName); 
