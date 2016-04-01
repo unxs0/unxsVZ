@@ -8402,27 +8402,16 @@ unsigned CommonCloneContainer(
 		//If we specify a class C mask then we check it here. Why?
 		if(cClassC[0])
 		{
-			if(guCompany==1)
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uIP=%u AND uAvailable=1 AND cLabel LIKE '%s%%' AND uDatacenter=%u",
 					guLoginClient,uWizIPv4,cClassC,uTargetDatacenter);
-			else
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
-					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND cLabel LIKE '%s%%'"
-					" AND uDatacenter=%u",
-						guLoginClient,uWizIPv4,uOwner,cClassC,uTargetDatacenter);
 		}
 		//Here no such class c check
 		else
 		{
-			if(guCompany==1)
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
-				" WHERE uIP=%u AND uAvailable=1 AND uDatacenter=%u",
-					guLoginClient,uWizIPv4,uTargetDatacenter);
-			else
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
-					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
-						guLoginClient,uWizIPv4,uOwner,uTargetDatacenter);
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+					" WHERE uIP=%u AND uAvailable=1 AND uDatacenter=%u",
+								guLoginClient,uWizIPv4,uTargetDatacenter);
 		}
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -9411,27 +9400,16 @@ unsigned CommonNewCloneContainer(
 		//If we specify a class C mask then we check it here. Why?
 		if(cClassC[0])
 		{
-			if(guCompany==1)
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uIP=%u AND uAvailable=1 AND cLabel LIKE '%s%%' AND uDatacenter=%u",
 					guLoginClient,uWizIPv4,cClassC,uTargetDatacenter);
-			else
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
-					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND cLabel LIKE '%s%%'"
-					" AND uDatacenter=%u",
-						guLoginClient,uWizIPv4,uOwner,cClassC,uTargetDatacenter);
 		}
 		//Here no such class c check
 		else
 		{
-			if(guCompany==1)
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+			sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uIP=%u AND uAvailable=1 AND uDatacenter=%u",
 					guLoginClient,uWizIPv4,uTargetDatacenter);
-			else
-				sprintf(gcQuery,"UPDATE tIP SET uAvailable=0,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
-					" WHERE uIP=%u AND uAvailable=1 AND uOwner=%u AND uDatacenter=%u",
-						guLoginClient,uWizIPv4,uOwner,uTargetDatacenter);
 		}
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))

@@ -169,6 +169,7 @@ void ExttOSTemplateCommands(pentry entries[], int x)
 					mysql_free_result(res);
 					tOSTemplate("<blink>Error</blink>: Can't modify a template used by a container!");
 				}
+				mysql_free_result(res);
 				sscanf(ForeignKey("tOSTemplate","uModDate",uOSTemplate),"%lu",&luActualModDate);
 				if(uModDate!=luActualModDate)
 					tOSTemplate("<blink>Error</blink>: This record was modified. Reload it!");
