@@ -34,26 +34,6 @@ body {
 				box-shadow: inset 1px -1px 1px #444, inset -1px 1px 1px #444;">
 		{{gcBrand}}
 		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="newaccountcreated">
-			<input maxlength="31" title='Selected login'
-				type="login" id="inputLogin" class="form-control" 
-				value="{{gcNewLogin}}" name="gcNewLogin" disabled>
-			<input hidden value="{{gcNewLogin}}" name="gcNewLogin">
-			<input maxlength="99" title='A valid and working email address'
-				type="login" id="inputEmail" class="form-control" 
-				value="{{gcNewEmail}}" name="gcNewEmail" disabled>
-			<input hidden value="{{gcNewEmail}}" name="gcNewEmail">
-			<input maxlength="64" title='Your full name'
-				type="login" id="inputFullName" class="form-control" 
-				value="{{gcFullName}}" name="gcFullName" disabled>
-			<input hidden value="{{gcFullName}}" name="gcFullName">
-			<input maxlength="64" title='An optional company name'
-				type="login" id="inputCompany" class="form-control" 
-				value="{{gcCompany}}" name="gcCompany" disabled>
-			<input hidden value="{{gcCompany}}" name="gcCompany">
-			<input maxlength="64" title='A valid and working SMS capable phone number'
-				type="phone" id="inputPhone" class="form-control" 
-				value="{{gcPhone}}" name="gcPhone" disabled>
-			<input hidden value="{{gcPhone}}" name="gcPhone">
 			<input maxlength="64" title='Emailed token'
 				type="login" id="inputToken" class="form-control" 
 				value="{{gcNewToken}}" name="gcNewToken" required autofocus>

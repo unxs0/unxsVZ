@@ -4,8 +4,12 @@ FILE
 	$Id$
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
+	(C) 2015-2016 Gary Wallis for Unixservice, LLC.
 
 */
+
+#define INTERFACE_HEADER_TITLE ""
+#define INTERFACE_COPYRIGHT "<font color=gray>Telco quality VOIP provisioning software &copy; 2015,2016 Unixservice, LLC. All Rights Reserved.</font>"
 
 
 #include "../../mysqlrad.h"
@@ -37,8 +41,8 @@ AUTHOR
 #define IP_BLOCK_DASH 2
 
 //Depend on correctly preconfigured tTemplateSet and tTemplateType:
-#define uPLAINSET	21
-#define uOneLogin	22
+#define uPLAINSET	11
+#define uOneLogin	41
 
 void InterfaceConnectDb(void);
 

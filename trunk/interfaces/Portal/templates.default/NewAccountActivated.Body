@@ -33,23 +33,6 @@ body {
 	<div class = "col-sm-9 col-md-6 col-lg-4" style = "background-color: #ffffff;
 				box-shadow: inset 1px -1px 1px #444, inset -1px 1px 1px #444;">
 		{{gcBrand}}
-		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="newaccountcreated">
-			<input maxlength="31" title='Selected login'
-				type="login" id="inputLogin" class="form-control" 
-				value="{{gcNewLogin}}" name="gcLogin" disabled>
-			<input maxlength="99" title='A valid and working email address'
-				type="login" id="inputEmail" class="form-control" 
-				value="{{gcNewEmail}}" name="gcEmail" disabled>
-			<input maxlength="64" title='Your full name'
-				type="login" id="inputFullName" class="form-control" 
-				value="{{gcFullName}}" name="gcFullName" disabled>
-			<input maxlength="64" title='An optional company name'
-				type="login" id="inputCompany" class="form-control" 
-				value="{{gcCompany}}" name="gcCompany" disabled>
-			<input maxlength="64" title='A valid and working SMS capable phone number'
-				type="phone" id="inputPhone" class="form-control" 
-				value="{{gcPhone}}" name="gcPhone" disabled>
-		</form>
 		<form class="form-signin" role="form" method="post" action="{{cCGI}}" name="Return">
 			<button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Return'>Return</button>
 		</form>

@@ -15,7 +15,7 @@ CGINAME= OneLogin.cgi
 
 CFLAGS=-Wall
 //LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -lldap
-LIBS=-L/usr/lib/mysql -L/usr/lib/openisp -L/usr/lib/oath -L/usr/lib64 -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -loath -lcurl
+LIBS=-L/usr/lib64/mysql -L/usr/lib/openisp -L/usr/lib/oath -L/usr/lib64 -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -loath -lcurl
 
 help:
 	@echo "These are the main make options available"

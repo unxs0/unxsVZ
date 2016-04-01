@@ -2361,7 +2361,7 @@ void htmlAuxPage(char *cTitle, char *cTemplateName)
 			template.cpValue[11]=gcLabel;
 
 			template.cpName[12]="gcCopyright";
-			template.cpValue[12]=LOCALCOPYRIGHT;
+			template.cpValue[12]=INTERFACE_COPYRIGHT;
 
 			template.cpName[13]="gcBrand";
 			template.cpValue[13]=INTERFACE_HEADER_TITLE;
@@ -2510,7 +2510,7 @@ void htmlContainerPage(char *cTitle, char *cTemplateName)
 			template.cpValue[15]=INTERFACE_HEADER_TITLE;
 
 			template.cpName[16]="gcCopyright";
-			template.cpValue[16]=LOCALCOPYRIGHT;
+			template.cpValue[16]=INTERFACE_COPYRIGHT;
 
 			template.cpName[17]="gcInCollapseFour";
 			//if(!guContainerSubmit && guContainer) sprintf(gcInCollapseFour,"out");
@@ -4634,7 +4634,7 @@ void htmlRepurposePage(char *cTitle, char *cTemplateName)
 			template.cpValue[11]=gcLabel;
 
 			template.cpName[12]="gcCopyright";
-			template.cpValue[12]=LOCALCOPYRIGHT;
+			template.cpValue[12]=INTERFACE_COPYRIGHT;
 
 			template.cpName[13]="gcBrand";
 			template.cpValue[13]=INTERFACE_HEADER_TITLE;
@@ -4822,7 +4822,7 @@ void htmlResellerPage(char *cTitle, char *cTemplateName)
 			template.cpValue[11]=gcLabel;
 
 			template.cpName[12]="gcCopyright";
-			template.cpValue[12]=LOCALCOPYRIGHT;
+			template.cpValue[12]=INTERFACE_COPYRIGHT;
 
 			template.cpName[13]="gcBrand";
 			template.cpValue[13]=INTERFACE_HEADER_TITLE;
@@ -5016,7 +5016,7 @@ void htmlDIDPage(char *cTitle, char *cTemplateName)
 			template.cpValue[11]=gcLabel;
 
 			template.cpName[12]="gcCopyright";
-			template.cpValue[12]=LOCALCOPYRIGHT;
+			template.cpValue[12]=INTERFACE_COPYRIGHT;
 
 			template.cpName[13]="gcBrand";
 			template.cpValue[13]=INTERFACE_HEADER_TITLE;
