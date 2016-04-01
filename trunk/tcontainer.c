@@ -621,7 +621,7 @@ void tContainerNewStep(unsigned uStep)
 
 		//uIPv4
 		OpenRow(LANG_FL_tContainer_uIPv4,"black");
-		tTablePullDownOwnerAvailDatacenter("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1,uDatacenter,uForClient);
+		tTablePullDownOwnerAvailDatacenter("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1,uDatacenter,0);
 
 		//uOSTemplate
 		OpenRow(LANG_FL_tContainer_uOSTemplate,"black");
@@ -859,7 +859,7 @@ void tContainerInput(unsigned uMode)
 	OpenRow(LANG_FL_tContainer_uIPv4,"black");
 	if(guPermLevel>=7 && uMode)
 		//tTablePullDownOwnerAvail("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1);
-		tTablePullDownOwnerAvailDatacenter("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1,uDatacenter,uForClient);
+		tTablePullDownOwnerAvailDatacenter("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1,uDatacenter,0);
 	else
 		tTablePullDown("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,0);
 //uOSTemplate
@@ -1700,21 +1700,21 @@ void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFie
 					" WHERE uAvailable=1"
 					" AND (LOCATE('%s',tIP.cLabel)=1 OR LOCATE('%s',tIP.cLabel)=1)"
 					" AND uDatacenter=%u"
-					" AND uOwner=%u AND _rowid=%u",
+					" AND (uOwner=%u OR %u=0) AND _rowid=%u",
 						cFieldName,cLocalTableName,
 						cAutoIPClass,cAutoIPClass2,
 						uDatacenter,
-						uClient,uSelector);
+						uClient,uClient,uSelector);
 			else
 				sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
 					" WHERE uAvailable=1"
 					" AND LOCATE('%s',tIP.cLabel)=1"
 					" AND uDatacenter=%u"
-					" AND uOwner=%u AND _rowid=%u",
+					" AND (uOwner=%u OR %u=0) AND _rowid=%u",
 						cFieldName,cLocalTableName,
 						cAutoIPClass,
 						uDatacenter,
-						uClient,uSelector);
+						uClient,uClient,uSelector);
 		}
 		else
 		{
@@ -1723,31 +1723,31 @@ void tTablePullDownOwnerAvailDatacenter(const char *cTableName, const char *cFie
 					" WHERE uAvailable=1"
 					" AND (LOCATE('%s',tIP.cLabel)=1 OR LOCATE('%s',tIP.cLabel)=1)"
 					" AND uDatacenter=%u"
-					" AND uOwner=%u ORDER BY %s",
+					" AND (uOwner=%u OR %u=0) ORDER BY %s",
 						cFieldName,cLocalTableName,
 						cAutoIPClass,cAutoIPClass2,
 						uDatacenter,
-						uClient,cOrderby);
+						uClient,uClient,cOrderby);
 			else
 				sprintf(gcQuery,"SELECT _rowid,%s FROM %s "
 					" WHERE uAvailable=1"
 					" AND LOCATE('%s',tIP.cLabel)=1"
 					" AND uDatacenter=%u"
-					" AND uOwner=%u ORDER BY %s",
+					" AND (uOwner=%u OR %u=0) ORDER BY %s",
 						cFieldName,cLocalTableName,
 						cAutoIPClass,
 						uDatacenter,
-						uClient,cOrderby);
+						uClient,uClient,cOrderby);
 		}
 	}
 	else
 	{
 		if(uSelector && !uMode)			
-			sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u AND _rowid=%u",
-				cFieldName,cLocalTableName,uDatacenter,uClient,uSelector);
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND (uOwner=%u OR %u=0) AND _rowid=%u",
+				cFieldName,cLocalTableName,uDatacenter,uClient,uClient,uSelector);
 		else
-			sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND uOwner=%u ORDER BY %s",
-				cFieldName,cLocalTableName,uDatacenter,uClient,cOrderby);
+			sprintf(gcQuery,"SELECT _rowid,%s FROM %s WHERE uAvailable=1 AND uDatacenter=%u AND (uOwner=%u OR %u=0) ORDER BY %s",
+				cFieldName,cLocalTableName,uDatacenter,uClient,uClient,cOrderby);
 	}
 
 	mysql_query(&gMysql,gcQuery);

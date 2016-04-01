@@ -396,7 +396,7 @@ void Insert_tOSTemplate(void)
 void Update_tOSTemplate(char *cRowid)
 {
 	sprintf(gcQuery,"UPDATE tOSTemplate SET uOSTemplate=%u,cLabel='%s',uModBy=%u,uContainerType=%u"
-			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+			",uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uOSTemplate
 			,TextAreaSave(cLabel)
 			,uContainerType

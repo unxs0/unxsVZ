@@ -266,8 +266,10 @@ else if(!strcmp(gcCommand,"Single Container Creation")
 
 			//make sure IPs are available
 			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
-				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uCloneDatacenter,cAutoCloneIPClass);
+				//" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+				//		uForClient,uCloneDatacenter,cAutoCloneIPClass);
+				" AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uCloneDatacenter,cAutoCloneIPClass);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -315,8 +317,10 @@ else if(!strcmp(gcCommand,"Single Container Creation")
 			if(!cAutoCloneIPClassBackup[0])
 				tContainer("<blink>Error:</blink> Please set tConfiguration:cAutoCloneIPClassBackup correctly.");
 			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
-				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uRemoteDatacenter,cAutoCloneIPClassBackup);
+				//" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+				//	uForClient,uRemoteDatacenter,cAutoCloneIPClassBackup);
+				" AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uRemoteDatacenter,cAutoCloneIPClassBackup);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -375,7 +379,7 @@ else if(!strcmp(gcCommand,"Single Container Creation")
 		//First get class c mask will be used here and again in main loop below
 
 		sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uIP=%u AND uAvailable=1"
-				" AND uOwner=%u AND uDatacenter=%u",uIPv4,uForClient,uDatacenter);
+				" AND uDatacenter=%u",uIPv4,uDatacenter);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -583,8 +587,8 @@ else if(!strcmp(gcCommand,"Single Container Creation")
 		if(cAutoCloneNode[0])
 		{
 			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
-				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uCloneDatacenter,cAutoCloneIPClass);
+				" AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uCloneDatacenter,cAutoCloneIPClass);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -604,8 +608,8 @@ else if(!strcmp(gcCommand,"Single Container Creation")
 		if(cAutoCloneNodeRemote[0] && uRemoteDatacenter && uRemoteNode)
 		{
 			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
-				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uRemoteDatacenter,cAutoCloneIPClassBackup);
+				" AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uRemoteDatacenter,cAutoCloneIPClassBackup);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1044,8 +1048,10 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 
 			//make sure IPs are available
 			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
-				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uCloneDatacenter,cAutoCloneIPClass);
+				//" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+				//	uForClient,uCloneDatacenter,cAutoCloneIPClass);
+				" AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uCloneDatacenter,cAutoCloneIPClass);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1085,8 +1091,10 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 			if(!cAutoCloneIPClassBackup[0])
 				tContainer("<blink>Error:</blink> Please set tConfiguration:cAutoCloneIPClassBackup correctly.");
 			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
-				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uRemoteDatacenter,cAutoCloneIPClassBackup);
+				//" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+				//	uForClient,uRemoteDatacenter,cAutoCloneIPClassBackup);
+				" AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uRemoteDatacenter,cAutoCloneIPClassBackup);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1182,8 +1190,10 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 			unsigned uCloneIPv4Count=0;
 
 			sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1"
-				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uCloneDatacenter,cAutoCloneIPClass);
+				//" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+				//	uForClient,uCloneDatacenter,cAutoCloneIPClass);
+				" AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uCloneDatacenter,cAutoCloneIPClass);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1208,8 +1218,10 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 			unsigned uRemoteIPv4Count=0;
 
 			sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uAvailable=1"
-				" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
-					uForClient,uRemoteDatacenter,cAutoCloneIPClassBackup);
+				//" AND uOwner=%u AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+				//	uForClient,uRemoteDatacenter,cAutoCloneIPClassBackup);
+				" AND uDatacenter=%u AND INSTR(cLabel,'%s')=1",
+					uRemoteDatacenter,cAutoCloneIPClassBackup);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1307,9 +1319,9 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 		if(cAutoCloneNodeRemote[0])
 		{
 			//Get next available uRemoteIPv4
-			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
 						" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
-							uForClient,cAutoCloneIPClassBackup,uRemoteDatacenter);
+							cAutoCloneIPClassBackup,uRemoteDatacenter);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1325,9 +1337,9 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 		if(cAutoCloneNode[0])
 		{
 			//Get next available uCloneIPv4
-			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
 						" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
-							uForClient,cAutoCloneIPClass,uCloneDatacenter);
+							cAutoCloneIPClass,uCloneDatacenter);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
@@ -1467,9 +1479,9 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 				if((i+1)<uNumContainer)
 				{
 					//Get next available uCloneIPv4
-					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
 							" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
-								uForClient,cAutoCloneIPClass,uCloneDatacenter);
+								cAutoCloneIPClass,uCloneDatacenter);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
@@ -1589,9 +1601,9 @@ else if(!strcmp(gcCommand,"Create Multiple Containers"))
 				if((i+1)<uNumContainer)
 				{
 					//Get next available uRemoteIPv4
-					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1 AND uOwner=%u"
+					sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uAvailable=1"
 							" AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
-								uForClient,cAutoCloneIPClassBackup,uRemoteDatacenter);
+								cAutoCloneIPClassBackup,uRemoteDatacenter);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 						htmlPlainTextError(mysql_error(&gMysql));
