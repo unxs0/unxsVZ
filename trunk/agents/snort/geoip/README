@@ -1,1 +1,1 @@
-the zip and the csv are not the same anymore. please fix.
+wget http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip
