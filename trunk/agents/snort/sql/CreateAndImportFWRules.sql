@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS tFWRules (
         cRuleName VARCHAR(100) NOT NULL
         );
 
-LOAD DATA INFILE '/home/unxs/snort.rules.csv' 
+LOAD DATA INFILE '/home/unxs/unxsVZ/agents/snort/sql/snort.rules.csv' 
         INTO TABLE tFWRules
         FIELDS TERMINATED BY ',' ENCLOSED BY '"' 
         LINES TERMINATED BY '\n' STARTING BY '' 
