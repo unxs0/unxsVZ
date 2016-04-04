@@ -3820,7 +3820,7 @@ while((field=mysql_fetch_row(res)))
 
 					if((sContainer.uStatus==uAWAITDEL || sContainer.uStatus==uAWAITACT ||
 						sContainer.uStatus==uAWAITSTOP)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						if(!CancelContainerJob(sContainer.uDatacenter,
 								sContainer.uNode,uCtContainer,1))
@@ -3857,7 +3857,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uACTIVE)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						if(StopContainerJob(sContainer.uDatacenter,
 								sContainer.uNode,uCtContainer,guCompany))
@@ -3884,7 +3884,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uACTIVE)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						if(uRestartContainerJob(sContainer.uDatacenter,
 								sContainer.uNode,uCtContainer,guCompany))
@@ -3911,7 +3911,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
-						&& (sContainer.uOwner==guCompany || guCompany==1) && uTargetNode && uTargetNode!=sContainer.uNode)
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient) && uTargetNode && uTargetNode!=sContainer.uNode)
 					{
        						MYSQL_RES *res;
 					        MYSQL_ROW field;
@@ -4172,7 +4172,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						unsigned uRemoveDNS=1;
 						if(DestroyContainerJob(sContainer.uDatacenter,
@@ -4247,7 +4247,7 @@ while((field=mysql_fetch_row(res)))
 
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
-					if( (sContainer.uOwner==guCompany || guCompany==1) && uChangeGroup)
+					if( (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient) && uChangeGroup)
 					{
 						//Remove from all container type groups
 						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u AND"
@@ -4277,7 +4277,7 @@ while((field=mysql_fetch_row(res)))
 
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
-					if( (sContainer.uOwner==guCompany || guCompany==1) && uChangeGroup)
+					if( (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient) && uChangeGroup)
 					{
 						if(!UpdatePrimaryContainerGroup(uCtContainer,uChangeGroup))
 							sprintf(cResult,"primary group changed");
@@ -4296,7 +4296,7 @@ while((field=mysql_fetch_row(res)))
 
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
-					if( (sContainer.uOwner==guCompany || guCompany==1) && uChangeGroup)
+					if( (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient) && uChangeGroup)
 					{
 						sprintf(gcQuery,"INSERT INTO tGroupGlue SET uContainer=%u,uGroup=%u",
 							uCtContainer,uChangeGroup);
@@ -4319,7 +4319,7 @@ while((field=mysql_fetch_row(res)))
 
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
-					if( (sContainer.uOwner==guCompany || guCompany==1) && uChangeGroup)
+					if( (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient) && uChangeGroup)
 					{
 						sprintf(gcQuery,"DELETE FROM tGroupGlue WHERE uContainer=%u AND uGroup=%u",
 							uCtContainer,uChangeGroup);
@@ -4369,7 +4369,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uINITSETUP || sContainer.uStatus==uAWAITCLONE)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						//Release IPs
 						sprintf(gcQuery,"UPDATE tIP SET uAvailable=1,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
@@ -4519,7 +4519,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						//We can only fo this if tConfiguration has been setup
 						//with datacenter wide cAutoCloneNode=node1,cAutoCloneSyncTime=600
@@ -4794,7 +4794,7 @@ while((field=mysql_fetch_row(res)))
 
 					//allow starting active also
 					if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uINITSETUP || sContainer.uStatus==uACTIVE)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						if(sContainer.uStatus==uINITSETUP)
 						{
@@ -5050,7 +5050,7 @@ while((field=mysql_fetch_row(res)))
 					GetContainerProps(uCtContainer,&sContainer);
 
 					if((sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						//Check to see of node is configured
 						char cBuffer[256]={""};
@@ -5210,7 +5210,7 @@ while((field=mysql_fetch_row(res)))
 					GetContainerProps(uCtContainer,&sContainer);
 
 					if((sContainer.uStatus==uACTIVE)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
         					MYSQL_RES *res;
 						MYSQL_ROW field;
@@ -5286,7 +5286,7 @@ while((field=mysql_fetch_row(res)))
 					GetContainerProps(uCtContainer,&sContainer);
 
 					if(	sContainer.uStatus==uACTIVE
-						&& (sContainer.uOwner==guCompany || guCompany==1) && cCommands[0])
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient) && cCommands[0])
 					{
 
 						if(strlen(cCommands)>2047)
@@ -5313,7 +5313,7 @@ while((field=mysql_fetch_row(res)))
 					GetContainerProps(uCtContainer,&sContainer);
 
 					if((sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						MYSQL_RES *res;
 						char cOSTLabel[101]={""};
@@ -5384,7 +5384,7 @@ while((field=mysql_fetch_row(res)))
 					GetContainerProps(uCtContainer,&sContainer);
 					if( sContainer.uSource!=0 && (!strstr(sContainer.cLabel,"-backup")) &&
 						 (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						unsigned uFailToJob=0;
 						if((uFailToJob=FailoverToJob(sContainer.uDatacenter,sContainer.uNode,
@@ -5435,7 +5435,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( sContainer.uSource!=0 &&
-						(sContainer.uOwner==guCompany || guCompany==1 || guPermLevel>=12))
+						(guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient || guPermLevel>=12))
 					{
 						unsigned uSourceDatacenter=0;
 						sscanf(ForeignKey("tContainer","uDatacenter",sContainer.uSource),
@@ -5548,7 +5548,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( uTargetNode && (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						//Capacity checking section start
 						if(uCheckMaxContainers(uTargetNode) || uCheckMaxCloneContainers(uTargetNode))
@@ -5666,7 +5666,7 @@ while((field=mysql_fetch_row(res)))
 						sContainer.uStatus==uAWAITCLONE ||
 						sContainer.uStatus==uAWAITRESTART ||
 						sContainer.uStatus==uAWAITDNSMIG )
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						SetContainerStatus(uCtContainer,uSTOPPED);
 						
@@ -5721,7 +5721,7 @@ while((field=mysql_fetch_row(res)))
 						sContainer.uStatus==uAWAITCLONE ||
 						sContainer.uStatus==uAWAITRESTART ||
 						sContainer.uStatus==uAWAITDNSMIG )
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						SetContainerStatus(uCtContainer,uACTIVE);
 						
@@ -5750,7 +5750,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uSTOPPED)
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						unsigned uNewIPv4=0;
 						char cunxsBindARecordJobZone[256]={""};
@@ -5864,7 +5864,7 @@ while((field=mysql_fetch_row(res)))
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uAWAITDEL || 
 							sContainer.uStatus==uAWAITACT )
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 							SetContainerStatus(uCtContainer,11);
 							sprintf(cResult,"SetContainerStatus done");
@@ -5882,7 +5882,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE || sContainer.uStatus==uREMOTEAPPLIANCE )
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						if(CreateDNSJob(sContainer.uIPv4,sContainer.uOwner,NULL,
 									sContainer.cHostname,sContainer.uDatacenter,
@@ -5908,7 +5908,7 @@ while((field=mysql_fetch_row(res)))
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE )
 						&& sContainer.uSource
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						sscanf(ForeignKey("tContainer","uDatacenter",sContainer.uSource),"%u",&uSourceDatacenter);
 						if(sContainer.uDatacenter!=uSourceDatacenter)
@@ -5970,7 +5970,7 @@ while((field=mysql_fetch_row(res)))
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uSTOPPED || sContainer.uStatus==uACTIVE )
 						&& sContainer.uSource
-						&& (sContainer.uOwner==guCompany || guCompany==1))
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						sprintf(gcQuery,"UPDATE tContainer SET uBackupDate=UNIX_TIMESTAMP(NOW())-86400"
 								" WHERE uContainer=%u",uCtContainer);
@@ -5998,7 +5998,7 @@ while((field=mysql_fetch_row(res)))
 
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
-					if( (sContainer.uOwner==guCompany || guCompany==1))
+					if( (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
        						MYSQL_RES *res;
 					        MYSQL_ROW field;
@@ -6068,7 +6068,7 @@ while((field=mysql_fetch_row(res)))
 
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
-					if( (sContainer.uOwner==guCompany || guCompany==1))
+					if( (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
 						//expensive DELETE
 						sprintf(gcQuery,"DELETE FROM tProperty"
@@ -6101,7 +6101,7 @@ while((field=mysql_fetch_row(res)))
 
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
-					if( (sContainer.uOwner==guCompany || guCompany==1) && sContainer.uSource!=0 && strstr(sContainer.cLabel,"-backup"))
+					if( (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient) && sContainer.uSource!=0 && strstr(sContainer.cLabel,"-backup"))
 					{
 
 						sprintf(gcQuery,"UPDATE tContainer"
@@ -6129,7 +6129,7 @@ while((field=mysql_fetch_row(res)))
 					InitContainerProps(&sContainer);
 					GetContainerProps(uCtContainer,&sContainer);
 					if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uREMOTEAPPLIANCE)
-						&& (sContainer.uOwner==guCompany || guCompany==1) )
+						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient) )
 					{
 						//Only once
 						static char cMonitorAddHostScript[256]={""};

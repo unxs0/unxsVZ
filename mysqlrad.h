@@ -693,6 +693,21 @@ void DeletetStatus(void);
 void ExttStatusGetHook(entry gentries[], int x);
 void ExttStatusNavBar(void);
 
+//tFWStatus
+int tFWStatusCommands(pentry entries[], int x);
+void tFWStatus(const char *results);
+void ProcesstFWStatusVars(pentry entries[], int x);
+void tFWStatusContent(void);
+void tFWStatusInputContent(void);
+void tFWStatusInput(unsigned uMode);
+void tFWStatusList(void);
+void NewtFWStatus(unsigned uMode);
+void ModtFWStatus(void);
+void CreatetFWStatus(void);
+void DeletetFWStatus(void);
+void ExttFWStatusGetHook(entry gentries[], int x);
+void ExttFWStatusNavBar(void);
+
 //tConfiguration
 int tConfigurationCommands(pentry entries[], int x);
 void tConfiguration(const char *results);

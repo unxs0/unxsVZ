@@ -25,11 +25,11 @@ help:
 unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tcontainertype.o tperm.o tostemplate.o tnameserver.o \
 	tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
 	ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o \
-	tjob.o tjobstatus.o tstatus.o tconfiguration.o  glossary.o main.o cgi.o mysqlconnect.o
+	tjob.o tjobstatus.o tstatus.o tfwstatus.o tconfiguration.o  glossary.o main.o cgi.o mysqlconnect.o
 	cc tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tcontainertype.o tperm.o tostemplate.o tnameserver.o \
 		tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
 		tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o \
-		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tconfiguration.o \
+		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tfwstatus.o tconfiguration.o \
 		glossary.o main.o cgi.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) 
 
 ###
@@ -145,6 +145,9 @@ tjobstatus.o: tjobstatus.c mysqlrad.h language.h tjobstatusfunc.h local.h
 
 tstatus.o: tstatus.c mysqlrad.h language.h tstatusfunc.h local.h
 	cc -c tstatus.c -o tstatus.o $(CFLAGS)
+
+tfwstatus.o: tfwstatus.c mysqlrad.h language.h tfwstatusfunc.h local.h
+	cc -c tfwstatus.c -o tfwstatus.o $(CFLAGS)
 
 tconfiguration.o: tconfiguration.c mysqlrad.h language.h tconfigurationfunc.h local.h
 	cc -c tconfiguration.c -o tconfiguration.o $(CFLAGS)

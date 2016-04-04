@@ -40,13 +40,13 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue
 char *strptime(const char *s, const char *format, struct tm *tm);
 
 static char cTableList[64][32]={ "tAuthorize", "tClient", "tConfig", "tConfiguration", "tContainer", "tContainerType",
-		"tDatacenter", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tIP", "tJob",
+		"tDatacenter", "tFWStatus", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tIP", "tJob",
 		"tJobStatus", "tLog", "tLogMonth", "tLogType", "tMonth", "tNameserver", "tNode",
 		"tOSTemplate", "tPerm", "tProperty", "tSearchdomain", "tStatus", "tTemplate", "tTemplateSet",
 			"tTemplateType", "tType", ""};
 
 char cInitTableList[64][32]={ "tAuthorize", "tClient", "tConfig", "tGlossary", "tGroupType",
-		"tJobStatus", "tLogType", "tOSTemplate", "tStatus", "tTemplate", "tTemplateSet",
+		"tJobStatus", "tLogType", "tOSTemplate", "tStatus", "tFWStatus", "tTemplate", "tTemplateSet",
 			"tTemplateType", "tType", "tPerm", ""};
 
 void ExtMainShell(int argc, char *argv[]);

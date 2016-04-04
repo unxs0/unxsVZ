@@ -255,6 +255,8 @@ int main(int iArgc, char *cArgv[])
 				ExttJobStatusGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tStatus"))
 				ExttStatusGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tFWStatus"))
+				ExttFWStatusGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tConfiguration"))
 				ExttConfigurationGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"Dashboard"))
@@ -327,6 +329,7 @@ int main(int iArgc, char *cArgv[])
 	tJobCommands(entries,x);
 	tJobStatusCommands(entries,x);
 	tStatusCommands(entries,x);
+	tFWStatusCommands(entries,x);
 	tConfigurationCommands(entries,x);
 
 
@@ -651,6 +654,9 @@ void Header_ism3(const char *title, int iJs)
 	else if(!strcmp(gcFunction,"tStatus") || !strcmp(gcFunction,"tStatusTools") ||
 			!strcmp(gcFunction,"tStatusList"))
 		ExttStatusNavBar();
+	else if(!strcmp(gcFunction,"tFWStatus") || !strcmp(gcFunction,"tFWStatusTools") ||
+			!strcmp(gcFunction,"tFWStatusList"))
+		ExttFWStatusNavBar();
 	else if(!strcmp(gcFunction,"tConfiguration") || !strcmp(gcFunction,"tConfigurationTools") ||
 			!strcmp(gcFunction,"tConfigurationList"))
 		ExttConfigurationNavBar();
@@ -1008,6 +1014,17 @@ if(guSSLCookieLogin)
 	  else
 		  printf(" id=current>\n");
 	  printf("\t\t\t<a title='tStatus' href=unxsVZ.cgi?gcFunction=tStatus>tStatus</a>\n");
+	}
+	//tFWStatus
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tFWStatus") && strcmp(gcFunction,"tFWStatusTools") &&
+			strcmp(gcFunction,"tFWStatusList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='tFWStatus' href=unxsVZ.cgi?gcFunction=tFWStatus>tFWStatus</a>\n");
 	}
 	//tConfiguration
 	if(guPermLevel>=20)
