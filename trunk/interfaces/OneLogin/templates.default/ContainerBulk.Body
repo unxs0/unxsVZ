@@ -18,7 +18,7 @@
 	<a title='User management page' class="wpsUnSelectedPlaceLink" href='{{cCGI}}?gcPage=User&guContainer={{guContainer}}'><b class ="font10pt">User</b></a>
 </td>
 <td class="wpsSelectedPlace" nowrap height="100%">
-	<a title='Container settings page' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=Container&guContainer={{guContainer}}'><b class ="font10pt">Container</b></a>
+	<a title='PBX settings page' class="wpsSelectedPlaceLink" href='{{cCGI}}?gcPage=PBX&guContainer={{guContainer}}'><b class ="font10pt">PBX</b></a>
 </td>
 
 </tr>
@@ -40,7 +40,7 @@
 
 
 <form method=post action={{cCGI}} style="margin:0px;">
-<input type=hidden name="gcPage" value="Container">
+<input type=hidden name="gcPage" value="PBX">
 <input type=hidden name="guContainer" value="{{guContainer}}">
 <table width=1200  border="0" cellspacing="0" cellpadding="0">
 <tr>
@@ -50,7 +50,7 @@
 <tr>
 <td valign="top" width="9" class="hdrtout padlt8" height="21"></td>
 <td class="hdrtout padlt8" width="33%">
-	<h6 class="modhdr">Container Tab</h6>
+	<h6 class="modhdr">PBX Tab</h6>
 </td>
 <td valign="top" width="9" class="hdrtout padlt8"></td>
 <td width="10"> </td>
@@ -65,7 +65,7 @@
 <td ><img src="/images/clear.gif" width="9" height="9" /></td>
 <td valign="top">
 
-<!-- Container tab panel content -->
+<!-- PBX tab panel content -->
 <table border="0" cellspacing="8" cellpadding="0" width="100%" class="table_content">
 	<tr>
 		<td valign="top">

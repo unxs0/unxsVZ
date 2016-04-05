@@ -26,12 +26,12 @@
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{{cCGI}}?gcPage=Container&guContainer={{guContainer}}">{{gcBrand}} OneLogin</a>
+          <a class="navbar-brand" href="{{cCGI}}?gcPage=PBX&guContainer={{guContainer}}">{{gcBrand}} OneLogin</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li><a href="{{cCGI}}?gcPage=User&guContainer={{guContainer}}">User</a></li>
-            <li><a href="{{cCGI}}?gcPage=Container&guContainer={{guContainer}}">Container</a></li>
+            <li><a href="{{cCGI}}?gcPage=PBX&guContainer={{guContainer}}">PBX</a></li>
             <li><a href="{{cCGI}}?gcPage=About&guContainer={{guContainer}}">About</a></li>
             <li><a href="{{cCGI}}?gcPage=Contact&guContainer={{guContainer}}">Contact</a></li>
             {{cPrivilegedContainerMenu}}
@@ -60,16 +60,16 @@
 		<br>
 		<button class="btn btn-lg btn-primary btn-block" 
 			title="Select a reseller or a customer. Select a container. Then use this button to assign the container.  Please note that if this container already has been assigned to another reseller it will be removed without notice."
-			type="submit" name=gcFunction value='Assign Container'>Assign Container</button>
+			type="submit" name=gcFunction value='Assign PBX'>Assign PBX</button>
 		<button class="btn btn-lg btn-primary btn-block" 
 			title="Select a reseller or a customer. Select a container. Then use this button to deassign or remove the container."
-			type="submit" name=gcFunction value='Deassign Container'>Deassign Container</button>
+			type="submit" name=gcFunction value='Deassign PBX'>Deassign PBX</button>
 		<button class="btn btn-lg btn-primary btn-block" 
 			title="Select a reseller or a customer. Then use this button to generate a direct to browser CSV report of containers per reseller."
 			type="submit" name=gcFunction value='Reseller Report'>Reseller Report</button>
 		<button class="btn btn-lg btn-primary btn-block" 
 			title="Select a container. Then use this button to generate a direct to browser CSV report of the owners of the given container."
-			type="submit" name=gcFunction value='Container Report'>Container Report</button>
+			type="submit" name=gcFunction value='PBX Report'>PBX Report</button>
 		</form>
 		<br>
       		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
