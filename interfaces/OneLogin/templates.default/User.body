@@ -32,7 +32,7 @@
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="{{cCGI}}?gcPage=User&guContainer={{guContainer}}">User</a></li>
-            <li><a href="{{cCGI}}?gcPage=Container&guContainer={{guContainer}}">Container</a></li>
+            <li><a href="{{cCGI}}?gcPage=PBX&guContainer={{guContainer}}">PBX</a></li>
             <li><a href="{{cCGI}}?gcPage=About&guContainer={{guContainer}}">About</a></li>
             <li><a href="{{cCGI}}?gcPage=Contact&guContainer={{guContainer}}">Contact</a></li>
             {{cPrivilegedContainerMenu}}
@@ -53,8 +53,8 @@
 		<h5>{{funcMOTD}}</h5>
 		<h3>Saved Session Data</h3>
 		<h5>
-		Container hostname: {{gcCtHostname}}<br>
-		Container VEID: {{guContainer}}<br>
+		PBX hostname: {{gcCtHostname}}<br>
+		PBX VEID: {{guContainer}}<br>
 		</h5>
           </div><!-- "jumbotron" -->
 

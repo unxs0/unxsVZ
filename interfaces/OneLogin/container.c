@@ -263,10 +263,10 @@ void ContainerCommands(pentry entries[], int x)
         MYSQL_RES *res2;
 	MYSQL_ROW field2;
 
-	if(!strcmp(gcPage,"Container"))
+	if(!strcmp(gcPage,"PBX"))
 	{
 		ProcessContainerVars(entries,x);
-		if(!strcmp(gcFunction,"Upgrade Container") && guPermLevel>5)
+		if(!strcmp(gcFunction,"Upgrade PBX") && guPermLevel>5)
 		{
 			char cAuthCode[32]={"PsW3jGd"};
 			char cTag[32]={""};
@@ -318,18 +318,18 @@ void ContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				gcMessage="Container already tagged for upgrade";
+				gcMessage="PBX already tagged for upgrade";
 				htmlContainer();
 			}
 
 			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
-			sprintf(gcQuery,"Container %s (%u) flagged for upgrade by %s\n",gcCtHostname,guContainer,gcName);
+			sprintf(gcQuery,"PBX %s (%u) flagged for upgrade by %s\n",gcCtHostname,guContainer,gcName);
 			SendAlertEmail(gcQuery);
 
 			gcMessage="upgrade break point 1";
 			htmlContainer();
 		}
-		else if(!strcmp(gcFunction,"Cancel Container") && guPermLevel>5)
+		else if(!strcmp(gcFunction,"Cancel PBX") && guPermLevel>5)
 		{
 			char cAuthCode[32]={"lwXM722Ki"};
 			char cTag[32]={""};
@@ -381,12 +381,12 @@ void ContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				gcMessage="Container already tagged for cancel";
+				gcMessage="PBX already tagged for cancel";
 				htmlContainer();
 			}
 
 			sprintf(gcCtHostname,"%.99s",(char *)cGetHostname(guContainer));
-			sprintf(gcQuery,"Container %s (%u) flagged for cancel by %s\n",gcCtHostname,guContainer,gcName);
+			sprintf(gcQuery,"PBX %s (%u) flagged for cancel by %s\n",gcCtHostname,guContainer,gcName);
 			SendAlertEmail(gcQuery);
 
 			gcMessage="cancel break point 1";
@@ -464,7 +464,7 @@ void ContainerCommands(pentry entries[], int x)
 			if(mysql_num_rows(res)<1)
 			{
 				mysql_free_result(res);
-				gcMessage="Container must be registered with OpenSIPS or have LinesContracted value.";
+				gcMessage="PBX must be registered with OpenSIPS or have LinesContracted value.";
 				htmlContainer();
 			}
 			mysql_free_result(res);
@@ -1195,7 +1195,7 @@ void ContainerCommands(pentry entries[], int x)
 	else if(!strcmp(gcPage,"Repurpose"))
 	{
 		ProcessContainerVars(entries,x);
-		if(!strcmp(gcFunction,"Repurpose Container") && guPermLevel>5)
+		if(!strcmp(gcFunction,"Repurpose PBX") && guPermLevel>5)
 		{
 
 			//gcMessage="debug step 1";
@@ -1840,9 +1840,9 @@ void ContainerCommands(pentry entries[], int x)
 			mysql_free_result(res);
 
 			guContainer=guNewContainer;
-			unxsvzLog(guNewContainer,"tContainer","Repurpose Container",guPermLevel,guLoginClient,gcLogin,gcHost);
+			unxsvzLog(guNewContainer,"tContainer","Repurpose PBX",guPermLevel,guLoginClient,gcLogin,gcHost);
 			htmlRepurpose();
-		}//Repurpose Container ~650 lines
+		}//Repurpose PBX ~650 lines
 	}
 	else if(!strcmp(gcPage,"Reseller"))
 	{
@@ -1851,7 +1851,7 @@ void ContainerCommands(pentry entries[], int x)
 		{
 			gcMessage="No function called.";
 		}
-		else if(!strcmp(gcFunction,"Container Report") && guNewContainer)
+		else if(!strcmp(gcFunction,"PBX Report") && guNewContainer)
 		{
 
 			printf("Content-type: text/plain\n\n");
@@ -1873,7 +1873,7 @@ void ContainerCommands(pentry entries[], int x)
 					ForeignKey("tClient","cLabel",uOwner),ForeignKey("tClient","cLabel",uCreatedBy));
 			}
 			mysql_free_result(res);
-			unxsvzLog(guNewContainer,"tContainer","Container Report",guPermLevel,guLoginClient,gcLogin,gcHost);
+			unxsvzLog(guNewContainer,"tContainer","PBX Report",guPermLevel,guLoginClient,gcLogin,gcHost);
 			exit(0);
 		}
 		else if(!strcmp(gcFunction,"Reseller Report") && guReseller)
@@ -1958,7 +1958,7 @@ void ContainerCommands(pentry entries[], int x)
 			unxsvzLog(guReseller,"tClient","Reseller Report",guPermLevel,guLoginClient,gcLogin,gcHost);
 			exit(0);
 		}
-		else if(!strcmp(gcFunction,"Assign Container") && guPermLevel>5 && guNewContainer && guReseller)
+		else if(!strcmp(gcFunction,"Assign PBX") && guPermLevel>5 && guNewContainer && guReseller)
 		{
 			//uStatus must be active or offline or appliance
 			sprintf(gcQuery,"SELECT uNode,uDatacenter FROM tContainer WHERE uContainer=%u",guNewContainer);
@@ -2016,10 +2016,10 @@ void ContainerCommands(pentry entries[], int x)
 				htmlReseller();
 			}
 
-			unxsvzLog(guNewContainer,"tContainer","Assign Container",guPermLevel,guLoginClient,gcLogin,gcHost);
+			unxsvzLog(guNewContainer,"tContainer","Assign PBX",guPermLevel,guLoginClient,gcLogin,gcHost);
 			htmlReseller();
 		}
-		else if(!strcmp(gcFunction,"Deassign Container") && guPermLevel>5 && guNewContainer && guReseller)
+		else if(!strcmp(gcFunction,"Deassign PBX") && guPermLevel>5 && guNewContainer && guReseller)
 		{
 			//this is wierd! please fix TODO
 			sprintf(gcQuery,"UPDATE tContainer"
@@ -2033,7 +2033,7 @@ void ContainerCommands(pentry entries[], int x)
 			}
 
 			gcMessage="Current container removed from reseller account";
-			unxsvzLog(guNewContainer,"tContainer","Deassign Container",guPermLevel,guLoginClient,gcLogin,gcHost);
+			unxsvzLog(guNewContainer,"tContainer","Deassign PBX",guPermLevel,guLoginClient,gcLogin,gcHost);
 			htmlReseller();
 		}
 		else if(!strcmp(gcFunction,"Create Reseller") && gcNewLogin[0] && gcNewPasswd[0] && guPermLevel>5)
@@ -2760,12 +2760,12 @@ void SelectContainer(void)
 	{
 		sprintf(gcLabel,"%.32s",field[0]);
 
-		if(!gcMessage[0]) gcMessage="Container Selected";
+		if(!gcMessage[0]) gcMessage="PBX Selected";
 	}
 	else
 	{
 		gcLabel[0]=0;
-		gcMessage="<blink>No Container Selected</blink>";
+		gcMessage="<blink>No PBX Selected</blink>";
 	}
 	
 	mysql_free_result(res);
@@ -3118,13 +3118,13 @@ void funcNewContainer(FILE *fp)
 
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Select reseller from above and add currently loaded container to their account'"
-			" name=gcFunction value='Add Container'>\n");
+			" name=gcFunction value='Add PBX'>\n");
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Select reseller from above and remove currently loaded container from their account'"
-			" name=gcFunction value='Del Container'>\n");
+			" name=gcFunction value='Del PBX'>\n");
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Select reseller from above and provide list of their containers'"
-			" name=gcFunction value='Show Containers'>\n");
+			" name=gcFunction value='Show PBXs'>\n");
 	if(guPermLevel>=10)
 		fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Select reseller from above and think twice, no undo!'"
@@ -3271,7 +3271,7 @@ void funcNewContainer(FILE *fp)
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Select a container, base time zone, then enter the first part of the new FQDN hostname."
 			" Other options (as configured) may apply.'"
-			" name=gcFunction value='Repurpose Container'>\n");
+			" name=gcFunction value='Repurpose PBX'>\n");
 	printf("</fieldset>");
 
 	fprintf(fp,"<p><input type=checkbox name=gcShowDetails %s> DID/Extension/Trunk Details",gcShowDetails);
@@ -3421,10 +3421,10 @@ void funcContainer(FILE *fp)
 			" name=gcAuthCode size=16 maxlength=32> Authorization Code");
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Immediately destroys all container data and functionality'"
-			" name=gcFunction value='Cancel Container'>\n");
+			" name=gcFunction value='Cancel PBX'>\n");
 	fprintf(fp,"<p><input type=submit class=largeButton"
 			" title='Schedules a job for container upgrade to latest version'"
-			" name=gcFunction value='Upgrade Container'>\n");
+			" name=gcFunction value='Upgrade PBX'>\n");
 	printf("</fieldset>");
 
 
@@ -4115,7 +4115,7 @@ void DIDOpsCommonChecking(void)
 	if(mysql_num_rows(res)<1)
 			{
 		mysql_free_result(res);
-		gcMessage="Container must be registered with OpenSIPS or have LinesContracted value.";
+		gcMessage="PBX must be registered with OpenSIPS or have LinesContracted value.";
 		htmlContainerBulk();
 	}
 	mysql_free_result(res);

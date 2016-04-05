@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 				GlossaryGetHook(gentries,i);
 			else if(!strcmp(gcPage,"User"))
 				UserGetHook(gentries,i);
-			else if(!strcmp(gcPage,"Container"))
+			else if(!strcmp(gcPage,"PBX"))
 				ContainerGetHook(gentries,i);
 			else if(!strcmp(gcPage,"About"))
 				ContainerGetHook(gentries,i);
