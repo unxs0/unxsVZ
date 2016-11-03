@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -401,7 +401,7 @@ void tDeletedZoneNavList(void)
 		printf("No records found<br>\n");
 
 	while((field=mysql_fetch_row(res)))
-		printf("<a class=darkLink href=iDNS.cgi?gcFunction=tDeletedZone&uDeletedZone=%s>%s [%s]</a><br>",
+		printf("<a class=darkLink href=?gcFunction=tDeletedZone&uDeletedZone=%s>%s [%s]</a><br>",
 			field[0],field[1],field[2]);
 	
 	mysql_free_result(res);

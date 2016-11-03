@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Non-schema dependent tclient.c expansion.
 AUTHOR

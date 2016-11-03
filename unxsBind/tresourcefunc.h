@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Non-schema dependent tresource.c expansion.
 AUTHOR
@@ -1757,10 +1757,10 @@ void ResourceLinks(unsigned uZone)
 	{
 		printf("<input type=checkbox name=uGrpResource%s> ",field[1]);
 		if(uArpa)
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s&cZone=%s>%s %s</a><br>\n",
+			printf("<a class=darkLink href=?gcFunction=tResource&uResource=%s&cZone=%s>%s %s</a><br>\n",
 				field[1],cZone,field[0],field[2]);
 		else
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s>%s %s</a><br>\n",
+			printf("<a class=darkLink href=?gcFunction=tResource&uResource=%s>%s %s</a><br>\n",
 				field[1],field[0],field[2]);
 	}
 
@@ -1888,7 +1888,7 @@ void ExttResourceButtons(void)
 				sscanf(ForeignKey("tZone","uView",uZone),"%u",&uView);
 
 				printf("<p><u>ZoneNavList</u><br>");
-				printf("<a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%u&cZone=%s>",uZone,cZone);
+				printf("<a class=darkLink href=?gcFunction=tZone&uZone=%u&cZone=%s>",uZone,cZone);
 				if(cZone[0])
 					printf("%s %s</a>",cZone,ForeignKey("tView","cLabel",uView));
 				else
@@ -2202,8 +2202,8 @@ while((field=mysql_fetch_row(res)))
 		}
 			
 		printf("<td valign=top><input type=checkbox name=Ct%s ></td>"
-		"<td valign=top><a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s>%s</a></td>"
-		"<td valign=top><a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%s>%s</a></td>"
+		"<td valign=top><a class=darkLink href=?gcFunction=tResource&uResource=%s>%s</a></td>"
+		"<td valign=top><a class=darkLink href=?gcFunction=tZone&uZone=%s>%s</a></td>"
 		"<td valign=top>%.64s</td>"
 		"<td valign=top>%.64s</td>"
 		"<td valign=top>%.64s</td>"

@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tfwstatusfunc.h 1380 2010-04-27 15:02:47Z Gary $
+	svn ID removed
 PURPOSE
 AUTHOR/LEGAL
 	(C) 2001-2016 Gary Wallis for Unixservice, LLC.

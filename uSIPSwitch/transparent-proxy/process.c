@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsVZ/uSIPSwitch/transparent-proxy/process.c
-	$Id$
+	svn ID removed
 PURPOSE
 	process message before forwarding
 	determine where to send

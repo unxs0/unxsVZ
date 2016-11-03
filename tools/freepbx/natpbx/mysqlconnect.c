@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: mysqlconnect.c 1646 2011-01-17 22:26:49Z Gary $
+	svn ID removed
 PURPOSE
 	Wrapper for mysql_real_connect() that supports very fast
 	connect to main or alternative local.h set MySQL servers.

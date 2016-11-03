@@ -2,15 +2,15 @@
 FILE
 	tProperty source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id$
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tpropertyfunc.h while 
-	RAD is still to be used.
+	Property doc style table for adding tags or other free form data
+	to other tables via FK.
 AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file.	
 */
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 #include "mysqlrad.h"

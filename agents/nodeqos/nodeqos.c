@@ -1,7 +1,7 @@
 /*
 FILE
 	nodeqos.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Collection of Asterisk PBX QOS data from containers running on a hardware node.
 	Collection of tshark determined problem streams.
@@ -125,7 +125,7 @@ int main(int iArgc, char *cArgv[])
 			}
 			if(!strcmp(cArgv[i],"--version"))
 			{
-				printf("version: %s $Id$\n",cArgv[0]);
+				printf("version: %s svn ID removed
 				exit(0);
 			}
 		}

@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # agents/nodeqos/makefile
 #
 # (C) 2012-2013 Gary Wallis for Unixservice, LLC.

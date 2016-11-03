@@ -1,7 +1,7 @@
 /*
 FILE 
 	glossary.c
-	$Id: glossary.c 660 2008-12-18 18:48:48Z hus $
+	svn ID removed
 AUTHOR
 	(C) 2006-2010 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 	GPLv2 license applies see LICENSE file included.

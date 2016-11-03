@@ -2,12 +2,14 @@
 FILE
 	tPerm source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: ttype.c 2690 2014-08-11 21:12:00Z Colin $
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in ttypefunc.h while 
-	RAD is still to be used.
+	Authentication permissions role table	
+AUTHOR/LEGAL
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file included.
 */
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 #include "mysqlrad.h"

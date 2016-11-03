@@ -1,7 +1,7 @@
 /*
 FILE
 	ldap.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Get authentication and authorization data from an LDAP server
 	using libldap.

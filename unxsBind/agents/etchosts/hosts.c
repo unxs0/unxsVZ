@@ -1,7 +1,7 @@
 /*
 FILE
         hosts.c
-        $Id$
+        svn ID removed
 
 PURPOSE
         Create /etc/hosts compatible lines for A records for given zone matching string.

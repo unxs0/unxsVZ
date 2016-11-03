@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: cgi.h 1953 2012-05-22 15:03:17Z Colin $
+	svn ID removed
 LEGAL
 	Public Domain. See cgi.c file for more info
 */

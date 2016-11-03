@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -126,7 +126,7 @@ void ExttResourceImportButtons(void)
 		default:
 			if(uZone)
 			{
-				printf("<a class=darkLink href=iDNS.cgi?gcFunction=tZoneImport&uZone=%u>",uZone);
+				printf("<a class=darkLink href=?gcFunction=tZoneImport&uZone=%u>",uZone);
 				printf("Back to Zone</a>");
 			}
 	}

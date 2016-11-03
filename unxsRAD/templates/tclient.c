@@ -2,7 +2,7 @@
 FILE
 	tClient source code of {{cProject}}.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tclient.c 1953 2012-05-22 15:03:17Z Colin $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tclientfunc.h while 

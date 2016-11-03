@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsVZ/interface/Org/firewallcontrol.c
-	$Id$
+	svn ID removed
 PURPOSE
 	
 AUTHOR/LEGAL

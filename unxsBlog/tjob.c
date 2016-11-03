@@ -2,7 +2,7 @@
 FILE
 	tJob source code of unxsBlog.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tjob.c 1291 2007-07-09 23:20:17Z Gary $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tjobfunc.h while 

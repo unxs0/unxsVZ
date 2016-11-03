@@ -1,7 +1,7 @@
 #
 #FILE
 #	unxsScripts/unxsvz/makefile
-#	$Id$
+#	svn ID removed
 #AUTHOR/LEGAL
 #	(C) 2001-2015 Gary Wallis for Unixservice, LLC. GPLv2 license applies.
 #

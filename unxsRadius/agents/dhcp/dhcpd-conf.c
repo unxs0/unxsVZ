@@ -1,7 +1,7 @@
 /*
 FILE
 	dhcpd-conf.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Create dhcpd.conf file based on MACs
 AUTHOR

@@ -2,7 +2,7 @@
 #
 #FILE
 #	mysqlcluster.sh
-#	$Id$
+#	$Id: mysqlcluster.sh 103 2009-05-28 19:42:18Z Hugo $
 #
 #PURPOSE
 #	Connect to all members of a MySQL replication cluster and check slave status.

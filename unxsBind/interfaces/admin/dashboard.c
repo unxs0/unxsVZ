@@ -1,7 +1,7 @@
 /*
 FILE
 	dashboard.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Provide the functions for the idnsAdmin Dashboard.
 AUTHOR/LEGAL

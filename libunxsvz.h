@@ -1,13 +1,13 @@
 /*
 FILE 
 	unxsVZ/libunxsvz.h
-	$Id$
+	svn ID removed
 PURPOSE
 	Header for libunxsvz.c linunxsvz.a library.
 	Move the jobqueue out of the cgi.
 NOTES
 AUTHOR/LEGAL
-	(C) 2011-2014 Unixservice, LLC.
+	(C) 2011-2016 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 FREE HELP
 	support @ openisp . net
@@ -59,6 +59,7 @@ void GetGroupProp(const unsigned uGroup,const char *cName,char *cValue);
 void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
 void GetIPProp(const unsigned uIP,const char *cName,char *cValue);
 void GetIPPropFromHost(const char *cHostIP,const char *cName,char *cValue);
+char *base64encode (const void *b64_encode_this, int encode_this_many_bytes);
 
 //Global vars
 

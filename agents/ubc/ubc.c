@@ -1,7 +1,7 @@
 /*
 FILE
 	ubc.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Collection of diverse VZ operating parameters and other system vars.
 AUTHOR
@@ -135,7 +135,7 @@ int main(int iArgc, char *cArgv[])
 			}
 			if(!strcmp(cArgv[i],"--version"))
 			{
-				printf("version: %s $Id$\n",cArgv[0]);
+				printf("version: %s svn ID removed
 				//SendEmail("ubc.c test","ubc.c test");
 				exit(0);
 			}

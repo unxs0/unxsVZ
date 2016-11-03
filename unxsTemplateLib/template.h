@@ -1,7 +1,7 @@
 /*
 FILE
 	template.h
-	$Id: template.h 1282 2007-07-03 23:44:44Z Gary $
+	svn ID removed
 PURPOSE
 	Template function library header file to use with RAD3 back-office
 	applications that have tTemplate and tTemplateSet model.

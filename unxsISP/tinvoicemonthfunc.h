@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 
 	Archive RO myISAM tables and be able to use them at will.

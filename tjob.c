@@ -1,16 +1,14 @@
 /*
 FILE
 	tJob source code of unxsVZ.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id$
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tjobfunc.h while 
-	RAD is still to be used.
+	Job queue table
 AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file.	
 */
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 #include "mysqlrad.h"
@@ -298,7 +296,7 @@ void tJob(const char *cResult)
 	else if(guMode==9004)
 		tJobNewStep(4);
 	//UBC wizard
-	if(guMode==8001)
+	else if(guMode==8001)
 		tJobNewStep(10);
 	else if(guMode==8002)
 		tJobNewStep(11);

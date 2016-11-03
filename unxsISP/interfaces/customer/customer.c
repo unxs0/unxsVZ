@@ -1,7 +1,7 @@
 /*
 FILE 
 	customer.c
-	$Id: customer.c 478 2009-08-12 16:54:58Z Hugo $
+	svn ID removed
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE

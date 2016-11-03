@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tauthorizefunc.h.template 1268 2007-07-02 21:34:14Z Gary $
+	svn ID removed
 PURPOSE
 	Non-schema dependent tauthorize.c expansion.
 AUTHOR

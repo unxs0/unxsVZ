@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsrad.c
-	$Id: unxsrad.c 2110 2012-09-17 21:23:47Z Gary $
+	svn ID removed
 PURPOSE
 	unxsSPS job queue CLI standalone program	
 LEGAL
@@ -23,7 +23,7 @@ HELP
 MYSQL gMysql;
 MYSQL gMysqlExt;
 char gcQuery[8192]={""};
-char *gcBuildInfo="$Id: unxsrad.c 2110 2012-09-17 21:23:47Z Gary $";
+char *gcBuildInfo="svn ID removed
 static FILE *gLfp=NULL;//log file
 char gcHostname[100]={""};
 

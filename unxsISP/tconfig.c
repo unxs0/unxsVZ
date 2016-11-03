@@ -2,7 +2,7 @@
 FILE
 	tConfig source code of unxsISP.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id$
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tconfigfunc.h while 

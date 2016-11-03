@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	tproduct.c expansion non-schema dependent file.
 	For application gcFunctionality regarding unxsISP products and related

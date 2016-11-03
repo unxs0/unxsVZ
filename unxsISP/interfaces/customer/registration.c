@@ -1,7 +1,7 @@
 /*
 FILE 
 	registration.c
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) 2010 Hugo Urquiza for Unixservice LLC.
 PURPOSE

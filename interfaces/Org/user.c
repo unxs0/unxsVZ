@@ -1,7 +1,7 @@
 /*
 FILE 
 	user.c
-	$Id: user.c 1478 2010-05-25 02:43:12Z Gary $
+	svn ID removed
 AUTHOR/LEGAL
 	(C) 2010, 2011 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.

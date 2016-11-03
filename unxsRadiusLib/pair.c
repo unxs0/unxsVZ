@@ -6,7 +6,7 @@
  */
 
 char pair_rcsid[] =
-"$Id: pair.c 60 2007-10-18 13:41:43Z Gary $";
+"svn ID removed
 
 #include	<sys/types.h>
 #include	<sys/time.h>

@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsVZ/uSIPSwitch/natpbx/process.c
-	$Id$
+	svn ID removed
 PURPOSE
 	This is where the SIP state machine is implemented
 AUTHOR/LEGAL

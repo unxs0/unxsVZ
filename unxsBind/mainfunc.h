@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Included in main.c. For command line interface and html main link.
 AUTHOR/LEGAL
@@ -96,6 +96,10 @@ void ProcessExtJobQueue(char *cServer);
 void ProcessVZJobQueue(void);
 void ExportRRCSV(char *cCompany,char *cOutFile);
 
+static unsigned guZeroSystem=0;
+static unsigned guAddBackup=1;	
+void voidAddBackup(void);
+void voidhtmlListBackupLinks(void);
 
 int iExtMainCommands(pentry entries[], int x)
 {
@@ -120,7 +124,19 @@ int iExtMainCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,"Zero System"))
 		{
 			if(guPermLevel>=12)
+				guZeroSystem=1;
+			Admin();
+		}
+		else if(!strcmp(gcCommand,"Zero System Confirm"))
+		{
+			if(guPermLevel>=12)
 				ZeroSystem();
+			Admin();
+		}
+		else if(!strcmp(gcCommand,"Add Backup"))
+		{
+			if(guPermLevel>=12)
+				voidAddBackup();
 			Admin();
 		}
 	}
@@ -173,7 +189,7 @@ void DashBoard(const char *cOptionalMsg)
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		sscanf(mysqlField[1],"%lu",&luClock);
-		printf("<td></td><td>%s</td><td colspan=2><a href=iDNS.cgi?gcFunction=tZone&uZone=%s>%s</a> %s (%s times)"
+		printf("<td></td><td>%s</td><td colspan=2><a href=?gcFunction=tZone&uZone=%s>%s</a> %s (%s times)"
 			"</td><td>%s</td></tr>\n",ctime(&luClock),mysqlField[5],mysqlField[3],
 							mysqlField[0],mysqlField[4],mysqlField[2]);
 	}
@@ -288,7 +304,7 @@ void ExtMainContent(void)
 		OpenRow("Table List","black");
 		printf("<td>\n");
 		for(i=0;cTableList[i][0];i++)
-			printf("<a href=iDNS.cgi?gcFunction=%.32s>%.32s</a><br>\n",
+			printf("<a href=?gcFunction=%.32s>%.32s</a><br>\n",
 				cTableList[i],cTableList[i]);
 		printf("</td></tr>\n");
 
@@ -1369,21 +1385,135 @@ void Admin(void)
 
 	if(guPermLevel>7)
 	{
-		printf("<input title=\"View this system's named.conf file\" class=largeButton type=submit"
+		printf("<br><input title=\"View this system's named.conf file\" class=largeButton type=submit"
 			" name=gcCommand value=NamedConf><br>");
-		printf("<input title=\"View this system's master.zones file\" class=largeButton type=submit"
+		printf("<br><input title=\"View this system's master.zones file\" class=largeButton type=submit"
 			" name=gcCommand value=MasterZones><br>");
-		printf("<input title='Tutorial' class=largeButton type=submit name=gcCommand value=Tutorial>");
-		if(guPermLevel>11 && guLoginClient==1 )
+		printf("<br><input title='Tutorial' class=largeButton type=submit name=gcCommand value=Tutorial>");
+		if(guPermLevel>11 && guLoginClient==1 && !guZeroSystem)
 			printf("<p><input title='DANGER truncates all tables, then installs distro init data from"
 			" /usr/local/share/iDNS/data'"
 			" class=lwarnButton type=submit name=gcCommand value='Zero System'>");
+		if(guPermLevel>11 && guLoginClient==1 && guZeroSystem)
+			printf("<p><input title='DANGER truncates all tables, then installs distro init data from"
+			" /usr/local/share/iDNS/data'"
+			" class=lwarnButton type=submit name=gcCommand value='Zero System Confirm'>");
 	}
+
+
+	if(guPermLevel>=10)
+		voidhtmlListBackupLinks();
 
 	printf("</td></tr></table></form>");
 	Footer_ism3();
 
 }//void Admin(void)
+
+
+//This needs a security review
+//you need to setup sudoers
+//
+//apache    ALL=(ALL)    NOPASSWD:/usr/bin/mysqldump
+//apache    ALL=(ALL)    NOPASSWD:/usr/sbin/idns-restore.sh
+//Defaults:apache !requiretty
+//
+void voidRestoreBackup(char *cFile)
+{
+	if(guPermLevel>=12)
+	{
+		char cPath[256];
+		sprintf(cPath,"sudo /usr/sbin/idns-restore.sh /usr/local/idns/backups/%.128s",cFile);	
+		if(system(cPath))
+			guAddBackup=0;	
+	}
+	Admin();
+}//void voidRestoreBackup(void)
+
+
+void voidDeleteBackup(char *cFile)
+{
+	if(guPermLevel>=12)
+	{
+		char cPath[256];
+		sprintf(cPath,"/usr/local/idns/backups/%.128s",cFile);	
+		unlink(cPath);
+	}
+	Admin();
+}//void voidDeleteBackup(void)
+
+//Only allow 1 backup per hour for DevOps/Monitoring disk safety.
+void voidAddBackup(void)
+{
+	if(guPermLevel>=10)
+	{
+		if(system("sudo /usr/bin/mysqldump -uidns -pwsxedc idns | gzip > "
+			" /usr/local/idns/backups/idns.$(date +\"%Y%m%d%H\").mysqldump.gz"))
+			guAddBackup=0;	
+	}
+	else
+	{
+		guAddBackup=0;
+	}
+
+}//void voidAddBackup(void)
+
+
+void voidhtmlListBackupLinks(void)
+{
+	printf("\n<fieldset><legend><b>Backup Links</b></legend>");
+	printf("<input class=largeButton type=submit name=gcCommand value='Add Backup'"
+		" title='Add another mysqldump backup to your backup list. This only works if the server you are running"
+		" your iDNS backend on is also running your backend MySQL DB'>\n");
+	if(!guAddBackup)
+		printf(" Failed!\n");
+	printf("<br><table><tr bgcolor=black>"
+		"<td><font color=white>Backup file name"
+		"<td><font color=white>Size"
+		"<td><font color=white>Date"
+		"<td><font color=white>Restore link"
+		"<td><font color=white>Delete link"
+			"</tr>\n");
+
+	#include <dirent.h> 
+	DIR *d;
+	struct dirent *dir;
+	d=opendir("/usr/local/idns/backups/");
+	if(d)
+	{
+		unsigned uCount=0;
+		while((dir=readdir(d)) != NULL)
+		{
+			if(strstr(dir->d_name,".mysqldump"))
+			{
+				struct stat stbuf;
+				char cFile[128]={""};
+				sprintf(cFile,"/usr/local/idns/backups/%s",dir->d_name);
+				if(!stat(cFile,&stbuf))
+				{
+					if(guPermLevel>=12)
+						printf("<tr><td>%1$s<td>%2$lu<td>%3$s<td><a class=darkLink href=?resBackup=%1$s >Restore</a>"
+						"<td><a class=darkLink href=?delBackup=%1$s ><font color=red>Delete</a></tr><br>\n",
+							dir->d_name,stbuf.st_size,ctime(&stbuf.st_ctime));
+					else
+						printf("<tr><td>%1$s<td>%2$lu<td>%3$s<td>n/a</a>"
+						"<td>n/a</tr><br>\n",
+							dir->d_name,stbuf.st_size,ctime(&stbuf.st_ctime));
+					uCount++;
+				}
+			}
+		}
+		closedir(d);
+		if(!uCount)
+			printf("Backup directory <i>/usr/local/idns/backups/</i> is empty\n");
+	}
+	else
+	{
+		printf("Directory <i>/usr/local/idns/backups/</i> does not exist or has incorrect permissions!\n");
+	}
+	printf("</table></fieldset>\n");
+
+}//void voidhtmlListBackupLinks()
+
 
 //List zones for a given uNSSet
 void ListZones(unsigned uNSSet)
@@ -3004,31 +3134,8 @@ void ImportFromDb(char *cSourceDbName, char *cTargetDbName, char *cPasswd)
 
 void ZeroSystem(void)
 {
-	register int i;
 
-	//Any failure will need CLI initialize!
-	for(i=0;cTableList[i][0];i++)
-	{
-        	sprintf(gcQuery,"TRUNCATE %s",cTableList[i]);
-        	mysql_query(&gMysql,gcQuery);
-        	if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-	}
-	
-	//Only valid for new rpm based layout
-	for(i=0;cInitTableList[i][0];i++)
-	{
-		sprintf(gcQuery,"LOAD DATA LOCAL INFILE '/usr/local/share/iDNS/data/%s.txt' REPLACE INTO TABLE %s",
-				cInitTableList[i],cInitTableList[i]);
-        	mysql_query(&gMysql,gcQuery);
-        	if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-	}
-
-	//tResourceTest not in cTableList, is not supposed to be accesed
-	sprintf(gcQuery,"TRUNCATE tResourceTest");
-	mysql_query(&gMysql,gcQuery);
-	//Removed error handling since this is obviously wrong.
+	//Change to load distro tutorial .sql file
 
 }//void ZeroSystem(void)
 

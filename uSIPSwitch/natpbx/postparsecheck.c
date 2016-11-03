@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsVZ/uSIPSwitch/natpbx/postparsecheck.c
-	$Id$
+	svn ID removed
 PURPOSE
 	After we parse SIP cMessage we can
 	check to make sure we have enough data to continue

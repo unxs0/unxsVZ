@@ -1,7 +1,7 @@
 /*
 FILE
 	natpbx.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Create /etc/sysconfig/iptables nat table section.
 	Create /etc/squid/squid.conf reverse proxy configuration file.

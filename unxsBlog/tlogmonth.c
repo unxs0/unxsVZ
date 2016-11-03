@@ -2,7 +2,7 @@
 FILE
 	tLogMonth source code of unxsBlog.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tlogmonth.c 429 2007-02-27 15:26:39Z root $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tlogmonthfunc.h while 

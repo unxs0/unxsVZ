@@ -1,4 +1,4 @@
-// $Id: language.h 1334 2007-07-23 22:39:47Z Gary $
+// svn ID removed
 // English: USA
 // Navigation bar buttons and results
 

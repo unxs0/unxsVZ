@@ -1,7 +1,7 @@
 /*
 FILE
 	radauth.c
-	$Id: radauth.c 60 2007-10-18 13:41:43Z Gary $
+	svn ID removed
 PURPOSE
 	uRadiusLib public API functions for authentication and authorization
 AUTHOR

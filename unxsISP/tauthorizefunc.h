@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Non-schema dependent tauthorize.c expansion.
 AUTHOR

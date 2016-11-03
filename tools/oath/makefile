@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # tools/oathtool/makefile
 #
 # (C) 2013 Gary Wallis for Unixservice, LLC.

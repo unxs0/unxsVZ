@@ -2,7 +2,7 @@
 FILE
 	tMonth source code of unxsBlog.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tmonth.c 427 2007-02-26 23:31:10Z root $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tmonthfunc.h while 

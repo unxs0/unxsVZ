@@ -1,7 +1,7 @@
 /*
 FILE
 	nodeqos.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Gather Asterisk QOS data from every PBX on this node.
 AUTHOR
@@ -66,7 +66,7 @@ int main(int iArgc, char *cArgv[])
 	{
 		if(!strncmp(cArgv[i],"--version",9))
 		{
-			printf("$Id$\n");
+			printf("svn ID removed
 			return(0);
 		}
 		else if(!strncmp(cArgv[i],"--help",6))

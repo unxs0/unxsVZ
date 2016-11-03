@@ -1,6 +1,6 @@
 #
 #FILE
-#	$Id: makefile 1619 2007-10-18 11:58:17Z Gary $
+#	svn ID removed
 #	Makefile
 #PURPOSE
 #	Create a small uClibC capable libradius.a

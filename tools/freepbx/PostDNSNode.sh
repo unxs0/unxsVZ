@@ -2,7 +2,7 @@
 
 #FILE
 #	rebootContainerPhones.sh	
-#	$Id$
+#	$Id: PostDNSNode.sh 2294 2013-04-18 19:12:29Z Colin $
 #PURPOSE
 #	In a container external migration.
 #	Waits for dns update and then try to reboot every online phone

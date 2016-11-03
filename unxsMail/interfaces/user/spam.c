@@ -1,7 +1,7 @@
 /*
 FILE 
 	spam.c
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) 2009 Hugo Urquiza for Unixservice
 PURPOSE

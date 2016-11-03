@@ -1,7 +1,7 @@
 /*
 FILE
 	unxsvz-checkconf.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Check unxsVZ managed OpenVZ server configuration.
 AUTHOR

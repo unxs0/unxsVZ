@@ -2,7 +2,7 @@
 FILE
 	tGlossary source code of unxsBlog.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: module.c.template 1176 2006-10-27 16:15:00Z ggw $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tglossaryfunc.h while 

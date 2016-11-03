@@ -1,7 +1,7 @@
 /*
 FILE
 	jobqueue.c
-	$Id: jobqueue.c 2069 2012-09-01 13:53:04Z Dylan $
+	svn ID removed
 PURPOSE
 	Command line processing of jobs in the tJob queue.
 AUTHOR/LEGAL

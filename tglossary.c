@@ -2,11 +2,12 @@
 FILE
 	tGlossary source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id$
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tglossaryfunc.h while 
 	RAD is still to be used.
+AUTHOR
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
 */
 
 
@@ -24,13 +25,14 @@ static char *cText={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 
@@ -90,17 +92,13 @@ void ProcesstGlossaryVars(pentry entries[], int x)
 
 void ProcesstGlossaryListVars(pentry entries[], int x)
 {
+	/*
         register int i;
 
         for(i=0;i<x;i++)
         {
-                if(!strncmp(entries[i].name,"ED",2))
-                {
-                        sscanf(entries[i].name+2,"%u",&uGlossary);
-                        guMode=2002;
-                        tGlossary("");
-                }
         }
+	*/
 }//void ProcesstGlossaryListVars(pentry entries[], int x)
 
 
@@ -245,10 +243,9 @@ void tGlossary(const char *cResult)
 void tGlossaryInput(unsigned uMode)
 {
 
-//uGlossary
+	//uGlossary
 	OpenRow(LANG_FL_tGlossary_uGlossary,"black");
-	printf("<input title='%s' type=text name=uGlossary value=%u size=16 maxlength=10 "
-,LANG_FT_tGlossary_uGlossary,uGlossary);
+	printf("<input title='%s' type=text name=uGlossary value=%u size=16 maxlength=10 ",LANG_FT_tGlossary_uGlossary,uGlossary);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -258,10 +255,9 @@ void tGlossaryInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=uGlossary value=%u >\n",uGlossary);
 	}
-//cLabel
+	//cLabel
 	OpenRow(LANG_FL_tGlossary_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tGlossary_cLabel,EncodeDoubleQuotes(cLabel));
+	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 ",LANG_FT_tGlossary_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -271,10 +267,9 @@ void tGlossaryInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
 	}
-//cText
+	//cText
 	OpenRow(LANG_FL_tGlossary_cText,"black");
-	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cText "
-,LANG_FT_tGlossary_cText);
+	printf("<textarea title='%s' cols=80 wrap=hard rows=16 name=cText ",LANG_FT_tGlossary_cText);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf(">%s</textarea></td></tr>\n",cText);
@@ -284,44 +279,32 @@ void tGlossaryInput(unsigned uMode)
 		printf("disabled>%s</textarea></td></tr>\n",cText);
 		printf("<input type=hidden name=cText value=\"%s\" >\n",EncodeDoubleQuotes(cText));
 	}
-//uOwner
+	//uOwner
 	OpenRow(LANG_FL_tGlossary_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
-//uCreatedBy
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
+	//uCreatedBy
 	OpenRow(LANG_FL_tGlossary_uCreatedBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
-//uCreatedDate
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
+	//uCreatedDate
 	OpenRow(LANG_FL_tGlossary_uCreatedDate,"black");
 	if(uCreatedDate)
 		printf("%s\n\n",ctime(&uCreatedDate));
 	else
 		printf("---\n\n");
 	printf("<input type=hidden name=uCreatedDate value=%lu >\n",uCreatedDate);
-//uModBy
+	//uModBy
 	OpenRow(LANG_FL_tGlossary_uModBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
-//uModDate
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
+	//uModDate
 	OpenRow(LANG_FL_tGlossary_uModDate,"black");
 	if(uModDate)
 		printf("%s\n\n",ctime(&uModDate));
@@ -329,8 +312,6 @@ void tGlossaryInput(unsigned uMode)
 		printf("---\n\n");
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
-
-
 
 }//void tGlossaryInput(unsigned uMode)
 
@@ -340,9 +321,7 @@ void NewtGlossary(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uGlossary FROM tGlossary\
-				WHERE uGlossary=%u"
-							,uGlossary);
+	sprintf(gcQuery,"SELECT uGlossary FROM tGlossary WHERE uGlossary=%u",uGlossary);
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -355,15 +334,13 @@ void NewtGlossary(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uGlossary=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tGlossary",uGlossary);
 	unxsVZLog(uGlossary,"tGlossary","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uGlossary);
-	tGlossary(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uGlossary);
+		tGlossary(gcQuery);
 	}
 
 }//NewtGlossary(unsigned uMode)
@@ -371,27 +348,18 @@ void NewtGlossary(unsigned uMode)
 
 void DeletetGlossary(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tGlossary WHERE uGlossary=%u AND ( uOwner=%u OR %u>9 )"
 					,uGlossary,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tGlossary WHERE uGlossary=%u"
-					,uGlossary);
-#endif
 	MYSQL_RUN;
 	//tGlossary("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uGlossary,"tGlossary","Del");
-#endif
 		tGlossary(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsVZLog(uGlossary,"tGlossary","DelError");
-#endif
 		tGlossary(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -436,7 +404,6 @@ void ModtGlossary(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -452,11 +419,6 @@ void ModtGlossary(void)
 	sprintf(gcQuery,"SELECT uGlossary,uModDate FROM tGlossary\
 				WHERE uGlossary=%u"
 						,uGlossary);
-#else
-	sprintf(gcQuery,"SELECT uGlossary FROM tGlossary\
-				WHERE uGlossary=%u"
-						,uGlossary);
-#endif
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
@@ -466,19 +428,15 @@ void ModtGlossary(void)
 	if(i>1) tGlossary(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tGlossary(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tGlossary(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tGlossary",uGlossary);
 	unxsVZLog(uGlossary,"tGlossary","Mod");
-#endif
 	tGlossary(gcQuery);
 
 }//ModtGlossary(void)
@@ -504,9 +462,15 @@ void tGlossaryList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uGlossary<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>cText<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black>"
+			"<td><font face=arial,helvetica color=white>uGlossary"
+			"<td><font face=arial,helvetica color=white>cLabel"
+			"<td><font face=arial,helvetica color=white>cText"
+			"<td><font face=arial,helvetica color=white>uOwner"
+			"<td><font face=arial,helvetica color=white>uCreatedBy"
+			"<td><font face=arial,helvetica color=white>uCreatedDate"
+			"<td><font face=arial,helvetica color=white>uModBy"
+			"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -557,7 +521,15 @@ void tGlossaryList(void)
 
 void CreatetGlossary(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGlossary ( uGlossary INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '',INDEX (cLabel), uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cText TEXT NOT NULL DEFAULT '' )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tGlossary ("
+				" uGlossary INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+				" cLabel VARCHAR(32) NOT NULL DEFAULT '',INDEX (cLabel),"
+				" uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
+				" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+				" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+				" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+				" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+				" cText TEXT NOT NULL DEFAULT '' )");
 	MYSQL_RUN;
 
 }//CreatetGlossary()

@@ -1,6 +1,6 @@
 /*
 FILE	lastmonth.c 
-	$Id: lastmonth.c 668 2007-07-02 13:50:59Z root $
+	svn ID removed
 AUTHOR/LEGAL
 	(C) 2002-2010 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.

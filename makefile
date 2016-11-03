@@ -1,7 +1,7 @@
 #
 #FILE
 #	unxsVZ/makefile
-#	$Id$
+#	svn ID removed
 #AUTHOR/LEGAL
 #	(C) 2001-2015 Gary Wallis for Unixservice, LLC. GPLv2 license applies.
 #
@@ -10,26 +10,29 @@
 #	Feel free to repackage for your OS and let us know.
 #
 
-CFLAGS=-Wall
+GIT_VERSION := $(shell git describe --dirty --always --tags)
+
+CFLAGS=-Wall -DGitVersion=\"$(GIT_VERSION)\"
 LIBS=-L/usr/lib/mysql -L/usr/lib64/mysql -L/usr/lib/openisp -L/usr/lib/oath -lmysqlclient -lz -lcrypt -lm -lssl -lucidr -ltemplate -loath -lunxsvz
 CGIDIR=cgi-bin
 #CGIDIR=cgi-bin/alpha
 
+
 help:
-	@echo "main make options available"
+	@echo "main make options available (git version: $(GIT_VERSION))"
 	@echo "	install-libunxsvz (required for unxsVZ and cgi)"
 	@echo "	install-unxsVZ (standalone job queue processor)"
 	@echo "	install (unxsVZ.cgi)"
 	@echo "	install-all (unxsVZ and unxsVZ.cgi)"
 
 unxsVZ.cgi: tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tcontainertype.o tperm.o tostemplate.o tnameserver.o \
-	tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
+	tsearchdomain.o tconfig.o tip.o tiptype.o tgrouptype.o tgroup.o tgroupglue.o tclient.o tauthorize.o \
 	ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o tlogmonth.o tmonth.o tglossary.o \
-	tjob.o tjobstatus.o tstatus.o tfwstatus.o tconfiguration.o  glossary.o main.o cgi.o mysqlconnect.o
+	tjob.o tjobstatus.o tstatus.o tfwstatus.o tfwrule.o tconfiguration.o  glossary.o main.o cgi.o mysqlconnect.o
 	cc tdatacenter.o tnode.o tcontainer.o tproperty.o ttype.o tcontainertype.o tperm.o tostemplate.o tnameserver.o \
-		tsearchdomain.o tconfig.o tip.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
+		tsearchdomain.o tconfig.o tip.o tiptype.o tgrouptype.o tgroup.o tgroupglue.o tclient.o \
 		tauthorize.o ttemplate.o ttemplateset.o ttemplatetype.o tlog.o tlogtype.o \
-		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tfwstatus.o tconfiguration.o \
+		tlogmonth.o tmonth.o tglossary.o tjob.o tjobstatus.o tstatus.o tfwstatus.o tfwrule.o tconfiguration.o \
 		glossary.o main.o cgi.o mysqlconnect.o -o unxsVZ.cgi $(LIBS) 
 
 ###
@@ -98,6 +101,9 @@ tconfig.o: tconfig.c mysqlrad.h language.h tconfigfunc.h local.h
 tip.o: tip.c mysqlrad.h language.h tipfunc.h local.h
 	cc -c tip.c -o tip.o $(CFLAGS)
 
+tiptype.o: tiptype.c mysqlrad.h language.h tiptypefunc.h local.h
+	cc -c tiptype.c -o tiptype.o $(CFLAGS)
+
 tgrouptype.o: tgrouptype.c mysqlrad.h language.h tgrouptypefunc.h local.h
 	cc -c tgrouptype.c -o tgrouptype.o $(CFLAGS)
 
@@ -145,6 +151,9 @@ tjobstatus.o: tjobstatus.c mysqlrad.h language.h tjobstatusfunc.h local.h
 
 tstatus.o: tstatus.c mysqlrad.h language.h tstatusfunc.h local.h
 	cc -c tstatus.c -o tstatus.o $(CFLAGS)
+
+tfwrule.o: tfwrule.c mysqlrad.h language.h tfwrulefunc.h local.h
+	cc -c tfwrule.c -o tfwrule.o $(CFLAGS)
 
 tfwstatus.o: tfwstatus.c mysqlrad.h language.h tfwstatusfunc.h local.h
 	cc -c tfwstatus.c -o tfwstatus.o $(CFLAGS)

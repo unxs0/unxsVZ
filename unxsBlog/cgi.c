@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: cgi.c 1261 2007-06-26 16:02:03Z hus $
+	svn ID removed
 LEGAL
 	Public Domain
 	

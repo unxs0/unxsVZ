@@ -2,7 +2,7 @@
 FILE
 	tClient source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id$
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tclientfunc.h while 
@@ -572,7 +572,7 @@ void tClientList(void)
                         ctime_r(&luTime9,cBuf9);
                 else
                         sprintf(cBuf9,"---");
-		printf("<td><a class=darkLink href=iDNS.cgi?gcFunction=tClient&uClient=%s>"
+		printf("<td><a class=darkLink href=?gcFunction=tClient&uClient=%s>"
                 	" %s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
                         ,field[0]
                         ,field[0]

@@ -1,7 +1,7 @@
 /*
 FILE 
 	idns-importzones.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Standalone CLI mass zone import tool.
 LEGAL

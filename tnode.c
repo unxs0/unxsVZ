@@ -2,12 +2,14 @@
 FILE
 	tNode source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id$
 PURPOSE
+	Metal servers for OpenVZ (or could be VM serves for docker containers) server node table
 AUTHOR/LEGAL
 	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 */
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 #include "mysqlrad.h"

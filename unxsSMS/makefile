@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # interfaces/sms/makefile
 #
 # (C) 2010 Gary Wallis for Unixservice, LLC.

@@ -1,8 +1,8 @@
 /*
 FILE
 	tDatacenter source code of unxsVZ.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id$
+	Built by mysqlRAD2.cgi 
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tdatacenterfunc.h while 
@@ -31,6 +31,8 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 

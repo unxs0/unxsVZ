@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # agents/kamailio/makefile
 #
 # (C) 2015 Gary Wallis for Unixservice, LLC.

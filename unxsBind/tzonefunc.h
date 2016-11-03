@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Non-schema dependent tzone.c expansion.
 AUTHOR/LEGAL
@@ -1935,7 +1935,7 @@ while((field=mysql_fetch_row(res)))
 	printf(">");
 
 		printf("<td valign=top><input type=checkbox name=Ct%s ></td>"
-		"<td valign=top><a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%s>%s</a></td>"
+		"<td valign=top><a class=darkLink href=?gcFunction=tZone&uZone=%s>%s</a></td>"
 		"<td valign=top>%.64s</td>"
 		"<td valign=top>%.64s</td>"
 		"<td valign=top>%.255s</td>\n",
@@ -2087,7 +2087,7 @@ void ResourceRecordList(unsigned uZone)
 
 		if(uArpa)
 			printf("<tr>"
-			"<td valign=top><a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s&cZone=%s>%s</a>"
+			"<td valign=top><a class=darkLink href=?gcFunction=tResource&uResource=%s&cZone=%s>%s</a>"
 			"</td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td>"
 			"<td valign=top>%s</td>"
 			"</tr>\n",
@@ -2106,7 +2106,7 @@ tResource.cName 0
 tResource.uResource 8
 */
 			printf("<tr>"
-				"<td valign=top><a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%s>%s</a></td>"
+				"<td valign=top><a class=darkLink href=?gcFunction=tResource&uResource=%s>%s</a></td>"
 				"<td valign=top>%s</td><td valign=top>%s</td><td valign=top>%.64s</td><td valign=top>%s</td>"
 				"<td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td>"
 				"</tr>\n",
@@ -4293,7 +4293,7 @@ void tZoneNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			uCount++;
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%s&cSearch=%s%s>%s [%s]</a><br>\n",
+			printf("<a class=darkLink href=?gcFunction=tZone&uZone=%s&cSearch=%s%s>%s [%s]</a><br>\n",
 				field[0]
 				,cURLEncode(cSearch)
 				,cSearchSecOnly
@@ -4385,7 +4385,7 @@ void htmlMasterZoneFile(void)
 			PassDirectHtmlLineNum(cFile);
 			printf("</blockquote></pre>");
 			printf("<input type=hidden name=gcFunction value=tZoneTools>");
-			printf("Back w/search link: <a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%u&cSearch=%s%s>%s [%s]</a><br>\n",
+			printf("Back w/search link: <a class=darkLink href=?gcFunction=tZone&uZone=%u&cSearch=%s%s>%s [%s]</a><br>\n",
 				uZone
 				,cURLEncode(cSearch)
 				,cSearchSecOnly
@@ -4423,7 +4423,7 @@ void htmlExternalNSRecords(void)
 			PassDirectHtml("/tmp/htmlExternalNSRecords.txt");
 			printf("</blockquote></pre>");
 			printf("<input type=hidden name=gcFunction value=tZoneTools>");
-			printf("Back w/search link: <a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%u&cSearch=%s>%s</a><br>\n",
+			printf("Back w/search link: <a class=darkLink href=?gcFunction=tZone&uZone=%u&cSearch=%s>%s</a><br>\n",
 				uZone
 				,cURLEncode(cSearch)
 				,cZone);

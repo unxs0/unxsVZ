@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # agents/ubc/makefile
 #
 # (C) 2001-2009 Gary Wallis.

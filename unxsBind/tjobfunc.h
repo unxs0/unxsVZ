@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Non-schema dependent tjob.c expansion.
 AUTHOR
@@ -383,7 +383,7 @@ void tJobNavList(void)
         res=mysql_store_result(&gMysql);
         while((field=mysql_fetch_row(res)))
         {
-                printf("<a class=darkLink href=iDNS.cgi?gcFunction=tJob&uJob=%s>%s</a><br>\n",field[0],field[1]);
+                printf("<a class=darkLink href=?gcFunction=tJob&uJob=%s>%s</a><br>\n",field[0],field[1]);
         }
         mysql_free_result(res);
 

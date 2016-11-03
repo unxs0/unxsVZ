@@ -2,7 +2,7 @@
 FILE
 	unxsVZ/mysqlrad.h
 AUTHOR
-	(C) 2001-2013 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
 */
 
 #include <stdio.h>
@@ -40,7 +40,33 @@ AUTHOR
 #define uFWREMOVED 5
 #define uFWWAITINGREMOVAL 6
 #define uFWWHITELISTED 7
+#define uFWLOGINACCESSHTTPANDSSH 8
+#define uFWLOGINACCESSHTTPONLY 9
+#define uFWREMOVEDLOGIN 10
+#define uFWWAITINGREMOVALLOGIN 11
+#define uFWWAITINGACCESSLOGIN 12
+#define uFWLOGINACCESSINTERFACE 13
 
+//tIPType
+#define uIPTYPE_CLASSC 1
+#define uIPTYPE_CONTAINER 2
+#define uIPTYPE_NODE 3
+#define uIPTYPE_NODEFLOAT 4
+#define uIPTYPE_SNORT 5
+#define uIPTYPE_BACKEND_LOGIN 6
+#define uIPTYPE_INTERFACE_LOGIN 7
+#define uIPTYPE_NODE_PRIVATE 8
+#define uIPTYPE_NODE_NAT 9
+#define uIPTYPE_NODE_OTHER 10
+#define uIPTYPE_ASTERISK_PEER 11
+#define uIPTYPE_MANUAL_FW 12
+#define uIPTYPE_OTHER_FW 13
+
+//Special
+//tDatacenter constants uDatacenter
+#define uCustomerPremiseDatacenter 41
+//tNode constants uNode
+#define uCustomerPremiseNode 81
 
 //tStatus constants
 #define uACTIVE		1
@@ -527,6 +553,7 @@ void CreatetAuthorize(void);
 void DeletetAuthorize(void);
 void ExttAuthorizeGetHook(entry gentries[], int x);
 void ExttAuthorizeNavBar(void);
+char *cOATHOneTimePasswd(const char *cOTPSecret);
 
 //tTemplate
 int tTemplateCommands(pentry entries[], int x);
@@ -647,6 +674,36 @@ void CreatetGlossary(void);
 void DeletetGlossary(void);
 void ExttGlossaryGetHook(entry gentries[], int x);
 void ExttGlossaryNavBar(void);
+
+//tFWRule
+int tFWRuleCommands(pentry entries[], int x);
+void tFWRule(const char *results);
+void ProcesstFWRuleVars(pentry entries[], int x);
+void tFWRuleContent(void);
+void tFWRuleInputContent(void);
+void tFWRuleInput(unsigned uMode);
+void tFWRuleList(void);
+void NewtFWRule(unsigned uMode);
+void ModtFWRule(void);
+void CreatetFWRule(void);
+void DeletetFWRule(void);
+void ExttFWRuleGetHook(entry gentries[], int x);
+void ExttFWRuleNavBar(void);
+
+//tIPType
+int tIPTypeCommands(pentry entries[], int x);
+void tIPType(const char *results);
+void ProcesstIPTypeVars(pentry entries[], int x);
+void tIPTypeContent(void);
+void tIPTypeInputContent(void);
+void tIPTypeInput(unsigned uMode);
+void tIPTypeList(void);
+void NewtIPType(unsigned uMode);
+void ModtIPType(void);
+void CreatetIPType(void);
+void DeletetIPType(void);
+void ExttIPTypeGetHook(entry gentries[], int x);
+void ExttIPTypeNavBar(void);
 
 //tJob
 int tJobCommands(pentry entries[], int x);
@@ -818,3 +875,5 @@ void GlossaryGetHook(entry gentries[],int x);
 void GetContainerProp(const unsigned uContainer,const char *cName,char *cValue);
 unsigned UpdatePrimaryContainerGroup(unsigned uContainer, unsigned uGroup);
 unsigned uGetGroup(unsigned uNode, unsigned uContainer);
+void LoginFirewallJobs(unsigned uLoginClient,char *cIP);
+void LogoutFirewallJobs(unsigned uLoginClient,char *cIP);

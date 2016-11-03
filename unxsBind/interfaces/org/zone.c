@@ -1,7 +1,7 @@
 /*
 FILE 
 	zone.c
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE

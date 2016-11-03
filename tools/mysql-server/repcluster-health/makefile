@@ -1,7 +1,7 @@
 #
 #FILE
 #	unxsVZ/tools/mysql-server/repcluster-health/makefile
-#	$Id$
+#	svn ID removed
 #AUTHOR/LEGAL
 #	(C) 2001-2010 Gary Wallis for Unixservice. GPLv2 license applies.
 #NOTES

@@ -2,7 +2,7 @@
 FILE
 	tLog source code template
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tlog.c 628 2007-06-19 22:43:39Z hugo $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tlogfunc.h while 

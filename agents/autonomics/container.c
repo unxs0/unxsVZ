@@ -1,7 +1,7 @@
 /*
 FILE
 	container.c
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) 2009, Gary Wallis for Unixservice, LLC.
 PURPOSE

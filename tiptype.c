@@ -1,7 +1,7 @@
 /*
 FILE
 	tIPType source code of unxsVZ.cgi
-	$Id$
+	svn ID removed
 PURPOSE
 	IP number type for fine grained classification.
 AUTHOR/LEGAL

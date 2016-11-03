@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: https.c,v 1.5 2004/12/20 19:57:07 ggw Exp $
+	svn ID removed
 PURPOSE
 	Simple SSL C client function. Connects to remote SSL HTTPS server
 	and returns response in a small buffer.

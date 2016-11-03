@@ -1,7 +1,7 @@
 /*
 FILE
         cpucheck.c
-        $Id$
+        svn ID removed
 
 PURPOSE
         Create file or on the fly graphs for unxsVZ node container cpu power related data.

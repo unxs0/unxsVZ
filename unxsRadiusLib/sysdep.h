@@ -4,7 +4,7 @@
  *
  *		Copyright 1997-2000	Cistron Internet Services B.V.
  *
- * Version:	$Id: sysdep.h 60 2007-10-18 13:41:43Z Gary $
+ * Version:	svn ID removed
  */
 
 #ifndef SYSDEP_H_INCLUDED

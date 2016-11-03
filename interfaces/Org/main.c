@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 1476 2010-05-24 17:34:16Z Gary $
+	svn ID removed
 AUTHOR/LEGAL
 	(C) 2010, 2011 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.

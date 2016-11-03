@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsrad.c
-	$Id$
+	svn ID removed
 PURPOSE
 	unxsRAD job queue CLI standalone program	
 LEGAL
@@ -18,7 +18,7 @@ HELP
 //Global vars
 MYSQL gMysql;
 char gcQuery[8192]={""};
-char *gcBuildInfo="$Id$";
+char *gcBuildInfo="svn ID removed
 static FILE *gLfp=NULL;//log file
 char gcHostname[100]={""};
 static unsigned guTable=0;

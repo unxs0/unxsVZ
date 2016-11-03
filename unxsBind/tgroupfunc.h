@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tgroupfunc.h 1744 2011-06-29 14:20:45Z Gary $
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -294,7 +294,7 @@ void tGroupNavList(void)
 	{	
         	printf("<p><u>tGroupNavList</u><br>\n");
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tGroup&uGroup=%s>%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=?gcFunction=tGroup&uGroup=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 
@@ -344,7 +344,7 @@ void tGroupMemberNavList(void)
 			        }
 			        res2=mysql_store_result(&gMysql);
 	        		if((field2=mysql_fetch_row(res2)))
-					printf("<a class=darkLink href=iDNS.cgi?gcFunction=tResource&uResource=%u>%s</a><br>\n",
+					printf("<a class=darkLink href=?gcFunction=tResource&uResource=%u>%s</a><br>\n",
 							uResource,field2[0]);
 				mysql_free_result(res2);
 			}
@@ -360,7 +360,7 @@ void tGroupMemberNavList(void)
 			        }
 			        res2=mysql_store_result(&gMysql);
 	        		if((field2=mysql_fetch_row(res2)))
-					printf("<a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%u>%s</a><br>\n",uZone,field2[0]);
+					printf("<a class=darkLink href=?gcFunction=tZone&uZone=%u>%s</a><br>\n",uZone,field2[0]);
 				mysql_free_result(res2);
 			}
 		}

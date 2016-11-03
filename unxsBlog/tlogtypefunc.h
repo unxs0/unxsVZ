@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tlogtypefunc.h 3 2006-10-31 13:28:24Z root $
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

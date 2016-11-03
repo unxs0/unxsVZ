@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -354,10 +354,10 @@ void tNSNavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(guLoginClient==1)
-				printf("<input type=checkbox name=uNS%s><a class=darkLink href=iDNS.cgi?gcFunction=tNS"
+				printf("<input type=checkbox name=uNS%s><a class=darkLink href=?gcFunction=tNS"
 					"&uNS=%s>%s</a><br>\n",field[0],field[0],field[1]);
 			else
-				printf("<a class=darkLink href=iDNS.cgi?gcFunction=tNS"
+				printf("<a class=darkLink href=?gcFunction=tNS"
 					"&uNS=%s>%s</a><br>\n",field[0],field[1]);
 		}
 		if(guLoginClient==1)

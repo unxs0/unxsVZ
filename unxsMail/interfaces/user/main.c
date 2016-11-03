@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) 2006-2009 Gary Wallis for Unixservice
 PURPOSE

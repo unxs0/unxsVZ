@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Provide web interface functionality as separate from schema as possible
 	for RADIUS NAS/RAS server info. Usually administrates multiple server raddb/client.conf files

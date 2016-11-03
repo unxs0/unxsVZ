@@ -1,7 +1,7 @@
 /*
 FILE
 	snort.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Agent to run on Snort IDS servers usually via barnyard2.
 	E.g. Create tJob entries for certain events for all active nodes.
@@ -251,7 +251,7 @@ int main(int iArgc, char *cArgv[])
 			}
 			if(!strcmp(cArgv[i],"--version"))
 			{
-				printf("version: %s $Id$\n",cArgv[0]);
+				printf("version: %s svn ID removed
 				return(0);
 			}
 			if(!strcmp(cArgv[i],"--report-ip") && iArgc==(i+2))

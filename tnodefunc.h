@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR/LEGAL

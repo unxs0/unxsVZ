@@ -1,16 +1,14 @@
 /*
 FILE
 	tIP source code of unxsVZ.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id$
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tipfunc.h while 
-	RAD is still to be used.
+	IP number inventory table
 AUTHOR/LEGAL
-	(C) 2001-2010 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 */
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 #include "mysqlrad.h"
@@ -467,8 +465,9 @@ void tIPSearchSet(unsigned uStep)
 			" value=\"%s\" size=40 maxlength=15 >",cCommentSearch);
 
 	OpenRow("uIPType","black");
-	printf("<input title='uIPType code. E.g. \"11\" ClassC IP from Asterisk' type=text name=uIPType"
-			" value=\"%u\" size=40 maxlength=15 >",uIPType);
+	tTablePullDown("tIPType;cuIPTypePullDown","cLabel","cLabel",uIPType,1);
+	//printf("<input title='uIPType code. E.g. \"11\" ClassC IP from Asterisk' type=text name=uIPType"
+	//		" value=\"%u\" size=40 maxlength=15 >",uIPType);
 	if(uStep==1)
 	{
 		;
@@ -852,18 +851,3 @@ void CreatetIP(void)
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
 }//CreatetIP()
-
-
-void CreatetIPType(void)
-{
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tIPType ("
-			" uType INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-			" cLabel VARCHAR(32) NOT NULL DEFAULT '',"
-			" uOwner INT UNSIGNED NOT NULL DEFAULT 0, INDEX (uOwner),"
-			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			" uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
-	mysql_query(&gMysql,gcQuery);
-}//CreatetIPType()
-

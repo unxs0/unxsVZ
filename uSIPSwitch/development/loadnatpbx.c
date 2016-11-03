@@ -1,7 +1,7 @@
 /*
 FILE
 	loadnatpbx.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Load unxsVZ NatPBX Hostnames, IPs and Ports into
 	localhost memcached.
@@ -135,7 +135,7 @@ int iSetupAndTestMemcached(void)
 	memcached_server_st *servers = NULL;
 	memcached_return rc;
 	char *key= "unxsLoadNatPBX";
-	char *value= "$Id$";
+	char *value= "svn ID removed
 
 	memcached_server_st *memcached_servers_parse(const char *server_strings);
 	gsMemc=memcached_create(NULL);

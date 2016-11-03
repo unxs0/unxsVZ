@@ -1,7 +1,7 @@
 #
 #FILE
 #	makefile
-#	$Id$
+#	svn ID removed
 #AUTHOR/LEGAL
 #	(C) 2009-2010 Gary Wallis for Unixservice, LLC.
 #	GPLv2 license applies. See included LICENSE file.

@@ -1,7 +1,7 @@
 /*
 FILE
 	loadfromsps.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Load data from unxsSPS MySQL database into
 	localhost memcached for uSIPSwitch use.
@@ -579,7 +579,7 @@ int iSetupAndTestMemcached(void)
 	memcached_server_st *servers = NULL;
 	memcached_return rc;
 	char *key= "unxsLoadFromSPS";
-	char *value= "$Id$";
+	char *value= "svn ID removed
 
 	//memcached_server_st *memcached_servers_parse(const char *server_strings);
 	gsMemc=memcached_create(NULL);

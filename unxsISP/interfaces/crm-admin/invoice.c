@@ -1,7 +1,7 @@
 /*
 FILE 
 	order.c
-	$Id: invoice.c 508 2009-08-13 23:17:58Z Hugo $
+	svn ID removed
 AUTHOR
 	(C) 2007-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE

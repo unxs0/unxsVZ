@@ -13,7 +13,7 @@
  * 		      mainly comments and formatting.
  */
 char encrattr_rcsid[] =
-"$Id: encrattr.c 60 2007-10-18 13:41:43Z Gary $";
+"svn ID removed
 
 #include <stdio.h>
 #include <sys/types.h>

@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id
+	svn ID removed
 PURPOSE
 	CLI and main tab related functions.
 AUTHOR
@@ -822,7 +822,7 @@ void AcctReport(char *cTableName)
 	}
 	else
 	{
-		printf("For %u users. $Id$\n",uFound);
+		printf("For %u users. svn ID removed
 		exit(0);
 	}
 
@@ -864,7 +864,7 @@ void AcctReportLegacy(char *cTableName)
 	}
 	else
 	{
-		printf("For %u users. $Id$\n",uFound);
+		printf("For %u users. svn ID removed
 		exit(0);
 	}
 
@@ -905,7 +905,7 @@ void AcctReportLegacyProxy(char *cRealm,char *cTableName)
 	}
 	else
 	{
-		printf("For %u realm:%s users. $Id$\n",uFound,cRealm);
+		printf("For %u realm:%s users. svn ID removed
 		exit(0);
 	}
 

@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # agents/openvz/makefile
 #
 # (C) 2001-2015 Gary Wallis for Unixservice, LLC.

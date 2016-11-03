@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Main cgi interface and common functions used for all the other
 	table tx.c files and their schema independent txfunc.h files -until
@@ -62,7 +62,7 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id$";
+char *gcBuildInfo="svn ID removed
 char *gcRADStatus="Forked from RAD2/3";
 
 //Local
@@ -101,6 +101,11 @@ void DayUsageData(unsigned uLogType);
 
 pentry entries[256];
 int x;
+
+//mainfunc.h
+void voidRestoreBackup(char *cFile);
+void voidDeleteBackup(char *cFile);
+
 
 int main(int iArgc, char *cArgv[])
 {
@@ -147,6 +152,10 @@ int main(int iArgc, char *cArgv[])
 			//Local vars
 			if(!strcmp(gentries[x].name,"gcFunction")) 
 				sprintf(gcFunction,"%.99s",gentries[x].val);
+			else if(!strcmp(gentries[x].name,"delBackup")) 
+				voidDeleteBackup(gentries[x].val);
+			else if(!strcmp(gentries[x].name,"resBackup")) 
+				voidRestoreBackup(gentries[x].val);
 		}
 
 		if(gcFunction[0])
@@ -228,10 +237,10 @@ int main(int iArgc, char *cArgv[])
 				ExttZoneImportGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tResourceImport"))
 				ExttResourceImportGetHook(gentries,x);
-			else if(!strcmp(gcFunction,"tMonthHit"))
-				ExttMonthHitGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tMonth"))
 				ExttMonthGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tMonthHit"))
+				ExttMonthHitGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tLogMonth"))
 				ExttLogMonthGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tHit"))
@@ -277,9 +286,9 @@ int main(int iArgc, char *cArgv[])
 			sprintf(gcFunction,"%.99s",entries[x].val);
 		else if(!strcmp(entries[x].name,"guListMode")) 
 			sscanf(entries[x].val,"%u",&guListMode);
-		else if(!strcmp(entries[x].name,"gcLogin"))
+		else if(!strcmp(entries[x].name,"username"))
 			sprintf(gcLogin,"%.99s",entries[x].val);
-                else if(!strcmp(entries[x].name,"gcPasswd"))
+                else if(!strcmp(entries[x].name,"password"))
 			sprintf(gcPasswd,"%.99s",entries[x].val);
                 else if(!strcmp(entries[x].name,"gcOTP"))
 			sprintf(gcOTP,"%.15s",entries[x].val);
@@ -316,8 +325,8 @@ int main(int iArgc, char *cArgv[])
 	tGroupTypeCommands(entries,x);
 	tZoneImportCommands(entries,x);
 	tResourceImportCommands(entries,x);
-	tMonthHitCommands(entries,x);
 	tMonthCommands(entries,x);
+	tMonthHitCommands(entries,x);
 	tLogMonthCommands(entries,x);
 	tHitCommands(entries,x);
 	tHitMonthCommands(entries,x);
@@ -366,130 +375,14 @@ void iDNS(const char *cResult)
 }//void iDNS(const char *cResult)
 
 
-void StyleSheet(void)
+void htmlStyleSheet(void)
 {
-	printf("<style type=\"text/css\">\n");
-	printf("<!--\n");
 
-	printf("input.smallButton {width:50px;}\n");
-	printf("input.medButton {width:100px;}\n");
-	printf("input.largeButton {width:150px;}\n");
-	printf("input.warnButton {color:red;}\n");
-	printf("input.lwarnButton {color:red;width:150px;}\n");
-	printf("input.alertButton {color:#DAA520;}\n");
-	printf("input.lalertButton {color:#DAA520;width:150px;}\n");
-	printf("input.revButton {color:white;background:black;}\n");
-	printf("input.lrevButton {color:white;background:black;width:150px;}\n");
-	printf("A.darkLink {color:black; text-decoration:none;}\n");
-	printf("A.darkLink:hover {color:blue; text-decoration:underline;}\n");
-	printf("A:hover {color:blue; text-decoration:underline;}\n");
-
-	printf("textarea {font-family: Arial,Helvetica; font-size: 11px;}\n");
-	printf("pre {font-family: Arial,Helvetica; font-size: 11px;}\n");
-	printf("input {font-family: Arial,Helvetica; font-size: 11px;}\n");
-	printf("select {font-family: Arial,Helvetica; font-size: 11px;}\n");
-
-	printf("body\n");
-	printf("{\n");
-	printf("\tmargin-top: 0px;\n");
-	printf("\tmargin-bottom: 12px;\n");
-	printf("\tmargin-left: 12px;\n");
-	printf("\tmargin-right: 10px;\n");
-	printf("\tfont-family: Arial,Helvetica;\n");
-	printf("\t#font-size: 85%%;\n");
-	printf("\tfont-size: 65%%;\n");
-	printf("\tline-height: 135%%;\n");
-	printf("\tpadding: 0px;\n");
-	printf("}\n");
-
-	printf("br.clearall\n");
-	printf("{\n");
-	printf("\tclear: both;\n");
-	printf("}\n");
-
-	printf("td\n");
-	printf("{\n");
-	printf("\tfont-family: Arial,Helvetica;\n");
-	printf("}\n");
-
-	printf("#menuholder\n");
-	printf("{\n");
-	printf("\t#width: 100%%;\n");
-	printf("}\n");
-
-	printf("#menutab\n");
-	printf("{\n");
-	printf("\tbackground: #e5e5e5 url('/images/hairline.gif') repeat-x bottom center;\n");
-	printf("\tborder-top: 0px solid #BEBFBF;\n");
-	printf("\tborder-right: 1px solid #BEBFBF;\n");
-	printf("\tmargin-top: 8px;\n");
-	printf("}\n");
-
-	printf("#topline\n");
-	printf("{\n");
-	printf("\t#width: 100%%;\n");
-	printf("\tbackground: transparent url('/images/hairline.gif') repeat-x top center;\n");
-	printf("}\n");
-
-	printf("#menutab ul, #menutab ol\n");
-	printf("{\n");
-	printf("\tmargin: 0;\n");
-	printf("\tpadding: 0px 0px 0;\n");
-	printf("\tlist-style: none;\n");
-	printf("}\n");
-
-	printf("#menutab li\n");
-	printf("{\n");
-	printf("\tfloat: left;\n");
-	printf("\tbackground: url('/images/left.gif') no-repeat left top;\n");
-	printf("\tmargin: 0;\n");
-	printf("\tpadding: 0 0 0 9px;\n");
-	printf("}\n");
-
-	printf("#menutab a, #menutab a.last\n");
-	printf("{\n");
-	printf("\tfloat:left;\n");
-	printf("\tdisplay: block;\n");
-	printf("\tbackground: url('/images/right.gif') no-repeat right top;\n");
-	printf("\tpadding: 5px 15px 2px 6px;\n");
-	printf("\tcolor: #222;\n");
-	printf("\ttext-decoration: none;\n");
-	printf("}\n");
-
-	printf("/* Commented Backslash Hack\n");
-	printf("\thides rule from IE5-Mac \\*/\n");
-	printf("\t#menutab a, #menutab a.last {float:none;}\n");
-	printf("/* End IE5-Mac hack */\n");
-
-	printf("#menutab a.last\n");
-	printf("{\n");
-	printf("\tbackground: url('/images/right_last.gif') no-repeat right top;\n");
-	printf("\tpadding: 5px 17px 2px 6px;\n");
-	printf("}\n");
-
-	printf("#menutab a:hover\n");
-	printf("{\n");
-	printf("\tcolor: black;\n");
-	printf("\ttext-decoration: underline;\n");
-	printf("}\n");
-
-	printf("#menutab #current\n");
-	printf("{\n");
-	printf("\tbackground-image: url('/images/left_on.gif');\n");
-	printf("}\n");
-
-	printf("#menutab #current a\n");
-	printf("{\n");
-	printf("\tbackground-image: url('/images/right_on.gif');\n");
-	printf("\tpadding-bottom: 3px;\n");
-	printf("\ttext-decoration: none;\n");
-	printf("}\n");
-
-	printf("-->\n");
-	printf("</style>\n");
+	printf("<!-- StyleSheet() -->\n");
+	printf("<link rel=stylesheet type=text/css href=/css/radBackend.css />\n");
 
 
-}//void StyleSheet(void)
+}//void htmlStyleSheet(void)
 
 
 void jsCalendarHeader(void)
@@ -557,16 +450,16 @@ void Header_ism3(char *title, int iJs)
 	printf("Content-type: text/html\n\n");
 	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\""
 			" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/dns.ico?v=2>\n");
+	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/dns.ico?v=4>\n");
         printf("<html><head><title>unxsBind %s %s </title>",gcHostname,title);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
-	StyleSheet();
+	htmlStyleSheet();
         if(iJs==1)
                 jsCalendarHeader();
         else if(iJs==2)
 		jsToggleCheckboxes();
 
-	printf("</head><body><form name=formMain action=iDNS.cgi method=post><blockquote>\n");
+	printf("</head><body><form name=formMain action=iDNS.cgi method=post autocomplete=on><blockquote>\n");
 	//printf("<img src=/images/unxsbind.jpg>&nbsp;&nbsp;\n");
 
 	//ModuleRAD3NavBars()
@@ -642,12 +535,12 @@ void Header_ism3(char *title, int iJs)
 	else if(!strcmp(gcFunction,"tResourceImport") || !strcmp(gcFunction,"tResourceImportTools") ||
 			!strcmp(gcFunction,"tResourceImportList"))
 		ExttResourceImportNavBar();
-	else if(!strcmp(gcFunction,"tMonthHit") || !strcmp(gcFunction,"tMonthHitTools") ||
-			!strcmp(gcFunction,"tMonthHitList"))
-		ExttMonthHitNavBar();
 	else if(!strcmp(gcFunction,"tMonth") || !strcmp(gcFunction,"tMonthTools") ||
 			!strcmp(gcFunction,"tMonthList"))
 		ExttMonthNavBar();
+	else if(!strcmp(gcFunction,"tMonthHit") || !strcmp(gcFunction,"tMonthHitTools") ||
+			!strcmp(gcFunction,"tMonthHitList"))
+		ExttMonthHitNavBar();
 	else if(!strcmp(gcFunction,"tLogMonth") || !strcmp(gcFunction,"tLogMonthTools") ||
 			!strcmp(gcFunction,"tLogMonthList"))
 		ExttLogMonthNavBar();
@@ -671,7 +564,7 @@ void Header_ism3(char *title, int iJs)
 		ExttAuthorizeNavBar();
 
 	//Login info
-	printf("<font size=3><b>iDNS</b></font> \n ");
+	printf("<font size=3><b>unxsBind</b></font> \n ");
 	if(!guPermLevel)
 	{
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>Your IP address %s has been logged</font>",gcHost);
@@ -690,8 +583,8 @@ void Header_ism3(char *title, int iJs)
 	//Logout link
 	if(guSSLCookieLogin)
 	{
-		printf(" <a title='Erase login cookies' href=iDNS.cgi?gcFunction=Logout>Logout</a> ");
-		printf(" <a title='Quick dashboard link' href=iDNS.cgi?gcFunction=Dashboard>Dashboard</a> ");
+		printf(" <a title='Erase login cookies' href=?gcFunction=Logout>Logout</a> ");
+		printf(" <a title='Quick dashboard link' href=?gcFunction=Dashboard>Dashboard</a> ");
 	}
 
 	//Generate Menu Items
@@ -709,7 +602,7 @@ void Header_ism3(char *title, int iJs)
 		printf(">\n");
 	else
 		printf(" id=current>\n");
-		printf("\t\t\t<a title='Home start page' href=iDNS.cgi?gcFunction=Main>Main</a>\n");
+		printf("\t\t\t<a title='Home start page' href=?gcFunction=Main>Main</a>\n");
 	printf("\t\t\t</li>\n");
 
 	if(guSSLCookieLogin)
@@ -724,10 +617,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='DNS Zones' href=iDNS.cgi?gcFunction=tZone>tZone</a>\n");
+		  printf("\t\t\t<a title='DNS Zones' href=?gcFunction=tZone>tZone</a>\n");
 		}
 		//tResource
-		if(guPermLevel>=20)
+		if(guPermLevel>=20 
+			|| strcmp(gcFunction,"tResource")==0 || strcmp(gcFunction,"tResourceTools")==0 || strcmp(gcFunction,"tResourceList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tResource") && strcmp(gcFunction,"tResourceTools") &&
@@ -735,10 +629,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Resource Records for a given Zone' href=iDNS.cgi?gcFunction=tResource>tResource</a>\n");
+		  printf("\t\t\t<a title='Resource Records for a given Zone' href=?gcFunction=tResource>tResource</a>\n");
 		}
 		//tRRType
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tRRType")==0 || strcmp(gcFunction,"tRRTypeList")==0 || strcmp(gcFunction,"tRRTypeTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tRRType") && strcmp(gcFunction,"tRRTypeTools") &&
@@ -746,10 +641,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Resource Record Types' href=iDNS.cgi?gcFunction=tRRType>tRRType</a>\n");
+		  printf("\t\t\t<a title='Resource Record Types' href=?gcFunction=tRRType>tRRType</a>\n");
 		}
 		//tMailServer
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tMailServer")==0 || strcmp(gcFunction,"tMailServerList")==0 || strcmp(gcFunction,"tMailServerTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tMailServer") && strcmp(gcFunction,"tMailServerTools") &&
@@ -757,10 +653,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Mail server groups' href=iDNS.cgi?gcFunction=tMailServer>tMailServer</a>\n");
+		  printf("\t\t\t<a title='Mail server groups' href=?gcFunction=tMailServer>tMailServer</a>\n");
 		}
 		//tNSType
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tNSType")==0 || strcmp(gcFunction,"tNSTypeList")==0 || strcmp(gcFunction,"tNSTypeTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tNSType") && strcmp(gcFunction,"tNSTypeTools") &&
@@ -768,10 +665,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Type of name server' href=iDNS.cgi?gcFunction=tNSType>tNSType</a>\n");
+		  printf("\t\t\t<a title='Type of name server' href=?gcFunction=tNSType>tNSType</a>\n");
 		}
 		//tNSSet
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tNSSet")==0 || strcmp(gcFunction,"tNSSetList")==0 || strcmp(gcFunction,"tNSSetTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tNSSet") && strcmp(gcFunction,"tNSSetTools") &&
@@ -779,10 +677,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='For grouping related NSs to a zone' href=iDNS.cgi?gcFunction=tNSSet>tNSSet</a>\n");
+		  printf("\t\t\t<a title='For grouping related NSs to a zone' href=?gcFunction=tNSSet>tNSSet</a>\n");
 		}
 		//tNS
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tNS")==0 || strcmp(gcFunction,"tNSList")==0 || strcmp(gcFunction,"tNSTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tNS") && strcmp(gcFunction,"tNSTools") &&
@@ -790,10 +689,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Individual NS set members' href=iDNS.cgi?gcFunction=tNS>tNS</a>\n");
+		  printf("\t\t\t<a title='Individual NS set members' href=?gcFunction=tNS>tNS</a>\n");
 		}
 		//tServer
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tServer")==0 || strcmp(gcFunction,"tServerList")==0 || strcmp(gcFunction,"tServerTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tServer") && strcmp(gcFunction,"tServerTools") &&
@@ -801,10 +701,12 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='For grouping NS sets to a server' href=iDNS.cgi?gcFunction=tServer>tServer</a>\n");
+		  printf("\t\t\t<a title='For grouping NS sets to a server' href=?gcFunction=tServer>tServer</a>\n");
 		}
 		//tConfiguration
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tConfiguration")==0 || strcmp(gcFunction,"tConfigurationList")==0 
+			|| strcmp(gcFunction,"tConfigurationTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tConfiguration") && strcmp(gcFunction,"tConfigurationTools") &&
@@ -812,10 +714,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Runtime configuration variables' href=iDNS.cgi?gcFunction=tConfiguration>tConfiguration</a>\n");
+		  printf("\t\t\t<a title='Runtime configuration variables' href=?gcFunction=tConfiguration>tConfiguration</a>\n");
 		}
 		//tTemplate
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tTemplate")==0 || strcmp(gcFunction,"tTemplateList")==0 || strcmp(gcFunction,"tTemplateTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tTemplate") && strcmp(gcFunction,"tTemplateTools") &&
@@ -823,10 +726,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='tTemplate' href=iDNS.cgi?gcFunction=tTemplate>tTemplate</a>\n");
+		  printf("\t\t\t<a title='tTemplate' href=?gcFunction=tTemplate>tTemplate</a>\n");
 		}
 		//tTemplateSet
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tTemplateSet")==0 || strcmp(gcFunction,"tTemplateSetList")==0 || strcmp(gcFunction,"tTemplateSetTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tTemplateSet") && strcmp(gcFunction,"tTemplateSetTools") &&
@@ -834,10 +738,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='tTemplateSet' href=iDNS.cgi?gcFunction=tTemplateSet>tTemplateSet</a>\n");
+		  printf("\t\t\t<a title='tTemplateSet' href=?gcFunction=tTemplateSet>tTemplateSet</a>\n");
 		}
 		//tTemplateType
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tTemplateType")==0 || strcmp(gcFunction,"tTemplateTypeList")==0 || strcmp(gcFunction,"tTemplateTypeTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tTemplateType") && strcmp(gcFunction,"tTemplateTypeTools") &&
@@ -845,10 +750,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='tTemplateType' href=iDNS.cgi?gcFunction=tTemplateType>tTemplateType</a>\n");
+		  printf("\t\t\t<a title='tTemplateType' href=?gcFunction=tTemplateType>tTemplateType</a>\n");
 		}
 		//tLog
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tLog")==0 || strcmp(gcFunction,"tLogList")==0 || strcmp(gcFunction,"tLogTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tLog") && strcmp(gcFunction,"tLogTools") &&
@@ -856,10 +762,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Audit Log' href=iDNS.cgi?gcFunction=tLog>tLog</a>\n");
+		  printf("\t\t\t<a title='Audit Log' href=?gcFunction=tLog>tLog</a>\n");
 		}
 		//tLogType
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tLogType")==0 || strcmp(gcFunction,"tLogTypeList")==0 || strcmp(gcFunction,"tLogTypeTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tLogType") && strcmp(gcFunction,"tLogTypeTools") &&
@@ -867,7 +774,7 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Audit Log Type' href=iDNS.cgi?gcFunction=tLogType>tLogType</a>\n");
+		  printf("\t\t\t<a title='Audit Log Type' href=?gcFunction=tLogType>tLogType</a>\n");
 		}
 		//tBlock
 		if(guPermLevel>=7)
@@ -878,7 +785,7 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='CIDR IP Block Control' href=iDNS.cgi?gcFunction=tBlock>tBlock</a>\n");
+		  printf("\t\t\t<a title='CIDR IP Block Control' href=?gcFunction=tBlock>tBlock</a>\n");
 		}
 		//tView
 		if(guPermLevel>=10)
@@ -889,10 +796,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='View details for tZone.uView' href=iDNS.cgi?gcFunction=tView>tView</a>\n");
+		  printf("\t\t\t<a title='View details for tZone.uView' href=?gcFunction=tView>tView</a>\n");
 		}
 		//tRegistrar
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tRegistrar")==0 || strcmp(gcFunction,"tRegistrarList")==0 || strcmp(gcFunction,"tRegistrarTools")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tRegistrar") && strcmp(gcFunction,"tRegistrarTools") &&
@@ -900,10 +808,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='tRegistrar' href=iDNS.cgi?gcFunction=tRegistrar>tRegistrar</a>\n");
+		  printf("\t\t\t<a title='tRegistrar' href=?gcFunction=tRegistrar>tRegistrar</a>\n");
 		}
 		//tGlossary
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tGlossary")==0 || strcmp(gcFunction,"tGlossaryTools")==0 || strcmp(gcFunction,"tGlossaryList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tGlossary") && strcmp(gcFunction,"tGlossaryTools") &&
@@ -911,10 +820,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Stores the Glossary definitions' href=iDNS.cgi?gcFunction=tGlossary>tGlossary</a>\n");
+		  printf("\t\t\t<a title='Stores the Glossary definitions' href=?gcFunction=tGlossary>tGlossary</a>\n");
 		}
 		//tGroup
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tGroup")==0 || strcmp(gcFunction,"tGroupTools")==0 || strcmp(gcFunction,"tGroupList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tGroup") && strcmp(gcFunction,"tGroupTools") &&
@@ -922,10 +832,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='tGroup' href=iDNS.cgi?gcFunction=tGroup>tGroup</a>\n");
+		  printf("\t\t\t<a title='tGroup' href=?gcFunction=tGroup>tGroup</a>\n");
 		}
 		//tGroupGlue
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tGroupGlue")==0 || strcmp(gcFunction,"tGroupGlueTools")==0 || strcmp(gcFunction,"tGroupGlueList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tGroupGlue") && strcmp(gcFunction,"tGroupGlueTools") &&
@@ -933,10 +844,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='tGroupGlue' href=iDNS.cgi?gcFunction=tGroupGlue>tGroupGlue</a>\n");
+		  printf("\t\t\t<a title='tGroupGlue' href=?gcFunction=tGroupGlue>tGroupGlue</a>\n");
 		}
 		//tGroupType
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tGroupType")==0 || strcmp(gcFunction,"tGroupTypeTools")==0 || strcmp(gcFunction,"tGroupTypeList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tGroupType") && strcmp(gcFunction,"tGroupTypeTools") &&
@@ -944,10 +856,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='tGroupType' href=iDNS.cgi?gcFunction=tGroupType>tGroupType</a>\n");
+		  printf("\t\t\t<a title='tGroupType' href=?gcFunction=tGroupType>tGroupType</a>\n");
 		}
 		//tZoneImport
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tZoneImport")==0 || strcmp(gcFunction,"tZoneImportTools")==0 || strcmp(gcFunction,"tZoneImportList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tZoneImport") && strcmp(gcFunction,"tZoneImportTools") &&
@@ -955,10 +868,12 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='DNS Imported Zones' href=iDNS.cgi?gcFunction=tZoneImport>tZoneImport</a>\n");
+		  printf("\t\t\t<a title='DNS Imported Zones' href=?gcFunction=tZoneImport>tZoneImport</a>\n");
 		}
 		//tResourceImport
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tResourceImport")==0 || strcmp(gcFunction,"tResourceImportTools")==0 
+			|| strcmp(gcFunction,"tResourceImportList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tResourceImport") && strcmp(gcFunction,"tResourceImportTools") &&
@@ -966,21 +881,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Resource Records for a given import zone' href=iDNS.cgi?gcFunction=tResourceImport>tResourceImport</a>\n");
-		}
-		//tMonthHit
-		if(guPermLevel>=20)
-		{
-		  printf("\t\t\t<li");
-		  if(strcmp(gcFunction,"tMonthHit") && strcmp(gcFunction,"tMonthHitTools") &&
-				strcmp(gcFunction,"tMonthHitList"))
-			  printf(">\n");
-		  else
-			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='tMonthHit' href=iDNS.cgi?gcFunction=tMonthHit>tMonthHit</a>\n");
+		  printf("\t\t\t<a title='Resource Records for a given import zone' href=?gcFunction=tResourceImport>tResourceImport</a>\n");
 		}
 		//tMonth
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tMonth")==0 || strcmp(gcFunction,"tMonthTools")==0 || strcmp(gcFunction,"tMonthList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tMonth") && strcmp(gcFunction,"tMonthTools") &&
@@ -988,10 +893,23 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='tMonth' href=iDNS.cgi?gcFunction=tMonth>tMonth</a>\n");
+		  printf("\t\t\t<a title='tMonth' href=?gcFunction=tMonth>tMonth</a>\n");
+		}
+		//tMonthHit
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tMonthHit")==0 || strcmp(gcFunction,"tMonthHitTools")==0 || strcmp(gcFunction,"tMonthHitList")==0)
+		{
+		  printf("\t\t\t<li");
+		  if(strcmp(gcFunction,"tMonthHit") && strcmp(gcFunction,"tMonthHitTools") &&
+				strcmp(gcFunction,"tMonthHitList"))
+			  printf(">\n");
+		  else
+			  printf(" id=current>\n");
+		  printf("\t\t\t<a title='tMonthHit' href=?gcFunction=tMonthHit>tMonthHit</a>\n");
 		}
 		//tLogMonth
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tLogMonth")==0 || strcmp(gcFunction,"tLogMonthTools")==0 || strcmp(gcFunction,"tLogMonthList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tLogMonth") && strcmp(gcFunction,"tLogMonthTools") &&
@@ -999,10 +917,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Archived Audit Log' href=iDNS.cgi?gcFunction=tLogMonth>tLogMonth</a>\n");
+		  printf("\t\t\t<a title='Archived Audit Log' href=?gcFunction=tLogMonth>tLogMonth</a>\n");
 		}
 		//tHit
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tHit")==0 || strcmp(gcFunction,"tHitTools")==0 || strcmp(gcFunction,"tHitList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tHit") && strcmp(gcFunction,"tHitTools") &&
@@ -1010,10 +929,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='tHit' href=iDNS.cgi?gcFunction=tHit>tHit</a>\n");
+		  printf("\t\t\t<a title='tHit' href=?gcFunction=tHit>tHit</a>\n");
 		}
 		//tHitMonth
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tHitMonth")==0 || strcmp(gcFunction,"tHitMonthTools")==0 || strcmp(gcFunction,"tHitMonthList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tHitMonth") && strcmp(gcFunction,"tHitMonthTools") &&
@@ -1021,10 +941,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='tHitMonth' href=iDNS.cgi?gcFunction=tHitMonth>tHitMonth</a>\n");
+		  printf("\t\t\t<a title='tHitMonth' href=?gcFunction=tHitMonth>tHitMonth</a>\n");
 		}
 		//tDeletedZone
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tDeletedZone")==0 || strcmp(gcFunction,"tDeletedZoneTools")==0 || strcmp(gcFunction,"tDeletedZoneList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tDeletedZone") && strcmp(gcFunction,"tDeletedZoneTools") &&
@@ -1032,10 +953,12 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Deleted DNS Zones' href=iDNS.cgi?gcFunction=tDeletedZone>tDeletedZone</a>\n");
+		  printf("\t\t\t<a title='Deleted DNS Zones' href=?gcFunction=tDeletedZone>tDeletedZone</a>\n");
 		}
 		//tDeletedResource
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tDeletedResource")==0 || strcmp(gcFunction,"tDeletedResourceTools")==0 
+			|| strcmp(gcFunction,"tDeletedResourceList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tDeletedResource") && strcmp(gcFunction,"tDeletedResourceTools") &&
@@ -1043,7 +966,7 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Deleted Resource Records for a given Zone' href=iDNS.cgi?gcFunction=tDeletedResource>tDeletedResource</a>\n");
+		  printf("\t\t\t<a title='Deleted Resource Records for a given Zone' href=?gcFunction=tDeletedResource>tDeletedResource</a>\n");
 		}
 		//tClient
 		if(guPermLevel>=7)
@@ -1054,10 +977,11 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Clients' href=iDNS.cgi?gcFunction=tClient>tClient</a>\n");
+		  printf("\t\t\t<a title='Clients' href=?gcFunction=tClient>tClient</a>\n");
 		}
 		//tAuthorize
-		if(guPermLevel>=20)
+		if(guPermLevel>=20
+			|| strcmp(gcFunction,"tAuthorize")==0 || strcmp(gcFunction,"tAuthorizeTools")==0 || strcmp(gcFunction,"tAuthorizeList")==0)
 		{
 		  printf("\t\t\t<li");
 		  if(strcmp(gcFunction,"tAuthorize") && strcmp(gcFunction,"tAuthorizeTools") &&
@@ -1065,7 +989,7 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Login Authorization' href=iDNS.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
+		  printf("\t\t\t<a title='Login Authorization' href=?gcFunction=tAuthorize>tAuthorize</a>\n");
 		}
 		//tJob
 		if(guPermLevel>=10)
@@ -1076,7 +1000,7 @@ void Header_ism3(char *title, int iJs)
 			  printf(">\n");
 		  else
 			  printf(" id=current>\n");
-		  printf("\t\t\t<a title='Job Queue' href=iDNS.cgi?gcFunction=tJob>tJob</a>\n");
+		  printf("\t\t\t<a title='Job Queue' href=?gcFunction=tJob>tJob</a>\n");
 		}
 	
 	}//if logged in
@@ -1093,7 +1017,7 @@ void Header_ism3(char *title, int iJs)
 
 void Footer_ism3(void)
 {
-	printf("</blockquote>");
+	printf("</blockquote></form>");
 
 	exit(0);
 
@@ -1287,7 +1211,7 @@ void CloseFieldSet(void)
 
 void OpenRow(const char *cFieldLabel, const char *cColor)
 {
-	printf("<tr><td width=20%% valign=top><a href=iDNS.cgi?gcFunction=tGlossary&cSearch=%s"
+	printf("<tr><td width=20%% valign=top><a href=?gcFunction=tGlossary&cSearch=%s"
 		" class=darkLink><font color=%.32s>%.32s</a></td><td>",cFieldLabel,cColor,cFieldLabel);
 
 }//void OpenRow()
@@ -2746,13 +2670,13 @@ void htmlSSLLogin(void)
         Header_ism3("",0);
 
 	printf("<p>\n");
-	printf("Login: <input type=text title='Enter your login name' size=20 maxlength=98 name=gcLogin >\n");
-	printf(" Passwd: <input type=password title='Enter your password' size=20 maxlength=20 name=gcPasswd >\n");
+	printf("Login: <input type=text title='Enter your login name' size=20 maxlength=98 id=\"username\" name=\"username\" >\n");
+	printf(" Passwd: <input type=password title='Enter your password' size=20 maxlength=20 id=\"password\" name=\"password\" >\n");
 	if(guRequireOTPLogin)
 		printf(" Validation code: <input type=text size=8 maxlength=8"
 			" title='Enter your 6 digit one time password. Download google authenticator"
 			" or similar. Ask your admin for the barcode or secret.' name=gcOTP autocomplete=off >\n");
-	printf("<font size=1> <input type=submit name=gcFunction value=Login>\n");
+	printf("<font size=1> <input id=login type=submit name=gcFunction value=Login >\n");
 
         Footer_ism3();
 

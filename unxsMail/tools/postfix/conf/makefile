@@ -1,7 +1,7 @@
 #
 #FILE
 #       makefile
-#	$Id$
+#	svn ID removed
 #PURPOSE
 #       create/maintain postfix hash tables
 #AUTHOR

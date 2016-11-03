@@ -1,4 +1,4 @@
-// $Id$
+// svn ID removed
 // English: USA
 // Navigation bar buttons and results
 
@@ -29,19 +29,18 @@
 #define LANG_NBR_EXTMOD "<blink>This record was just modified by another user!"
 #define LANG_NBRF_REC_MODIFIED "record %s modified"
 
-#define LANG_NBB_SKIPFIRST "<input style='width:30px;' title=\"Skip to first record\" type=submit name=gcFind value=\"<<\" >"
-#define LANG_NBB_SKIPBACK "<input style='width:30px;' title=\"Go back one record\" type=submit name=gcFind value=\"< \" >"
-#define LANG_NBB_SKIPNEXT "<input style='width:30px;' title=\"Advance to next record\" type=submit name=gcFind value=\" >\" >"
-#define LANG_NBB_SKIPLAST "<input style='width:30px;' title=\"Skip to last record\" type=submit name=gcFind value=\">>\" >\n"
+#define LANG_NBB_SKIPFIRST "<input class=first title='Skip to first record' type=submit name=gcFind value='<<' >"
+#define LANG_NBB_SKIPBACK "<input class=back title='Go back one record' type=submit name=gcFind value='< ' >"
+#define LANG_NBB_SKIPNEXT "<input class=next title='Advance to next record' type=submit name=gcFind value=' >' >"
+#define LANG_NBB_SKIPLAST "<input class=last title='Skip to last record' type=submit name=gcFind value='>>' >\n"
 
-//Modified for local .h use
-#define LANG_NBB_NEWREV "<input class=revButton title=\"Create new record\" type=submit name=gcCommand value=New>"
-#define LANG_NBB_NEW "<input  title=\"Create new record\" type=submit name=gcCommand value=New>"
-#define LANG_NBB_DELETE "<input class=warnButton title=\"Delete current record\" type=submit name=gcCommand value=Delete>"
-#define LANG_NBB_MODIFY "<input class=alertButton title=\"Modify current record\" type=submit name=gcCommand value=Modify>"
+#define LANG_NBB_NEWREV "<input class=revButton title='Create new record' type=submit name=gcCommand value=New>"
+#define LANG_NBB_NEW "<input class=new title='Create new record' type=submit name=gcCommand value=New>"
+#define LANG_NBB_DELETE "<input class=delete title='Delete current record' type=submit name=gcCommand value=Delete>"
+#define LANG_NBB_MODIFY "<input class=modify title='Modify current record' type=submit name=gcCommand value=Modify>"
 
-#define LANG_NBB_LIST "<input title=\"Paginated listing of all records\" type=submit name=gcFind value=List>"
-#define LANG_NBB_SEARCH "<input class=revButton title=\"Find record with parameters set below\" type=submit name=gcFind value=Search>"
+#define LANG_NBB_LIST "<input class=list title='Paginated listing of all records' type=submit name=gcFind value=List>"
+#define LANG_NBB_SEARCH "<input class=refresh title='Find record with parameters set below' type=submit name=gcFind value=Search>"
 
 #define LANG_PAGEMACHINE_HINT "No matching records found.<br>"
 #define LANG_PAGEMACHINE_SHOWING "Page %d/%d (Records %d-%d of %d)\n"
@@ -229,8 +228,8 @@
 #define LANG_FT_tAuthorize_uAuthorize "Primary Key"
 #define LANG_FL_tAuthorize_cLabel "cLabel"
 #define LANG_FT_tAuthorize_cLabel "Short label"
-#define LANG_FL_tAuthorize_cIpMask "cIpMask"
-#define LANG_FT_tAuthorize_cIpMask "Allow user from this IP"
+#define LANG_FL_tAuthorize_cIPMask "cIPMask"
+#define LANG_FT_tAuthorize_cIPMask "Allow user from this IP"
 #define LANG_FL_tAuthorize_uPerm "uPerm"
 #define LANG_FT_tAuthorize_uPerm "User permission level"
 #define LANG_FL_tAuthorize_uCertClient "uCertClient"
@@ -281,6 +280,40 @@
 #define LANG_FT_tGlossary_uModBy "uClient for last update"
 #define LANG_FL_tGlossary_uModDate "uModDate"
 #define LANG_FT_tGlossary_uModDate "Unix seconds date last update"
+//tIPType
+#define LANG_FL_tIPType_uIPType "uIPType"
+#define LANG_FT_tIPType_uIPType "Primary Key"
+#define LANG_FL_tIPType_cLabel "cLabel"
+#define LANG_FT_tIPType_cLabel "Short label"
+#define LANG_FL_tIPType_cComment "cComment"
+#define LANG_FT_tIPType_cComment "Description of cLabel"
+#define LANG_FL_tIPType_uOwner "uOwner"
+#define LANG_FT_tIPType_uOwner "Record owner"
+#define LANG_FL_tIPType_uCreatedBy "uCreatedBy"
+#define LANG_FT_tIPType_uCreatedBy "uClient for last insert"
+#define LANG_FL_tIPType_uCreatedDate "uCreatedDate"
+#define LANG_FT_tIPType_uCreatedDate "Unix seconds date last insert"
+#define LANG_FL_tIPType_uModBy "uModBy"
+#define LANG_FT_tIPType_uModBy "uClient for last update"
+#define LANG_FL_tIPType_uModDate "uModDate"
+#define LANG_FT_tIPType_uModDate "Unix seconds date last update"
+//tFWRule
+#define LANG_FL_tFWRule_uFWRule "uFWRule"
+#define LANG_FT_tFWRule_uFWRule "Primary Key"
+#define LANG_FL_tFWRule_cLabel "cLabel"
+#define LANG_FT_tFWRule_cLabel "Short label"
+#define LANG_FL_tFWRule_cComment "cComment"
+#define LANG_FT_tFWRule_cComment "Description of cLabel"
+#define LANG_FL_tFWRule_uOwner "uOwner"
+#define LANG_FT_tFWRule_uOwner "Record owner"
+#define LANG_FL_tFWRule_uCreatedBy "uCreatedBy"
+#define LANG_FT_tFWRule_uCreatedBy "uClient for last insert"
+#define LANG_FL_tFWRule_uCreatedDate "uCreatedDate"
+#define LANG_FT_tFWRule_uCreatedDate "Unix seconds date last insert"
+#define LANG_FL_tFWRule_uModBy "uModBy"
+#define LANG_FT_tFWRule_uModBy "uClient for last update"
+#define LANG_FL_tFWRule_uModDate "uModDate"
+#define LANG_FT_tFWRule_uModDate "Unix seconds date last update"
 //tJob
 #define LANG_FL_tJob_uJob "uJob"
 #define LANG_FT_tJob_uJob "Primary Key"

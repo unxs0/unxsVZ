@@ -1,7 +1,7 @@
 /*
 FILE
 	uradius.h
-	$Id: uradius.h 60 2007-10-18 13:41:43Z Gary $
+	svn ID removed
 PURPOSE
 	For use with openisp.net liburadius.a
 AUTHOR

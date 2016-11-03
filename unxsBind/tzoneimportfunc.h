@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -736,7 +736,7 @@ void ResourceImportRecordList(unsigned uZone)
 
 		if(strcmp(cColorName,cRed))
 		{
-			printf("<tr><td valign=top><a class=darkLink href=iDNS.cgi?gcFunction="
+			printf("<tr><td valign=top><a class=darkLink href=?gcFunction="
 			"tResourceImport&uResource=%s&cZone=%s>"
 			"<font color=%s>%s</font></a></td><td valign=top><font color=%s>%s</font></td><td valign=top>"
 			"<font color=%s>%s</font></td><td valign=top><font color=%s>%.64s</font></td><td valign=top>"
@@ -748,7 +748,7 @@ void ResourceImportRecordList(unsigned uZone)
 		else
 		{
 			printf("<tr><td valign=top><input type=checkbox name=ImportRR%s checked>"
-			"<a class=darkLink href=iDNS.cgi?gcFunction="
+			"<a class=darkLink href=?gcFunction="
 			"tResourceImport&uResource=%s&cZone=%s>"
 			"<font color=%s>%s</font></a>"
 			"</td><td valign=top>"

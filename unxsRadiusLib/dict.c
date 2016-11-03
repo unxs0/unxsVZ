@@ -6,7 +6,7 @@
  *		Copyright 2002		Cistron IP B.V.
  */
 char dict_rcsid[] =
-"$Id: dict.c 60 2007-10-18 13:41:43Z Gary $";
+"svn ID removed
 
 #include	<stdio.h>
 #include	<stdlib.h>

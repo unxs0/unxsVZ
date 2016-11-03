@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) 2001-2009 Gary Wallis and hugo Urquiza. 
 */

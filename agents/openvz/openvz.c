@@ -1,7 +1,7 @@
 /*
 FILE
 	openvz.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Collection of OpenVZ container information.
 	Initially to reconcile unxsVZ container data with actual deployed
@@ -82,7 +82,7 @@ int main(int iArgc, char *cArgv[])
 			}
 			if(!strcmp(cArgv[i],"--version"))
 			{
-				printf("version: %s $Id$\n",cArgv[0]);
+				printf("version: %s svn ID removed
 				exit(0);
 			}
 			if(!strcmp(cArgv[i],"--ContainerCheck"))

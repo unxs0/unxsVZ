@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -380,7 +380,7 @@ void DeletedResourceLinks(unsigned uZone)
 	res=mysql_store_result(&gMysql);
 
 	while((field=mysql_fetch_row(res)))
-		printf("<a class=darkLink href=iDNS.cgi?gcFunction=tDeletedResource&uDeletedResource=%s>%s %s</a><br>\n",
+		printf("<a class=darkLink href=?gcFunction=tDeletedResource&uDeletedResource=%s>%s %s</a><br>\n",
 			field[1],field[0],field[2]);
 
 }//void ResourceLinks(unsigned uZone)

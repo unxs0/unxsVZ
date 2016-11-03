@@ -1,4 +1,4 @@
-// $Id$
+// svn ID removed
 // Spanish: Argentina
 // Navigation bar buttons and results
 

@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # tools/freepbx/natpbx/makefile
 #
 # (C) 2012 Gary Wallis for Unixservice, LLC.

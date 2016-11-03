@@ -1,7 +1,7 @@
 #
 #FILE
 #       unxsRAD/makefile
-#       $Id: makefile.template 2979 2011-12-11 15:24:44Z Gary $
+#       svn ID removed
 #AUTHOR/LEGAL
 #       (C) 2001-2012 Gary Wallis for Unixservice. GPLv2 license applies.
 #

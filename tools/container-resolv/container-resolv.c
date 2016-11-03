@@ -1,7 +1,7 @@
 /*
 FILE
 	container-resolv.c
-	$Id$
+	svn ID removed
 PURPOSE
 	update tContainer.uIPNumActive and Backup from DNS
 AUTHOR

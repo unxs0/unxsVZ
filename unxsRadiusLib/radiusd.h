@@ -5,7 +5,7 @@
  *		Copyright 1996-2001	Cistron Internet Services B.V.
  *		Copyright 2002		Cistron IP B.V.
  *
- * Version:	$Id: radiusd.h 60 2007-10-18 13:41:43Z Gary $
+ * Version:	svn ID removed
  */
 
 #include "sysdep.h"

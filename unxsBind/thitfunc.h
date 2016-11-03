@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -45,7 +45,7 @@ void ExttHitButtons(void)
 	printf("This table holds the non-archived (usually the current month only) per tZone.cZone Dns/BIND named daemon "
 		"query hits (cluster wide.) Not real time data: This data is collected from all cluster NSs and then "
 		"aggregated here usually only once a day. When possible some context related info is provided below.<p>"
-		"<a href=iDNS.cgi?gcFunction=tHitMonth>tHitMonth</a> allows access to all archived (read-only and compressed)"
+		"<a href=?gcFunction=tHitMonth>tHitMonth</a> allows access to all archived (read-only and compressed)"
 		"monthly tHit data sets. These archives are created from the command line usually by crontab operation.");
 	printf("<p><u>Search Tools</u><br>");
 	printf("Enter the complete or the first part of a <i>cZone</i>. You can use %% and _ SQL LIKE matching chars.<br>");
@@ -183,7 +183,7 @@ void tHitNavList(void)
         	printf("<p><u>tHitNavList Top 20 by uHitCount</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tHit&uHit=%s>%s/%s</a><br>\n",
+			printf("<a class=darkLink href=?gcFunction=tHit&uHit=%s>%s/%s</a><br>\n",
 				field[0],field[1],field[2]);
 	}
         mysql_free_result(res);

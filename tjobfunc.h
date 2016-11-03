@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -384,7 +384,7 @@ void ExttJobCommands(pentry entries[], int x)
 				if(uHour==24) uHour=0;//Adjust for start after posting correct value above.
 				luStartDate+=(uMin*60)+(uHour*3600);
 				uJobDate=luStartDate;
-	                        tJob("d1");
+	                        //tJob("d1");
 				NewtJob(1);
 				if(uJob)
 	                        	tJob("Recurring job added");

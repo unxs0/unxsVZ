@@ -2,12 +2,14 @@
 FILE
 	tLogType source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id$
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tlogtypefunc.h while 
-	RAD is still to be used.
+	Log type codes table
+AUTHOR/LEGAL
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file.	
 */
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 #include "mysqlrad.h"

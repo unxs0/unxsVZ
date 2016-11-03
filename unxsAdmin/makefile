@@ -1,7 +1,7 @@
 #
 # FILE
 #       unxsAdmin/makefile
-#       $Id$
+#       svn ID removed
 # AUTHOR/LEGAL
 # (C) 2001-2009 Gary Wallis under GPL License see www.fsf.org for details
 #

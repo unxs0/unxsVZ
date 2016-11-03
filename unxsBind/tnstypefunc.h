@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -278,7 +278,7 @@ void tNSTypeNavList(void)
         	printf("<p><u>tNSTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tNSType"
+			printf("<a class=darkLink href=?gcFunction=tNSType"
 				"&uNSType=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

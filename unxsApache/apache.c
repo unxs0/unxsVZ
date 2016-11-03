@@ -1,7 +1,7 @@
 /*
 FILE
 	apache.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Mostly command line functions and common functions that are used in more than
 	one tXfunc.h file.
@@ -2775,7 +2775,7 @@ int MakeAndCheckConfFiles(const char *cServer)
 		fprintf(fp,"%s",field[0]);
 		fprintf(fp,"#End cVirtualHost section %s\n",field[1]);
 		fprintf(fp,"\n#Built by webfarm automation system unxsApache.\n"
-			"#$Id$ (C) 2007-2009 Unixservice\n");
+			"#svn ID removed
 		fclose(fp);
 		
 	}
@@ -2802,7 +2802,7 @@ int MakeAndCheckConfFiles(const char *cServer)
 		fprintf(fp,"#End cSSLVirtualHost section %s\n",field[1]);
 		fclose(fp);
 		fprintf(fp,"\n#Built by webfarm automation system unxsApache.\n"
-			"#$Id$ (C) 2007-2009 Unixservice\n");
+			"#svn ID removed
 		fclose(fp);
 	}
 	mysql_free_result(res);

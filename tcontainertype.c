@@ -1,7 +1,6 @@
 /*
 FILE
 	tContainerType source code of unxsVZ.cgi
-	$Id: tcontainertype.c 2690 2014-08-11 21:12:00Z Colin $
 PURPOSE
 	Simple lookup table.
 AUTHOR
@@ -29,6 +28,8 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 

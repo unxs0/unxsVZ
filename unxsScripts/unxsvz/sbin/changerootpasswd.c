@@ -14,6 +14,8 @@ REQUIRES
 	Modern /bin/sed
 BUILD
 	gcc -Wall -o changerootpasswd changerootpasswd.c -lcrypt
+NOTES
+	updated for SHA512 ID = $6$
 */
 
 
@@ -50,7 +52,7 @@ void EncryptPasswd(char *pw)
 
         char *cpw;
 
-	char cSalt[] = "$1$01234567$";
+	char cSalt[] = "$6$01234567$";
     	(void)srand((int)time((time_t *)NULL));
 	to64(&cSalt[3],rand(),8);
 	cpw = crypt(pw,cSalt);
@@ -100,11 +102,12 @@ int main(int iArgc, char *cArgv[])
 		sprintf(cPasswd,"%.32s",cArgv[1]);
 		EncryptPasswd(cPasswd);
 		//printf("%s\n",cPasswd);
+		//sed/bash requires we escape the $ and / chars
 		escape_shell_cmd(cPasswd);
 		//printf("%s\n",cPasswd);
 		char cSystem[256];
 		sprintf(cSystem,"/bin/sed -i -e "
-				"'s/^root:$1$[a-zA-Z0-9/\\.]*$[a-zA-Z0-9/\\.]*:"
+				"'s/^root:$6$[a-zA-Z0-9/\\.]*$[a-zA-Z0-9/\\.]*:"
 				"/root:%s:/' /etc/shadow",cPasswd);
 		if(system(cSystem))
 		{

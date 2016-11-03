@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -274,7 +274,7 @@ void tTemplateSetNavList(void)
         	printf("<p><u>tTemplateSetNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tTemplateSet"
+			printf("<a class=darkLink href=?gcFunction=tTemplateSet"
 				"&uTemplateSet=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

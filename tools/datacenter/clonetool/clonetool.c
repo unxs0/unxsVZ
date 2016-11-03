@@ -1,7 +1,7 @@
 /*
 FILE
 	clonetool.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Provide a set of misc unxsVZ tools for managing datacenter issues
 	with standard rsync stopped container clones.

@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Test verifying which server is reachable before mysql_real_connect;
 AUTHOR

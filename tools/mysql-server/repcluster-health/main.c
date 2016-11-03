@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsVZ/tools/mysql-server/repcluster-health/main.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Testing some alpha code for checking replication.
 AUTHOR/LEGAL

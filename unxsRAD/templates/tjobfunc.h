@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tjobfunc.h 1970 2012-05-31 02:11:07Z Colin $
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

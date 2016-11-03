@@ -1,7 +1,7 @@
 /*
 FILE
 	main.c
-	$Id$
+	svn ID removed
 	/usr/sbin/unxsvz-autonomics
 AUTHOR
 	(C) 2009, Gary Wallis for Unixservice USA

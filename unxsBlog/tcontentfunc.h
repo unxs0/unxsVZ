@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: modulefunc.h.template 1263 2007-06-30 23:38:30Z Gary $
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

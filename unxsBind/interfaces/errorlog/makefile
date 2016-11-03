@@ -1,7 +1,7 @@
 #
 #FILE
 #	makefile
-#	$Id: makefile 660 2007-06-28 22:05:36Z Gary $
+#	svn ID removed
 #AUTHOR/LEGAL
 #	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 #	(C) 2010 Gary Wallis for Unixservice, LLC.

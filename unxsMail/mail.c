@@ -1,7 +1,7 @@
 /*
 FILE
 	mail.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Mostly command line functions and common functions that are used in more than
 	one tXfunc.h file.
@@ -2041,7 +2041,7 @@ int NewVUTConfigJob(unsigned uJob)
 		printf("cPath=%s\n",cPath);
 		return(1);
 	}
-	fprintf(fp,"#unxsMail::NewVUTConfigJob() $Id$\n");
+	fprintf(fp,"#unxsMail::NewVUTConfigJob() svn ID removed
 
 	//Write file and set ownership and perms
         sprintf(gcQuery,"SELECT cVirtualEmail,cDomain,cTargetEmail FROM tVUT,tVUTEntries,tServerGroupGlue WHERE tVUT.uVUT=tVUTEntries.uVUT AND tVUT.uServerGroup=tServerGroupGlue.uServerGroup AND tServerGroupGlue.uServer=%u ORDER BY cDomain,cVirtualEmail",uServer);
@@ -2155,7 +2155,7 @@ int MakeAccessFile(unsigned uServer)
                	return(1);
         }
 
-	fprintf(fp,"#OpenISP unxsMail.MakeAccessFile() $Id$\n");
+	fprintf(fp,"#OpenISP unxsMail.MakeAccessFile() svn ID removed
 
 	
 	sprintf(gcQuery,"SELECT DISTINCT cDomainIP,cRelayAttr FROM tAccess WHERE uServerGroup=%u",uServerGroup);
@@ -2329,7 +2329,7 @@ int MakeLocalFile(unsigned uServer)
                	return(1);
         }
 
-	fprintf(fp,"#OpenISP unxsMail.MakeLocalFile() $Id$\n");
+	fprintf(fp,"#OpenISP unxsMail.MakeLocalFile() svn ID removed
 
 	sprintf(gcQuery,"SELECT cDomain FROM tLocal WHERE uServerGroup=%u",uServerGroup);
         mysql_query(&gMysql,gcQuery);
@@ -2743,7 +2743,7 @@ int NewAliasFile(unsigned uServer)
 		return(1);
         }
 
-	fprintf(fp,"#OpenISP unxsMail.MakeAliasFile() $Id$\n");
+	fprintf(fp,"#OpenISP unxsMail.MakeAliasFile() svn ID removed
 
 	sprintf(gcQuery,"SELECT cUser,cTargetEmail FROM tAlias WHERE uServerGroup=%u",uServerGroup);
         mysql_query(&gMysql,gcQuery);
@@ -2784,7 +2784,7 @@ unsigned MakeWhiteListFile(unsigned uServer)
 		return(1);
 	}
 
-	fprintf(fp,"#OpenISP unxsMail.MakeWhiteListFile() $Id$\n");
+	fprintf(fp,"#OpenISP unxsMail.MakeWhiteListFile() svn ID removed
 
 	sprintf(gcQuery,"SELECT cLabel FROM tWhiteList WHERE uServerGroup=%u AND uUser=0",uServerGroup);
 	mysql_query(&gMysql,gcQuery);
@@ -2825,7 +2825,7 @@ unsigned MakeBlackListFile(unsigned uServer)
 		return(1);
 	}
 
-	fprintf(fp,"#OpenISP unxsMail.MakeBlackListFile() $Id$\n");
+	fprintf(fp,"#OpenISP unxsMail.MakeBlackListFile() svn ID removed
 
 	sprintf(gcQuery,"SELECT cLabel FROM tBlackList WHERE uServerGroup=%u AND uUser=0",uServerGroup);
 	mysql_query(&gMysql,gcQuery);

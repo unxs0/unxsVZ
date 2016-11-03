@@ -9,6 +9,9 @@ app = Flask(__name__)
 def main():
     return render_template('index.html')
 
+@app.route('/showSignUp')
+def showSignUp():
+    return render_template('signup.html')
 
 #Next, check if the executed file is the main program and run the app:
 	

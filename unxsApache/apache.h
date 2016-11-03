@@ -1,7 +1,7 @@
 /*
 FILE
 	apache.h
-	$Id$
+	svn ID removed
 PURPOSE
 	Specific application defines and prototypes
 AUTHOR/LEGAL

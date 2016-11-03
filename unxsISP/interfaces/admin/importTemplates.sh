@@ -1,7 +1,7 @@
 #/bin/bash
 #
 #FILE
-#	$Id$
+#	$Id: importTemplates.sh 889 2009-10-22 16:52:50Z Hugo $
 #PURPOSE
 #	Import ispAdmin.cgi templates in one fell swoop.
 #	Very useful when moving application to new server.

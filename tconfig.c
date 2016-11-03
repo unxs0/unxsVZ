@@ -2,11 +2,7 @@
 FILE
 	tConfig source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id$
-PURPOSE
-AUTHOR/LEGAL
-	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
-	GPLv2 license applies. See LICENSE file included.
+	(C) 2008-2016 Gary Wallis for Unixservice, LLC.
 */
 
 
@@ -31,6 +27,8 @@ static time_t uModDate=0;
 //uContainerType: VZ or Google Compute Engine VM
 static unsigned uContainerType=0;
 static char cuContainerTypePullDown[256]={""};
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 

@@ -2,7 +2,7 @@
 FILE
 	tServer source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id$
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tserverfunc.h while 

@@ -2,7 +2,7 @@
 FILE
 	tContentType source code of unxsBlog.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: module.c.template 1292 2007-07-09 23:31:18Z Gary $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tcontenttypefunc.h while 

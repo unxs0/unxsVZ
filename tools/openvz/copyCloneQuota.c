@@ -1,7 +1,7 @@
 /*
 FILE
 	copyCloneQuota.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Fix missing /var/vzquota/quota.VEID files that are
 	now correctly copied by jobqueue.c on CloneContainer()

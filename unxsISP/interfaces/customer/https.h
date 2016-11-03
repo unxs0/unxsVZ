@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: https.h,v 1.4 2004/08/17 23:32:33 ggw Exp $
+	svn ID removed
 PURPOSE
 	https.c header file
 AUTHOR

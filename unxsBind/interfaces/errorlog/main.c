@@ -1,7 +1,7 @@
 /*
 FILE
 	main.c
-	$Id: main.c 667 2007-06-29 16:25:24Z Gary $
+	svn ID removed
 	/usr/sbin/idns-logerror
 AUTHOR
 	(C) 2006-2009, Gary Wallis for Unixservice USA

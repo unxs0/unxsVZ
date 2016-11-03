@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #FILE
-# $Id$
+# $Id: importTemplates.sh 100 2009-05-28 17:00:01Z Hugo $
 #PURPOSE
 #	Import mail2Admin.cgi templates in one fell swoop.
 #	Very useful when moving application to new server.

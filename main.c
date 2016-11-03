@@ -1,21 +1,14 @@
 /*
 FILE 
 	unxsVZ/main.c
-	$Id$
 PURPOSE
 	Main cgi interface and common functions used for all the other
 	table tx.c files and their schema independent txfunc.h files -until
 	you mess with them in non standard ways...lol.
 	
 AUTHOR/LEGAL
-	(C) 2001-2012 Unixservice, LLC.
+	(C) Gary Wallis 2001-2016 for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
-OTHER
-	Only tested on CentOS 5 with Firefox and Chrome browsers.
-FREE HELP
-	support @ openisp . net
-	supportgrp @ unixservice . com
-	Join mailing list: https://lists.openisp.net/mailman/listinfo/unxsvz
 */
 
 #include "mysqlrad.h"
@@ -47,11 +40,13 @@ unsigned guMode;
 
 int guPermLevel=0;
 unsigned guLoginClient=0;
+unsigned guAuthorize=0;
 unsigned guReseller=0;
 unsigned guCompany=0;
 char gcCompany[100]={""};
 char gcUser[100]={""};
-char gcHost[100]={""};
+char gcHost[32]={""};
+char gcIPMask[32]={""};//tAuthorize.cIPMask on login it is gcHost
 char gcHostname[100]={""};
 
 //libunxsvz required
@@ -68,15 +63,16 @@ unsigned guSSLCookieLogin=0;
 unsigned guRequireOTPLogin=0;
 unsigned guOTPExpired=0;
 char gcOTP[16]={""};
-char gcOTPInfo[64]={"Nothing yet"};
+char gcOTPInfo[128]={"Nothing yet"};
 char gcOTPSecret[65]={""};
 
 char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id$";
-char *gcRADStatus="Forked";
+//git describe version info from makefile define
+char *gcBuildInfo="GitVersion:"GitVersion;
+char *gcRADStatus="";
 
 //Local
 void Footer_ism3(void);
@@ -108,8 +104,9 @@ void GetPLAndClient(char *cUser);
 void htmlSSLLogin(void);
 void GeneratePasswd(char *pw);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
-void LoginFirewallJobs(unsigned uLoginClient);
-void LogoutFirewallJobs(unsigned uLoginClient);
+void LoginFirewallJobs(unsigned uLoginClient,char *cIP);
+void LogoutFirewallJobs(unsigned uLoginClient,char *cIP);
+void RemoveLoginSession(const char *cIP,const char *gcUser,const char *gcCompany);
 
 //mainfunc.h for symbolic links to this program
 void CalledByAlias(int iArgc,char *cArgv[]);
@@ -118,6 +115,43 @@ void CalledByAlias(int iArgc,char *cArgv[]);
 pentry entries[512];
 entry gentries[16];
 int x;
+
+void voidLogout(void)
+{
+	printf("Set-Cookie: unxsVZLogin=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+	printf("Set-Cookie: unxsVZPasswd=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+	sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
+	" uLoginClient=%u,cLogin='%.99s',cHost='%.15s/%.15s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+	" uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE "
+	" cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
+	" uLoginClient=%u,cLogin='%.99s',cHost='%.15s/%.15s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+	" uCreatedDate=UNIX_TIMESTAMP(NOW())",
+		gcLogin,guPermLevel,
+		guLoginClient,gcLogin,gcHost,gcIPMask,gcHostname,guCompany,
+		gcLogin,guPermLevel,
+		guLoginClient,gcLogin,gcHost,gcIPMask,gcHostname,guCompany);
+	MYSQL_RUN;
+	LogoutFirewallJobs(guLoginClient,gcIPMask);
+	if(guAuthorize)
+	{
+		gcIPMask[0]=0;
+		sprintf(gcQuery,"UPDATE tAuthorize SET cIPMask='' WHERE uAuthorize=%u",guAuthorize);
+		MYSQL_RUN;
+	}
+	if(gcOTPSecret[0])
+	{
+		UpdateOTPExpire(0,guLoginClient);
+		guRequireOTPLogin=1;
+	}
+	gcCookie[0]=0;
+	guPermLevel=0;
+	guLoginClient=0;
+	gcUser[0]=0;
+	gcCompany[0]=0;
+	guSSLCookieLogin=0;
+	htmlSSLLogin();
+}//voidLogout(void)
+
 
 int main(int iArgc, char *cArgv[])
 {
@@ -172,33 +206,7 @@ int main(int iArgc, char *cArgv[])
 			if(!strcmp(gcFunction,"Main"))
 				unxsVZ("");
 			else if(!strcmp(gcFunction,"Logout"))
-			{
-				printf("Set-Cookie: unxsVZLogin=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				printf("Set-Cookie: unxsVZPasswd=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
-				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
-				" uCreatedDate=UNIX_TIMESTAMP(NOW()) ON DUPLICATE KEY UPDATE "
-				" cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
-				" uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
-				" uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
-					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
-				MYSQL_RUN;
-				LogoutFirewallJobs(guLoginClient);
-				if(gcOTPSecret[0])
-				{
-					UpdateOTPExpire(0,guLoginClient);
-					guRequireOTPLogin=1;
-				}
-				gcCookie[0]=0;
-                                guPermLevel=0;
-                                guLoginClient=0;
-                                gcUser[0]=0;
-                                gcCompany[0]=0;
-                                guSSLCookieLogin=0;
-                                htmlSSLLogin();
-			}
-
+				voidLogout();
 			else if(!strcmp(gcFunction,"tDatacenter"))
 				ExttDatacenterGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tNode"))
@@ -257,6 +265,10 @@ int main(int iArgc, char *cArgv[])
 				ExttStatusGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tFWStatus"))
 				ExttFWStatusGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tFWRule"))
+				ExttFWRuleGetHook(gentries,x);
+			else if(!strcmp(gcFunction,"tIPType"))
+				ExttIPTypeGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"tConfiguration"))
 				ExttConfigurationGetHook(gentries,x);
 			else if(!strcmp(gcFunction,"Dashboard"))
@@ -330,6 +342,8 @@ int main(int iArgc, char *cArgv[])
 	tJobStatusCommands(entries,x);
 	tStatusCommands(entries,x);
 	tFWStatusCommands(entries,x);
+	tFWRuleCommands(entries,x);
+	tIPTypeCommands(entries,x);
 	tConfigurationCommands(entries,x);
 
 
@@ -376,125 +390,8 @@ void unxsVZ(const char *cResult)
 
 void StyleSheet(void)
 {
-	printf("<style type=\"text/css\">\n");
-	printf("<!--\n");
-
-	printf("input.smallButton {width:50px;}\n");
-	printf("input.medButton {width:100px;}\n");
-	printf("input.largeButton {width:150px;}\n");
-	printf("input.warnButton {color:red;}\n");
-	printf("input.lwarnButton {color:red;width:150px;}\n");
-	printf("input.alertButton {color:#DAA520;}\n");
-	printf("input.lalertButton {color:#DAA520;width:150px;}\n");
-	printf("input.revButton {color:white;background:black;}\n");
-	printf("input.lrevButton {color:white;background:black;width:150px;}\n");
-	printf("A.darkLink {color:black; text-decoration:none;}\n");
-	printf("A.darkLink:hover {color:blue; text-decoration:underline;}\n");
-	printf("A:hover {color:blue; text-decoration:underline;}\n");
-
-	printf("textarea {font-family: Arial,Helvetica; font-size: 11px;}\n");
-	printf("pre {font-family: Arial,Helvetica; font-size: 11px;}\n");
-	printf("input {font-family: Arial,Helvetica; font-size: 11px;}\n");
-	printf("select {font-family: Arial,Helvetica; font-size: 11px;}\n");
-
-	printf("body\n");
-	printf("{\n");
-	printf("\tmargin-top: 0px;\n");
-	printf("\tmargin-bottom: 12px;\n");
-	printf("\tmargin-left: 12px;\n");
-	printf("\tmargin-right: 10px;\n");
-	printf("\tfont-family: Arial,Helvetica;\n");
-	printf("\t#font-size: 85%%;\n");
-	printf("\tfont-size: 65%%;\n");
-	printf("\tline-height: 135%%;\n");
-	printf("\tpadding: 0px;\n");
-	printf("}\n");
-
-	printf("br.clearall\n");
-	printf("{\n");
-	printf("\tclear: both;\n");
-	printf("}\n");
-
-	printf("td\n");
-	printf("{\n");
-	printf("\tfont-family: Arial,Helvetica;\n");
-	printf("}\n");
-
-	printf("#menuholder\n");
-	printf("{\n");
-	printf("\t#width: 100%%;\n");
-	printf("}\n");
-
-	printf("#menutab\n");
-	printf("{\n");
-	printf("\tbackground: #e5e5e5 url('/images/hairline.gif') repeat-x bottom center;\n");
-	printf("\tborder-top: 0px solid #BEBFBF;\n");
-	printf("\tborder-right: 1px solid #BEBFBF;\n");
-	printf("\tmargin-top: 8px;\n");
-	printf("}\n");
-
-	printf("#topline\n");
-	printf("{\n");
-	printf("\t#width: 100%%;\n");
-	printf("\tbackground: transparent url('/images/hairline.gif') repeat-x top center;\n");
-	printf("}\n");
-
-	printf("#menutab ul, #menutab ol\n");
-	printf("{\n");
-	printf("\tmargin: 0;\n");
-	printf("\tpadding: 0px 0px 0;\n");
-	printf("\tlist-style: none;\n");
-	printf("}\n");
-
-	printf("#menutab li\n");
-	printf("{\n");
-	printf("\tfloat: left;\n");
-	printf("\tbackground: url('/images/left.gif') no-repeat left top;\n");
-	printf("\tmargin: 0;\n");
-	printf("\tpadding: 0 0 0 9px;\n");
-	printf("}\n");
-
-	printf("#menutab a, #menutab a.last\n");
-	printf("{\n");
-	printf("\tfloat:left;\n");
-	printf("\tdisplay: block;\n");
-	printf("\tbackground: url('/images/right.gif') no-repeat right top;\n");
-	printf("\tpadding: 5px 15px 2px 6px;\n");
-	printf("\tcolor: #222;\n");
-	printf("\ttext-decoration: none;\n");
-	printf("}\n");
-
-	printf("/* Commented Backslash Hack\n");
-	printf("\thides rule from IE5-Mac \\*/\n");
-	printf("\t#menutab a, #menutab a.last {float:none;}\n");
-	printf("/* End IE5-Mac hack */\n");
-
-	printf("#menutab a.last\n");
-	printf("{\n");
-	printf("\tbackground: url('/images/right_last.gif') no-repeat right top;\n");
-	printf("\tpadding: 5px 17px 2px 6px;\n");
-	printf("}\n");
-
-	printf("#menutab a:hover\n");
-	printf("{\n");
-	printf("\tcolor: black;\n");
-	printf("\ttext-decoration: underline;\n");
-	printf("}\n");
-
-	printf("#menutab #current\n");
-	printf("{\n");
-	printf("\tbackground-image: url('/images/left_on.gif');\n");
-	printf("}\n");
-
-	printf("#menutab #current a\n");
-	printf("{\n");
-	printf("\tbackground-image: url('/images/right_on.gif');\n");
-	printf("\tpadding-bottom: 3px;\n");
-	printf("\ttext-decoration: none;\n");
-	printf("}\n");
-
-	printf("-->\n");
-	printf("</style>\n");
+	printf("<!-- StyleSheet() -->\n");
+	printf("<link rel=stylesheet type=text/css href=/css/radBackend.css />\n");
 
 }//void StyleSheet(void)
 
@@ -541,8 +438,6 @@ void jsToggleCheckboxes(void)
 }//void jsToggleCheckboxes(void)
 
 
-
-
 void Header_ism3(const char *title, int iJs)
 {
 	printf("Content-type: text/html\n\n");
@@ -567,7 +462,7 @@ void Header_ism3(const char *title, int iJs)
 	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
 	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/unxsvz.ico?v=2>\n");
 	printf("</head><body><form name=formMain action=unxsVZ.cgi method=post><blockquote>\n");
-	printf("<img src=/images/unxslogo.gif>&nbsp;&nbsp;\n");
+	//printf("<img src=/images/unxslogo.gif>&nbsp;&nbsp;\n");
 
 	//ModuleRAD3NavBars()
 	if(!strcmp(gcFunction,"tDatacenter") || !strcmp(gcFunction,"tDatacenterTools") ||
@@ -657,27 +552,33 @@ void Header_ism3(const char *title, int iJs)
 	else if(!strcmp(gcFunction,"tFWStatus") || !strcmp(gcFunction,"tFWStatusTools") ||
 			!strcmp(gcFunction,"tFWStatusList"))
 		ExttFWStatusNavBar();
+	else if(!strcmp(gcFunction,"tFWRule") || !strcmp(gcFunction,"tFWRuleTools") ||
+			!strcmp(gcFunction,"tFWRuleList"))
+		ExttFWRuleNavBar();
+	else if(!strcmp(gcFunction,"tIPType") || !strcmp(gcFunction,"tIPTypeTools") ||
+			!strcmp(gcFunction,"tIPTypeList"))
+		ExttIPTypeNavBar();
 	else if(!strcmp(gcFunction,"tConfiguration") || !strcmp(gcFunction,"tConfigurationTools") ||
 			!strcmp(gcFunction,"tConfigurationList"))
 		ExttConfigurationNavBar();
 
 
 	//Login info
-	//printf("<font size=3><b>unxsVZ</b></font> \n ");
+	printf("<font size=3><b>unxsVZ</b></font> \n ");
 	if(!guPermLevel)
 	{
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>Your IP address %s has been logged</font>",gcHost);
 		//debug only
 		//printf("&nbsp;&nbsp;&nbsp;<font color=red>%s ",gcUser);
 		//if(strcmp(gcUser,gcCompany)) printf("(%s) ",gcCompany);
-		//printf("logged in from %s [%s/%u (%s)]</font>",gcHost,cUserLevel(guPermLevel),guReseller,gcOTPInfo);
+		//printf("debug %s [%s/%u (%s)]</font>",gcHost,cUserLevel(guPermLevel),guReseller,gcOTPInfo);
 	}
 	else
 	{
 		printf("&nbsp;&nbsp;&nbsp;<font color=red>%s ",gcUser);
 		if(strcmp(gcUser,gcCompany)) printf("(%s) ",gcCompany);
 		printf("logged in from %s [%s/%u]</font>",gcHost,cUserLevel(guPermLevel),guReseller);
-		//printf("logged in from %s [%s/%u (%s)]</font>",gcHost,cUserLevel(guPermLevel),guReseller,gcOTPInfo);
+		//printf("debug %s [%s/%u (%s)]</font>",gcHost,cUserLevel(guPermLevel),guReseller,gcOTPInfo);
 	}
 
 	//Logout link
@@ -741,16 +642,8 @@ if(guSSLCookieLogin)
 	  printf("\t\t\t<a title='OpenVZ Container' href=unxsVZ.cgi?gcFunction=tContainer>tContainer</a>\n");
 	}
 	//tProperty
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tProperty") && strcmp(gcFunction,"tPropertyTools") &&
-			strcmp(gcFunction,"tPropertyList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Shared property table' href=unxsVZ.cgi?gcFunction=tProperty>tProperty</a>\n");
-	}
+	if(!strcmp(gcFunction,"tProperty") || !strcmp(gcFunction,"tPropertyTools") || !strcmp(gcFunction,"tPropertyList"))
+		printf("\t\t\t<li id=current>\t\t\t<a title='Shared property table' href=unxsVZ.cgi?gcFunction=tProperty>tProperty</a>\n");
 	//tType
 	if(guPermLevel>=20)
 	{
@@ -884,16 +777,8 @@ if(guSSLCookieLogin)
 	  printf("\t\t\t<a title='Client Info' href=unxsVZ.cgi?gcFunction=tClient>tClient</a>\n");
 	}
 	//tAuthorize
-	if(guPermLevel>=20)
-	{
-	  printf("\t\t\t<li");
-	  if(strcmp(gcFunction,"tAuthorize") && strcmp(gcFunction,"tAuthorizeTools") &&
-			strcmp(gcFunction,"tAuthorizeList"))
-		  printf(">\n");
-	  else
-		  printf(" id=current>\n");
-	  printf("\t\t\t<a title='Login Authorization' href=unxsVZ.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
-	}
+	if(!strcmp(gcFunction,"tAuthorize") || !strcmp(gcFunction,"tAuthorizeTools") || !strcmp(gcFunction,"tAuthorizeList"))
+		printf("\t\t\t<li id=current>\t\t\t<a title='Login Authorization' href=unxsVZ.cgi?gcFunction=tAuthorize>tAuthorize</a>\n");
 	//tTemplate
 	if(guPermLevel>=20)
 	{
@@ -1025,6 +910,28 @@ if(guSSLCookieLogin)
 	  else
 		  printf(" id=current>\n");
 	  printf("\t\t\t<a title='tFWStatus' href=unxsVZ.cgi?gcFunction=tFWStatus>tFWStatus</a>\n");
+	}
+	//tIPType
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tIPType") && strcmp(gcFunction,"tIPTypeTools") &&
+			strcmp(gcFunction,"tIPTypeList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='tIPType' href=unxsVZ.cgi?gcFunction=tIPType>tIPType</a>\n");
+	}
+	//tFWRule
+	if(guPermLevel>=20)
+	{
+	  printf("\t\t\t<li");
+	  if(strcmp(gcFunction,"tFWRule") && strcmp(gcFunction,"tFWRuleTools") &&
+			strcmp(gcFunction,"tFWRuleList"))
+		  printf(">\n");
+	  else
+		  printf(" id=current>\n");
+	  printf("\t\t\t<a title='tFWRule' href=unxsVZ.cgi?gcFunction=tFWRule>tFWRule</a>\n");
 	}
 	//tConfiguration
 	if(guPermLevel>=20)
@@ -1962,8 +1869,8 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: unxsVZLogin=%s; secure;\n",gcLogin);
-		printf("Set-Cookie: unxsVZPasswd=%s; secure;\n",gcPasswd);
+		printf("Set-Cookie: unxsVZLogin=%s; secure; httponly;\n",gcLogin);
+		printf("Set-Cookie: unxsVZPasswd=%s; secure; httponly;\n",gcPasswd);
 		strncpy(gcUser,gcLogin,41);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
@@ -2112,7 +2019,12 @@ int iValidLogin(int mode)
 				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 		MYSQL_RUN;
-		LoginFirewallJobs(guLoginClient);
+		LoginFirewallJobs(guLoginClient,gcHost);
+		if(guAuthorize)
+		{
+			sprintf(gcQuery,"UPDATE tAuthorize SET cIPMask='%.19s' WHERE uAuthorize=%u",gcHost,guAuthorize);
+			MYSQL_RUN;
+		}
 	}
 
 	char cSalt[16]={""};
@@ -2135,9 +2047,11 @@ int iValidLogin(int mode)
 		if(!mode)
 		{
 
-			//MD5 vs DES salt determination
-			if(cPassword[0]=='$' && cPassword[2]=='$')
+			//MD5-SHA vs DES salt determination
+			if(cPassword[0]=='$' && cPassword[2]=='$' && cPassword[1]=='1')
 				sprintf(cSalt,"%.12s",cPassword);
+			else if(cPassword[0]=='$' && cPassword[2]=='$' && (cPassword[1]=='5' || cPassword[1]=='6'))
+				sprintf(cSalt,"%.14s",cPassword);
 			else
 				sprintf(cSalt,"%.2s",cPassword);
 			EncryptPasswdWithSalt(gcPasswd,cSalt);
@@ -2150,8 +2064,9 @@ int iValidLogin(int mode)
 					if(!uValidOTP(gcOTPSecret,gcOTP))
 					{
 						guRequireOTPLogin=1;
-						sprintf(gcOTPInfo,"{%s}/[%s] %u login invalid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
-						LogoutFirewallJobs(guLoginClient);
+						sprintf(gcOTPInfo,"{%s}/[%s/%s] %u login invalid gcOTP",
+								gcOTPSecret,gcOTP,cOATHOneTimePasswd(gcOTPSecret),guOTPExpired);
+						LogoutFirewallJobs(guLoginClient,gcIPMask);
 						return(0);
 					}
 					else
@@ -2168,10 +2083,10 @@ int iValidLogin(int mode)
 				{
 					guRequireOTPLogin=1;
 					sprintf(gcOTPInfo,"{%s}/[%s] %u login valid but expired",gcOTPSecret,gcOTP,guOTPExpired);
-					LogoutFirewallJobs(guLoginClient);
+					LogoutFirewallJobs(guLoginClient,gcIPMask);
 					return(0);
 				}
-				sprintf(gcOTPInfo,"{%s}/[%s] %u login valid",gcOTPSecret,gcOTP,guOTPExpired);
+				sprintf(gcOTPInfo,"{%s}/[%s] %u login valid %u",gcOTPSecret,gcOTP,guOTPExpired,guAuthorize);
 				UpdateLogLoginOk();
 				return(1);
 			}
@@ -2186,8 +2101,9 @@ int iValidLogin(int mode)
 					if(!uValidOTP(gcOTPSecret,gcOTP))
 					{
 						guRequireOTPLogin=1;
-						sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login expired invalid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
-						LogoutFirewallJobs(guLoginClient);
+						sprintf(gcOTPInfo,"{%s}/[%s/%s] %u cookie login expired invalid gcOTP",
+								gcOTPSecret,gcOTP,cOATHOneTimePasswd(gcOTPSecret),guOTPExpired);
+						LogoutFirewallJobs(guLoginClient,gcIPMask);
 						return(0);
 					}
 					else
@@ -2203,7 +2119,7 @@ int iValidLogin(int mode)
 				{
 					guRequireOTPLogin=1;
 					sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login expired no gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
-					LogoutFirewallJobs(guLoginClient);
+					LogoutFirewallJobs(guLoginClient,gcIPMask);
 					return(0);
 				}
 				sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login valid",gcOTPSecret,gcOTP,guOTPExpired);
@@ -2228,7 +2144,7 @@ int iValidLogin(int mode)
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 		MYSQL_RUN;
-		LogoutFirewallJobs(guLoginClient);
+		LogoutFirewallJobs(guLoginClient,gcIPMask);
 	}
 
 	if(guOTPExpired)
@@ -2294,6 +2210,12 @@ void SSLCookieLogin(void)
 	GetPLAndClient(gcUser);
 	if(!guPermLevel || !guLoginClient)
 		unxsVZ("Access denied");
+	//cIP has changed force logout
+	if(gcIPMask[0] && strcmp(gcHost,gcIPMask))
+	{
+		sprintf(gcOTPInfo,"%s!=%s gcHost!=gcIPMask %u",gcHost,gcIPMask,guAuthorize);
+		voidLogout();
+	}
 	gcPasswd[0]=0;
 	guSSLCookieLogin=1;
 
@@ -2343,7 +2265,7 @@ void GetPLAndClient(char *cUser)
 	//SQL FROM the defined external tables must provide db.tAuthorize and db.tClient for the other SQL
 	// to work.
 	sprintf(gcQuery,"SELECT tAuthorize.uPerm,tAuthorize.uCertClient,tAuthorize.uOwner,"
-				"tClient.cLabel"
+				"tClient.cLabel,tAuthorize.cIPMask,tAuthorize.uAuthorize"
 				" FROM " TAUTHORIZE "," TCLIENT
 				" WHERE tAuthorize.uOwner=tClient.uClient"
 				" AND tAuthorize.cLabel='%s'",cUser);
@@ -2355,8 +2277,14 @@ void GetPLAndClient(char *cUser)
 		sscanf(mysqlField[1],"%u",&guLoginClient);
 		sscanf(mysqlField[2],"%u",&guCompany);
 		sprintf(gcCompany,"%.99s",mysqlField[3]);
+		sprintf(gcIPMask,"%.31s",mysqlField[4]);
+		sscanf(mysqlField[5],"%u",&guAuthorize);
 	}
 	mysql_free_result(mysqlRes);
+
+	//This should never happen but...
+	if(!gcIPMask[0] && gcHost[0])
+		sprintf(gcIPMask,"%.15s",gcHost);
 
 }//void GetPLAndClient()
 
@@ -2685,39 +2613,33 @@ void to64(s, v, n)
     }
 }//void to64(s, v, n)
 
-
-void EncryptPasswd(char *pw)
+char *base64encode (const void *b64_encode_this, int encode_this_many_bytes);
+void EncryptPasswd(char *cPw)
 {
-	//Notes:
-	//	We should change time based salt 
-	//	(could be used for faster dictionary attack)
-	//	to /dev/random based system.
+	FILE *fp;
+	fp=fopen("/dev/urandom","r");
+	char cRandomData[18];
+	fread(cRandomData,1,18,fp);
+	fclose(fp);
 
-        char salt[3];
-        char passwd[102]={""};
-        char *cpw;
+	char *cpPwd="";
 	char cMethod[16] ={""}; 
-
 	GetConfiguration("cCryptMethod",cMethod,0,0,0,0);
-	if(!strcmp(cMethod,"MD5"))
+	if(!strcmp(cMethod,"SHA256") || !strcmp(cMethod,"SHA512"))
+	{
+		char cSalt[] = "$5$0123456789$";
+		sprintf(cSalt+3,"%.10s",base64encode(cRandomData,10));
+		cpPwd=crypt(cPw,cSalt);
+	}
+	else //MD5 default not secure but small and fast
 	{
 		char cSalt[] = "$1$01234567$";
-	    	(void)srand((int)time((time_t *)NULL));
-    		to64(&cSalt[3],rand(),8);
-		cpw = crypt(pw,cSalt);
-		// error not verified, str NULL ("") returned	
+		sprintf(cSalt+3,"%.8s",base64encode(cRandomData,8));
+		cpPwd=crypt(cPw,cSalt);
 	}
-	else
-	{
-		// default DES method
-	        sprintf(passwd,"%.99s",pw);
-    		(void)srand((int)time((time_t *)NULL));
-    		to64(&salt[0],rand(),2);
-		cpw=crypt(passwd,salt);
-	}	
-	sprintf(pw,"%.99s",cpw);
+	sprintf(cPw,"%.99s",cpPwd);
 
-}//void EncryptPasswd(char *pw)
+}//void EncryptPasswd(char *cPw)
 
 
 void GeneratePasswd(char *dest)
@@ -2914,8 +2836,8 @@ unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP);
 void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 void RemoveLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 void NewNoDupsIPProp(char const *cName,char const *cValue,unsigned uIP);
-void LogoutFirewallJobs(unsigned uLoginClient);
-void LoginFirewallJobs(unsigned uLoginClient);
+void LogoutFirewallJobs(unsigned uLoginClient,char *cIP);
+void LoginFirewallJobs(unsigned uLoginClient,char *cIP);
 
 //UBC safe should not be used for UBCs	
 void SetUpdateIPProp(char const *cName,char const *cValue,unsigned uIP)
@@ -2975,7 +2897,6 @@ void SetUpdateIPPropFromHost(char const *cName,char const *cValue,char const *cH
 }//void SetUpdateIPPropFromHost()
 
 
-#define uLOGIN_IPTYPE 7
 unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP)
 {
         MYSQL_RES *res;
@@ -2990,7 +2911,16 @@ unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
+		//Note that an IP maybe in use with NAT and this may lead
+		//to confusion in regards to uFWStatus.
 		sscanf(field[0],"%u",&uIP);
+		sprintf(gcQuery,"UPDATE tIP"
+				" SET uIPType=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()),"
+				" uFWStatus=%u WHERE uIP=%u",
+					uIPTYPE_BACKEND_LOGIN,guLoginClient,uFWWAITINGACCESSLOGIN,uIP);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
 	}
 	else
 	{
@@ -2998,8 +2928,9 @@ unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP)
 				" SET cLabel='%.15s',"
 				" uIPNum=INET_ATON('%s'),"
 				" uIPType=%u,"
+				" uFWStatus=%u,"
 				" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					cHostIP,cHostIP,uLOGIN_IPTYPE,guCompany,guLoginClient);
+					cHostIP,cHostIP,uIPTYPE_BACKEND_LOGIN,uFWWAITINGACCESSLOGIN,guCompany,guLoginClient);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));
@@ -3027,10 +2958,9 @@ void RemoveLoginSession(const char *cHostIP,const char *gcUser,const char *gcCom
 {
 	if(!cHostIP[0] || !gcUser[0]) return;
 
-	//31 is tIP
 	sprintf(gcQuery,"DELETE FROM tProperty"
 			" WHERE uKey IN (SELECT uIP FROM tIP WHERE uIPNum=INET_ATON('%.15s'))"
-			" AND uType=31 AND cValue='gcUser=%.31s;gcCompany=%.31s;'",
+			" AND uType="PROP_IP" AND cValue='gcUser=%.31s;gcCompany=%.31s;'",
 				cHostIP,gcUser,gcCompany);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -3061,7 +2991,7 @@ void NewNoDupsIPProp(char const *cName,char const *cValue,unsigned uIP)
 }//void NewNoDupsIPProp();
 
 
-void LoginFirewallJobs(unsigned uLoginClient)
+void LoginFirewallJobs(unsigned uLoginClient,char *cIP)
 {
 	//Only users with two factor authentication via OTP
 	//can access hardware nodes at this time.
@@ -3084,26 +3014,8 @@ void LoginFirewallJobs(unsigned uLoginClient)
 	if(!strncmp(cEnableSSHOnLogin,"Yes",sizeof("Yes")))
 		sprintf(cJobName,"%.31s","LoginFirewallJob");
 
-	//Check for cLoginSession
-	char cLoginSession[256]={""};
-	char gcUserSection[64]={""};
-	GetIPPropFromHost(gcHost,"cLoginSession",cLoginSession);
-	if(cLoginSession[0])
-	{
-		sprintf(gcUserSection,"gcUser=%s;",gcLogin);
-		if(strstr(cLoginSession,gcUserSection))
-		//already logged in do nothing
-		return;
-	}
-
-	//For existing or creates new tIP entry
-	//For each unique IP or NAT user we create a session
-	CreateLoginSession(gcHost,gcLogin,gcCompany);
-
-	//If NAT user:
-	//No need to create login jobs since session already exists for another user same IP?
-	if(cLoginSession[0])
-		return;
+	//We let the firewall control code take care of not adding extra rules
+	CreateLoginSession(cIP,gcLogin,gcCompany);
 
 	//Only for nodes with tProperty.cName=cCreateLoginJobs
 	sprintf(gcQuery,"SELECT DISTINCT tNode.uNode,tNode.uDatacenter"
@@ -3113,8 +3025,7 @@ void LoginFirewallJobs(unsigned uLoginClient)
 				" AND tProperty.cName='cCreateLoginJobs'"
 				" AND tProperty.cValue='Yes'"
 				" AND tDatacenter.uStatus=1"
-				" AND tNode.uStatus=1"
-				" AND tNode.cLabel!='appliance'");
+				" AND tNode.uStatus=1");
 	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		return;
@@ -3136,7 +3047,7 @@ void LoginFirewallJobs(unsigned uLoginClient)
 						uLoginClient,
 						uDatacenter,
 						uNode,
-						gcHost);
+						cIP);
 		mysql_query(&gMysql,gcQuery);
 
 		//do not add again
@@ -3144,7 +3055,7 @@ void LoginFirewallJobs(unsigned uLoginClient)
 				" WHERE cLabel='LoginFirewallJobs(%u)' AND cJobName='%s' AND uJobStatus=1"
 				" AND uDatacenter=%u AND uNode=%u AND uContainer=0"
 				" AND cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'",
-							uLoginClient,cJobName,uDatacenter,uNode,gcHost);
+							uLoginClient,cJobName,uDatacenter,uNode,cIP);
 		mysql_query(&gMysql,gcQuery);
         	if(!mysql_errno(&gMysql))
 		{
@@ -3161,16 +3072,16 @@ void LoginFirewallJobs(unsigned uLoginClient)
 						cJobName,
 						uDatacenter,
 						uNode,
-						gcHost,
+						cIP,
 						guCompany,guLoginClient);
 				mysql_query(&gMysql,gcQuery);
 			}
 		}
 	}
-}//void LoginFirewallJobs(unsigned uLoginClient)
+}//void LoginFirewallJobs()
 
 
-void LogoutFirewallJobs(unsigned uLoginClient)
+void LogoutFirewallJobs(unsigned uLoginClient, char *cIP)
 {
         MYSQL_RES *res;
         MYSQL_RES *res2;
@@ -3189,12 +3100,12 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 		sprintf(cJobName,"%.31s","LogoutFirewallJob");
 
 	//Remove corresponding session
-	RemoveLoginSession(gcHost,gcLogin,gcCompany);
+	RemoveLoginSession(cIP,gcLogin,gcCompany);
 	//Check for any remaining cLoginSession for given IP
 	char cLoginSession[256]={""};
-	GetIPPropFromHost(gcHost,"cLoginSession",cLoginSession);
+	GetIPPropFromHost(cIP,"cLoginSession",cLoginSession);
+	//someone else logged in from same IP
 	if(cLoginSession[0])
-		//someone else logged in from same IP
 		return;
 
 	sprintf(gcQuery,"SELECT DISTINCT tNode.uNode,tNode.uDatacenter"
@@ -3204,8 +3115,7 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 				" AND tProperty.cName='cCreateLoginJobs'"
 				" AND tProperty.cValue='Yes'"
 				" AND tDatacenter.uStatus=1"
-				" AND tNode.uStatus=1"
-				" AND tNode.cLabel!='appliance'");
+				" AND tNode.uStatus=1");
 	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		return;
@@ -3228,16 +3138,22 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 						cJobName,
 						uDatacenter,
 						uNode,
-						gcHost);
+						cIP);
 		mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+			printf(mysql_error(&gMysql));
 
 		//do not add again
+		//if IP changes then gcHost might not be the original login IP
+		//we will start saving the original IP in tAuthorize.cIPMask
 		sprintf(gcQuery,"SELECT uJob FROM tJob"
 				" WHERE cLabel='LogoutFirewallJobs(%u)' AND cJobName='%s' AND uJobStatus=1"
 				" AND uDatacenter=%u AND uNode=%u AND uContainer=0"
 				" AND cJobData='cIPv4=%.15s;\ntConfiguration:cCreateLoginJobs=Via tNode::tProperty:cCreateLoginJobs;'",
-							uLoginClient,cJobName,uDatacenter,uNode,gcHost);
+							uLoginClient,cJobName,uDatacenter,uNode,cIP);
 		mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+			printf(mysql_error(&gMysql));
         	if(!mysql_errno(&gMysql))
 		{
 			res2=mysql_store_result(&gMysql);
@@ -3253,10 +3169,14 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 						cJobName,
 						uDatacenter,
 						uNode,
-						gcHost,
+						cIP,
 						guCompany,guLoginClient);
 				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+					printf(mysql_error(&gMysql));
 			}
 		}
 	}
-}//void LogoutFirewallJobs(unsigned uLoginClient)
+}//void LogoutFirewallJobs()
+
+

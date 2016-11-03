@@ -1,7 +1,7 @@
 /*
 FILE
 	unxsBind/agents/etchosts/etchosts.h
-	$Id$
+	svn ID removed
 AUTHOR/LEGAL
 	(C) 2013-2014 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.

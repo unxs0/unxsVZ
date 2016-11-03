@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: import.c 1212 2010-03-05 18:09:49Z Gary $
+	svn ID removed
 AUTHOR
 	(C) 2001-2010 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 PURPOSE

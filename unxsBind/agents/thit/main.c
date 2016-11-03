@@ -1,7 +1,7 @@
 /*
 FILE
 	main.c (for tHitCollector exe)
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) 2006-2012, Dylan and Gary for Unixservice USA - GPLv2 Applies
 PURPOSE

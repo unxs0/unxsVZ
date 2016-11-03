@@ -5,7 +5,7 @@
  *		Copyright 2002		Cistron IP B.V.
  */
 char attrprint_rcsid[] =
-"$Id: attrprint.c 60 2007-10-18 13:41:43Z Gary $";
+"svn ID removed
 
 #include	<sys/types.h>
 #include	<sys/socket.h>

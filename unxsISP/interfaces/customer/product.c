@@ -1,7 +1,7 @@
 /*
 FILE 
 	product.c
-	$Id: product.c 460 2009-08-11 21:02:11Z Hugo $
+	svn ID removed
 AUTHOR
 	(C) 2007-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE

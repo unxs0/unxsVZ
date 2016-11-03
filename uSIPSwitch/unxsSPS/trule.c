@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: module.c 2115 2012-09-19 14:11:03Z Gary $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality can be developed in trulefunc.h

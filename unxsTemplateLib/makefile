@@ -1,7 +1,7 @@
 #
 #FILE
 #	makefile
-#	$Id: makefile 1397 2007-08-09 14:32:57Z Gary $
+#	svn ID removed
 #AUTHOR/LEGAL
 #	(C) 2006-2009 Gary Wallis for Unixservice, LLC.
 # 	LGPL License applies

@@ -1,13 +1,13 @@
 /*
 FILE
 	tGroupType source code of unxsVZ.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id$
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tgrouptypefunc.h while 
-	RAD is still to be used.
+	Group type table
+AUTHOR
+	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
 */
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 #include "mysqlrad.h"

@@ -1,7 +1,7 @@
 /*
 FILE
 	ucidr.h
-	$Id: ucidr.h 1193 2006-11-28 23:05:53Z ggw $
+	svn ID removed
 PURPOSE
 	Create and install openisp libucidr a very small
 	basic cdir math lib developed initially for

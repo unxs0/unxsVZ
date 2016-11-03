@@ -2,7 +2,7 @@
 FILE
 	tAuthorize source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id$
+	(C) 2010-2016 Gary Wallis for Unixservice, LLC.
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tauthorizefunc.h while 
@@ -16,8 +16,8 @@ PURPOSE
 static unsigned uAuthorize=0;
 //cLabel: Short label
 static char cLabel[33]={""};
-//cIpMask: Allow user from this IP
-static char cIpMask[21]={"0.0.0.0/0"};
+//cIPMask: Allow user from this IP
+static char cIPMask[21]={"0.0.0.0/0"};
 //uPerm: User permission level
 static unsigned uPerm=0;
 //uCertClient: User uClient
@@ -41,9 +41,11 @@ static char cOTPSecret[65]={""};
 //uOTPExpire: Unix seconds date last when cOTPSecret is no longer valid. If 0 do not
 //require OTP
 static time_t uOTPExpire=0;
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
-#define VAR_LIST_tAuthorize "tAuthorize.uAuthorize,tAuthorize.cLabel,tAuthorize.cIpMask,tAuthorize.uPerm,tAuthorize.uCertClient,tAuthorize.cPasswd,tAuthorize.cClrPasswd,tAuthorize.uOwner,tAuthorize.uCreatedBy,tAuthorize.uCreatedDate,tAuthorize.uModBy,tAuthorize.uModDate,tAuthorize.cOTPSecret,tAuthorize.uOTPExpire"
+#define VAR_LIST_tAuthorize "tAuthorize.uAuthorize,tAuthorize.cLabel,tAuthorize.cIPMask,tAuthorize.uPerm,tAuthorize.uCertClient,tAuthorize.cPasswd,tAuthorize.cClrPasswd,tAuthorize.uOwner,tAuthorize.uCreatedBy,tAuthorize.uCreatedDate,tAuthorize.uModBy,tAuthorize.uModDate,tAuthorize.cOTPSecret,tAuthorize.uOTPExpire"
 
  //Local only
 void Insert_tAuthorize(void);
@@ -62,6 +64,9 @@ void ExttAuthorizeListSelect(void);
 void ExttAuthorizeListFilter(void);
 void ExttAuthorizeAuxTable(void);
 
+//
+char *cOATHOneTimePasswd(const char *cOTPSecret);
+
 #include "tauthorizefunc.h"
 
  //Table Variables Assignment Function
@@ -76,8 +81,8 @@ void ProcesstAuthorizeVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uAuthorize);
 		else if(!strcmp(entries[i].name,"cLabel"))
 			sprintf(cLabel,"%.32s",entries[i].val);
-		else if(!strcmp(entries[i].name,"cIpMask"))
-			sprintf(cIpMask,"%.20s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cIPMask"))
+			sprintf(cIPMask,"%.20s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uPerm"))
 			sscanf(entries[i].val,"%u",&uPerm);
 		else if(!strcmp(entries[i].name,"uCertClient"))
@@ -199,7 +204,7 @@ void tAuthorize(const char *cResult)
 			field=mysql_fetch_row(res);
 		sscanf(field[0],"%u",&uAuthorize);
 		sprintf(cLabel,"%.32s",field[1]);
-		sprintf(cIpMask,"%.20s",field[2]);
+		sprintf(cIPMask,"%.20s",field[2]);
 		sscanf(field[3],"%u",&uPerm);
 		sscanf(field[4],"%u",&uCertClient);
 		sprintf(cPasswd,"%.100s",field[5]);
@@ -298,10 +303,10 @@ void tAuthorizeInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
 	}
-//cIpMask
-	OpenRow(LANG_FL_tAuthorize_cIpMask,"black");
-	printf("<input title='%s' type=text name=cIpMask value=\"%s\" size=40 maxlength=20 "
-,LANG_FT_tAuthorize_cIpMask,EncodeDoubleQuotes(cIpMask));
+//cIPMask
+	OpenRow(LANG_FL_tAuthorize_cIPMask,"black");
+	printf("<input title='%s' type=text name=cIPMask value=\"%s\" size=40 maxlength=20 "
+,LANG_FT_tAuthorize_cIPMask,EncodeDoubleQuotes(cIPMask));
 	if(guPermLevel>=0 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -309,7 +314,7 @@ void tAuthorizeInput(unsigned uMode)
 	else
 	{
 		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cIpMask value=\"%s\">\n",EncodeDoubleQuotes(cIpMask));
+		printf("<input type=hidden name=cIPMask value=\"%s\">\n",EncodeDoubleQuotes(cIPMask));
 	}
 //uPerm
 	OpenRow(LANG_FL_tAuthorize_uPerm,"black");
@@ -450,23 +455,7 @@ void tAuthorizeInput(unsigned uMode)
 				printf(" <a href=\"https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl="
 						"otpauth://totp/%.31s%%3Fsecret%%3D%.20s\">QRCode link</a>",
 								cLabel,cOTPSecret);
-				char *secret;
-				size_t secretlen=0;
-				int rc;
-				char otp[10];
-				time_t now=time(NULL);
-	
-				rc=oath_init();
-				if(rc==OATH_OK)
-				{
-					rc=oath_base32_decode(cOTPSecret,strlen(cOTPSecret),&secret,&secretlen);
-					if(rc==OATH_OK)
-					{
-						rc=oath_totp_generate(secret,secretlen,now,30,0,6,otp);
-						if(rc==OATH_OK)
-							printf(" Validation code: %s",otp);
-					}
-				}
+				printf(" Validation code: %s",cOATHOneTimePasswd(cOTPSecret));
 			}
 			printf("</td></tr>\n");
 			printf("<input type=hidden name=cOTPSecret value=\"%s\">\n",cOTPSecret);
@@ -542,10 +531,10 @@ void Insert_tAuthorize(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tAuthorize SET uAuthorize=%u,cLabel='%s',cIpMask='%s',uPerm=%u,uCertClient=%u,cPasswd='%s',cClrPasswd='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tAuthorize SET uAuthorize=%u,cLabel='%s',cIPMask='%s',uPerm=%u,uCertClient=%u,cPasswd='%s',cClrPasswd='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uAuthorize
 			,TextAreaSave(cLabel)
-			,TextAreaSave(cIpMask)
+			,TextAreaSave(cIPMask)
 			,uPerm
 			,uCertClient
 			,TextAreaSave(cPasswd)
@@ -563,10 +552,10 @@ void Update_tAuthorize(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tAuthorize SET uAuthorize=%u,cLabel='%s',cIpMask='%s',uPerm=%u,uCertClient=%u,cPasswd='%s',cClrPasswd='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()),cOTPSecret='%s',uOTPExpire=%lu WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tAuthorize SET uAuthorize=%u,cLabel='%s',cIPMask='%s',uPerm=%u,uCertClient=%u,cPasswd='%s',cClrPasswd='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()),cOTPSecret='%s',uOTPExpire=%lu WHERE _rowid=%s",
 			uAuthorize
 			,TextAreaSave(cLabel)
-			,TextAreaSave(cIpMask)
+			,TextAreaSave(cIPMask)
 			,uPerm
 			,uCertClient
 			,TextAreaSave(cPasswd)
@@ -646,7 +635,7 @@ void tAuthorizeList(void)
 	printf("<tr bgcolor=black>"
 		"<td><font face=arial,helvetica color=white>uAuthorize"
 		"<td><font face=arial,helvetica color=white>cLabel"
-		"<td><font face=arial,helvetica color=white>cIpMask"
+		"<td><font face=arial,helvetica color=white>cIPMask"
 		"<td><font face=arial,helvetica color=white>uPerm"
 		"<td><font face=arial,helvetica color=white>uCertClient"
 		"<td><font face=arial,helvetica color=white>cPasswd"
@@ -733,7 +722,7 @@ void CreatetAuthorize(void)
 			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
-			"cIpMask VARCHAR(20) NOT NULL DEFAULT '',"
+			"cIPMask VARCHAR(20) NOT NULL DEFAULT '',"
 			"uPerm INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uCertClient INT UNSIGNED NOT NULL DEFAULT 0,"
 			"cPasswd VARCHAR(100) NOT NULL DEFAULT '',"
@@ -744,3 +733,25 @@ void CreatetAuthorize(void)
 
 }//CreatetAuthorize()
 
+
+char *cOATHOneTimePasswd(const char *cOTPSecret)
+{
+	char *secret;
+	size_t secretlen=0;
+	int rc;
+	static char otp[10]="error";
+	time_t now=time(NULL);
+
+	rc=oath_init();
+	if(rc==OATH_OK)
+	{
+		rc=oath_base32_decode(cOTPSecret,strlen(cOTPSecret),&secret,&secretlen);
+		if(rc==OATH_OK)
+		{
+			rc=oath_totp_generate(secret,secretlen,now,30,0,6,otp);
+			if(rc==OATH_OK)
+				sprintf(otp,"%.9s",otp);
+		}
+	}
+				return(otp);
+}//char *cOATHOneTimePasswd(const char *cOTPSecret)

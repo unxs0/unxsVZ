@@ -2,7 +2,7 @@
 FILE
 	tGroup source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tgroup.c 166 2009-06-05 22:10:35Z Dylan $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tgroupfunc.h while 

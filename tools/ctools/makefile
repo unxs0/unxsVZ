@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # tools/ctools/makefile
 #
 # (C) 2011-2012 Gary Wallis for Unixservice, LLC.

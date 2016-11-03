@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: modulefunc.h 2116 2012-09-19 23:00:28Z Gary $
+	svn ID removed
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR

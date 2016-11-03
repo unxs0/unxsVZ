@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsVZ/uSIPSwitch/sipswitch/process.c
-	$Id$
+	svn ID removed
 PURPOSE
 	This is where the SIP state machine, routing logic 
 	and SBC items (channel limits and CDR data gathering) 

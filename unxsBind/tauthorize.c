@@ -2,7 +2,7 @@
 FILE
 	tAuthorize source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id$
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tauthorizefunc.h while 
@@ -685,7 +685,7 @@ void tAuthorizeList(void)
 			ctime_r(&luTime13,cBuf13);
 		else
 			sprintf(cBuf13,"---");
-		printf("<td><a class=darkLink href=iDNS.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
+		printf("<td><a class=darkLink href=?gcFunction=tAuthorize&uAuthorize=%s>"
                 	" %s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]

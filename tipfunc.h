@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -205,7 +205,7 @@ void ExttIPCommands(pentry entries[], int x)
 				unsigned uGroup=0;
 
 				if(cIPv4Search[0]==0 && uDatacenterSearch==0 && uNodeSearch==0 && uNodeSearchNot==0 && uAvailableSearch==0
-						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0 && uCountryCodeSearch==0)
+						&& uOwnerSearch==0 && uIPv4Exclude==0 && cCommentSearch[0]==0 && uCountryCodeSearch==0 && uIPType==0)
 	                        	tIP("You must specify at least one search parameter");
 
 				if((uGroup=uGetSearchGroup(gcUser,31))==0)
@@ -308,6 +308,15 @@ void ExttIPCommands(pentry entries[], int x)
 								" cLabel NOT LIKE '172.17.%%.%%' AND" 
 								" cLabel NOT LIKE '172.18.%%.%%' AND"
 								" cLabel NOT LIKE '192.168.%%.%%'");
+					strcat(gcQuery,cQuerySection);
+					uLink=1;
+				}
+
+				if(uIPType)
+				{
+					if(uLink)
+						strcat(gcQuery," AND");
+					sprintf(cQuerySection," uIPType=%u",uIPType);
 					strcat(gcQuery,cQuerySection);
 					uLink=1;
 				}
@@ -668,8 +677,10 @@ void ExttIPCommands(pentry entries[], int x)
 				//1.2.3.4 min
 				if(strlen(cLabel)<7)
 					tIP("cLabel too short");
-				if(!uDatacenter)
-					tIP("Must specify a uDatacenter");
+				//if(!uDatacenter)
+				//	tIP("Must specify a uDatacenter");
+				if(!uIPType)
+					tIP("Must specify an IP type");
                         	guMode=0;
 
 				uIP=0;
@@ -787,8 +798,8 @@ void ExttIPCommands(pentry entries[], int x)
 				}
 				if(strlen(cLabel)<7)
 					tIP("cLabel too short");
-				if(!uDatacenter)
-					tIP("Must specify a uDatacenter");
+				//if(!uDatacenter)
+				//	tIP("Must specify a uDatacenter");
                         	guMode=0;
 
 				if(uForClient)
@@ -1016,6 +1027,12 @@ void ExttIPAuxTable(void)
 			printf("&nbsp;<input title='Set firewall status to whitelisted. This keeps the IP from being blocked by unxsSnort agent.'"
 				" type=submit class=largeButton"
 				" name=gcCommand value='Group Whitelist'>\n");
+			printf("&nbsp; <input title='Set uIPType to the search selected value'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group Set IPType'>\n");
+			printf("&nbsp; <input title='Allow login session from this IP. Changes IP type and status.'"
+				" type=submit class=largeButton"
+				" name=gcCommand value='Group AllowLogin'>\n");
 			if(guPermLevel>=10)
 			{
 				printf("&nbsp; <input title='Remove IP from all iptables node firewalls'"
@@ -1034,26 +1051,29 @@ void ExttIPAuxTable(void)
 				sprintf(gcQuery,"SELECT"
 					" tIP.uIP,"
 					" tIP.cLabel,"
+					" IFNULL(tIPType.cLabel,''),"
 					//" IF(tIP.uAvailable>0,'Yes','No'),"
 					//" IFNULL(tDatacenter.cLabel,''),"
 					" IFNULL(tClient.cLabel,''),"
 					" IF(tIP.uCreatedDate>0,FROM_UNIXTIME(tIP.uCreatedDate,'%%a %%b %%d %%T %%Y'),''),"
 					" IF(tIP.uModDate>0,FROM_UNIXTIME(tIP.uModDate,'%%a %%b %%d %%T %%Y'),''),"
-					" IFNULL(tFWStatus.cLabel,''),"
-					" IFNULL(tFWRules.cRuleName,'NOC Action/Script'),"
+					" IFNULL(tFWStatus.cLabel,'Unknown'),"
+					" IFNULL(tFWRule.cLabel,''),"
 					" IFNULL(tGeoIPCountryCode.cCountryCode,''),"
 					" tIP.cComment"
 					" FROM tIP"
 					" LEFT JOIN tDatacenter ON tIP.uDatacenter=tDatacenter.uDatacenter"
 					" LEFT JOIN tClient ON tIP.uModBy=tClient.uClient"
 					" LEFT JOIN tFWStatus ON tIP.uFWStatus=tFWStatus.uFWStatus"
-					" LEFT JOIN tFWRules ON tIP.uFWRule=tFWRules.uFWRules"
+					" LEFT JOIN tFWRule ON tIP.uFWRule=tFWRule.uFWRule"
 					" LEFT JOIN tGeoIPCountryCode ON tIP.uCountryCode=tGeoIPCountryCode.uGeoIPCountryCode"
+					" LEFT JOIN tIPType ON tIP.uIPType=tIPType.uIPType"
 					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u) ORDER BY tIP.uModDate DESC",uGroup);
 			else
 				sprintf(gcQuery,"SELECT"
 					" tIP.uIP,"
 					" tIP.cLabel,"
+					" IFNULL(tIPType.cLabel,''),"
 					" IF(tIP.uAvailable>0,'Yes','No'),"
 					" IFNULL(tDatacenter.cLabel,''),"
 					" IFNULL(tNode.cLabel,''),"
@@ -1068,6 +1088,7 @@ void ExttIPAuxTable(void)
 					" LEFT JOIN tDatacenter ON tIP.uDatacenter=tDatacenter.uDatacenter"
 					" LEFT JOIN tNode ON tContainer.uNode=tNode.uNode"
 					" LEFT JOIN tClient ON tIP.uOwner=tClient.uClient"
+					" LEFT JOIN tIPType ON tIP.uIPType=tIPType.uIPType"
 					" WHERE uIP IN (SELECT uIP FROM tGroupGlue WHERE uGroup=%u) ORDER BY tIP.uIP DESC",uGroup);
 		        mysql_query(&gMysql,gcQuery);
 		        if(mysql_errno(&gMysql))
@@ -1084,6 +1105,7 @@ void ExttIPAuxTable(void)
 				printf("<tr>");
 				if(uFirewallMode)
 					printf("<td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> <u>cLabel</u></td>"
+						"<td><u>IPType</u></td>"
 						//"<td><u>Available</u></td>"
 						//"<td><u>Datacenter</u></td>"
 						"<td><u>ModBy</u></td>"
@@ -1096,6 +1118,7 @@ void ExttIPAuxTable(void)
 						"<td><u>Set operation result</u></td></tr>");
 				else
 					printf("<td><input type=checkbox name=all onClick='checkAll(document.formMain,this)'> <u>cLabel</u></td>"
+						"<td><u>IPType</u></td>"
 						"<td><u>Available</u></td>"
 						"<td><u>Datacenter</u></td>"
 						"<td><u>Node</u></td>"
@@ -1184,6 +1207,30 @@ while((field=mysql_fetch_row(res)))
 						cResult[0]=0;
 					break;
 				}//Group Delete
+
+
+				//Group Set IPType
+				else if(!strcmp(gcCommand,"Group Set IPType"))
+				{
+					if(!uIPType)
+					{
+						sprintf(cResult,"!uIPType");
+						break;
+					}
+					sprintf(gcQuery,"UPDATE tIP SET uIPType=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+							" WHERE uIP=%u",
+								uIPType,
+								guLoginClient,
+								uCtIP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						htmlPlainTextError(mysql_error(&gMysql));
+					if(mysql_affected_rows(&gMysql)>0)
+						sprintf(cResult,"uIPType set");
+					else
+						cResult[0]=0;
+					break;
+				}//Group Set IPType
 
 
 				//Group Make Available
@@ -1326,7 +1373,7 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"data error");
 						break;
 					}
-					if(uDatacenter!=41)
+					if(uDatacenter!=uCustomerPremiseDatacenter)
 					{
 						sprintf(cResult,"wrong datacenter");
 						break;
@@ -1442,11 +1489,11 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"data error");
 						break;
 					}
-					if(uDatacenter!=41)
-					{
-						sprintf(cResult,"wrong datacenter");
-						break;
-					}
+					//if(uDatacenter!=uCustomerPremiseDatacenter)
+					//{
+					//	sprintf(cResult,"wrong datacenter");
+					//	break;
+					//}
 					if(uAvailable==1)
 					{
 						sprintf(cResult,"must not be available");
@@ -1462,6 +1509,7 @@ while((field=mysql_fetch_row(res)))
 					sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
 								" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1"
 								" AND tDatacenter.cLabel!='CustomerPremise'"
+								" AND tNode.uContainerType=1"//OPenVZ container nodes only
 								" AND tNode.uDatacenter=tDatacenter.uDatacenter");
 					//			debug only
 					//			" AND tNode.uDatacenter=tDatacenter.uDatacenter LIMIT 1");
@@ -1563,7 +1611,7 @@ while((field=mysql_fetch_row(res)))
 						break;
 					}
 					/* this is not useful
-					if(uDatacenter!=41)
+					if(uDatacenter!=uCustomerPremiseDatacenter)
 					{
 						sprintf(cResult,"wrong datacenter");
 						break;
@@ -1584,6 +1632,7 @@ while((field=mysql_fetch_row(res)))
 					sprintf(gcQuery,"SELECT tNode.uNode,tDatacenter.uDatacenter FROM tNode,tDatacenter"
 								" WHERE tDatacenter.uStatus=1 AND tNode.uStatus=1"
 								" AND tDatacenter.cLabel!='CustomerPremise'"
+								" AND tNode.uContainerType=1"//OPenVZ container nodes only
 								" AND tNode.uDatacenter=tDatacenter.uDatacenter");
 					//			debug only
 					//			" AND tNode.uDatacenter=tDatacenter.uDatacenter LIMIT 1");
@@ -1786,7 +1835,7 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"data error");
 						break;
 					}
-					if(uDatacenter!=41)
+					if(uDatacenter!=uCustomerPremiseDatacenter)
 					{
 						sprintf(cResult,"wrong datacenter");
 						break;
@@ -1849,7 +1898,7 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"data error");
 						break;
 					}
-					if(uDatacenter!=41)
+					if(uDatacenter!=uCustomerPremiseDatacenter)
 					{
 						sprintf(cResult,"wrong datacenter");
 						break;
@@ -1886,6 +1935,44 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Group Whitelist
 
+				//Group AllowLogin
+				else if(!strcmp(gcCommand,"Group AllowLogin"))
+				{
+					char cIP[16]={""};
+					sprintf(cIP,"%.15s",ForeignKey("tIP","cLabel",uCtIP));
+					unsigned uAvailable=0;
+					sscanf(ForeignKey("tIP","uAvailable",uCtIP),"%u",&uAvailable);
+					unsigned uDatacenter=0;
+					sscanf(ForeignKey("tIP","uDatacenter",uCtIP),"%u",&uDatacenter);
+					unsigned uFWStatus=0;
+					sscanf(ForeignKey("tIP","uFWStatus",uCtIP),"%u",&uFWStatus);
+					if(guPermLevel<10)
+					{
+						sprintf(cResult,"insufficient permlevel");
+						break;
+					}
+					if(!cIP[0])
+					{
+						sprintf(cResult,"data error");
+						break;
+					}
+					if(uDatacenter!=uCustomerPremiseDatacenter)
+					{
+						sprintf(cResult,"wrong datacenter");
+						break;
+					}
+					if(uAvailable==1)
+					{
+						sprintf(cResult,"must not be available");
+						break;
+					}
+
+					LoginFirewallJobs(guLoginClient,cIP);
+					sprintf(cResult,"LoginFirewallJobs()");
+					unxsVZLog(uCtIP,"tIP","Group AllowLogin");
+					break;
+				}//Group AllowLogin
+
 				else if(1)
 				{
 					sprintf(cResult,"Unexpected gcCommand=%.64s",gcCommand);
@@ -1920,13 +2007,14 @@ while((field=mysql_fetch_row(res)))
 	{
 		//Allow instant feedback like cResult
 		if(!cCommentUpdated[0])
-			sprintf(cCommentUpdated,"%.255s",field[8]);
+			sprintf(cCommentUpdated,"%.255s",field[9]);
 		if(!cFWStatusUpdated[0])
-			sprintf(cFWStatusUpdated,"%.255s",field[5]);
+			sprintf(cFWStatusUpdated,"%.255s",field[6]);
 		printf("<td width=120 valign=top>"
 		"<input type=checkbox name=Ct%s >" //0
 		"<a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a>" //0 and 1
 		"</td>"
+		"<td>%s</td>" //2
 		//"<td>%s</td>" //2
 		//"<td>%s</td>" //3
 		"<td>%s</td>" //4
@@ -1939,15 +2027,13 @@ while((field=mysql_fetch_row(res)))
 		"<td>%s</td>\n", //cResult
 			field[0],//uIP
 			field[0],field[1],//uIP,cLabel
-			//field[2],//Available Yes/No
-			//field[3],//Datacenter
-			field[2],//modby
-			field[3],//date
+			field[2],//tIPType.cLabel
+			field[3],//modby
 			field[4],//date
-			//field[n],//status
+			field[5],//date
 			cFWStatusUpdated,//status
-			field[6],//rule
-			field[7],//country code
+			field[7],//rule
+			field[8],//country code
 				cCommentUpdated,
 				cResult);
 	}
@@ -1955,11 +2041,11 @@ while((field=mysql_fetch_row(res)))
 	{
 		//Allow instant feedback like cResult
 		if(!cCommentUpdated[0])
-			sprintf(cCommentUpdated,"%.255s",field[9]);
+			sprintf(cCommentUpdated,"%.255s",field[10]);
 		char cContainerURL[256]={""};
-		if(field[5][0])
+		if(field[6][0])
 			sprintf(cContainerURL,"<a class=darkLink href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a>",
-					field[10],field[5]);
+					field[11],field[6]);
 
 		printf("<td width=200 valign=top>"
 		"<input type=checkbox name=Ct%s >" //0
@@ -1972,11 +2058,12 @@ while((field=mysql_fetch_row(res)))
 		"<td>%s</td>" //6
 		"<td>%s</td>" //7
 		"<td>%s</td>" //8
-		"<td>%s</td>" //8
+		"<td>%s</td>" //9
+		"<td>%s</td>" //10
 		"<td>%s</td>\n", //cResult
-			field[0],field[0],field[1],field[2],field[3],field[4],
-					cContainerURL,//5 with 9
-			field[6],field[7],field[8],cCommentUpdated,cResult);
+			field[0],field[0],field[1],field[2],field[3],field[4],field[5],
+					cContainerURL,//6 with 11
+			field[7],field[8],field[9],cCommentUpdated,cResult);
 	}
 	printf("</tr>");
 
@@ -2390,10 +2477,9 @@ void AddIPRange(char *cIPRange)
 			if(uD==0 || uD==1 || uD==255)
 				uAvailable=0;
 		}
-		//uIPType==1 backend added gral IPs
 		sprintf(gcQuery,"INSERT INTO tIP SET cLabel='%s',uIPNum=INET_ATON('%s'),uOwner=%u,uCreatedBy=%u,uAvailable=%u"
-				",uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,uIPType=1",
-					cIPs[i],cIPs[i],guCompany,guLoginClient,uAvailable,uDatacenter);
+				",uCreatedDate=UNIX_TIMESTAMP(NOW()),uDatacenter=%u,uIPType=%u",
+					cIPs[i],cIPs[i],guCompany,guLoginClient,uAvailable,uDatacenter,uIPType);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));

@@ -1,7 +1,7 @@
 /*
 FILE
 	oathtool.c
-	$Id$
+	svn ID removed
 PURPOSE
 	initial tests for integrating 2 step login to web apps.
 AUTHOR

@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Non-schema dependent tclient.c expansion.
 AUTHOR
@@ -923,7 +923,7 @@ void ContactsNavList(void)
         	printf("<p><u>Controlled Companies or Contacts NavList</u><br>\n");
 		while((field=mysql_fetch_row(res)))
         	{
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tClient&uClient=%s&uOnlyASPs=%u"
+			printf("<a class=darkLink href=?gcFunction=tClient&uClient=%s&uOnlyASPs=%u"
 				,field[0],uOnlyASPs);
 			if(cSearch[0])
 			{
@@ -944,7 +944,7 @@ void htmlRecordContext(void)
 	if(uOwner>1 && strcmp(cCode,"Contact") && strncmp(cCode,"CONT",4))
 		printf("'%s' appears to be a reseller or ASP owned company or organization",cLabel);
 	else if(uOwner>1 && strcmp(cCode,"Organization") && strncmp(cCode,"COMP",4))
-		printf("'%s' appears to be a contact of <a class=darkLink href=iDNS.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",
+		printf("'%s' appears to be a contact of <a class=darkLink href=?gcFunction=tClient&uClient=%u>'%s'</a>",
 				cLabel,uOwner,ForeignKey(TCLIENT,"cLabel",uOwner));
 	else if(uOwner==1 && strcmp(cLabel,"Root"))
 		printf("'%s' appears to be an ASP root company",cLabel);
@@ -976,7 +976,7 @@ void tClientNavList(void)
         if(mysql_num_rows(res))
         {
                 while((field=mysql_fetch_row(res)))
-                        printf("<a class=darkLink href=iDNS.cgi?gcFunction=tClient&uClient=%s&cSearch=%s>%s</a><br>\n",
+                        printf("<a class=darkLink href=?gcFunction=tClient&uClient=%s&cSearch=%s>%s</a><br>\n",
                                 field[0]
                                 ,cURLEncode(cSearch)
                                 ,field[1]
@@ -1026,7 +1026,7 @@ void htmlAuthorizeLinksFromClient(unsigned uCertClient)
         }
         res=mysql_store_result(&gMysql);
         while((field=mysql_fetch_row(res)))
-		printf("<br><a class=darkLink href=iDNS.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
+		printf("<br><a class=darkLink href=?gcFunction=tAuthorize&uAuthorize=%s>"
 				"%s/%s/%s</a>\n",field[0],cLabel,field[1],field[2]);
         mysql_free_result(res);
 
@@ -1057,7 +1057,7 @@ void tAuthorizeNavListForLoadedOwner(void)
         	printf("<p><u>tAuthorizeNavList(%u)</u><br>\n",uNum);
         	while((field=mysql_fetch_row(res)))
 		{
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
+			printf("<a class=darkLink href=?gcFunction=tAuthorize&uAuthorize=%s>"
 				"%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
 			if((++uCount)>50) break;
 		}
@@ -1091,7 +1091,7 @@ void tAuthorizeLink(void)
         	printf("<p><u>tAuthorizeLink()</u><br>\n");
         	while((field=mysql_fetch_row(res)))
 		{
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tAuthorize&uAuthorize=%s>"
+			printf("<a class=darkLink href=?gcFunction=tAuthorize&uAuthorize=%s>"
 				"%s/%s/%s</a><br>\n",field[0],field[1],field[2],field[3]);
 		}
 				

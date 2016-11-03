@@ -1,7 +1,7 @@
 /*
 FILE
 	unxsVZ/uSIPSwitch/libevent-test.c
-	$Id$
+	svn ID removed
 
 COMPILE
 	gcc -Wall libevent-test.c -o libevent-test /usr/lib64/libevent.so\
@@ -314,7 +314,7 @@ int iSetupAndTestMemcached(void)
 	memcached_st *memc;
 	memcached_return rc;
 	char *key= "uSIPSwitch";
-	char *value= "$Id$";
+	char *value= "svn ID removed
 
 	memcached_server_st *memcached_servers_parse(const char *server_strings);
 	memc=memcached_create(NULL);

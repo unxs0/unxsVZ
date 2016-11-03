@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	tConfig table left panel web gui extensions to tconfig.c
 

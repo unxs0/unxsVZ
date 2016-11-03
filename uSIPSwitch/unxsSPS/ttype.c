@@ -2,7 +2,7 @@
 FILE
 	tType source code of unxsSPS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: ttype.c 166 2009-06-05 22:10:35Z Dylan $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in ttypefunc.h while 

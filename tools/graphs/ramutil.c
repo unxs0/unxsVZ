@@ -1,7 +1,7 @@
 /*
 FILE
         ramutil.c
-        $Id$
+        svn ID removed
 
 PURPOSE
         Create file or on the fly graphs for unxsVZ node container ram 

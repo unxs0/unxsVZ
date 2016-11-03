@@ -1,7 +1,7 @@
 /*
 FILE
 	interface.h
-	$Id: interface.h 1476 2010-05-24 17:34:16Z Gary $
+	svn ID removed
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 

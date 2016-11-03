@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Included in main.c. For command line interface and html main link.
 
@@ -40,14 +40,10 @@ void GetNodeProp(const unsigned uNode,const char *cName,char *cValue);//jobqueue
 char *strptime(const char *s, const char *format, struct tm *tm);
 
 static char cTableList[64][32]={ "tAuthorize", "tClient", "tConfig", "tConfiguration", "tContainer", "tContainerType",
-		"tDatacenter", "tFWStatus", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tIP", "tJob",
+		"tDatacenter", "tFWRule", "tFWStatus", "tGlossary", "tGroup", "tGroupGlue", "tGroupType", "tIP", "tIPType", "tJob",
 		"tJobStatus", "tLog", "tLogMonth", "tLogType", "tMonth", "tNameserver", "tNode",
 		"tOSTemplate", "tPerm", "tProperty", "tSearchdomain", "tStatus", "tTemplate", "tTemplateSet",
 			"tTemplateType", "tType", ""};
-
-char cInitTableList[64][32]={ "tAuthorize", "tClient", "tConfig", "tGlossary", "tGroupType",
-		"tJobStatus", "tLogType", "tOSTemplate", "tStatus", "tFWStatus", "tTemplate", "tTemplateSet",
-			"tTemplateType", "tType", "tPerm", ""};
 
 void ExtMainShell(int argc, char *argv[]);
 void mySQLRootConnect(char *cPasswd);
@@ -1316,8 +1312,6 @@ void UpdateSchema(void)
 
 	//
 	//tIP
-void CreatetIPType(void);
-	CreatetIPType();
 	unsigned uIPNum=0;
 	unsigned uFWStatus=0;
 	unsigned uFWRule=0;
@@ -4858,7 +4852,8 @@ void SessionReport(const char *cOptionalMsg)
 				" tIP.cLabel,"
 				" tProperty.cValue,"
 				" tClient.cLabel,"
-				" FROM_UNIXTIME(tProperty.uCreatedDate)"
+				" FROM_UNIXTIME(tProperty.uCreatedDate),"
+				" tIP.uIP"
 			" FROM tIP,tProperty,tClient"
 			" WHERE tProperty.uType=31"
 			" AND tProperty.uKey=tIP.uIP"
@@ -4885,8 +4880,10 @@ void SessionReport(const char *cOptionalMsg)
 		sprintf(gcQuery,"SELECT FROM_UNIXTIME(uOTPExpire) FROM tAuthorize WHERE cLabel='%s'",cLogin);
 		macro_mySQLQueryErrorText2
         	if((mysqlField2=mysql_fetch_row(mysqlRes2)))
-			printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
-						mysqlField[0],mysqlField[1],mysqlField[2],mysqlField[3],mysqlField2[0]);
+			printf("<tr><td></td><td><a class=darkLink href=unxsVZ.cgi?gcFunction=tIP&uIP=%s>%s</a></td>"
+				"<td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
+						mysqlField[4],mysqlField[0],
+						mysqlField[1],mysqlField[2],mysqlField[3],mysqlField2[0]);
 	}
 	mysql_free_result(mysqlRes);
 

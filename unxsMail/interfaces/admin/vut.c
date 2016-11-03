@@ -1,7 +1,7 @@
 /*
 FILE 
 	vut.c
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) 2008-2009 Hugo Urquiza for Unixservice
 PURPOSE

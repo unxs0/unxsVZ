@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsrad.h
-	$Id$
+	svn ID removed
 PURPOSE
 	unxsRAD job queue CLI standalone program header file
 LEGAL

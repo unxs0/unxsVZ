@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	uSIPSwitch/statemachine/main.c
 AUTHOR
 	(C) 2013 Gary Wallis for Unixservice, LLC.

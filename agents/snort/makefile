@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # agents/snort/makefile
 #
 # (C) 2001-2014 Gary Wallis.

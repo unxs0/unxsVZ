@@ -1,4 +1,4 @@
-// $Id$
+// svn ID removed
 // English: USA
 // Navigation bar buttons and results
 

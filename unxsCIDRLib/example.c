@@ -1,7 +1,7 @@
 /*
 FILE
 	ucidr.c
-	$Id: example.c 1193 2006-11-28 23:05:53Z ggw $
+	svn ID removed
 PURPOSE
 	Illustrate the use of libucidr.a
 AUTHOR

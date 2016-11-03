@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #FILE
-# $Id$
+# $Id: importTemplates.sh 1335 2010-04-09 16:05:21Z Gary $
 #PURPOSE
 #	Import vdnsOrg.cgi templates in one fell swoop.
 #	Very useful when moving application to new server.

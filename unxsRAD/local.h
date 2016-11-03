@@ -1,6 +1,6 @@
 /*
 FILE
-        $Id$
+        svn ID removed
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL

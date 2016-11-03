@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 2082 2012-09-06 01:44:03Z Dylan $
+	svn ID removed
 	unxsRAD created application file for unxsSPS.cgi
 PURPOSE
 	Main cgi interface and common functions used for all the other
@@ -63,7 +63,7 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id: main.c 2082 2012-09-06 01:44:03Z Dylan $";
+char *gcBuildInfo="svn ID removed
 char *gcRADStatus="Start";
 
 //Local

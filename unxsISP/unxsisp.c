@@ -1,7 +1,7 @@
 /*
 FILE
 	mysqlisp.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Jobqueue and other special gcCommand line processing.
 LEGAL

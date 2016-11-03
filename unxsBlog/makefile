@@ -1,5 +1,5 @@
 #
-# $Id: makefile.template 693 2006-07-27 22:58:07Z ggw $
+# svn ID removed
 #
 # (C) 2001-2004 Gary Wallis.
 #

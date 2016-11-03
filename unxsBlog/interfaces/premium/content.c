@@ -1,7 +1,7 @@
 /*
 FILE 
 	content.c
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) 2007 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE

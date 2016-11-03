@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tconfigurationfunc.h 1276 2007-07-03 15:30:52Z Gary $
+	svn ID removed
 PURPOSE
 	Non-schema dependent tconfiguration.c expansion.
 AUTHOR

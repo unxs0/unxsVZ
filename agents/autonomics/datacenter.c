@@ -1,7 +1,7 @@
 /*
 FILE
 	datacenter.c
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) 2009, Gary Wallis for Unixservice USA
 PURPOSE

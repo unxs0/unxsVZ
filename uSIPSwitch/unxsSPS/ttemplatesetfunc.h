@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: ttemplatesetfunc.h 1953 2012-05-22 15:03:17Z Colin $
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

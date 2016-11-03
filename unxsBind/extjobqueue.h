@@ -1,7 +1,7 @@
 /*
 FILE
 	extjobqueue.h
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) Gary Wallis and Hugo Urquiza 2001-2009.
 	GPL License applies. See LICENSE file.

@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Non-schema dependent tauthorize.c expansion.
 AUTHOR
@@ -141,14 +141,15 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 				}
 
 				//Must clear out encrypted password before replacing
-				if(cClrPasswd[0] && strncmp(cPasswd,"..",2) && strncmp(cPasswd,"$1$",3))
+				if(cClrPasswd[0] && strncmp(cPasswd,"$1$",3) && strncmp(cPasswd,"$5$",3) 
+							&& strncmp(cPasswd,"$6$",3))
 				{
 					sprintf(cPasswd,"%.35s",cClrPasswd);
 					EncryptPasswd(cPasswd);
 				}
 				else
 				{
-					if(strncmp(cPasswd,"..",2) && strncmp(cPasswd,"$1$",3))
+					if(strncmp(cPasswd,"$1$",3) && strncmp(cPasswd,"$5$",3) && strncmp(cPasswd,"$6$",3))
 						EncryptPasswd(cPasswd);
 				}
 
@@ -214,7 +215,7 @@ void ExttAuthorizeButtons(void)
 			printf("cIpMask: This field is optionally used to limit the login from IP or IP range.<p>");
 			printf("uPerm: This field is a number value of utmost importance. See the tClient [Authorize] process for more information.<p>");
 			printf("uCertClient: Is usually the tClient.uClient number of the usage owner of this record, but maybe an alias like the value 1 for the default Root user.<p>");
-			printf("Password setting: You can either enter a clear text passwd in cClrPasswd or enter a clear text passwd in cPasswd that will be encrypted into cPasswd and no cClrPasswd will be saved. And finally you can enter a fixed '..' salt DES encrypted passwd into cPasswd..<p>");
+			printf("Password setting: You can either enter a clear text passwd in cClrPasswd or enter a clear text passwd in cPasswd that will be encrypted into cPasswd and no cClrPasswd will be saved.<p>");
                         printf(LANG_NBB_CONFIRMNEW);
 			printf("<br>\n");
                 break;
@@ -226,7 +227,7 @@ void ExttAuthorizeButtons(void)
 
                 case 2002:
 			printf("<u>Modify: Step 1 Tips</u><br>");
-			printf("Password changing: You have several choices for passwd changing: You can either enter a clear text passwd in cClrPasswd or enter a clear text passwd in cPasswd that will be encrypted into cPasswd and no cClrPasswd will be saved. And finally you can enter an MD5 $1$ prefixed encrypted password (or for backwards compatability a fixed '..' salt DES encrypted ) passwd into cPasswd.<p>\n");
+			printf("Password changing: You have several choices for passwd changing: You can either enter a clear text passwd in cClrPasswd or enter a clear text passwd in cPasswd that will be encrypted into cPasswd and no cClrPasswd will be saved. And finally you can enter an MD5/SHA256/SHA512 $1$/$5$/$6$ prefixed encrypted password.<p>\n");
 			printf("Other field changes: Unless you are absolutely sure what you need done, have 2nd level support (support@unixservice.com) do it for you.<p>\n");
 
 			if(cOTPSecret[0] && guPermLevel>10)

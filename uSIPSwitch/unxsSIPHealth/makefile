@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # uSIPSwitch/makefile
 #
 # (C) 2012-2015 Gary Wallis for Unixservice, LLC.

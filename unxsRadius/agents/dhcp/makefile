@@ -1,7 +1,7 @@
 #
 #FILE
 # unxsVZ/unxsRadius/agents/dhcp/makefile
-# $Id$
+# svn ID removed
 #
 # (C) 2001-2009 Gary Wallis.
 #

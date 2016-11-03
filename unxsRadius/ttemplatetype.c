@@ -2,7 +2,7 @@
 FILE
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 	GPL LICENSE included with ditribution.
-	$Id$
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in ttemplatetypefunc.h while 

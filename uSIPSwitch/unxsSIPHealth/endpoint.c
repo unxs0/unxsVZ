@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsVZ/uSIPSwitch/unxsSIPHealth/endpoint.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Parse OPTIONS SIP cMessage
 AUTHOR/LEGAL

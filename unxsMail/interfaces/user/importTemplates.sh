@@ -1,7 +1,7 @@
 #/bin/bash
 #
 #FILE
-# $Id$
+# $Id: importTemplates.sh 101 2009-05-28 17:10:23Z Hugo $
 #PURPOSE
 #	Import iRadius.cgi templates in one fell swoop.
 #	Very useful when moving application to new server.

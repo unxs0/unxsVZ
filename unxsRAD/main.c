@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id$
+	svn ID removed
 	mysqlRAD2.cgi created application file for unxsRAD.cgi
 	(tAuthorize.cPasswd template set)
 	mysqlRAD2 to mysqlRAD3 transition template
@@ -69,7 +69,7 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id$";
+char *gcBuildInfo="svn ID removed
 char gcRADStatus[32]={"start"};
 
 //Local

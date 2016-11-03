@@ -1,7 +1,7 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 482 2009-08-12 20:08:48Z Hugo $
+	svn ID removed
 AUTHOR
 	(C) 2006-2010 Gary Wallis and Hugo Urquiza for Unixservice LLC.
 PURPOSE

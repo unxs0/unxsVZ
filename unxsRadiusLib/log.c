@@ -5,7 +5,7 @@
  */
 
 char log_rcsid[] =
-"$Id: log.c 60 2007-10-18 13:41:43Z Gary $";
+"svn ID removed
 
 #include	<stdio.h>
 #include	<stdlib.h>

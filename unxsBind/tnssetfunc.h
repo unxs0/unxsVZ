@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -341,10 +341,10 @@ void tNSSetNavList(void)
 		{
 			if(guLoginClient==1)
 				printf("<input type=checkbox name=uNSSet%s>"
-					"<a class=darkLink href=iDNS.cgi?gcFunction=tNSSet"
+					"<a class=darkLink href=?gcFunction=tNSSet"
 					"&uNSSet=%s>%s</a><br>\n",field[0],field[0],field[1]);
 			else
-				printf("<a class=darkLink href=iDNS.cgi?gcFunction=tNSSet"
+				printf("<a class=darkLink href=?gcFunction=tNSSet"
 					"&uNSSet=%s>%s</a><br>\n",field[0],field[1]);
 		}
 		if(guLoginClient==1)
@@ -380,7 +380,7 @@ void tNSSetMembers(unsigned uNSSet)
         	printf("tNSSetMembers w/tNSType:<br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tNS"
+			printf("<a class=darkLink href=?gcFunction=tNS"
 				"&uNS=%s>%s %s</a><br>\n",
 				field[0],field[1],field[2]);
 	}
@@ -403,7 +403,7 @@ void tNSSetMembers(unsigned uNSSet)
         	printf("tNSSetMembers w/tServer:<br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tNS"
+			printf("<a class=darkLink href=?gcFunction=tNS"
 				"&uNS=%s>%s %s</a><br>\n",
 				field[0],field[1],field[2]);
 	}
@@ -438,7 +438,7 @@ void tNSSetZones(unsigned uNSSet)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tZone"
+			printf("<a class=darkLink href=?gcFunction=tZone"
 				"&uZone=%s>%s</a><br>\n",
 				field[0],field[1]);
 			uCount++;

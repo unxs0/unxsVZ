@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsVZ/uSIPSwitch/unxsSIPHealth/main.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Develop simple daemon for marking SIP end points as up or down
 	using unxsSPS data.
@@ -593,7 +593,7 @@ int iSetupAndTestMemcached(void)
 	memcached_server_st *servers = NULL;
 	memcached_return rc;
 	char *key= "unxsSIPHealth";
-	char *value= "$Id: main.c 2884 2015-06-02 14:01:15Z Dylan $";
+	char *value= "svn ID removed
 
 	memcached_server_st *memcached_servers_parse(const char *server_strings);
 	gsMemc=memcached_create(NULL);

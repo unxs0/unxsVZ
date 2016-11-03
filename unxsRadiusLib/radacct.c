@@ -1,7 +1,7 @@
 /*
 FILE
 	radacct.c
-	$Id: radacct.c 60 2007-10-18 13:41:43Z Gary $
+	svn ID removed
 PURPOSE
 	uRadiusLib public API functions for accounting
 AUTHOR

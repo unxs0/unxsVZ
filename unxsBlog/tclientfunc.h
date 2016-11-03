@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tclientfunc.h.template 1334 2007-07-23 22:39:47Z Gary $
+	svn ID removed
 PURPOSE
 	Non-schema dependent tclient.c expansion.
 AUTHOR

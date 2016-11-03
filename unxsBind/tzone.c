@@ -2,7 +2,7 @@
 FILE
 	tZone source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id$
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tzonefunc.h while 
@@ -1252,7 +1252,7 @@ void tZoneList(void)
 			ctime_r(&luTime21,cBuf21);
 		else
 			sprintf(cBuf21,"---");
-		printf("<td><a class=darkLink href=iDNS.cgi?gcFunction=tZone&uZone=%s>%s</a>"
+		printf("<td><a class=darkLink href=?gcFunction=tZone&uZone=%s>%s</a>"
 				"<td>%s"
 				"<td>%s"
 				"<td>%s"

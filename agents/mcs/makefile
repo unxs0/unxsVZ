@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # agents/mcs/makefile
 #
 # (C) 2011 Gary Wallis for Unixservice, LLC.

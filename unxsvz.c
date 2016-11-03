@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsVZ/unxsvz.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Move the jobqueue out of the cgi.
 NOTES
@@ -76,7 +76,7 @@ void GatherHardwareInfo(unsigned uNode);
 void AddContainers(void);
 void CreateDNSJobAPI(const char *cIPv4,const char *cHostname,const char *cuContainer);
 
-static char cRELEASE[64]={"$Id$"};
+static char cRELEASE[64]={"svn ID removed
 
 void ExtMainShell(int argc, char *argv[])
 {

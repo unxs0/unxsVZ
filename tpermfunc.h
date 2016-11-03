@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: ttypefunc.h 1516 2010-06-19 15:16:39Z Gary $
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

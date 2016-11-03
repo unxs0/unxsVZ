@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsVZ/uSIPSwitch/sipswitch/parsemessage.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Parse SIP cMessage	
 	Quickly modularize code

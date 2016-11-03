@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tgrouptypefunc.h 1380 2010-04-27 15:02:47Z Gary $
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -265,7 +265,7 @@ void tGroupTypeNavList(void)
         	printf("<p><u>tGroupTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tGroupType&uGroupType=%s>%s</a><br>\n",
+			printf("<a class=darkLink href=?gcFunction=tGroupType&uGroupType=%s>%s</a><br>\n",
 					field[0],field[1]);
 	}
         mysql_free_result(res);

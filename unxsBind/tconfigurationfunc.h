@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Non-schema dependent tconfiguration.c expansion.
 AUTHOR
@@ -341,7 +341,7 @@ void tConfigurationNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 		{
-printf("<a class=darkLink href=iDNS.cgi?gcFunction=tConfiguration&uConfiguration=%s>%s</a><br>\n",field[0],field[1]);
+printf("<a class=darkLink href=?gcFunction=tConfiguration&uConfiguration=%s>%s</a><br>\n",field[0],field[1]);
 	        }
 	}
         mysql_free_result(res);

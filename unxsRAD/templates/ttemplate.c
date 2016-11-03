@@ -2,7 +2,7 @@
 FILE
 	tTemplate source code of {{cProject}}.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: ttemplate.c 2082 2012-09-06 01:44:03Z Dylan $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in ttemplatefunc.h while 

@@ -1,7 +1,7 @@
 /*
 FILE
 	sips.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Kamailio agent for PBX provisioning and data scraping.
 AUTHOR

@@ -2,7 +2,7 @@
 FILE
 	tJob source code of unxsSPS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tjob.c 1969 2012-05-31 01:48:19Z Colin $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tjobfunc.h while 

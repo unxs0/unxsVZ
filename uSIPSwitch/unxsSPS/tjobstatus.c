@@ -2,7 +2,7 @@
 FILE
 	tJobStatus source code of unxsSPS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tjobstatus.c 1953 2012-05-22 15:03:17Z Colin $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tjobstatusfunc.h while 

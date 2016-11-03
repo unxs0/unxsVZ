@@ -1,7 +1,7 @@
 #
 #FILE
 #	makefile
-#	$Id: makefile 72 2006-10-17 15:25:58Z ggw $
+#	svn ID removed
 #AUTHOR
 #	(C) 2006, Gary Wallis for Unixservice
 #PURPOSE

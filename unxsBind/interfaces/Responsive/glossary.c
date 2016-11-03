@@ -1,7 +1,7 @@
 /*
 FILE 
 	glossary.c
-	$Id: glossary.c 2735 2014-12-18 13:15:15Z Colin $
+	svn ID removed
 AUTHOR/LEGAL
 	(C) 2010 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.

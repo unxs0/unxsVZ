@@ -1,7 +1,7 @@
 /*
 FILE 
 	unxsVZ/uSIPSwitch/main.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Develop simple proxy for sharing port 5060 with
 	private LAN IP PBXs.
@@ -371,7 +371,7 @@ int iSetupAndTestMemcached(void)
 	memcached_server_st *servers = NULL;
 	memcached_return rc;
 	char *key= "uSIPSwitch";
-	char *value= "$Id$";
+	char *value= "svn ID removed
 
 	memcached_server_st *memcached_servers_parse(const char *server_strings);
 	gsMemc=memcached_create(NULL);

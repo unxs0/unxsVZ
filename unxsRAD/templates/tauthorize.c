@@ -2,7 +2,7 @@
 FILE
 	tAuthorize source code of {{cProject}}.cgi
 	Built by {{cProject}} (C) Gary Wallis 2001-2012
-	$Id: tauthorize.c 1953 2012-05-22 15:03:17Z Colin $
+	svn ID removed
 PURPOSE
 	Web application user authentication and authorization.
 	Closely tied to tclient code.

@@ -2,7 +2,7 @@
 FILE
 	tIndexType source code of unxsRAD.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2009 for Unixservice
-	$Id$
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tindextypefunc.h while 

@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: mysqlrad.h.template 1269 2007-07-02 21:51:06Z Gary $
+	svn ID removed
 AUTHOR
 	(C) 2001-2007 Gary Wallis. 
 */

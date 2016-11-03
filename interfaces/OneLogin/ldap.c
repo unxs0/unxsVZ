@@ -1,7 +1,7 @@
 /*
 FILE
 	ldap.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Provide for LDAP based login for mysqlRAD2/3
 	based software.

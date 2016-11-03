@@ -1,7 +1,7 @@
 /*
 FILE
 	radiusdstatus.c
-	$Id: radiusdstatus.c 61 2007-10-18 13:48:23Z Gary $
+	svn ID removed
 PURPOSE
 	Provide an example for use in any of our dashboards that 
 	generates an html object to indicate status of radiusd.

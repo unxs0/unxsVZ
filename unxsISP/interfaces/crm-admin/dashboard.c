@@ -1,7 +1,7 @@
 /*
 FILE
 	dashboard.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Provide the Dashboard tab functions
 	of the ispCRM interface.

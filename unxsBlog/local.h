@@ -1,6 +1,6 @@
 /*
 FILE
-        $Id: local.h.template 1262 2007-06-30 22:36:38Z Gary $
+        svn ID removed
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL

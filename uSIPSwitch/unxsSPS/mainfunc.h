@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: mainfunc.h 2085 2012-09-06 03:27:21Z Dylan $
+	svn ID removed
 PURPOSE
 	Included in main.c. For command line interface and html main link.
 

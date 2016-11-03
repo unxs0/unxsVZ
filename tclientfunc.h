@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Non-schema dependent tclient.c expansion.
 AUTHOR
@@ -1137,7 +1137,7 @@ void tClientAuthorizeNavList(void)
 	{
 		sprintf(gcQuery,"SELECT uAuthorize,cLabel,uPerm,uCertClient"
 				" FROM tAuthorize"
-				" WHERE uCertClient=%u ORDER BY cLabel",uClient);
+				" WHERE uCertClient=%u OR cLabel='%s' ORDER BY cLabel",uClient,cLabel);
 	}
 	else if(1)
 	{

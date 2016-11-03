@@ -1,7 +1,7 @@
 /*
 FILE 
 	idns-importarpaptrs.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Standalone CLI mass arpa zone PTRs import tool.
 LEGAL

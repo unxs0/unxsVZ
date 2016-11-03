@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	radius.c part of the mysqlradius.cgi application
 PURPOSE
 	raddb/users and raddb/clients file generation
@@ -179,7 +179,7 @@ int CreateClientConf(unsigned uHtml,unsigned uServer)
 
         res=mysql_store_result(&gMysql);
 
-	fprintf(fp,"#naslist unxsRadius.$Id$\n");
+	fprintf(fp,"#naslist unxsRadius.svn ID removed
 	fprintf(fp,"#uServer:%u\n",uServer);
 
         while((field=mysql_fetch_row(res)))
@@ -300,7 +300,7 @@ int MakeUsersFile(unsigned uHtml, unsigned uServer, char *cLogin)
 	if(!uAddMode)
 	{
 //Page header
-fprintf(fp,"#users unxsRadius.$Id$\n");
+fprintf(fp,"#users unxsRadius.svn ID removed
 fprintf(fp,"#For uServer:%u\n",uServer);
 
 		//Outside select for each active uUser
@@ -546,7 +546,7 @@ int MakeNASListFile(unsigned uHtml, unsigned uServer)
 
         res=mysql_store_result(&gMysql);
 
-	fprintf(fp,"#naslist unxsRadius.$Id$\n");
+	fprintf(fp,"#naslist unxsRadius.svn ID removed
 	fprintf(fp,"#uServer:%u\n",uServer);
 
         while((field=mysql_fetch_row(res)))
@@ -608,7 +608,7 @@ int MakeNASPasswdFile(unsigned uHtml, unsigned uServer)
 
         res=mysql_store_result(&gMysql);
 
-	fprintf(fp,"#naspasswd unxsRadius.$Id$\n");
+	fprintf(fp,"#naspasswd unxsRadius.svn ID removed
 	fprintf(fp,"#uServer:%u\n",uServer);
 
         while((field=mysql_fetch_row(res)))

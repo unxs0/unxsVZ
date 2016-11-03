@@ -1,7 +1,7 @@
 /*
 FILE 
 	instance.c
-	$Id: instance.c 85 2009-05-26 15:30:04Z Hugo $
+	svn ID removed
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 PURPOSE

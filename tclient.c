@@ -2,11 +2,9 @@
 FILE
 	tClient source code of unxsVZ.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id$
+	(C) 2010-2016 Gary Wallis for Unixservice, LLC.
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tclientfunc.h while 
-	RAD is still to be used.
+	tClient is a user/customer/company table for access control and row level record auditing.
 */
 
 
@@ -34,6 +32,8 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 #define VAR_LIST_tClient "tClient.uClient,tClient.cLabel,tClient.cInfo,tClient.cEmail,tClient.cCode,tClient.uOwner,tClient.uCreatedBy,tClient.uCreatedDate,tClient.uModBy,tClient.uModDate"

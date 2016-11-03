@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #FILE
-# $Id$
+# $Id: importTemplates.sh 1954 2012-05-22 16:11:09Z Colin $
 #PURPOSE
 #	Import unxsRAD.cgi templates in one fell swoop.
 #	Very useful when moving application to new server.

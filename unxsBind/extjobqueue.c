@@ -1,7 +1,7 @@
 /*
 FILE
 	extjobqueue.c
-	$Id$
+	svn ID removed
 AUTHOR
 	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
 	(C) 2010 Gary Wallis for Unixservice, LLC.

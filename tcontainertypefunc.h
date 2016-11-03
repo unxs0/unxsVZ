@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tcontainertypefunc.h 1516 2010-06-19 15:16:39Z Gary $
+	svn ID removed
 PURPOSE
 AUTHOR/LEGAL
 	(C) 2001-2016 Gary Wallis for Unixservice, LLC.

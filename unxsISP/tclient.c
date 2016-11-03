@@ -1,7 +1,7 @@
 /*
 FILE
 	tClient.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 AUTHOR

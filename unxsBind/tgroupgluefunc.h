@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: tgroupgluefunc.h 1355 2010-04-16 20:50:35Z Gary $
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.

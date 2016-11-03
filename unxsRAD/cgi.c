@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 LEGAL
 	Public Domain
 	

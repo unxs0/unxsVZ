@@ -1,7 +1,7 @@
 /*
 FILE
 	sips.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Collection of diverse VZ operating parameters and other system vars.
 AUTHOR

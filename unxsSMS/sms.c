@@ -1,7 +1,7 @@
 /*
 FILE
 	sms.c
-	$Id$
+	svn ID removed
 PURPOSE
 	SMS gateway preprocessor interface
 AUTHOR
@@ -110,7 +110,7 @@ void Run(void)
 
 void Version(void)
 {
-	printf("$Id$\n");
+	printf("svn ID removed
 }//void Version(void)
 
 

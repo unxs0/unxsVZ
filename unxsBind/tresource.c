@@ -2,7 +2,7 @@
 FILE
 	tResource source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	$Id$
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tresourcefunc.h while 
@@ -701,9 +701,21 @@ void tResourceList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uResource<td><font face=arial,helvetica color=white>uZone<td><font face=arial,helvetica color=white>cName<td><font face=arial,helvetica color=white>uTTL<td><font face=arial,helvetica color=white>uRRType<td><font face=arial,helvetica color=white>cParam1<td><font face=arial,helvetica color=white>cParam2<td><font face=arial,helvetica color=white>cParam3<td><font face=arial,helvetica color=white>cParam4<td><font face=arial,helvetica color=white>cComment<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uResource"
+		"<td><font face=arial,helvetica color=white>uZone"
+		"<td><font face=arial,helvetica color=white>cName"
+		"<td><font face=arial,helvetica color=white>uTTL"
+		"<td><font face=arial,helvetica color=white>uRRType"
+		"<td><font face=arial,helvetica color=white>cParam1"
+		"<td><font face=arial,helvetica color=white>cParam2"
+		"<td><font face=arial,helvetica color=white>cParam3"
+		"<td><font face=arial,helvetica color=white>cParam4"
+		"<td><font face=arial,helvetica color=white>cComment"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -731,26 +743,37 @@ void tResourceList(void)
 			ctime_r(&luTime14,cBuf14);
 		else
 			sprintf(cBuf14,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>"
-				"<textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
-			,ForeignKey("tZone","cZone",strtoul(field[1],NULL,10))
-			,field[2]
-			,field[3]
-			,ForeignKey("tRRType","cLabel",strtoul(field[4],NULL,10))
-			,field[5]
-			,field[6]
-			,field[7]
-			,field[8]
-			,field[9]
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[10],NULL,10))
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[11],NULL,10))
-			,cBuf12
-			,ForeignKey(TCLIENT,"cLabel",strtoul(field[13],NULL,10))
-			,cBuf14
-				);
-
+		printf("<td><a class=darkLink href=?gcFunction=tResource&uResource=%s>%s</a>"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td><textarea disabled>%s</textarea>"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"</tr>"
+				,field[0],field[0]
+				,ForeignKey("tZone","cZone",strtoul(field[1],NULL,10))
+				,field[2]
+				,field[3]
+				,ForeignKey("tRRType","cLabel",strtoul(field[4],NULL,10))
+				,field[5]
+				,field[6]
+				,field[7]
+				,field[8]
+				,field[9]
+				,ForeignKey(TCLIENT,"cLabel",strtoul(field[10],NULL,10))
+				,ForeignKey(TCLIENT,"cLabel",strtoul(field[11],NULL,10))
+				,cBuf12
+				,ForeignKey(TCLIENT,"cLabel",strtoul(field[13],NULL,10))
+				,cBuf14);
 	}
 
 	printf("</table></form>\n");

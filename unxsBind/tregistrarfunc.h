@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 	(Built initially by unixservice.com mysqlRAD2)
 PURPOSE
 	Non schema-dependent table and application table related functions.
@@ -275,7 +275,7 @@ void tRegistrarNavList(void)
         	printf("<p><u>tRegistrarNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href=iDNS.cgi?gcFunction=tRegistrar&uRegistrar=%s>%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=?gcFunction=tRegistrar&uRegistrar=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 

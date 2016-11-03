@@ -1,7 +1,7 @@
 #
 # FILE
 # 	iDNS/tools/makefile
-# 	$Id$
+# 	svn ID removed
 # AUTHOR/LEGAL
 # (C) 2001-2007 Gary Wallis under GPL License see www.fsf.org for details
 

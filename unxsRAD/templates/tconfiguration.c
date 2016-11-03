@@ -2,7 +2,7 @@
 FILE
 	tConfiguration source code of {{cProject}}.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tconfiguration.c 1965 2012-05-29 14:21:16Z Colin $
+	svn ID removed
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality in tconfigurationfunc.h while 

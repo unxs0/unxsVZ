@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id: mysqlrad.h 2085 2012-09-06 03:27:21Z Dylan $
+	svn ID removed
 AUTHOR
 	(C) 2001-2008 Gary Wallis and Hugo Urquiza. 
 	(C) 2009-2012 Gary Wallis for Unixservice LLC.

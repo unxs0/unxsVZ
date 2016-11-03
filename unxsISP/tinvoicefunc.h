@@ -1,6 +1,6 @@
 /*
 FILE
-	$Id$
+	svn ID removed
 PURPOSE
 	Table where invoices with different statuses are kept usually
 	closed invoices will be extracted along with their tInvoiceItems

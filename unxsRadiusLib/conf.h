@@ -1,7 +1,7 @@
 /*
  * conf.h	Mostly definitions of filenames and locations.
  *
- * Version:	$Id: conf.h 60 2007-10-18 13:41:43Z Gary $
+ * Version:	svn ID removed
  *
  */
 

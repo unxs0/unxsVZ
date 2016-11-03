@@ -1,4 +1,4 @@
-// $Id: language2.h 1334 2007-07-23 22:39:47Z Gary $
+// svn ID removed
 // Spanish: Argentina
 // Navigation bar buttons and results
 

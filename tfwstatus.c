@@ -27,6 +27,8 @@ static time_t uCreatedDate=0;
 static unsigned uModBy=0;
 //uModDate: Unix seconds date last update
 static time_t uModDate=0;
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 

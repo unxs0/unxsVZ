@@ -1,7 +1,7 @@
 /*
 FILE
 	jobqueue.c
-	$Id$
+	svn ID removed
 PURPOSE
 	Command line processing of jobs in the tJob queue.
 AUTHOR/LEGAL
@@ -69,6 +69,7 @@ void RemoveDropFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatacen
 void RemoveAcceptFromIPTables(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigned uNode);
 void DenyAccess(unsigned uJob,const char *cJobData);
 void UpdateIPFWStatus(const char *cIPv4,unsigned uFWStatus);
+void ConditionalAddIPAndFWStatus(const char *cIPv4,unsigned uFWStatus,unsigned uIPType);
 void CloneContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void CloneRemoteContainer(unsigned uJob,unsigned uContainer,char *cJobData,unsigned uNewVeid);
 void AppFunctions(FILE *fp,char *cFunction);
@@ -2411,7 +2412,7 @@ void TemplateContainer(unsigned uJob,unsigned uContainer,const char *cJobData)
 	//1-.
 	if(!cSnapshotDir[0])
 		//sprintf(gcQuery,"/usr/sbin/vzdump --compress --suspend %u",uContainer);
-		sprintf(gcQuery,"/usr/sbin/vzdump --compress --stop %u",uContainer);
+		sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir /vz/dump --stop %u",uContainer);
 	else
 		sprintf(gcQuery,"/usr/sbin/vzdump --compress --dumpdir %s --snapshot %u",
 									cSnapshotDir,uContainer);
@@ -4448,12 +4449,6 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 		tJobErrorUpdate(uJob,"recurring job data=-1");
 		return;
 	}
-	if(!uMin && !uHour && !uDayOfWeek && !uDayOfMonth && !uMonth)
-	{
-		logfileLine("RecurringJob All recurring job data=0 cJobData=",cJobData);
-		tJobErrorUpdate(uJob,"recurring job data=0");
-		return;
-	}
 
 	if((cp=strstr(cJobData,"cRecurringJob=")))
 		sprintf(cRecurringJob,"%.99s",cp+14);
@@ -4575,13 +4570,15 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
 		sprintf(gcQuery,"Attempting %s",cCommand);
 		logfileLine("RecurringJob",gcQuery);
 	}
-	if(system(cCommand))
+	char cCommandWithArgs[256]={""};
+	sprintf(cCommandWithArgs,"%.99s %u",cCommand,uContainer);
+	if(system(cCommandWithArgs))
 	{
-		tJobErrorUpdate(uJob,"system(cCommand)");
-		logfileLine("RecurringJob",cCommand);
+		tJobErrorUpdate(uJob,"system(cCommandWithArgs)");
+		logfileLine("RecurringJob",cCommandWithArgs);
 		goto Common_WaitingExit;
 	}
-	sprintf(gcQuery,"Ran %s",cCommand);
+	sprintf(gcQuery,"Ran %s",cCommandWithArgs);
 	logfileLine("RecurringJob",gcQuery);
 	//Update uJobDate based on cJobData.
 	//TODO: Analyze what happens when jobs for some reason do not run for given periods.
@@ -4610,10 +4607,14 @@ void RecurringJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,unsigned uCo
         	sprintf(gcQuery,"UPDATE tJob SET"
 		" uJobDate=UNIX_TIMESTAMP(DATE_ADD(CURDATE(),INTERVAL 1 WEEK))+%u+%u-((DAYOFWEEK(CURDATE())-%u)*86400)"
 		" WHERE uJob=%u",uMin*60,uHour*3600,uDayOfWeek,uJob);
-	else if(1)
+	else if(uMin)
         	sprintf(gcQuery,"UPDATE tJob SET"
 		" uJobDate=UNIX_TIMESTAMP(NOW())-(EXTRACT(MINUTE FROM NOW())*60)-(EXTRACT(SECOND FROM NOW()))+3600+%u+%u"
 		" WHERE uJob=%u",uMin*60,uHour*3600,uJob);
+	else if(1)//uMin==0
+        	sprintf(gcQuery,"UPDATE tJob SET"
+		" uJobDate=uJobDate+60"
+		" WHERE uJob=%u",uJob);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -4906,7 +4907,7 @@ void AllowAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsigne
 
 	logfileLine("AllowAccess","iptables command ok");
 	tJobDoneUpdate(uJob);
-	//UpdateIPFWStatus(cIPv4,uFWACCESS);
+	ConditionalAddIPAndFWStatus(cIPv4,uFWACCESS,uIPTYPE_INTERFACE_LOGIN);
 	return;
 
 }//void AllowAccess()
@@ -4939,7 +4940,7 @@ void DenyAccess(unsigned uJob,const char *cJobData)
 
 	logfileLine("DenyAccess","iptables command ok");
 	tJobDoneUpdate(uJob);
-	//UpdateIPFWStatus(cIPv4,uFWBLOCKED);
+	ConditionalAddIPAndFWStatus(cIPv4,uFWREMOVED,uIPTYPE_INTERFACE_LOGIN);
 	return;
 
 }//void DenyAccess(unsigned uJob,const char *cJobData)
@@ -6541,6 +6542,75 @@ void AllowAllAccess(unsigned uJob,const char *cJobData,unsigned uDatacenter,unsi
 }//void AllowAllAccess()
 
 
+void ConditionalAddIPAndFWStatus(const char *cIPv4,unsigned uFWStatus,unsigned uIPType)
+{
+	unsigned uIP=0;
+	sprintf(gcQuery,"SELECT uIP FROM tIP WHERE uIPNum=INET_ATON('%s')",cIPv4);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ConditionalAddIPAndFWStatus",mysql_error(&gMysql));
+		return;
+	}
+	else
+	{
+        	MYSQL_RES *res;
+        	MYSQL_ROW field;
+		res=mysql_store_result(&gMysql);
+		if(mysql_num_rows(res)>1)
+		{
+			logfileLine("ConditionalAddIPAndFWStatus","more than one uIP");
+		}
+		else
+		{
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&uIP);
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tIP"
+					" SET uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+					" uCreatedBy=%u,"
+					" uFWStatus=%u,"
+					" uOwner=%u,"
+					" uAvailable=0,"
+					" uDatacenter=%u,"
+					" uIPNum=INET_ATON('%s'),"
+					" uIPType=%u"
+						,guLoginClient,
+						uFWStatus,
+						guCompany,
+						uCustomerPremiseDatacenter,
+						cIPv4,
+						uIPType);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					logfileLine("ConditionalAddIPAndFWStatus",mysql_error(&gMysql));
+				return;
+			}
+		}
+		mysql_free_result(res);
+	}
+	if(!uIP)
+	{
+		logfileLine("ConditionalAddIPAndFWStatus","error no uIP");
+		return;
+	}
+
+	sprintf(gcQuery,"UPDATE tIP"
+		" SET uModDate=UNIX_TIMESTAMP(NOW()),"
+		" uFWStatus=%u"
+		" WHERE uIP=%u",uFWStatus,uIP);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		logfileLine("ConditionalAddIPFWStatus",mysql_error(&gMysql));
+	else if(mysql_affected_rows(&gMysql)!=1)
+		logfileLine("ConditionalAddIPFWStatus","mysql_affected_rows()!=1");
+
+}//void ConditionalAddIPAndFWStatus(const char *cIPv4,unsigned uFWACCESS,unsigned uIPType)
+
+
 void UpdateIPFWStatus(const char *cIPv4,unsigned uFWStatus)
 {
 	sprintf(gcQuery,"UPDATE tIP"
@@ -6838,7 +6908,7 @@ void LoginFirewallJobHTTP(unsigned uJob,const char *cJobData,unsigned uDatacente
 
 	logfileLine("LoginFirewallJobHTTP","iptables command ok");
 	tJobDoneUpdate(uJob);
-	//UpdateIPFWStatus(cIPv4,uFWACCESS);
+	ConditionalAddIPAndFWStatus(cIPv4,uFWACCESS,uIPTYPE_BACKEND_LOGIN);
 	return;
 
 }//void LoginFirewallJobHTTP()
@@ -6909,7 +6979,7 @@ void LogoutFirewallJobHTTP(unsigned uJob,const char *cJobData,unsigned uDatacent
 
 	logfileLine("LogoutFirewallJob","iptables command ok");
 	tJobDoneUpdate(uJob);
-	//UpdateIPFWStatus(cIPv4,uFWACCESS);
+	ConditionalAddIPAndFWStatus(cIPv4,uFWREMOVED,uIPTYPE_BACKEND_LOGIN);
 	return;
 
 }//void LogoutFirewallJobHTTP()
@@ -6980,7 +7050,7 @@ void LoginFirewallJobSSH(unsigned uJob,const char *cJobData,unsigned uDatacenter
 
 	logfileLine("LoginFirewallJobSSH","iptables command ok");
 	tJobDoneUpdate(uJob);
-	//UpdateIPFWStatus(cIPv4,uFWACCESS);
+	ConditionalAddIPAndFWStatus(cIPv4,uFWACCESS,uIPTYPE_BACKEND_LOGIN);
 	return;
 
 }//void LoginFirewallJobSSH()
@@ -7051,7 +7121,7 @@ void LogoutFirewallJobSSH(unsigned uJob,const char *cJobData,unsigned uDatacente
 
 	logfileLine("LogoutFirewallJobSSH","iptables command ok");
 	tJobDoneUpdate(uJob);
-	//UpdateIPFWStatus(cIPv4,uFWACCESS);
+	ConditionalAddIPAndFWStatus(cIPv4,uFWREMOVED,uIPTYPE_BACKEND_LOGIN);
 	return;
 
 }//void LogoutFirewallJobSSH()
@@ -7125,7 +7195,7 @@ void LoginFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,un
 
 	logfileLine("LoginFirewallJob","iptables command ok");
 	tJobDoneUpdate(uJob);
-	//UpdateIPFWStatus(cIPv4,uFWACCESS);
+	ConditionalAddIPAndFWStatus(cIPv4,uFWACCESS,uIPTYPE_BACKEND_LOGIN);
 	return;
 
 }//void LoginFirewallJob()
@@ -7199,7 +7269,7 @@ void LogoutFirewallJob(unsigned uJob,const char *cJobData,unsigned uDatacenter,u
 
 	logfileLine("LogoutFirewallJob","iptables command ok");
 	tJobDoneUpdate(uJob);
-	//UpdateIPFWStatus(cIPv4,uFWACCESS);
+	ConditionalAddIPAndFWStatus(cIPv4,uFWREMOVED,uIPTYPE_BACKEND_LOGIN);
 	return;
 
 }//void LogoutFirewallJob()
@@ -7570,6 +7640,7 @@ void AlwaysRunTheseJobs(unsigned uNode)
 			}
 			//if(guDebug)
 				logfileLine("ExpiredItems",field[0]);
+			ConditionalAddIPAndFWStatus(field[0],uFWREMOVED,uIPTYPE_BACKEND_LOGIN);
 		}
 
 		sprintf(gcQuery,"DELETE FROM tProperty WHERE uProperty=%s",field[1]);
@@ -7625,9 +7696,14 @@ void RemoveAcceptsFromChainIfNotSession(char const *cChain)
 			if(guDebug)
 				printf("%.511s\n",gcQuery);
 			if(system(gcQuery))
+			{
 				logfileLine("RemoveAcceptsFromChainIfNotSession","iptables command failed");
+			}
 			else
+			{
 				logfileLine("RemoveAcceptsFromChainIfNotSession",cIPv4);
+				ConditionalAddIPAndFWStatus(cIPv4,uFWREMOVED,uIPTYPE_INTERFACE_LOGIN);
+			}
 		}
 	}
 	pclose(fp);

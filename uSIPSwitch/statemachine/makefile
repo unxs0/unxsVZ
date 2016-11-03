@@ -1,5 +1,5 @@
 #
-# $Id$
+# svn ID removed
 # uSIPSwitch/statemachine/makefile
 #
 # (C) 2013 Gary Wallis for Unixservice, LLC.
