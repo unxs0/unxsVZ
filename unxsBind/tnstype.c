@@ -2,12 +2,15 @@
 FILE
 	tNSType source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	svn ID removed
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tnstypefunc.h while 
-	RAD is still to be used.
+	Name server type codes. E.g. hidden, primary, secondary etc.
+	Still has old DNS server racist labels, like SLAVE, that need to be updated.
+AUTHOR/LEGAL
+        (C) 2001-2016 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file.
 */
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 #include "mysqlrad.h"

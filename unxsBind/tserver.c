@@ -2,12 +2,15 @@
 FILE
 	tServer source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	svn ID removed
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tserverfunc.h while 
-	RAD is still to be used.
+	Server table for use with tNSSet. A server is the Linux VM
+	or metal server where a BIND named daemon is running.
+AUTHOR/LEGAL
+        (C) 2001-2016 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file.
 */
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 #include "mysqlrad.h"

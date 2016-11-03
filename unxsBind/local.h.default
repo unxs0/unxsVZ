@@ -1,6 +1,6 @@
 /*
 FILE
-        $Id: local.h.default 2936 2015-09-30 16:00:40Z Gary $
+        local.h.default
 PURPOSE
         Localization constants
 LEGAL
@@ -12,6 +12,7 @@ LEGAL
 
 //Set these up to match your mySQL database settings and location
 //NULL is for stream socket on local server. Much faster than localhost tcp/ip.
+//Do not use with both NULL
 #define DBIP0 NULL
 #define DBIP1 NULL
 #define DBNAME "idns"

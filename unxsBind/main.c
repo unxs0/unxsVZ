@@ -62,8 +62,8 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="svn ID removed
-char *gcRADStatus="Forked from RAD2/3";
+char *gcBuildInfo="GitVersion:"GitVersion;
+char *gcRADStatus="";
 
 //Local
 void Footer_ism3(void);

@@ -2,12 +2,15 @@
 FILE
 	tMailServer source code of iDNS.cgi
 	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
-	svn ID removed
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tmailserverfunc.h while 
-	RAD is still to be used.
+	tZone mail server FK table. Being deprecated as very weird.
+	Was used to save DB space back in the day.
+AUTHOR/LEGAL
+        (C) 2001-2016 Gary Wallis for Unixservice, LLC.
+	GPLv2 license applies. See LICENSE file.
 */
+//git describe version info
+static char *cGitVersion="GitVersion:"GitVersion;
 
 
 #include "mysqlrad.h"
