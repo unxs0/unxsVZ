@@ -1,36 +1,12 @@
-$Id: INSTALL 2809 2015-03-10 20:47:00Z Colin $
-
 ---
 Intro
 
-1-.  RPM and yum based install is now available.
-
-yum setup:
-
-# rpm -i http://unixservice.com/rpm/i386/unxsyum-1.0-1.i386.rpm
-
-# rpm -i unxsyum-1.0-1.i386.rpm
-# yum search unxsvz
-
-rpm's can be used alone and can be found here:
-
-http://unixservice.com/rpm
-
----
-unxsVZ Example
-
-# yum install unxsvz
-
-# #setup or get mysql info, perms, and create unxsvz db
-
-# #first time only: install schema and sample data.
-# mysql -hhost -uuser -ppasswd unxsvz < /usr/local/unxsVZ/data/unxsvz.mysqldump
+TODO
 
 ---
 Post Install
 
 TODO
-
 
 ---
 Legalese

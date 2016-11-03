@@ -1,15 +1,16 @@
 /*
 FILE
-        $Id: local.h.default 2428 2013-07-11 22:30:13Z Dylan $
+        local.h.default
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL
-        Copyright 2001-2009 Gary Wallis
+        Copyright 2001-2016 Gary Wallis for Unixservice, LLC.
 */
 
 #define LOCALCOPYRIGHT "&copy; 2000-2013 Unixservice, LLC. All Rights Reserved."
 
 //Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
+//If both are NULL compile error TODO report BUG
 #define DBIP0 NULL
 #define DBIP1 NULL
 #define DBNAME "unxsvz"
