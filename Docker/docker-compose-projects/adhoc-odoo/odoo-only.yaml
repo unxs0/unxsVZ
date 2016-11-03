@@ -1,0 +1,28 @@
+#
+#Implement this pair of service containers using docker-compose:
+#  docker run --rm -ti -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo --name db postgres:9.4
+#  docker run --rm -ti --link db:db --name odoo adhoc/odoo:9.0 -- -i account -d odoo --stop-after-init
+#modified for daemon mode cli
+#  docker run -d -ti -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo --name db postgres:9.4
+#  docker run --rm -ti --link db:db --name odoo adhoc/odoo:9.0 -- -i account -d odoo --stop-after-init
+
+version: '2'
+
+services:
+
+  odoo-erp0:
+    ports:
+      - "18069:8069"
+      - "18071:8071"
+    image: adhoc/odoo:9.0
+    command: -- -i account -d odoo --stop-after-init
+#    links:
+#      - odoo-db0:db
+
+#  odoo-db0:
+#    ports:
+#      - "5432:5432"
+#    image: postgres:9.4
+#    environment:
+#      - POSTGRES_USER=odoo
+#      - POSTGRES_PASSWORD=odoo

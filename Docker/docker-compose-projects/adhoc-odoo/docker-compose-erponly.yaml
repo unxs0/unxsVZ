@@ -1,0 +1,12 @@
+#
+#Implement this pair of service containers using docker-compose:
+#  docker run -d -ti -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo --name odoo-db0 postgres:9.4
+#  docker run --detach -ti --link odoo-db0:db --name odoo-erp0 newodoo -- -i account -d odoo --stop-after-init; docker exec odoo-erp0 env
+
+version: '2'
+
+services:
+
+  odoo-erp0:
+    image: newodoo
+    entrypoint: ./wait-for-it.sh 172.21.0.2:5432 -- "sudo -u odoo /entrypoint.sh -- -i account -d odoo --stop-after-init"

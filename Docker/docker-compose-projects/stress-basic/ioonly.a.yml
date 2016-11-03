@@ -1,0 +1,16 @@
+version: '2'
+
+#comment?
+services:
+  stress0:
+    image: dkuffner/docker-stress
+    command: --cpu 1 --io 4 --vm 2 --vm-bytes 64M --timeout 120s
+  stress1:
+    image: dkuffner/docker-stress
+    command: --cpu 2 --io 3 --vm 2 --vm-bytes 128M --timeout 120s
+  stress2:
+    image: dkuffner/docker-stress
+    command: --cpu 3 --io 2 --vm 2 --vm-bytes 64M --timeout 120s
+  stress3:
+    image: dkuffner/docker-stress
+    command: --cpu 4 --io 1 --vm 2 --vm-bytes 128M --timeout 120s

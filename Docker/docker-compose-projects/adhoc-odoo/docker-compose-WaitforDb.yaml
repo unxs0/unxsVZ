@@ -1,0 +1,35 @@
+#
+#Implement this pair of service containers using docker-compose:
+#  docker run -d -ti -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo --name odoo-db0 postgres:9.4
+#  docker run --detach -ti --link odoo-db0:db --name odoo-erp0 newodoo -- -i account -d odoo --stop-after-init; docker exec odoo-erp0 env
+
+version: '2'
+
+services:
+
+  odoo-erp0:
+    image: newodoo
+    #command: -- -i account -d odoo --stop-after-init
+    #command: -i account -d odoo --stop-after-init
+    links:
+      - odoo-db0:db
+    entrypoint: ./wait-for-it.sh db:5432 -- "/entrypoint.sh -- -i account -d odoo --stop-after-init"
+    environment:
+      - DB_PORT_5432_TCP_ADDR=db
+      - DB_PORT_5432_TCP_PORT=5432
+      - DB_ENV_POSTGRES_USER=odoo
+      - DB_ENV_POSTGRES_PASSWORD=odoo
+
+  odoo-db0:
+    image: postgres:9.4
+    environment:
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo
+
+#DB_PORT=tcp://172.17.0.41:5432
+#DB_PORT_5432_TCP=tcp://172.17.0.41:5432
+#DB_PORT_5432_TCP_ADDR=172.17.0.41
+#DB_PORT_5432_TCP_PORT=5432
+#DB_PORT_5432_TCP_PROTO=tcp
+#DB_NAME=/odoo-erp0/db
+

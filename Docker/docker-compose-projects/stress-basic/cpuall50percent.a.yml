@@ -1,0 +1,43 @@
+version: '2'
+
+#test details and objectives
+#	we use all cpu per container
+#	we limit to 50% cpu each
+#metrics
+#	after start we gather cpu info on the host server
+# example metrics capture
+#root@ent2-stress0:~/docker-compose-projects/stress-basic# systemd-cgtop -n 1 | grep 07e3d536c6de4
+#/docker/07e3d536c6de414238d5cf2539810b24c0acd446b53c871fc540bbf86c81102b       1      -    58.1M        -        -
+#root@ent2-stress0:~/docker-compose-projects/stress-basic# docker ps --all | grep stress0
+#54a6c50f783c        dkuffner/docker-stress                             "stress --cpu 8 --tim"   10 minutes ago      Exited (0) 7 minutes ago                                                                  stressbasic_stress0_1
+#root@ent2-stress0:~/docker-compose-projects/stress-basic# uptime
+# 21:08:17 up  1:02,  2 users,  load average: 0.00, 1.69, 2.44
+#root@ent2-stress0:~/docker-compose-projects/stress-basic# docker stats --no-stream stressbasic_stress0_1
+#CONTAINER               CPU %               MEM USAGE / LIMIT   MEM %               NET I/O             BLOCK I/O           PIDS
+#stressbasic_stress0_1   0.00%               0 B / 0 B           0.00%               0 B / 0 B           0 B / 0 B           0
+
+
+#cpu only 4 container stress test
+#	--cpu-quota=0   Limit the CPU CFS (Completely Fair Scheduler) quota
+#	--cpu-shares=0  CPU shares (relative weight)
+#	--cpuset-cpus="0,1"	CPUs in which to allow execution (0-3, 0,1)
+#examples
+#	--cpu-quota=50000 50% cpu cycles every 100ms since 50000/100000 = 1/2
+#	note the - versus _ issue
+services:
+  stress0:
+    image: dkuffner/docker-stress
+    command: --cpu 8 --timeout 1m
+    cpu_quota: 50000
+  stress1:
+    image: dkuffner/docker-stress
+    command: --cpu 8 --timeout 1m
+    cpu_quota: 50000
+  stress2:
+    image: dkuffner/docker-stress
+    command: --cpu 8 --timeout 1m
+    cpu_quota: 50000
+  stress3:
+    image: dkuffner/docker-stress
+    command: --cpu 8 --timeout 1m
+    cpu_quota: 50000

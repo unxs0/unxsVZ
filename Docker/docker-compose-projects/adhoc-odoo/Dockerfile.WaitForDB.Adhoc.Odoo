@@ -1,0 +1,13 @@
+FROM adhoc/odoo:9.0
+MAINTAINER Gary Wallis <gary@unxs.io>
+
+USER root
+COPY wait-for-it.sh /wait-for-it.sh
+
+USER odoo
+# Install some deps
+#RUN apt-get update \
+#        && apt-get install -y \
+#		sudo
+#		sudo postgresql-client
+#		postgresql-client already installed in 9.0

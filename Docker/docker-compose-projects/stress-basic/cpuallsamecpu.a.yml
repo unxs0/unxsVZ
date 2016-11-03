@@ -1,0 +1,41 @@
+version: '2'
+
+#test details and objectives
+#	we use only one cpu for all container
+#metrics
+#	after start we gather cpu info on the host server
+#example metrics capture
+#systemd-cgtop -c
+#...446f80f479118597c7d4a1366                                                   9   25.2   428.0K        -        -
+#...2a6818443518de968e01bee3f                                                   9   24.9   308.0K        -        -
+#...8958088603cb48cb702ce2f69                                                   9   24.9   312.0K        -        -
+#...ed2e22a178bbac359a63e1730                                                   9   24.8   344.0K       
+#
+#conclusion
+#	on a four cpu server (max 400%) we get 25% cpu usage per container for 100% usage on cpu1
+
+
+#cpu only 4 container stress test
+#	--cpu-quota=0   Limit the CPU CFS (Completely Fair Scheduler) quota
+#	--cpu-shares=0  CPU shares (relative weight)
+#	--cpuset-cpus="0,1"	CPUs in which to allow execution (0-3, 0,1)
+#examples
+#	--cpu-quota=50000 50% cpu cycles every 100ms since 50000/100000 = 1/2
+#	note the - versus _ issue
+services:
+  stress0:
+    image: dkuffner/docker-stress
+    command: --cpu 8 --timeout 1m
+    cpuset: "1"
+  stress1:
+    image: dkuffner/docker-stress
+    command: --cpu 8 --timeout 1m
+    cpuset: "1"
+  stress2:
+    image: dkuffner/docker-stress
+    command: --cpu 8 --timeout 1m
+    cpuset: "1"
+  stress3:
+    image: dkuffner/docker-stress
+    command: --cpu 8 --timeout 1m
+    cpuset: "1"

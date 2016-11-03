@@ -1,0 +1,19 @@
+version: '2'
+services:
+    db:
+        image: postgres:9.5
+        environment:
+            - POSTGRES_USER=odoo
+            - POSTGRES_PASSWORD=odoo
+    odoo:
+        links:
+            - db:db
+        image: newodoo
+        command: -i account -d odoo --stop-after-init
+        ports:
+            - "8069:8069"
+        environment:
+            - DB_PORT_5432_TCP_ADDR=db
+            - DB_PORT_5432_TCP_PORT=5432
+            - DB_ENV_POSTGRES_USER=odoo
+            - DB_ENV_POSTGRES_PASSWORD=odoo

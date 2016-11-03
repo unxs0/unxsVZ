@@ -1,0 +1,43 @@
+Author: Gary Wallis of unxs.io for AdHoc S.A. 2016
+
+Setting up docker-compose environment for the automation of container metrics
+per docker resource usage limit settings (docker runtime constraints on resources).
+
+Currently documented constraints:
+
+--memory=""	Memory limit (format: <number>[<unit>]). Number is a positive integer. Unit can be one of b, k, m, or g. Minimum is 4M.
+--memory-swap=""	Total memory limit (memory + swap, format: <number>[<unit>]). Number is a positive integer. Unit can be one of b, k, m, or g.
+--memory-reservation=""	Memory soft limit (format: <number>[<unit>]). Number is a positive integer. Unit can be one of b, k, m, or g.
+--kernel-memory=""	Kernel memory limit (format: <number>[<unit>]). Number is a positive integer. Unit can be one of b, k, m, or g. Minimum is 4M.
+--cpu-shares=0	CPU shares (relative weight)
+--cpu-period=0	Limit the CPU CFS (Completely Fair Scheduler) period
+--cpuset-cpus=""	CPUs in which to allow execution (0-3, 0,1)
+--cpuset-mems=""	Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.
+--cpu-quota=0	Limit the CPU CFS (Completely Fair Scheduler) quota
+--blkio-weight=0	Block IO weight (relative weight) accepts a weight value between 10 and 1000.
+--blkio-weight-device=""	Block IO weight (relative device weight, format: DEVICE_NAME:WEIGHT)
+--device-read-bps=""	Limit read rate from a device (format: <device-path>:<number>[<unit>]). Number is a positive integer. Unit can be one of kb, mb, or gb.
+--device-write-bps=""	Limit write rate to a device (format: <device-path>:<number>[<unit>]). Number is a positive integer. Unit can be one of kb, mb, or gb.
+--device-read-iops=""	Limit read rate (IO per second) from a device (format: <device-path>:<number>). Number is a positive integer.
+--device-write-iops=""	Limit write rate (IO per second) to a device (format: <device-path>:<number>). Number is a positive integer.
+--oom-kill-disable=false	Whether to disable OOM Killer for the container or not.
+--oom-score-adj=0	Tune container.s OOM preferences (-1000 to 1000)
+--memory-swappiness=""	Tune a container.s memory swappiness behavior. Accepts an integer between 0 and 100.
+--shm-size=""	Size of /dev/shm. The format is <number><unit>. number must be greater than 0. Unit is optional and can be b (bytes), k (kilobytes), m (megabytes), or g (gigabytes). If you omit the unit, the system uses bytes. If you omit the size entirely, the system uses 64m.
+
+We can also load the server, in general, using "stress" containers in order to understand
+how differect sets of resource usage limits impact our service containers when container hogs exist. This is especially important when
+trying to set relative weight parameters like --cpu-shares and --blkio-weight.
+
+The focus is on PostgreSQL and Odoo ERP container services.
+
+We would like to learn how to isolate resource hog containers from affecting the others.
+
+Base CPU Test
+Base Memory Test
+Base IO Stress Test
+Base Disk Read Test
+Base Disk Write Test
+
+Example:
+# cd stress-basic;docker-compose -f cpuallsamecpu50percent.a.yml up
