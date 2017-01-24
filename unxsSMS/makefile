@@ -1,5 +1,5 @@
 #
-# svn ID removed
+# $Id$
 # interfaces/sms/makefile
 #
 # (C) 2010 Gary Wallis for Unixservice, LLC.
@@ -21,6 +21,12 @@ unxsDOApi: digitalocean.api.o
 
 digitalocean.api.o: digitalocean.api.c local.h
 	cc -c digitalocean.api.c -o digitalocean.api.o $(CFLAGS)
+
+unxsGCApi: gcloud.api.o
+	cc gcloud.api.o -o unxsGCApi $(LIBS2) 
+
+gcloud.api.o: gcloud.api.c local.h
+	cc -c gcloud.api.c -o gcloud.api.o $(CFLAGS)
 
 unxsSMS: sms.o mysqlconnect.o
 	cc sms.o mysqlconnect.o -o unxsSMS $(LIBS) 
