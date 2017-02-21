@@ -48,6 +48,13 @@ int main(int argc, char *argv[])
         { "recid": N, "field-1": "value-1", ... "field-N": "value-N" }
     ]
 }
+
+else 
+
+{
+    "status"  : "error",
+    "message" : "Error Message"
+}
 */
 
 	printf("Content-type: text/json\n\n");
@@ -58,20 +65,21 @@ int main(int argc, char *argv[])
 	printf("{\n");
 	if((uNumRows=mysql_num_rows(res))>0)
 	{
-		printf("    \"status\" : \"success\",\n");
-		printf("    \"total\" : %u,\n",uNumRows);
-		printf("    \"records\" : [\n");
+		printf("    'status' : 'success',\n");
+		printf("    'total' : %u,\n",uNumRows);
+		printf("    'records' : [\n");
 
 		while((field=mysql_fetch_row(res)))
 		{
-			printf("{ \"recid\": 1, \"fname\": \"%s\" }\n",field[0]);
+			printf("        { 'recid': 1, 'fname': '%s' }\n",field[0]);
 		}
 		printf("    ]\n");
 
 	}
 	else
 	{
-		printf("    \"status\" : \"failure\",\n");
+		printf("    'status' : 'error',\n");
+		printf("    'message' : 'error: mysql_num_rows<=0',\n");
 	}
 	printf("}\n");
 
