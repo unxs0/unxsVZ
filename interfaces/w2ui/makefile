@@ -26,11 +26,11 @@ clean:
 	rm -f *.o *.cgi
 	
 install-test: interface.cgi
-	install -m 510 -g apache -s interface.cgi /var/www/unxs/cgi-bin/test/$(CGINAME)
+	install -m 510 -g apache -s interface.cgi /var/www/cgi-bin/test/$(CGINAME)
 	rm -f interface.cgi
 
 install: interface.cgi
-	install -m 510 -g apache -s interface.cgi /var/www/unxs/cgi-bin/$(CGINAME)
+	install -m 510 -g apache -s interface.cgi /var/www/cgi-bin/$(CGINAME)
 	rm -f interface.cgi
 
 local.h: local.h.default
