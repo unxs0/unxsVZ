@@ -61,22 +61,20 @@ int main(int argc, char *argv[])
 	unsigned uNumRows=0;
 	if((uNumRows=mysql_num_rows(res))>0)
 	{
-		printf("    'status' : 'success',\n");
-		printf("    'total' : %u,\n",uNumRows);
-		printf("    'records' : [\n");
+		printf("    \"rows\" : [\n");
 
+		unsigned uLast=0;
 		while((field=mysql_fetch_row(res)))
 		{
-			printf("        { 'uLog': '%s', 'cHost': '%s', 'cLogin': '%s', 'cTableName': '%s', 'cLabel': '%s', 'uCreatedDate': '%s' },\n",
+			printf("        { \"uLog\": %s, \"cHost\": \"%s\", \"cLogin\": \"%s\", \"cTableName\": \"%s\", \"cLabel\": \"%s\", \"uCreatedDate\": \"%s\" }",
 						field[0],field[1],field[2],field[3],field[4],field[5]);
+			if((++uLast)<uNumRows)
+				printf(",\n");
+			else
+				printf("\n");
 		}
-		printf("    ]\n");
+		printf("]\n");
 
-	}
-	else
-	{
-		printf("    'status' : 'error',\n");
-		printf("    'message' : 'error: mysql_num_rows<=0',\n");
 	}
 	mysql_free_result(res);
 

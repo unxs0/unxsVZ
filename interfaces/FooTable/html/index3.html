@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="css/footable.bootstrap.min.css" />
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" rel="stylesheet">
+</head>
+
+<body>
+<table class="table" data-paging="true"></table>
+</body>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/footable.min.js"></script>
+<script>
+jQuery(function($){
+	$('.table').footable({
+	"columns": [
+			{ "name": "uLog", "title": "Log Key", "breakpoints": "xs" },
+			{ "name": "cHost", "title": "Host" },
+			{ "name": "cLogin", "title": "cLogin" },
+			{ "name": "cTableName", "title": "Table Name", "breakpoints": "xs" },
+			{ "name": "cLabel", "title": "Label", "breakpoints": "xs sm" },
+			{ "name": "uCreatedDate", "title": "Date Created", "breakpoints": "xs sm md" }
+		],
+        "rows": $.get('/cgi-bin/unxsvzFT.cgi')
+	});
+});
+</script>
+</html>

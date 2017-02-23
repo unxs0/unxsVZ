@@ -5,10 +5,10 @@
 #	(C) 2017 Gary Wallis for Unixservice, LLC.
 #	GPLv2 license applies. See included LICENSE file.
 #PURPOSE
-#	Test server side w2ui json server
+#	Test server side FooTable json server
 #
 
-CGINAME= unxsvzW2UI.cgi
+CGINAME= unxsvzFT.cgi
 
 CFLAGS=-Wall
 LIBS=-L/usr/lib/mysql -lmysqlclient -lz -lcrypt -lm -lssl
@@ -35,3 +35,7 @@ install: interface.cgi
 
 local.h: local.h.default
 	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi
+
+install-www:
+	@ mkdir -p /var/www/html/FT /var/www/html/FT/css /var/www/html/FT/js;
+	@ cp -a html/*.html /var/www/html/FT/; cp -a css/*.css /var/www/html/FT/css; cp -a js/*.js /var/www/html/FT/js;
