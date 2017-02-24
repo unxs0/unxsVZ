@@ -7,24 +7,18 @@
 </head>
 
 <body>
-    <div class="example">
-        <table id="ajax-example-1" class="table" data-paging="true"></table>
-    </div>
+<table class="table" data-paging="true" data-editing="true" data-sorting="true"></table>
 </body>
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="js/footable.js"></script>
+<script type="text/javascript" src="js/footable.min.js"></script>
 <script>
 jQuery(function($){
-		$('#ajax-example-1').footable({
-			"columns": $.Deferred(function(d){
-				setTimeout(function(){
-					$.get('columns.json').then(d.resolve, d.reject);
-				}, 3000);
-			}),
-			"rows": $.get('/cgi-bin/unxsvzFT.cgi')
-		});
+	$('.table').footable({
+        "rows": $.post('/cgi-bin/unxsvzFT.cgi','cFunction=PostRows'),
+        "columns": $.post('/cgi-bin/unxsvzFT.cgi','cFunction=PostCols')
 	});
+});
 </script>
 </html>
