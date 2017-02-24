@@ -28,10 +28,5 @@ AUTHOR
 
 
 //Global vars all declared in main.c
-//libtemplate.a required
-extern MYSQL gMysql;
-//Multipurpose buffer
-extern char gcQuery[];
 
-
-void InterfaceConnectDb(void);
+void InterfaceConnectDb(MYSQL *spMysql);

@@ -7,7 +7,7 @@
 </head>
 
 <body>
-<table class="table" data-paging="true"></table>
+<table class="table" data-paging="true" data-editing="true" data-sorting="true"></table>
 </body>
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -16,15 +16,8 @@
 <script>
 jQuery(function($){
 	$('.table').footable({
-	"columns": [
-			{ "name": "uLog", "title": "Log Key", "breakpoints": "xs" },
-			{ "name": "cHost", "title": "Host" },
-			{ "name": "cLogin", "title": "cLogin" },
-			{ "name": "cTableName", "title": "Table Name", "breakpoints": "xs" },
-			{ "name": "cLabel", "title": "Label", "breakpoints": "xs sm" },
-			{ "name": "uCreatedDate", "title": "Date Created", "breakpoints": "xs sm md" }
-		],
-        "rows": $.get('/cgi-bin/unxsvzFT.cgi')
+        "rows": $.post('/cgi-bin/unxsvzFT.cgi','cFunction=PostRows'),
+        "columns": $.post('/cgi-bin/unxsvzFT.cgi','cFunction=PostCols')
 	});
 });
 </script>

@@ -13,14 +13,17 @@ CGINAME= unxsvzFT.cgi
 CFLAGS=-Wall
 LIBS=-L/usr/lib/mysql -lmysqlclient -lz -lcrypt -lm -lssl
 
-interface.cgi: main.o mysqlconnect.o local.h
-	cc main.o mysqlconnect.o -o interface.cgi $(LIBS)
+interface.cgi: main.o mysqlconnect.o cgi.o local.h
+	cc main.o mysqlconnect.o cgi.o -o interface.cgi $(LIBS)
 
 mysqlconnect.o: mysqlconnect.c interface.h local.h
 	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS) 
 
-main.o: main.c interface.h interface.h
+main.o: main.c interface.h
 	cc -c main.c -o main.o $(CFLAGS) 
+
+cgi.o: cgi.c cgi.h interface.h
+	cc -c cgi.c -o cgi.o $(CFLAGS) 
 
 clean:
 	rm -f *.o *.cgi

@@ -24,22 +24,22 @@ NOTES
 //10 ms
 
 //TOC protos
-void InterfaceConnectDb(void);
+void InterfaceConnectDb(MYSQL *spMysql);
 
 
-void InterfaceConnectDb(void)
+void InterfaceConnectDb(MYSQL *spMysql)
 {
 	//Handle quick cases first
 	//Port is irrelevant here. Make it clear.
-	mysql_init(&gMysql);
+	mysql_init(spMysql);
 	if(DBIP0==NULL)
 	{
-		if (mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
+		if (mysql_real_connect(spMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
 			return;
 	}
 	if(DBIP1==NULL)
 	{
-		if (mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
+		if (mysql_real_connect(spMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
 			return;
 	}
 
@@ -95,8 +95,8 @@ void InterfaceConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						mysql_init(&gMysql);
-						if(mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,
+						mysql_init(spMysql);
+						if(mysql_real_connect(spMysql,DBIP0,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
 							return;
 					}
@@ -142,8 +142,8 @@ void InterfaceConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						mysql_init(&gMysql);
-						if(mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,
+						mysql_init(spMysql);
+						if(mysql_real_connect(spMysql,DBIP1,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
 							return;
 					}
