@@ -123,31 +123,19 @@ int main(int argc, char *argv[])
 			char *cBreakpoints="";
 			while((field=mysql_fetch_row(res)))
 			{
-				if(strstr(field[0],"uLog"))
-				{
-					cBreakpoints=", \"visible\": false";
-				}
-				else if(strstr(field[0],"uCreated") || strstr(field[0],"uMod") ||strstr(field[0],"uOwner"))
-				{
-					cBreakpoints=", \"breakpoints\": \"all\"";
-				}
-				else if(!strcmp(field[1],"varchar"))
+				if(!strcmp(field[1],"varchar"))
 				{
 					uVarcharCount++;
 					unsigned uSize=0;
 					sscanf(field[2],"%u",&uSize);
-					if(uVarcharCount>3)
-						cBreakpoints=", \"breakpoints\": \"all\"";
-					else if(uSize>200)
-						cBreakpoints=", \"breakpoints\": \"xs sm md lg\"";
-					else if(uSize>100)
+					if(uVarcharCount>4)
 						cBreakpoints=", \"breakpoints\": \"xs sm md\"";
-					else if(1)
+					else if(uVarcharCount>3)
 						cBreakpoints=", \"breakpoints\": \"xs sm\"";
 				}
 				else if(1)
 				{
-					cBreakpoints=", \"breakpoints\": \"xs\"";
+					cBreakpoints=", \"breakpoints\": \"xs sm\"";
 				}
 				printf("        { \"name\": \"%s\", \"title\": \"%s\"%s }",
 							field[0],field[0],cBreakpoints);

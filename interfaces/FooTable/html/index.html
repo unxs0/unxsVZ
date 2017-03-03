@@ -1,24 +1,117 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="css/footable.bootstrap.min.css" />
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/footable.min.js"></script>
+</head>
+<body>
+
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="css/footable.bootstrap.min.css" />
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" rel="stylesheet">
 </head>
 
 <body>
+<div class="jumbotron text-center">
+  <h4>FooTable Dev</h4>
+</div>
+  
+
 <table class="table" data-paging="true" data-editing="true" data-sorting="true"></table>
+
+<div class="modal fade" id="editor-modal" tabindex="-1" role="dialog" aria-labelledby="editor-title">
+	<style scoped>
+		/* provides a red astrix to denote required fields - this should be included in common stylesheet */
+		.form-group.required .control-label:after {
+			content:"*";
+			color:red;
+			margin-left: 4px;
+		}
+	</style>
+	<div class="modal-dialog" role="document">
+		<form class="modal-content form-horizontal" id="editor">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+				<h4 class="modal-title" id="editor-title">Add Row</h4>
+			</div>
+			<div class="modal-body">
+				<input type="number" id="id" name="id" class="hidden"/>
+				<div class="form-group required">
+					<label for="firstName" class="col-sm-3 control-label">First Name</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="firstName" name="firstName" placeholder="First Name" required>
+					</div>
+				</div>
+				<div class="form-group required">
+					<label for="lastName" class="col-sm-3 control-label">Last Name</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="lastName" name="lastName" placeholder="Last Name" required>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="jobTitle" class="col-sm-3 control-label">Job Title</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="jobTitle" name="jobTitle" placeholder="Job Title">
+					</div>
+				</div>
+				<div class="form-group required">
+					<label for="startedOn" class="col-sm-3 control-label">Started On</label>
+					<div class="col-sm-9">
+						<input type="date" class="form-control" id="startedOn" name="startedOn" placeholder="Started On" required>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="dob" class="col-sm-3 control-label">Date of Birth</label>
+					<div class="col-sm-9">
+						<input type="date" class="form-control" id="dob" name="dob" placeholder="Date of Birth">
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="submit" class="btn btn-primary">Save changes</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+			</div>
+		</form>
+	</div>
+</div>
+
 </body>
 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="js/footable.min.js"></script>
+
+
 <script>
 jQuery(function($){
-	$('.table').footable({
+
+	ft=FooTable.init($('.table'),{
         "rows": $.post('/cgi-bin/unxsvzFT.cgi','cFunction=PostRows'),
-        "columns": $.post('/cgi-bin/unxsvzFT.cgi','cFunction=PostCols')
+        "columns": $.post('/cgi-bin/unxsvzFT.cgi','cFunction=PostCols'),
+	editing: {
+			enabled: true,
+			deleteRow: function(row){
+				if (confirm('Are you sure you want to delete the row?')){
+					row.delete();
+				}
+			},
+			editRow: function(row){
+				if (confirm('Are you sure you want to edit the row?')){
+					row.delete();
+				}
+			},
+			addRow: function(row){
+				if (confirm('Are you sure you want to add a new row?')){
+					row.delete();
+				}
+			}
+		}
 	});
+
 });
+
 </script>
 </html>
