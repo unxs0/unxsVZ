@@ -104,7 +104,7 @@ extern int guError;
 extern char gcErrormsg[];
 
 void unxsRAD(const char *cResult);
-void ConnectDb(void);
+void ConnectDb(MYSQL *spMysql);
 void Footer_ism3(void);
 void Header_ism3(char *cMsg, int iJs);
 void ProcessControlVars(pentry entries[], int x);

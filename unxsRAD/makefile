@@ -14,7 +14,7 @@
 #CFLAGS=-O -DLinux -Wall -pedantic
 CFLAGS= -DLinux -Wall
 RELEASE= 0.1
-LIBS= -L/usr/lib/openisp /usr/lib/mysql/libmysqlclient.a -lz -lcrypt -lm -lssl -ltemplate
+LIBS= -L/usr/lib/openisp -L/usr/lib64/mysql -L/usr/lib/mysql -lz -lcrypt -lm -lssl -ltemplate -lmysqlclient
 CGIDIR=/var/www/unxs/cgi-bin/
 
 
@@ -24,11 +24,11 @@ all: unxsRAD.cgi unxsRAD
 unxsRAD: unxsrad.o mysqlconnect.o
 	cc unxsrad.o mysqlconnect.o -o unxsRAD $(LIBS)
 
-unxsrad.o: unxsrad.c unxsrad.h mysqlrad.h local.h mysqlconnect.c
+unxsrad.o: unxsrad.h mysqlrad.h local.h
 	cc -c unxsrad.c -o unxsrad.o $(CFLAGS)
 
-unxsRAD.cgi: tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o   main.o cgi.o
-	cc tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o   main.o cgi.o -o unxsRAD.cgi $(LIBS) 
+unxsRAD.cgi: tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o mysqlconnect.o  main.o cgi.o
+	cc tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o mysqlconnect.o  main.o cgi.o -o unxsRAD.cgi $(LIBS) 
 
 tproject.o: tproject.c mysqlrad.h language.h tprojectfunc.h local.h
 	cc -c tproject.c -o tproject.o $(CFLAGS)
@@ -108,6 +108,7 @@ local.h: local.h.default
 
 clean:
 	rm -f *.o
+	rm unxsRAD.cgi
 
 cleandist:
 	rm -f *.o *.gz

@@ -18,7 +18,7 @@ HELP
 //Global vars
 MYSQL gMysql;
 char gcQuery[8192]={""};
-char *gcBuildInfo="svn ID removed
+char *gcBuildInfo="svn ID removed";
 static FILE *gLfp=NULL;//log file
 char gcHostname[100]={""};
 static unsigned guTable=0;
@@ -71,7 +71,7 @@ void funcConfiguration(FILE *fp,char *cFunction);
 
 
 //external prototypes
-unsigned TextConnectDb(void); //mysqlconnect.c
+void ConnectDb(MYSQL *spMysql);
 
 int main(int iArgc, char *cArgv[])
 {
@@ -89,8 +89,7 @@ int main(int iArgc, char *cArgv[])
 	logfileLine("main",gcHostname);
 
 	//Uses login data from local.h
-	if(TextConnectDb())
-		exit(1);
+	ConnectDb(&gMysql);
 
 	if(iArgc==2)
 	{

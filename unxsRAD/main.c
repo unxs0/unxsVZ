@@ -69,7 +69,7 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="svn ID removed
+char *gcBuildInfo="svn ID removed";
 char gcRADStatus[32]={"start"};
 
 //Local
@@ -87,7 +87,6 @@ void ExtMainShell(int iArgc, char *cArgv[]);
 void DashBoard(const char *cOptionalMsg);
 
 //Only local
-void ConnectDb(void);
 void NoSuchFunction(void);
 void unxsRAD(const char *cResult);
 void InitialInstall(void);
@@ -126,7 +125,7 @@ int main(int iArgc, char *cArgv[])
 
 	else if(getenv("REMOTE_ADDR")!=NULL)
 	{
-		ConnectDb();
+		ConnectDb(&gMysql);
 		sprintf(gcHost,"%.99s",getenv("REMOTE_ADDR"));
 	}
 	else
@@ -842,23 +841,6 @@ void Footer_ism3(void)
 	exit(0);
 
 }//Footer_ism3(void)
-
-
-void ConnectDb(void)
-{
-	//
-	//First will try to connect to the MySQL server at DBIP0.
-	//If it fails it will try to connect to the MySQL server at DBIP1, if that fails too
-	//an error message will be displayed and the software will exit
-	//
-        mysql_init(&gMysql);
-        if (!mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-        {
-		if (!mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,DBPORT,DBSOCKET,0))
-	                unxsRAD("Database server unavailable. Did you run unxsRAD.cgi Initialize &lt;mysqlpwd&gt;?");
-        }
-
-}//end of ConnectDb()
 
 
 void NoSuchFunction(void)
