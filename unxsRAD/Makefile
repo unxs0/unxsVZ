@@ -1,24 +1,19 @@
 #
 #FILE
-#       unxsRAD/makefile
-#       svn ID removed
+#       unxsRAD/Makefile
 #AUTHOR/LEGAL
-#       (C) 2001-2012 Gary Wallis for Unixservice. GPLv2 license applies.
+#       (C) 2001-2017 Gary Wallis for Unixservice, LLC.
+#       GPLv2 license applies.
 #
 #NOTES
-#       We only develop and test on Linux CentOS-5 and distribute via yum and rpm.
-#       Feel free to repackage for your OS and let us know.
 #
 
-#Change these for your system: Ex. -DSolaris instead of -DLinux
-#CFLAGS=-O -DLinux -Wall -pedantic
 GIT_VERSION := $(shell git describe --dirty --always --tags)
 CFLAGS= -DLinux -Wall -DdsGitVersion=\"$(GIT_VERSION)\"
 RELEASE= 0.1
 LIBS= -L/usr/lib/openisp -L/usr/lib64/mysql -L/usr/lib/mysql -lz -lcrypt -lm -lssl -ltemplate -lmysqlclient
 CGIDIR=/var/www/cgi-bin/
 IMGDIR=/var/www/html/pami/images/
-
 
 all: unxsRAD.cgi unxsRAD
 
@@ -29,8 +24,12 @@ unxsRAD: unxsrad.o mysqlconnect.o
 unxsrad.o: unxsrad.h mysqlrad.h local.h
 	cc -c unxsrad.c -o unxsrad.o $(CFLAGS)
 
-unxsRAD.cgi: tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o mysqlconnect.o  main.o cgi.o
-	cc tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o mysqlconnect.o  main.o cgi.o -o unxsRAD.cgi $(LIBS) 
+unxsRAD.cgi: tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o\
+	 tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o\
+	 tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o mysqlconnect.o  main.o cgi.o
+	cc tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o\
+	 tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o\
+	 tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o mysqlconnect.o  main.o cgi.o -o unxsRAD.cgi $(LIBS) 
 
 tproject.o: tproject.c mysqlrad.h language.h tprojectfunc.c local.h
 	cc -c tproject.c -o tproject.o $(CFLAGS)
