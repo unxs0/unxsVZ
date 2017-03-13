@@ -1,12 +1,10 @@
 /*
 FILE
-	tAuthorize source code of unxsRAD.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	svn ID removed
+	tAuthorize
+	(C) Gary Wallis for Unixservice, LLC. 2001-2017
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tauthorizefunc.h while 
-	RAD is still to be used.
+	Authentication and Authorization data for tClient
+	based access control.
 */
 
 
@@ -49,7 +47,7 @@ void Insert_tAuthorize(void);
 void Update_tAuthorize(char *cRowid);
 void ProcesstAuthorizeListVars(pentry entries[], int x);
 
- //In tAuthorizefunc.h file included below
+ //In tAuthorizefunc.c file included below
 void ExtProcesstAuthorizeVars(pentry entries[], int x);
 void ExttAuthorizeCommands(pentry entries[], int x);
 void ExttAuthorizeButtons(void);
@@ -61,7 +59,7 @@ void ExttAuthorizeListSelect(void);
 void ExttAuthorizeListFilter(void);
 void ExttAuthorizeAuxTable(void);
 
-#include "tauthorizefunc.h"
+#include "tauthorizefunc.c"
 
  //Table Variables Assignment Function
 void ProcesstAuthorizeVars(pentry entries[], int x)

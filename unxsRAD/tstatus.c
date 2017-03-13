@@ -39,7 +39,7 @@ void Insert_tStatus(void);
 void Update_tStatus(char *cRowid);
 void ProcesstStatusListVars(pentry entries[], int x);
 
- //In tStatusfunc.h file included below
+ //In tStatusfunc.c file included below
 void ExtProcesstStatusVars(pentry entries[], int x);
 void ExttStatusCommands(pentry entries[], int x);
 void ExttStatusButtons(void);
@@ -51,7 +51,7 @@ void ExttStatusListSelect(void);
 void ExttStatusListFilter(void);
 void ExttStatusAuxTable(void);
 
-#include "tstatusfunc.h"
+#include "tstatusfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstStatusVars(pentry entries[], int x)

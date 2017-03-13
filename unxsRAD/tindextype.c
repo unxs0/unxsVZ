@@ -39,7 +39,7 @@ void Insert_tIndexType(void);
 void Update_tIndexType(char *cRowid);
 void ProcesstIndexTypeListVars(pentry entries[], int x);
 
- //In tIndexTypefunc.h file included below
+ //In tIndexTypefunc.c file included below
 void ExtProcesstIndexTypeVars(pentry entries[], int x);
 void ExttIndexTypeCommands(pentry entries[], int x);
 void ExttIndexTypeButtons(void);
@@ -51,7 +51,7 @@ void ExttIndexTypeListSelect(void);
 void ExttIndexTypeListFilter(void);
 void ExttIndexTypeAuxTable(void);
 
-#include "tindextypefunc.h"
+#include "tindextypefunc.c"
 
  //Table Variables Assignment Function
 void ProcesstIndexTypeVars(pentry entries[], int x)

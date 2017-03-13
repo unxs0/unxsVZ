@@ -41,7 +41,7 @@ void Insert_tGlossary(void);
 void Update_tGlossary(char *cRowid);
 void ProcesstGlossaryListVars(pentry entries[], int x);
 
- //In tGlossaryfunc.h file included below
+ //In tGlossaryfunc.c file included below
 void ExtProcesstGlossaryVars(pentry entries[], int x);
 void ExttGlossaryCommands(pentry entries[], int x);
 void ExttGlossaryButtons(void);
@@ -53,7 +53,7 @@ void ExttGlossaryListSelect(void);
 void ExttGlossaryListFilter(void);
 void ExttGlossaryAuxTable(void);
 
-#include "tglossaryfunc.h"
+#include "tglossaryfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstGlossaryVars(pentry entries[], int x)

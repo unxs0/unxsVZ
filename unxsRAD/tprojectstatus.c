@@ -63,7 +63,7 @@ void Insert_tProjectStatus(void);
 void Update_tProjectStatus(char *cRowid);
 void ProcesstProjectStatusListVars(pentry entries[], int x);
 
- //In tProjectStatusfunc.h file included below
+ //In tProjectStatusfunc.c file included below
 void ExtProcesstProjectStatusVars(pentry entries[], int x);
 void ExttProjectStatusCommands(pentry entries[], int x);
 void ExttProjectStatusButtons(void);
@@ -75,7 +75,7 @@ void ExttProjectStatusListSelect(void);
 void ExttProjectStatusListFilter(void);
 void ExttProjectStatusAuxTable(void);
 
-#include "tprojectstatusfunc.h"
+#include "tprojectstatusfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstProjectStatusVars(pentry entries[], int x)

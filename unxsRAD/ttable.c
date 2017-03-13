@@ -61,7 +61,7 @@ void Insert_tTable(void);
 void Update_tTable(char *cRowid);
 void ProcesstTableListVars(pentry entries[], int x);
 
- //In tTablefunc.h file included below
+ //In tTablefunc.c file included below
 void ExtProcesstTableVars(pentry entries[], int x);
 void ExttTableCommands(pentry entries[], int x);
 void ExttTableButtons(void);
@@ -73,7 +73,7 @@ void ExttTableListSelect(void);
 void ExttTableListFilter(void);
 void ExttTableAuxTable(void);
 
-#include "ttablefunc.h"
+#include "ttablefunc.c"
 
  //Table Variables Assignment Function
 void ProcesstTableVars(pentry entries[], int x)

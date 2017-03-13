@@ -1,22 +1,56 @@
 /*
 FILE
-	svn ID removed
+	mainfunc.h
 PURPOSE
 	Included in main.c. For command line interface and html main link.
-
 AUTHOR
-	Template and mysqlRAD2 author: 
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2017 Gary Wallis for Unixservice, LLC.
  
 */
 
 #include "local.h"
 char *strptime(const char *s, const char *format, struct tm *tm);
 
-static char cTableList[64][32]={"tProject","tTable","tField","tTemplate","tTemplateSet","tTemplateType","tProjectStatus","tFieldType","tIndexType","tClient","tAuthorize","tStatus","tLog","tLogType","tLogMonth","tGlossary","tJob","tMonth","tJobStatus","tConfiguration","tServer",""};
+static char cTableList[64][32]={
+		"tAuthorize",
+		"tClient",
+		"tConfiguration",
+		"tField",
+		"tFieldType",
+		"tGlossary",
+		"tIndexType",
+		"tJob",
+		"tJobStatus",
+		"tLog",
+		"tLogMonth",
+		"tLogType",
+		"tMonth",
+		"tProject",
+		"tProjectStatus",
+		"tStatus",
+		"tServer",
+		"tTable",
+		"tTemplate",
+		"tTemplateSet",
+		"tTemplateType",
+		""};
 
-
-char cInitTableList[64][32]={"tLogType","tStatus","tJobStatus","tServer","tFieldType","tProjectStatus","tConfiguration","tTemplate","tTemplateSet","tTemplateType","tProject","tTable","tField","tIndexType",""};
+char cInitTableList[64][32]={
+		"tLogType",
+		"tStatus",
+		"tJobStatus",
+		"tServer",
+		"tFieldType",
+		"tProjectStatus",
+		"tConfiguration",
+		"tTemplate",
+		"tTemplateSet",
+		"tTemplateType",
+		"tProject",
+		"tTable",
+		"tField",
+		"tIndexType",
+		""};
 
 void ExtMainShell(int argc, char *argv[]);
 void Initialize(char *cPasswd);
@@ -68,7 +102,8 @@ void DashBoard(const char *cOptionalMsg)
 
 
 	OpenRow("System Messages (Last 20)","black");
-	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer FROM tLog WHERE uLogType=4 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 20");
+	sprintf(gcQuery,"SELECT cMessage,GREATEST(uCreatedDate,uModDate),cServer"
+			" FROM tLog WHERE uLogType=4 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 20");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -87,7 +122,9 @@ void DashBoard(const char *cOptionalMsg)
 
 
 	OpenRow("tLog (Last 20)","black");
-	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,tLog.cTableName,tLog.cHost,tLogType.cLabel FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType AND tLog.uLogType!=4 ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 20");
+	sprintf(gcQuery,"SELECT tLog.cLabel,GREATEST(tLog.uCreatedDate,tLog.uModDate),tLog.cLogin,tLog.cTableName,tLog.cHost,tLogType.cLabel"
+			" FROM tLog,tLogType WHERE tLog.uLogType=tLogType.uLogType AND tLog.uLogType!=4"
+			" ORDER BY GREATEST(tLog.uCreatedDate,tLog.uModDate) DESC LIMIT 20");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -105,7 +142,8 @@ void DashBoard(const char *cOptionalMsg)
 	mysql_free_result(mysqlRes);
 
 	OpenRow("Login Activity (Last 20)","black");
-	sprintf(gcQuery,"SELECT cLabel,GREATEST(uCreatedDate,uModDate),cServer,cHost FROM tLog WHERE uLogType=6 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 20");
+	sprintf(gcQuery,"SELECT cLabel,GREATEST(uCreatedDate,uModDate),cServer,cHost"
+			" FROM tLog WHERE uLogType=6 ORDER BY GREATEST(uCreatedDate,uModDate) DESC LIMIT 20");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -123,7 +161,10 @@ void DashBoard(const char *cOptionalMsg)
 	mysql_free_result(mysqlRes);
 
 	OpenRow("Pending or Stuck Jobs (Last 20)","black");
-	sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tJob.cServer,tJobStatus.cLabel FROM tJob,tJobStatus WHERE tJob.uJobStatus=tJobStatus.uJobStatus AND tJob.uJobStatus!=3 ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 20");
+	sprintf(gcQuery,"SELECT tJob.cLabel,GREATEST(tJob.uCreatedDate,tJob.uModDate),tServer.cLabel,tJobStatus.cLabel"
+			" FROM tJob,tJobStatus,tServer WHERE tJob.uJobStatus=tJobStatus.uJobStatus AND"
+			" tJob.uJobStatus!=3 AND tJob.uServer=tServer.uServer"
+			" ORDER BY GREATEST(tJob.uCreatedDate,tJob.uModDate) DESC LIMIT 20");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -154,14 +195,13 @@ void ExtMainContent(void)
 	OpenRow("Hostname","black");
 	printf("<td>%s</td></tr>\n",gcHostname);
 
-	OpenRow("Build Information","black");
-	printf("<td>%s</td></tr>\n",sgcBuildInfo);
-
-	OpenRow("RAD Status","black");
-	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);
+	OpenRow("main.c Build Information","black");
+	printf("<td>(<a class=darkLink href=https://github.com/unxs0/unxsVZ/commit/%1$s>%1$s</a>)</td></tr>\n",sgcBuildInfo);
 
 	OpenRow("Application Summary","black");
-	printf("<td>This tool is used to create C mySQL CGI applications from template code sets. <br>First you setup the schema and it's UI characteristics then you build the source code. You must then 'make' the application binary from the command line.<br>You can program the application logic in the per table .h files while the schema is still under development. Quick start hints: Create a new project at tProject add tTable and tField schema elements and then build source code.</td></tr>\n");
+	printf("<td>This tool is used to create C MySQL CGI applications from template code sets."
+		" <br>First you setup the schema and it's UI characteristics then you can build the source code app directory."
+		" <br>You can program the application logic in the per table .c files while the schema is still under development.</td></tr>\n");
 
 	if(guPermLevel>9)
 	{
@@ -169,7 +209,7 @@ void ExtMainContent(void)
 		OpenRow("Table List","black");
 		printf("<td>\n");
 		for(i=0;cTableList[i][0];i++)
-			printf("<a href=unxsRAD.cgi?gcFunction=%.32s>%.32s</a><br>\n",
+			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=%.32s>%.32s</a><br>\n",
 				cTableList[i],cTableList[i]);
 		printf("</td></tr>\n");
         	OpenRow("Admin Functions","black");
@@ -257,7 +297,8 @@ void RestoreAll(char *cPasswd)
 
 	for(i=0;cTableList[i][0];i++)
 	{
-sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s",cInstallDir,cTableList[i],cTableList[i]);
+		sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s",
+				cInstallDir,cTableList[i],cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -352,7 +393,7 @@ void Backup(char *cPasswd)
 				,cInstallDir,cTableList[i]);
 		unlink(cFileName);
 
-sprintf(gcQuery,"SELECT * INTO OUTFILE '%s' FROM %s",cFileName,cTableList[i]);
+		sprintf(gcQuery,"SELECT * INTO OUTFILE '%s' FROM %s",cFileName,cTableList[i]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -765,7 +806,9 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 		printf("%s\n",mysql_error(&gMysql));
 		exit(1);
 	}
-	sprintf(gcQuery,"INSERT INTO tLog SET cMessage='ExtracttLog() Start...',cServer='%s',uLogType=4,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
+	sprintf(gcQuery,"INSERT INTO tLog"
+			" SET cMessage='ExtracttLog() Start...',cServer='%s',uLogType=4,uOwner=1,"
+			"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcHostname);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		fprintf(stderr,"%s\n",mysql_error(&gMysql));
@@ -814,7 +857,10 @@ void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath)
 	}
 
 	printf("Getting data from tLog...\n");
-	sprintf(gcQuery,"INSERT %s (uLog,cLabel,uLogType,cHash,uPermLevel,uLoginClient,cLogin,cHost,uTablePK,cTableName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate) SELECT uLog,cLabel,uLogType,cHash,uPermLevel,uLoginClient,cLogin,cHost,uTablePK,cTableName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate FROM tLog WHERE uCreatedDate>=%lu AND uCreatedDate<%lu",cTableName,uStart,uEnd);
+	sprintf(gcQuery,"INSERT %s (uLog,cLabel,uLogType,cHash,uPermLevel,uLoginClient,cLogin,cHost,uTablePK,cTableName,"
+			"uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate) SELECT uLog,cLabel,uLogType,cHash,uPermLevel,"
+			"uLoginClient,cLogin,cHost,uTablePK,cTableName,uOwner,uCreatedBy,uCreatedDate,uModBy,uModDate"
+			" FROM tLog WHERE uCreatedDate>=%lu AND uCreatedDate<%lu",cTableName,uStart,uEnd);
         mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -928,7 +974,22 @@ time_t cDateToUnixTime(char *cDate)
 //Another schema dependent item
 void CreatetLogTable(char *cTableName)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS %s ( uTablePK VARCHAR(32) NOT NULL DEFAULT '', cHost VARCHAR(32) NOT NULL DEFAULT '', uLoginClient INT UNSIGNED NOT NULL DEFAULT 0, cLogin VARCHAR(32) NOT NULL DEFAULT '', uPermLevel INT UNSIGNED NOT NULL DEFAULT 0, cTableName VARCHAR(32) NOT NULL DEFAULT '', uLog INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(64) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cHash VARCHAR(32) NOT NULL DEFAULT '', uLogType INT UNSIGNED NOT NULL DEFAULT 0,index (uLogType) )",cTableName);
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS %s ("
+			" uLog INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" uTablePK VARCHAR(32) NOT NULL DEFAULT '',"
+			" cHost VARCHAR(32) NOT NULL DEFAULT '',"
+			" uLoginClient INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cLogin VARCHAR(32) NOT NULL DEFAULT '',"
+			" uPermLevel INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cTableName VARCHAR(32) NOT NULL DEFAULT '',"
+			" cLabel VARCHAR(64) NOT NULL DEFAULT '',"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cHash VARCHAR(32) NOT NULL DEFAULT '',"
+			" uLogType INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uLogType) )",cTableName);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1005,7 +1066,9 @@ void TextError(const char *cError, unsigned uContinue)
 	printf("\nPlease report this unxsRAD fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
-        sprintf(gcQuery,"INSERT INTO tLog SET cLabel='TextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",guPermLevel,guLoginClient,gcUser,gcHost,cError,gcHostname,guLoginClient);
+        sprintf(gcQuery,"INSERT INTO tLog SET cLabel='TextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',"
+			"cHost='%s',cMessage=\"%s\",cServer='%s',uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				guPermLevel,guLoginClient,gcUser,gcHost,cError,gcHostname,guLoginClient);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 		printf("Another error occurred while attempting to log: %s\n",

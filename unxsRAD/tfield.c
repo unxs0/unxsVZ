@@ -75,7 +75,7 @@ void Insert_tField(void);
 void Update_tField(char *cRowid);
 void ProcesstFieldListVars(pentry entries[], int x);
 
- //In tFieldfunc.h file included below
+ //In tfieldfunc.c file included below
 void ExtProcesstFieldVars(pentry entries[], int x);
 void ExttFieldCommands(pentry entries[], int x);
 void ExttFieldButtons(void);
@@ -87,7 +87,7 @@ void ExttFieldListSelect(void);
 void ExttFieldListFilter(void);
 void ExttFieldAuxTable(void);
 
-#include "tfieldfunc.h"
+#include "tfieldfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstFieldVars(pentry entries[], int x)

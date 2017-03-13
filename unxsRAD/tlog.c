@@ -60,7 +60,7 @@ void Insert_tLog(void);
 void Update_tLog(char *cRowid);
 void ProcesstLogListVars(pentry entries[], int x);
 
- //In tLogfunc.h file included below
+ //In tLogfunc.c file included below
 void ExtProcesstLogVars(pentry entries[], int x);
 void ExttLogCommands(pentry entries[], int x);
 void ExttLogButtons(void);
@@ -72,7 +72,7 @@ void ExttLogListSelect(void);
 void ExttLogListFilter(void);
 void ExttLogAuxTable(void);
 
-#include "tlogfunc.h"
+#include "tlogfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstLogVars(pentry entries[], int x)

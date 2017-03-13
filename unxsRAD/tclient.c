@@ -1,12 +1,10 @@
 /*
 FILE
-	tClient source code of unxsRAD.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
+	tClient source code
+	(C) Gary Wallis 2001-2017 for Unixservice, LLC.
 	svn ID removed
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tclientfunc.h while 
-	RAD is still to be used.
+	Access control and auditing system main table.
 */
 
 
@@ -45,7 +43,7 @@ void Insert_tClient(void);
 void Update_tClient(char *cRowid);
 void ProcesstClientListVars(pentry entries[], int x);
 
- //In tClientfunc.h file included below
+ //In tClientfunc.c file included below
 void ExtProcesstClientVars(pentry entries[], int x);
 void ExttClientCommands(pentry entries[], int x);
 void ExttClientButtons(void);
@@ -57,7 +55,7 @@ void ExttClientListSelect(void);
 void ExttClientListFilter(void);
 void ExttClientAuxTable(void);
 
-#include "tclientfunc.h"
+#include "tclientfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstClientVars(pentry entries[], int x)

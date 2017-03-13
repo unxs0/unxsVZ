@@ -35,64 +35,64 @@ unxsRAD.cgi: tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatety
 tproject.o: tproject.c mysqlrad.h language.h tprojectfunc.c local.h
 	cc -c tproject.c -o tproject.o $(CFLAGS)
 
-ttable.o: ttable.c mysqlrad.h language.h ttablefunc.h local.h
+ttable.o: ttable.c mysqlrad.h language.h ttablefunc.c local.h
 	cc -c ttable.c -o ttable.o $(CFLAGS)
 
-tfield.o: tfield.c mysqlrad.h language.h tfieldfunc.h local.h
+tfield.o: tfield.c mysqlrad.h language.h tfieldfunc.c local.h
 	cc -c tfield.c -o tfield.o $(CFLAGS)
 
-ttemplate.o: ttemplate.c mysqlrad.h language.h ttemplatefunc.h local.h
+ttemplate.o: ttemplate.c mysqlrad.h language.h ttemplatefunc.c local.h
 	cc -c ttemplate.c -o ttemplate.o $(CFLAGS)
 
-ttemplateset.o: ttemplateset.c mysqlrad.h language.h ttemplatesetfunc.h local.h
+ttemplateset.o: ttemplateset.c mysqlrad.h language.h ttemplatesetfunc.c local.h
 	cc -c ttemplateset.c -o ttemplateset.o $(CFLAGS)
 
-ttemplatetype.o: ttemplatetype.c mysqlrad.h language.h ttemplatetypefunc.h local.h
+ttemplatetype.o: ttemplatetype.c mysqlrad.h language.h ttemplatetypefunc.c local.h
 	cc -c ttemplatetype.c -o ttemplatetype.o $(CFLAGS)
 
-tprojectstatus.o: tprojectstatus.c mysqlrad.h language.h tprojectstatusfunc.h local.h
+tprojectstatus.o: tprojectstatus.c mysqlrad.h language.h tprojectstatusfunc.c local.h
 	cc -c tprojectstatus.c -o tprojectstatus.o $(CFLAGS)
 
-tfieldtype.o: tfieldtype.c mysqlrad.h language.h tfieldtypefunc.h local.h
+tfieldtype.o: tfieldtype.c mysqlrad.h language.h tfieldtypefunc.c local.h
 	cc -c tfieldtype.c -o tfieldtype.o $(CFLAGS)
 
-tindextype.o: tindextype.c mysqlrad.h language.h tindextypefunc.h local.h
+tindextype.o: tindextype.c mysqlrad.h language.h tindextypefunc.c local.h
 	cc -c tindextype.c -o tindextype.o $(CFLAGS)
 
-tclient.o: tclient.c mysqlrad.h language.h tclientfunc.h local.h
+tclient.o: tclient.c mysqlrad.h language.h tclientfunc.c local.h
 	cc -c tclient.c -o tclient.o $(CFLAGS)
 
-tauthorize.o: tauthorize.c mysqlrad.h language.h tauthorizefunc.h local.h
+tauthorize.o: tauthorize.c mysqlrad.h language.h tauthorizefunc.c local.h
 	cc -c tauthorize.c -o tauthorize.o $(CFLAGS)
 
-tstatus.o: tstatus.c mysqlrad.h language.h tstatusfunc.h local.h
+tstatus.o: tstatus.c mysqlrad.h language.h tstatusfunc.c local.h
 	cc -c tstatus.c -o tstatus.o $(CFLAGS)
 
-tlog.o: tlog.c mysqlrad.h language.h tlogfunc.h local.h
+tlog.o: tlog.c mysqlrad.h language.h tlogfunc.c local.h
 	cc -c tlog.c -o tlog.o $(CFLAGS)
 
-tlogtype.o: tlogtype.c mysqlrad.h language.h tlogtypefunc.h local.h
+tlogtype.o: tlogtype.c mysqlrad.h language.h tlogtypefunc.c local.h
 	cc -c tlogtype.c -o tlogtype.o $(CFLAGS)
 
-tlogmonth.o: tlogmonth.c mysqlrad.h language.h tlogmonthfunc.h local.h
+tlogmonth.o: tlogmonth.c mysqlrad.h language.h tlogmonthfunc.c local.h
 	cc -c tlogmonth.c -o tlogmonth.o $(CFLAGS)
 
-tglossary.o: tglossary.c mysqlrad.h language.h tglossaryfunc.h local.h
+tglossary.o: tglossary.c mysqlrad.h language.h tglossaryfunc.c local.h
 	cc -c tglossary.c -o tglossary.o $(CFLAGS)
 
-tjob.o: tjob.c mysqlrad.h language.h tjobfunc.h local.h
+tjob.o: tjob.c mysqlrad.h language.h tjobfunc.c local.h
 	cc -c tjob.c -o tjob.o $(CFLAGS)
 
-tmonth.o: tmonth.c mysqlrad.h language.h tmonthfunc.h local.h
+tmonth.o: tmonth.c mysqlrad.h language.h tmonthfunc.c local.h
 	cc -c tmonth.c -o tmonth.o $(CFLAGS)
 
-tjobstatus.o: tjobstatus.c mysqlrad.h language.h tjobstatusfunc.h local.h
+tjobstatus.o: tjobstatus.c mysqlrad.h language.h tjobstatusfunc.c local.h
 	cc -c tjobstatus.c -o tjobstatus.o $(CFLAGS)
 
-tconfiguration.o: tconfiguration.c mysqlrad.h language.h tconfigurationfunc.h local.h
+tconfiguration.o: tconfiguration.c mysqlrad.h language.h tconfigurationfunc.c local.h
 	cc -c tconfiguration.c -o tconfiguration.o $(CFLAGS)
 
-tserver.o: tserver.c mysqlrad.h language.h tserverfunc.h local.h
+tserver.o: tserver.c mysqlrad.h language.h tserverfunc.c local.h
 	cc -c tserver.c -o tserver.o $(CFLAGS)
 
 

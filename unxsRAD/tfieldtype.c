@@ -43,7 +43,7 @@ void Insert_tFieldType(void);
 void Update_tFieldType(char *cRowid);
 void ProcesstFieldTypeListVars(pentry entries[], int x);
 
- //In tFieldTypefunc.h file included below
+ //In tfieldtypefunc.c file included below
 void ExtProcesstFieldTypeVars(pentry entries[], int x);
 void ExttFieldTypeCommands(pentry entries[], int x);
 void ExttFieldTypeButtons(void);
@@ -55,7 +55,7 @@ void ExttFieldTypeListSelect(void);
 void ExttFieldTypeListFilter(void);
 void ExttFieldTypeAuxTable(void);
 
-#include "tfieldtypefunc.h"
+#include "tfieldtypefunc.c"
 
  //Table Variables Assignment Function
 void ProcesstFieldTypeVars(pentry entries[], int x)

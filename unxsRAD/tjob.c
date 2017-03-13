@@ -50,7 +50,7 @@ void Insert_tJob(void);
 void Update_tJob(char *cRowid);
 void ProcesstJobListVars(pentry entries[], int x);
 
- //In tJobfunc.h file included below
+ //In tJobfunc.c file included below
 void ExtProcesstJobVars(pentry entries[], int x);
 void ExttJobCommands(pentry entries[], int x);
 void ExttJobButtons(void);
@@ -62,7 +62,7 @@ void ExttJobListSelect(void);
 void ExttJobListFilter(void);
 void ExttJobAuxTable(void);
 
-#include "tjobfunc.h"
+#include "tjobfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstJobVars(pentry entries[], int x)

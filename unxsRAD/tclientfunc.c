@@ -1,12 +1,12 @@
 /*
 FILE
-	svn ID removed
+	tclientfunc.c
 PURPOSE
 	Non-schema dependent tclient.c expansion.
 AUTHOR
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
-	(C) 2001-2007 Gary Wallis.
+	(C) 2001-2017 Gary Wallis for Unixservice, LLC.
 */
 
 #define BO_CUSTOMER	"Back-Office Customer"

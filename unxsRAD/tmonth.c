@@ -39,7 +39,7 @@ void Insert_tMonth(void);
 void Update_tMonth(char *cRowid);
 void ProcesstMonthListVars(pentry entries[], int x);
 
- //In tMonthfunc.h file included below
+ //In tMonthfunc.c file included below
 void ExtProcesstMonthVars(pentry entries[], int x);
 void ExttMonthCommands(pentry entries[], int x);
 void ExttMonthButtons(void);
@@ -51,7 +51,7 @@ void ExttMonthListSelect(void);
 void ExttMonthListFilter(void);
 void ExttMonthAuxTable(void);
 
-#include "tmonthfunc.h"
+#include "tmonthfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstMonthVars(pentry entries[], int x)

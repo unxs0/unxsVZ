@@ -39,7 +39,7 @@ void Insert_tServer(void);
 void Update_tServer(char *cRowid);
 void ProcesstServerListVars(pentry entries[], int x);
 
- //In tServerfunc.h file included below
+ //In tServerfunc.c file included below
 void ExtProcesstServerVars(pentry entries[], int x);
 void ExttServerCommands(pentry entries[], int x);
 void ExttServerButtons(void);
@@ -51,7 +51,7 @@ void ExttServerListSelect(void);
 void ExttServerListFilter(void);
 void ExttServerAuxTable(void);
 
-#include "tserverfunc.h"
+#include "tserverfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstServerVars(pentry entries[], int x)

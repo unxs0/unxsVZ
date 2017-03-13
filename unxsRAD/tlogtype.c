@@ -39,7 +39,7 @@ void Insert_tLogType(void);
 void Update_tLogType(char *cRowid);
 void ProcesstLogTypeListVars(pentry entries[], int x);
 
- //In tLogTypefunc.h file included below
+ //In tLogTypefunc.c file included below
 void ExtProcesstLogTypeVars(pentry entries[], int x);
 void ExttLogTypeCommands(pentry entries[], int x);
 void ExttLogTypeButtons(void);
@@ -51,7 +51,7 @@ void ExttLogTypeListSelect(void);
 void ExttLogTypeListFilter(void);
 void ExttLogTypeAuxTable(void);
 
-#include "tlogtypefunc.h"
+#include "tlogtypefunc.c"
 
  //Table Variables Assignment Function
 void ProcesstLogTypeVars(pentry entries[], int x)

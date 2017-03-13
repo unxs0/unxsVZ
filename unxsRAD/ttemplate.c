@@ -49,7 +49,7 @@ void Insert_tTemplate(void);
 void Update_tTemplate(char *cRowid);
 void ProcesstTemplateListVars(pentry entries[], int x);
 
- //In tTemplatefunc.h file included below
+ //In tTemplatefunc.c file included below
 void ExtProcesstTemplateVars(pentry entries[], int x);
 void ExttTemplateCommands(pentry entries[], int x);
 void ExttTemplateButtons(void);
@@ -61,7 +61,7 @@ void ExttTemplateListSelect(void);
 void ExttTemplateListFilter(void);
 void ExttTemplateAuxTable(void);
 
-#include "ttemplatefunc.h"
+#include "ttemplatefunc.c"
 
  //Table Variables Assignment Function
 void ProcesstTemplateVars(pentry entries[], int x)

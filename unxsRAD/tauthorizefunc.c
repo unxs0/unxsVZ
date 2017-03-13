@@ -1,13 +1,13 @@
 /*
 FILE
-	svn ID removed
+	tauthorizefunc.c	
 PURPOSE
 	Non-schema dependent tauthorize.c expansion.
 AUTHOR
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
-	(C) 2001-2008 Gary Wallis and Hugo Urquiza.
- 
+	(C) 2001-2008 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2009-2017 Gary Wallis for Unixservice, LLC.
 */
 
 

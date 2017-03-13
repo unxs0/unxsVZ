@@ -47,7 +47,7 @@ void Insert_tConfiguration(void);
 void Update_tConfiguration(char *cRowid);
 void ProcesstConfigurationListVars(pentry entries[], int x);
 
- //In tConfigurationfunc.h file included below
+ //In tConfigurationfunc.c file included below
 void ExtProcesstConfigurationVars(pentry entries[], int x);
 void ExttConfigurationCommands(pentry entries[], int x);
 void ExttConfigurationButtons(void);
@@ -59,7 +59,7 @@ void ExttConfigurationListSelect(void);
 void ExttConfigurationListFilter(void);
 void ExttConfigurationAuxTable(void);
 
-#include "tconfigurationfunc.h"
+#include "tconfigurationfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstConfigurationVars(pentry entries[], int x)

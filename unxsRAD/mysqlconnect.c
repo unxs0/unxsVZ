@@ -1,12 +1,12 @@
 /*
 FILE
-	svn ID removed
+	mysqlconnect.c
 PURPOSE
 	Wrapper for mysql_real_connect() that supports very fast
 	connect to main or alternative local.h set MySQL servers.
 	Interface version.
 AUTHOR
-	(C) 2010 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2017 Gary Wallis for Unixservice, LLC.
 NOTES
 	Based on unxsBind/mysqlping.c test code.
 */

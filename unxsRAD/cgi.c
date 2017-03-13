@@ -1,6 +1,6 @@
 /*
 FILE
-	svn ID removed
+	cgi.c
 LEGAL
 	Public Domain
 	

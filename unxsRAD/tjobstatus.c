@@ -39,7 +39,7 @@ void Insert_tJobStatus(void);
 void Update_tJobStatus(char *cRowid);
 void ProcesstJobStatusListVars(pentry entries[], int x);
 
- //In tJobStatusfunc.h file included below
+ //In tJobStatusfunc.c file included below
 void ExtProcesstJobStatusVars(pentry entries[], int x);
 void ExttJobStatusCommands(pentry entries[], int x);
 void ExttJobStatusButtons(void);
@@ -51,7 +51,7 @@ void ExttJobStatusListSelect(void);
 void ExttJobStatusListFilter(void);
 void ExttJobStatusAuxTable(void);
 
-#include "tjobstatusfunc.h"
+#include "tjobstatusfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstJobStatusVars(pentry entries[], int x)

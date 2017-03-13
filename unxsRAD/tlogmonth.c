@@ -56,7 +56,7 @@ void Insert_tLogMonth(void);
 void Update_tLogMonth(char *cRowid);
 void ProcesstLogMonthListVars(pentry entries[], int x);
 
- //In tLogMonthfunc.h file included below
+ //In tLogMonthfunc.c file included below
 void ExtProcesstLogMonthVars(pentry entries[], int x);
 void ExttLogMonthCommands(pentry entries[], int x);
 void ExttLogMonthButtons(void);
@@ -68,7 +68,7 @@ void ExttLogMonthListSelect(void);
 void ExttLogMonthListFilter(void);
 void ExttLogMonthAuxTable(void);
 
-#include "tlogmonthfunc.h"
+#include "tlogmonthfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstLogMonthVars(pentry entries[], int x)
