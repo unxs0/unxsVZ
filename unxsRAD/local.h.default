@@ -43,6 +43,7 @@ LEGAL
 //You should customize these for your own ISP
 #define EXTISPNAME "openisp"
 #define EXTISPURL "openisp.net"
+#define HEADER_TITLE "unxsRAD"
 
 
 //End-users: Do not change these!

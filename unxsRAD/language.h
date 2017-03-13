@@ -29,19 +29,18 @@
 #define LANG_NBR_EXTMOD "<blink>This record was just modified by another user!"
 #define LANG_NBRF_REC_MODIFIED "record %s modified"
 
-#define LANG_NBB_SKIPFIRST "<input style='width:30px;' title=\"Skip to first record\" type=submit name=gcFind value=\"<<\" >"
-#define LANG_NBB_SKIPBACK "<input style='width:30px;' title=\"Go back one record\" type=submit name=gcFind value=\"< \" >"
-#define LANG_NBB_SKIPNEXT "<input style='width:30px;' title=\"Advance to next record\" type=submit name=gcFind value=\" >\" >"
-#define LANG_NBB_SKIPLAST "<input style='width:30px;' title=\"Skip to last record\" type=submit name=gcFind value=\">>\" >\n"
+#define LANG_NBB_SKIPFIRST "<input class=first title='Skip to first record' type=submit name=gcFind value='<<' >"
+#define LANG_NBB_SKIPBACK "<input class=back title='Go back one record' type=submit name=gcFind value='< ' >"
+#define LANG_NBB_SKIPNEXT "<input class=next title='Advance to next record' type=submit name=gcFind value=' >' >"
+#define LANG_NBB_SKIPLAST "<input class=last title='Skip to last record' type=submit name=gcFind value='>>' >\n"
 
-//Modified for local .h use
-#define LANG_NBB_NEWREV "<input class=revButton title=\"Create new record\" type=submit name=gcCommand value=New>"
-#define LANG_NBB_NEW "<input  title=\"Create new record\" type=submit name=gcCommand value=New>"
-#define LANG_NBB_DELETE "<input class=warnButton title=\"Delete current record\" type=submit name=gcCommand value=Delete>"
-#define LANG_NBB_MODIFY "<input class=alertButton title=\"Modify current record\" type=submit name=gcCommand value=Modify>"
+#define LANG_NBB_NEWREV "<input class=revButton title='Create new record' type=submit name=gcCommand value=New>"
+#define LANG_NBB_NEW "<input class=new title='Create new record' type=submit name=gcCommand value=New>"
+#define LANG_NBB_DELETE "<input class=delete title='Delete current record' type=submit name=gcCommand value=Delete>"
+#define LANG_NBB_MODIFY "<input class=modify title='Modify current record' type=submit name=gcCommand value=Modify>"
 
-#define LANG_NBB_LIST "<input title=\"Paginated listing of all records\" type=submit name=gcFind value=List>"
-#define LANG_NBB_SEARCH "<input class=revButton title=\"Find record with parameters set below\" type=submit name=gcFind value=Search>"
+#define LANG_NBB_LIST "<input class=list title='Paginated listing of all records' type=submit name=gcFind value=List>"
+#define LANG_NBB_SEARCH "<input class=refresh title='Find record with parameters set below' type=submit name=gcFind value=Search>"
 
 #define LANG_PAGEMACHINE_HINT "No matching records found.<br>"
 #define LANG_PAGEMACHINE_SHOWING "Page %d/%d (Records %d-%d of %d)\n"

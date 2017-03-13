@@ -12,10 +12,12 @@
 
 #Change these for your system: Ex. -DSolaris instead of -DLinux
 #CFLAGS=-O -DLinux -Wall -pedantic
-CFLAGS= -DLinux -Wall
+GIT_VERSION := $(shell git describe --dirty --always --tags)
+CFLAGS= -DLinux -Wall -DdsGitVersion=\"$(GIT_VERSION)\"
 RELEASE= 0.1
 LIBS= -L/usr/lib/openisp -L/usr/lib64/mysql -L/usr/lib/mysql -lz -lcrypt -lm -lssl -ltemplate -lmysqlclient
-CGIDIR=/var/www/unxs/cgi-bin/
+CGIDIR=/var/www/cgi-bin/
+IMGDIR=/var/www/html/pami/images/
 
 
 all: unxsRAD.cgi unxsRAD
@@ -108,24 +110,13 @@ local.h: local.h.default
 
 clean:
 	rm -f *.o
-	rm unxsRAD.cgi
-
-cleandist:
-	rm -f *.o *.gz
+	rm -f unxsRAD.cgi
 
 install: unxsRAD.cgi unxsRAD
 	install -s unxsRAD.cgi $(CGIDIR)unxsRAD.cgi
 	install -s unxsRAD /usr/sbin/unxsRAD
-	rm unxsRAD.cgi
-	rm unxsRAD
+	rm -f unxsRAD.cgi
+	rm -f unxsRAD
 
-distribution:
-	cd ..;  tar czvf unxsRAD/unxsRAD$(RELEASE).tar.gz --exclude .svn\
-		unxsRAD/*.h\
-		unxsRAD/*.c\
-		unxsRAD/data\
-		unxsRAD/docs\
-		unxsRAD/makefile\
-		unxsRAD/CHANGES\
-		unxsRAD/LICENSE\
-		unxsRAD/INSTALL
+install-img: 
+	cp images/*.gif $(IMGDIR)
