@@ -155,7 +155,7 @@ void ExtMainContent(void)
 	printf("<td>%s</td></tr>\n",gcHostname);
 
 	OpenRow("Build Information","black");
-	printf("<td>%s</td></tr>\n",gcBuildInfo);
+	printf("<td>%s</td></tr>\n",sgcBuildInfo);
 
 	OpenRow("RAD Status","black");
 	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);

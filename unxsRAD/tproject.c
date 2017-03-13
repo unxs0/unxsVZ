@@ -1,11 +1,11 @@
 /*
 FILE
 	tProject source code of unxsRAD.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2009 for Unixservice
-	svn ID removed
+	Built by mysqlRAD2.cgi 
+	(C) Gary Wallis 2001-2017 for Unixservice, LLC.
 PURPOSE
 	Schema dependent RAD generated file.
-	Program app functionality in tprojectfunc.h while 
+	Program app functionality in tprojectfunc.c while 
 	RAD is still to be used.
 */
 
@@ -41,7 +41,6 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
-
 #define VAR_LIST_tProject "tProject.uProject,tProject.cLabel,tProject.uProjectStatus,tProject.uTemplateSet,tProject.cDescription,tProject.cDirectory,tProject.uOwner,tProject.uCreatedBy,tProject.uCreatedDate,tProject.uModBy,tProject.uModDate"
 
  //Local only
@@ -49,7 +48,7 @@ void Insert_tProject(void);
 void Update_tProject(char *cRowid);
 void ProcesstProjectListVars(pentry entries[], int x);
 
- //In tProjectfunc.h file included below
+ //In tProjectfunc.c file included below
 void ExtProcesstProjectVars(pentry entries[], int x);
 void ExttProjectCommands(pentry entries[], int x);
 void ExttProjectButtons(void);
@@ -61,7 +60,7 @@ void ExttProjectListSelect(void);
 void ExttProjectListFilter(void);
 void ExttProjectAuxTable(void);
 
-#include "tprojectfunc.h"
+#include "tprojectfunc.c"
 
  //Table Variables Assignment Function
 void ProcesstProjectVars(pentry entries[], int x)

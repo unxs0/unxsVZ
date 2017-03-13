@@ -69,7 +69,7 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo=dsGitVersion;
+static char *sgcBuildInfo=dsGitVersion;
 char gcRADStatus[32]={"start"};
 
 //Local
@@ -287,7 +287,7 @@ int main(int iArgc, char *cArgv[])
 
 }//end of main()
 
-#include "mainfunc.h"
+#include "mainfunc.c"
 
 void unxsRAD(const char *cResult)
 {
@@ -377,6 +377,7 @@ void Header_ism3(char *cTitle, int iJs)
 	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
 	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/rad.ico?v=2>\n");
 	printf("</head><body><form name=formMain action=unxsRAD.cgi method=post><blockquote>\n");
+	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td align=left valign=bottom>\n");
 	if(!strncmp(gcFunction,"Main",4))
 		printf("<img src=/images/rad.png>&nbsp;&nbsp;\n");
 

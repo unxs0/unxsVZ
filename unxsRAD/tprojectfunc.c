@@ -12,6 +12,8 @@ AUTHOR
 //ModuleFunctionProtos()
 
 
+static char *sgcBuildInfo=dsGitVersion;
+
 void tProjectNavList(void);
 void tProjectTableNavList(void);
 void tProjectTableFieldNavList(void);
@@ -209,7 +211,7 @@ void ExttProjectButtons(void)
 			printf("<u>Table Tips</u><br>");
 			printf("Here we manage projects. Projects consists of a templates, tables,"
 				" fields and their properties. Source code and even ready to run applications can be"
-				" generated here if all the templates required exist.");
+				" generated here if all the templates required exist. (git %s).",sgcBuildInfo);
 			printf("<p><u>Record Context Info</u><br>");
 			if(guCookieProject && guCookieProject!=uProject)
 				printf("Loaded is not the workflow project.");
