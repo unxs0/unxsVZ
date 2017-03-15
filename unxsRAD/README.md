@@ -1,9 +1,9 @@
-# unxsRAD 
+## unxsRAD 
 
 Very preliminary version being built based on old MySQL C app code generator
 that was laying around.
 
-## MySQL Data Driven Rapid Application Developer
+### MySQL Data Driven Rapid Application Developer
 
 Paste in your MySQL schema, type in some other details and create your app code base.
 
@@ -23,7 +23,7 @@ and interpreted language requirement/version/lib headaches.
 You apps can be in node.js/python/go/ruby etc by extending the template
 code accordingly to handle the output file extensions.
 
-## Backend Nomenclature and Quick Notes
+### Backend Nomenclature and Quick Notes
 
 *t* prefix is for a table.
 *u* prefix is for an unsigned int or the FK of a table (may show up as the FK.cLabel char string, or a unix timestamp (shown as a date).
@@ -31,13 +31,15 @@ code accordingly to handle the output file extensions.
 
 Main tab provides access to all schema.
 
-## unxsRAD Installation
+### unxsRAD Installation
 
-### Non standard required libs
+#### Non standard required libs
+
 mysql-devel: libmysqlclient.a
 unxsTemplateLib: libtemplate.a
 
-### Straightforward standalone C
+#### Straightforward standalone C
+
 ```
 make
 vi local.h #set MySQL server items
@@ -45,9 +47,12 @@ vi Makefile #set cgi-bin and html paths
 make install
 ```
 
-### httpd content notes
+#### httpd content notes
+
 You must use unxsVZ/unxsAdmin images/css and js content
 in your html dir
 
-## User Guide
+### User Guide
+
+Nothing yet.
 
