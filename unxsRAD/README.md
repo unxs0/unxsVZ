@@ -3,6 +3,8 @@
 Very preliminary version being built based on old MySQL C app code generator
 that was laying around.
 
+Will provide major provider (Amazon/Google/DigitalOcean) VM cloud based Docker DevOps and cloud SQL server support.
+
 ### MySQL Data Driven Rapid Application Developer
 
 Paste in your MySQL schema, type in some other details and create your app code base.
@@ -25,11 +27,22 @@ code accordingly to handle the output file extensions.
 
 ### Backend Nomenclature and Quick Notes
 
-*t* prefix is for a table.
-*u* prefix is for an unsigned int or the FK of a table (may show up as the FK.cLabel char string, or a unix timestamp (shown as a date).
-*c* prefix is for a char string.
+#### Backend schema prefixes for easy SQL program reading.
 
-Main tab provides access to all schema.
+* *t* prefix is for a table.
+
+	E.g. tAuthorize.
+
+* *u* prefix is for an unsigned int or long int.
+
+	Or the FK of a table (may show up as the FK.cLabel char string, or a unix timestamp (shown as a date).
+	E.g. uAuthorize.
+
+* *c* prefix is for a char string.
+
+	E.g. cLabel as for example tTemplate.cLabel.
+
+#### Main tab provides access to all schema.
 
 ### unxsRAD Installation
 
