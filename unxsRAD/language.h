@@ -364,7 +364,7 @@
 #define LANG_FL_tProject_cDescription "cDescription"
 #define LANG_FT_tProject_cDescription "Project blurb"
 #define LANG_FL_tProject_cDirectory "cDirectory"
-#define LANG_FT_tProject_cDirectory "Project blurb"
+#define LANG_FT_tProject_cDirectory "Project source code directory name"
 #define LANG_FL_tProject_uOwner "uOwner"
 #define LANG_FT_tProject_uOwner "Record owner"
 #define LANG_FL_tProject_uCreatedBy "uCreatedBy"

@@ -196,7 +196,10 @@ void ExtMainContent(void)
 	printf("<td>%s</td></tr>\n",gcHostname);
 
 	OpenRow("main.c Build Information","black");
-	printf("<td>(<a class=darkLink href=https://github.com/unxs0/unxsVZ/commit/%1$s>%1$s</a>)</td></tr>\n",sgcBuildInfo);
+	if(!strstr(sgcBuildInfo,"-dirty"))
+		printf("<td><a target=github class=darkLink href=https://github.com/unxs0/unxsVZ/commit/%1$s>%1$s</a></td></tr>\n",sgcBuildInfo);
+	else
+		printf("<td>Local git mods: %1$s</td></tr>\n",sgcBuildInfo);
 
 	OpenRow("Application Summary","black");
 	printf("<td>This tool is used to create C MySQL CGI applications from template code sets."

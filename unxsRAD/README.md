@@ -23,6 +23,14 @@ and interpreted language requirement/version/lib headaches.
 You apps can be in node.js/python/go/ruby etc by extending the template
 code accordingly to handle the output file extensions.
 
+## Backend Nomenclature and Quick Notes
+
+*t* prefix is for a table.
+*u* prefix is for an unsigned int or the FK of a table (may show up as the FK.cLabel char string, or a unix timestamp (shown as a date).
+*c* prefix is for a char string.
+
+Main tab provides access to all schema.
+
 ## unxsRAD Installation
 
 ### Non standard required libs

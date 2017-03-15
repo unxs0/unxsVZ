@@ -1,6 +1,6 @@
 /*
 FILE
-	tAuthorize
+	tauthorize.c
 	(C) Gary Wallis for Unixservice, LLC. 2001-2017
 PURPOSE
 	Authentication and Authorization data for tClient
@@ -30,7 +30,6 @@ static char cClrPasswd[33]={""};
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -423,10 +422,8 @@ void NewtAuthorize(unsigned uMode)
 	Insert_tAuthorize();
 	//sprintf(gcQuery,"New record %u added");
 	uAuthorize=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tAuthorize",uAuthorize);
 	unxsRADLog(uAuthorize,"tAuthorize","New");
-#endif
 
 	if(!uMode)
 	{
@@ -439,27 +436,18 @@ void NewtAuthorize(unsigned uMode)
 
 void DeletetAuthorize(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uAuthorize=%u AND ( uOwner=%u OR %u>9 )"
 					,uAuthorize,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uAuthorize=%u"
-					,uAuthorize);
-#endif
 	macro_mySQLQueryHTMLError;
 	//tAuthorize("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uAuthorize,"tAuthorize","Del");
-#endif
 		tAuthorize(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uAuthorize,"tAuthorize","DelError");
-#endif
 		tAuthorize(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -512,7 +500,6 @@ void ModtAuthorize(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -528,11 +515,6 @@ void ModtAuthorize(void)
 	sprintf(gcQuery,"SELECT uAuthorize,uModDate FROM tAuthorize\
 				WHERE uAuthorize=%u"
 						,uAuthorize);
-#else
-	sprintf(gcQuery,"SELECT uAuthorize FROM tAuthorize\
-				WHERE uAuthorize=%u"
-						,uAuthorize);
-#endif
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -542,19 +524,15 @@ void ModtAuthorize(void)
 	if(i>1) tAuthorize(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tAuthorize(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tAuthorize(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tAuthorize",uAuthorize);
 	unxsRADLog(uAuthorize,"tAuthorize","Mod");
-#endif
 	tAuthorize(gcQuery);
 
 }//ModtAuthorize(void)
@@ -579,7 +557,20 @@ void tAuthorizeList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uAuthorize<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>cIpMask<td><font face=arial,helvetica color=white>uPerm<td><font face=arial,helvetica color=white>uCertClient<td><font face=arial,helvetica color=white>cPasswd<td><font face=arial,helvetica color=white>cClrPasswd<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
+	printf("<tr bgcolor=black>"
+		"<td><font face=arial,helvetica color=white>uAuthorize"
+		"<td><font face=arial,helvetica color=white>cLabel"
+		"<td><font face=arial,helvetica color=white>cIpMask"
+		"<td><font face=arial,helvetica color=white>uPerm"
+		"<td><font face=arial,helvetica color=white>uCertClient"
+		"<td><font face=arial,helvetica color=white>cPasswd"
+		"<td><font face=arial,helvetica color=white>cClrPasswd"
+		"<td><font face=arial,helvetica color=white>uOwner"
+		"<td><font face=arial,helvetica color=white>uCreatedBy"
+		"<td><font face=arial,helvetica color=white>uCreatedDate"
+		"<td><font face=arial,helvetica color=white>uModBy"
+		"<td><font face=arial,helvetica color=white>uModDate"
+			"</tr>");
 
 
 
@@ -635,7 +626,20 @@ void tAuthorizeList(void)
 
 void CreatetAuthorize(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tAuthorize ( uAuthorize INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '',unique (cLabel,uOwner), uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cIpMask VARCHAR(20) NOT NULL DEFAULT '', uPerm INT UNSIGNED NOT NULL DEFAULT 0, uCertClient INT UNSIGNED NOT NULL DEFAULT 0, cPasswd VARCHAR(35) NOT NULL DEFAULT '', cClrPasswd VARCHAR(32) NOT NULL DEFAULT '' )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tAuthorize ("
+			" uAuthorize INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cLabel VARCHAR(32) NOT NULL DEFAULT '',UNIQUE (cLabel,uOwner),"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cIpMask VARCHAR(20) NOT NULL DEFAULT '',"
+			" uPerm INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCertClient INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cPasswd VARCHAR(35) NOT NULL DEFAULT '',"
+			" cClrPasswd VARCHAR(32) NOT NULL DEFAULT ''"
+				" )");
 	macro_mySQLQueryHTMLError;
 
 }//CreatetAuthorize()

@@ -212,7 +212,7 @@ void ExttProjectButtons(void)
 			printf("Here we manage projects. Projects consists of a templates, tables,"
 				" fields and their properties. Source code and even ready to run applications can be"
 				" generated here if all the templates required exist."
-				"<br>(<a href=https://github.com/unxs0/unxsVZ/commit/%1$s>%1$s</a>).",sgcBuildInfo);
+				"<br>(<a target=github href=https://github.com/unxs0/unxsVZ/commit/%1$s>%1$s</a>).",sgcBuildInfo);
 			printf("<p><u>Record Context Info</u><br>");
 			if(guCookieProject && guCookieProject!=uProject)
 				printf("Loaded is not the workflow project.");
