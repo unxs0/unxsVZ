@@ -21,7 +21,7 @@ all: unxsRAD.cgi unxsRAD
 unxsRAD: unxsrad.o mysqlconnect.o
 	cc unxsrad.o mysqlconnect.o -o unxsRAD $(LIBS)
 
-unxsrad.o: unxsrad.h mysqlrad.h local.h
+unxsrad.o: unxsrad.c unxsrad.h mysqlrad.h local.h
 	cc -c unxsrad.c -o unxsrad.o $(CFLAGS)
 
 unxsRAD.cgi: tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o\

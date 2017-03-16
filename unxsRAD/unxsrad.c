@@ -1,11 +1,10 @@
 /*
 FILE 
 	unxsrad.c
-	svn ID removed
 PURPOSE
 	unxsRAD job queue CLI standalone program	
 LEGAL
-	(C) Gary Wallis 2012 for Unixservice, LLC. All Rights Reserved.
+	(C) 2012-2017 Gary Wallis for Unixservice, LLC. All Rights Reserved.
 	LICENSE file should be included in distribution.
 OTHER
 HELP
@@ -18,7 +17,7 @@ HELP
 //Global vars
 MYSQL gMysql;
 char gcQuery[8192]={""};
-char *gcBuildInfo="svn ID removed";
+static char *sgcBuildInfo=dsGitVersion;
 static FILE *gLfp=NULL;//log file
 char gcHostname[100]={""};
 static unsigned guTable=0;
@@ -29,7 +28,7 @@ unsigned guProject=0;
 char gcProject[32]={"Project"};
 char gcProjectLC[32]={"project"};
 char gcRADStatus[32]={"Unknown"};
-char gcDirectory[100]={"/tmp"};
+char gcDirectory[256]={""};
 char gcRADDataDir[100]={"/home/unxs/unxsVZ/unxsRAD/appdata/"};
 char gcAppSummary[256]={"No application summary"};
 
@@ -99,6 +98,8 @@ int main(int iArgc, char *cArgv[])
 	else if(1)
 	{
 		printf("usage: %s ProcessJobQueue\n",cArgv[0]);
+		printf("\tgcHostname: %s\n",gcHostname);
+		printf("\tgit build info: %s\n",sgcBuildInfo);
 	}
 	fclose(gLfp);
 	mysql_close(&gMysql);
@@ -112,7 +113,8 @@ void ProcessJobQueue(void)
         MYSQL_ROW field;
 	unsigned uJob=0;
 
-	sprintf(gcQuery,"SELECT uJob,cJobName,cJobData FROM tJob,tServer"
+	//Explicit queue
+	sprintf(gcQuery,"SELECT tJob.uJob,tJob.cJobName,tJob.cJobData FROM tJob,tServer"
 			" WHERE tJob.uServer=tServer.uServer AND tServer.cLabel='%s'"
 			" AND tJob.uJobStatus=1",
 					gcHostname);
@@ -120,6 +122,25 @@ void ProcessJobQueue(void)
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uJob);
+		if(!strcmp(field[1],"MakeSourceCodeJob"))
+			MakeSourceCodeJob(uJob,field[2]);
+	}
+	mysql_free_result(res);
+
+	//Any server queue
+	sprintf(gcQuery,"SELECT tJob.uJob,tJob.cJobName,tJob.cJobData FROM tJob"
+			" WHERE tJob.uServer=0"
+			" AND tJob.uJobStatus=1");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		logfileLine("ProcessJobQueue2",mysql_error(&gMysql));
 		return;
 	}
         res=mysql_store_result(&gMysql);
@@ -155,7 +176,14 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 
 	sprintf(gcAppSummary,"%.255s",ForeignKey("tProject","cDescription",guProject));
 
-	sprintf(gcDirectory,"%.99s",ForeignKey("tProject","cDirectory",guProject));
+	char cDirectory[100]={""};
+	sprintf(cDirectory,"%.99s",ForeignKey("tProject","cDirectory",guProject));
+	if(cDirectory[0])
+		sprintf(gcDirectory,"/var/local/unxsRAD/apps/%.99s",cDirectory);
+	else
+		sprintf(gcDirectory,"/var/local/unxsRAD/apps/%.99s",ForeignKey("tProject","cLabel",guProject));
+	sprintf(gcQuery,"mkdir -p %s/data",gcDirectory);
+	system(gcQuery);
 
 	sscanf(ForeignKey("tProject","uProjectStatus",guProject),"%u",&uProjectStatus);
 	sprintf(gcRADStatus,"%.31s",ForeignKey("tProjectStatus","cLabel",uProjectStatus));
@@ -187,9 +215,9 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 	mysql_free_result(res);
 
 	//Add other files and dirs
-	GetRADConfiguration("gcRADDataDir",gcRADDataDir,100,0);
-	sprintf(gcQuery,"mkdir -p %s/data;cp %s/*.txt %s/data/",gcDirectory,gcRADDataDir,gcDirectory);
-	system(gcQuery);
+	//GetRADConfiguration("gcRADDataDir",gcRADDataDir,100,0);
+	//sprintf(gcQuery,"mkdir -p %s/data;cp %s/*.txt %s/data/",gcDirectory,gcRADDataDir,gcDirectory);
+	//system(gcQuery);
 	logfileLine("MakeSourceCodeJob","end");
 
 }//void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
@@ -230,7 +258,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+		logfileLine("CreateFile",mysql_error(&gMysql));
 		return(-1);
 	}
         res=mysql_store_result(&gMysql);
@@ -250,7 +278,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable)
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+		logfileLine("CreateFile",mysql_error(&gMysql));
 		return(-1);
 	}
         res=mysql_store_result(&gMysql);
@@ -516,7 +544,8 @@ unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable)
 		sprintf(cFile,"%.126s/%.126sfunc.h",gcDirectory,gcTableNameLC);
 		if((fp=fopen(cFile,"w"))==NULL)
 		{
-			logfileLine("CreateModuleFuncFile",cFile);
+			sprintf(gcQuery,"could not open %s",cFile);
+			logfileLine("CreateModuleFuncFile",gcQuery);
 			return(1);
 		}
 			
