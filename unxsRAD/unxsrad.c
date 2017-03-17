@@ -15,6 +15,7 @@ HELP
 #include <openisp/template.h>
 
 //Global vars
+static unsigned guDebug=0;
 MYSQL gMysql;
 char gcQuery[8192]={""};
 static char *sgcBuildInfo=dsGitVersion;
@@ -36,11 +37,11 @@ char gcAppSummary[256]={"No application summary"};
 void ProcessJobQueue(void);
 void MakeSourceCodeJob(unsigned uJob,char const *cJobData);
 void logfileLine(const char *cFunction,const char *cLogline);
-unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable);
+unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned uSourceLock);
 unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable);
-unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable);
-unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable);
-unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable);
+unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable,unsigned uSourceLock);
+unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable,unsigned uSourceLock);
+unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable,unsigned uSourceLock);
 void funcModuleListPrint(FILE *fp);
 void funcModuleListTable(FILE *fp);
 void funcModuleLoadVars(FILE *fp);
@@ -94,10 +95,15 @@ int main(int iArgc, char *cArgv[])
 	{
 		if(!strcmp(cArgv[1],"ProcessJobQueue"))
 			ProcessJobQueue();
+		if(!strcmp(cArgv[1],"ProcessJobQueueDebug"))
+		{
+			guDebug=1;
+			ProcessJobQueue();
+		}
 	}
 	else if(1)
 	{
-		printf("usage: %s ProcessJobQueue\n",cArgv[0]);
+		printf("usage: %s ProcessJobQueue|ProcessJobQueueDebug\n",cArgv[0]);
 		printf("\tgcHostname: %s\n",gcHostname);
 		printf("\tgit build info: %s\n",sgcBuildInfo);
 	}
@@ -112,6 +118,9 @@ void ProcessJobQueue(void)
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uJob=0;
+
+	if(guDebug)
+		logfileLine("ProcessJobQueue","debug mode on");
 
 	//Explicit queue
 	sprintf(gcQuery,"SELECT tJob.uJob,tJob.cJobName,tJob.cJobData FROM tJob,tServer"
@@ -162,6 +171,7 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 	unsigned uProject=0;
 	unsigned uProjectStatus=0;
 	unsigned uTable=0;
+	unsigned uSourceLock=0;
 	unsigned uTemplateSet=0;
 	unsigned uOnce=1;
 
@@ -184,13 +194,16 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 		sprintf(gcDirectory,"/var/local/unxsRAD/apps/%.99s",ForeignKey("tProject","cLabel",guProject));
 	sprintf(gcQuery,"mkdir -p %s/data",gcDirectory);
 	system(gcQuery);
+	if(guDebug)
+		logfileLine("MakeSourceCodeJob",gcQuery);
 
 	sscanf(ForeignKey("tProject","uProjectStatus",guProject),"%u",&uProjectStatus);
 	sprintf(gcRADStatus,"%.31s",ForeignKey("tProjectStatus","cLabel",uProjectStatus));
 
 	//All tTables that do not have uSourceLock=yes
-	sprintf(gcQuery,"SELECT tProject.cLabel,tTable.cLabel,tTable.uTable,tProject.uTemplateSet FROM tProject,tTable"
-			" WHERE tTable.uProject=tProject.uProject AND tProject.uProject=%u AND tTable.uSourceLock=0",
+	//If uSourceLock==1 then if file does not exist we create if not we do not replace
+	sprintf(gcQuery,"SELECT tProject.cLabel,tTable.cLabel,tTable.uTable,tProject.uTemplateSet,tTable.uSourceLock FROM tProject,tTable"
+			" WHERE tTable.uProject=tProject.uProject AND tProject.uProject=%u",
 					uProject);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -204,12 +217,21 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 		if(uOnce)
 		{
 			sscanf(field[3],"%u",&uTemplateSet);
-			printf("%s uTemplateSet:%u\n",field[0],uTemplateSet);
+			if(guDebug)
+			{
+				sprintf(gcQuery,"%s uTemplateSet:%u",field[0],uTemplateSet);
+				logfileLine("MakeSourceCodeJob",gcQuery);
+			}
 			uOnce=0;
 		}
 		sscanf(field[2],"%u",&uTable);
-		printf("%s uTable:%u\n",field[1],uTable);
-		if(CreateFile(uTemplateSet,uTable,field[1]))
+		sscanf(field[4],"%u",&uSourceLock);
+		if(guDebug)
+		{
+			sprintf(gcQuery,"%s uTable:%u:%u",field[1],uTable,uSourceLock);
+			logfileLine("MakeSourceCodeJob",gcQuery);
+		}
+		if(CreateFile(uTemplateSet,uTable,field[1],uSourceLock))
 			break;
 	}
 	mysql_free_result(res);
@@ -242,12 +264,15 @@ void logfileLine(const char *cFunction,const char *cLogline)
 }//void logfileLine(char *cLogline)
 
 
-unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable)
+unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned uSourceLock)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uRetVal=0;
 	unsigned uTemplate=0;
+
+	logfileLine("CreateFile","start");
+	if(guDebug) logfileLine("CreateFile",cTable);
 
 	WordToLower(cTable);
 
@@ -264,9 +289,10 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
+		if(guDebug) logfileLine("CreateFile","CreateGenericFile {{cTable}}");
 		sscanf(field[0],"%u",&uTemplate);
 		if(uTemplate && uTable)
-			uRetVal=CreateGenericFile(uTemplate,uTable);
+			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock);
 	}
 	mysql_free_result(res);
 
@@ -284,9 +310,10 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
+		if(guDebug) logfileLine("CreateFile","CreateGenericFile {{cTable}}.c case");
 		sscanf(field[0],"%u",&uTemplate);
 		if(uTemplate && uTable)
-			uRetVal=CreateGenericFile(uTemplate,uTable);
+			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock);
 	}
 	mysql_free_result(res);
 
@@ -304,9 +331,10 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable)
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
+		logfileLine("CreateFile","CreateGenericFile {{cTable}}func.h case");
 		sscanf(field[0],"%u",&uTemplate);
 		if(uTemplate && uTable)
-			uRetVal=CreateGenericFile(uTemplate,uTable);
+			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock);
 	}
 	mysql_free_result(res);
 
@@ -326,9 +354,10 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable)
 	        res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
+			if(guDebug) logfileLine("CreateFile","CreateModuleFuncFile using modulefunc.h template");
 			sscanf(field[0],"%u",&uTemplate);
 			if(uTemplate && uTable)
-				uRetVal=CreateModuleFuncFile(uTemplate,uTable);
+				uRetVal=CreateModuleFuncFile(uTemplate,uTable,uSourceLock);
 		}
 		mysql_free_result(res);
 
@@ -345,9 +374,10 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable)
 	        res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
+			if(guDebug) logfileLine("CreateFile","CreateModuleFuncFile using module.c template");
 			sscanf(field[0],"%u",&uTemplate);
 			if(uTemplate && uTable)
-				uRetVal=CreateModuleFile(uTemplate,uTable);
+				uRetVal=CreateModuleFile(uTemplate,uTable,uSourceLock);
 		}
 		mysql_free_result(res);
 
@@ -357,13 +387,16 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable)
 	}
 
 	//Here we decide which template to use
+	logfileLine("CreateFile","end");
 	return(uRetVal);
 }//unsigned CreateFile()
 
 
-unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
+unsigned CreateModuleFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLock)
 {
 	unsigned uRetVal= -1;
+	
+	logfileLine("CreateModuleFile","start");
 
 	if(!uTable || !uTemplate) return(uRetVal);
 
@@ -391,9 +424,19 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 		FILE *fp;
 		char cFile[256]={""};
 		sprintf(cFile,"%.126s/%.126s.c",gcDirectory,gcTableNameLC);
+		if(uSourceLock)
+		{
+			if((fp=fopen(cFile,"r"))!=NULL)
+			{
+				logfileLine("CreateModuleFile","uSourceLock==1 not replacing");
+				mysql_free_result(res);
+				return(0);
+			}
+		}
 		if((fp=fopen(cFile,"w"))==NULL)
 		{
 			logfileLine("CreateModuleFile",cFile);
+			mysql_free_result(res);
 			return(1);
 		}
 
@@ -446,14 +489,16 @@ unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable)
 	}
 	mysql_free_result(res);
 
+	logfileLine("CreateModuleFile","end");
 	return(uRetVal);
 
 }//unsigned CreateModuleFile()
 
 
-unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable)
+unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable,unsigned uSourceLock)
 {
 	unsigned uRetVal= -1;
+	logfileLine("CreateGenericFile","start");
 
 	if(!uTable || !uTemplate) return(uRetVal);
 
@@ -475,9 +520,20 @@ unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable)
 		FILE *fp=NULL;
 		char cFile[256]={""};
 		sprintf(cFile,"%.126s/%.126s",gcDirectory,field[1]);
+
+		if(uSourceLock)
+		{
+			if((fp=fopen(cFile,"r"))!=NULL)
+			{
+				logfileLine("CreateGenericFile","uSourceLock==1 not replacing");
+				mysql_free_result(res);
+				return(0);
+			}
+		}
 		if((fp=fopen(cFile,"w"))==NULL)
 		{
 			logfileLine("CreateGenericFile",cFile);
+			mysql_free_result(res);
 			return(1);
 		}
 			
@@ -506,16 +562,16 @@ unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable)
 	}
 	mysql_free_result(res);
 
+	logfileLine("CreateGenericFile","end");
 	return(uRetVal);
-
 
 }//unsigned CreateGenericFile()
 
 
-unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable)
+unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable,unsigned uSourceLock)
 {
-
 	unsigned uRetVal= -1;
+	logfileLine("CreateModuleFuncFile","start");
 
 	if(!uTable || !uTemplate) return(uRetVal);
 
@@ -542,10 +598,20 @@ unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable)
 		FILE *fp=NULL;
 		char cFile[256]={""};
 		sprintf(cFile,"%.126s/%.126sfunc.h",gcDirectory,gcTableNameLC);
+		if(uSourceLock)
+		{
+			if((fp=fopen(cFile,"r"))!=NULL)
+			{
+				logfileLine("CreateModuleFuncFile","uSourceLock==1 not replacing");
+				mysql_free_result(res);
+				return(0);
+			}
+		}
 		if((fp=fopen(cFile,"w"))==NULL)
 		{
 			sprintf(gcQuery,"could not open %s",cFile);
 			logfileLine("CreateModuleFuncFile",gcQuery);
+			mysql_free_result(res);
 			return(1);
 		}
 			
@@ -581,6 +647,7 @@ unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable)
 	}
 	mysql_free_result(res);
 
+	logfileLine("CreateModuleFuncFile","end");
 	return(uRetVal);
 
 

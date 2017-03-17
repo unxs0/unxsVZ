@@ -75,7 +75,7 @@ char gcRADStatus[32]={"start"};
 //Local
 void Footer_ism3(void);
 void Header_ism3(char *cMsg, int iJs);
-const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
+const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 char *cEmailInput(char *cInput);
 void GetClientOwner(unsigned uClient, unsigned *uOwner);
 void htmlPlainTextError(const char *cError);
@@ -1327,31 +1327,33 @@ int ReadYesNoPullDown(const char *cLabel)
 
 const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
 {
+	if(!uKey)
+        	return("---");
+
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 
-	static char gcQuery[256];
+	static char cQuery[256];
 
-        sprintf(gcQuery,"SELECT %s FROM %s WHERE _rowid=%u",
+        sprintf(cQuery,"SELECT %.99s FROM %.99s WHERE _rowid=%u",
                         cFieldName,cTableName,uKey);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql)) return(mysql_error(&gMysql));
+        mysql_query(&gMysql,cQuery);
+        if(mysql_errno(&gMysql))
+		return("FK Error");
 
         mysqlRes=mysql_store_result(&gMysql);
         if(mysql_num_rows(mysqlRes)==1)
         {
                 mysqlField=mysql_fetch_row(mysqlRes);
-                return(mysqlField[0]);
+        	if(mysql_errno(&gMysql))
+			return("FK Error");
+		sprintf(cQuery,"%.255s",mysqlField[0]);
+                return(cQuery);
         }
-
-	if(!uKey)
-	{
-        	return("---");
-	}
 	else
 	{
-		sprintf(gcQuery,"%u",uKey);
-        	return(gcQuery);
+		sprintf(cQuery,"%u",uKey);
+        	return(cQuery);
 	}
 
 }//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)

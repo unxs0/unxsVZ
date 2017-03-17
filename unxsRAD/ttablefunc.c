@@ -525,9 +525,9 @@ void tTableFieldNavList(void)
 				" ORDER BY tField.uOrder,tField.cLabel",
 					uTable,guCompany,guLoginClient);
         mysql_query(&gMysql,gcQuery);
+        printf("<p><u>tFieldNavList</u><br>\n");
         if(mysql_errno(&gMysql))
         {
-        	printf("<p><u>tFieldNavList</u><br>\n");
                 printf("%s",mysql_error(&gMysql));
                 return;
         }
@@ -536,7 +536,6 @@ void tTableFieldNavList(void)
 	if(mysql_num_rows(res))
 	{	
 		char *cColor;
-        	printf("<p><u>tFieldNavList</u><br>\n");
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(atoi(field[0])==guCookieField)
@@ -547,6 +546,10 @@ void tTableFieldNavList(void)
 				"&uField=%s><font color=%s>%s</font></a><br>\n",
 				field[0],cColor,field[1]);
 		}
+	}
+	else
+	{
+		printf("Table has no fields, might be a special default table created directly from a \"named\" template");
 	}
         mysql_free_result(res);
 

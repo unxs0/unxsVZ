@@ -1,11 +1,10 @@
 /*
 FILE
-	svn ID removed
-	(Built initially by unixservice.com mysqlRAD2)
+	ttemplatetypefunc.c
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2009 Gary Wallis for Unixservice.
+	(C) 2001-2017 Gary Wallis for Unixservice, LLC.
  
 */
 
@@ -140,6 +139,9 @@ void ExttTemplateTypeButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
+			printf("The source code creation system uses these types to place files"
+				" in the source code directory structure. E.g. interface type main.c file be placed"
+				" in the project/interface directory.");
 			printf("<p><u>Record Context Info</u><br>");
 			tTemplateTypeNavList();
 	}
