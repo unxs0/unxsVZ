@@ -459,10 +459,16 @@ void Header_ism3(char *cTitle, int iJs)
 	//close first col
 	printf("</td><td align=right valign=bottom>\n");
 
-	printf("%s %s %s",
-		ForeignKey("tField","cLabel",guCookieField),
-		ForeignKey("tTable","cLabel",guCookieTable),
-		ForeignKey("tProject","cLabel",guCookieProject));
+	char cCookieField[100]={"---"};
+	char cCookieTable[100]={"---"};
+	char cCookieProject[100]={"---"};
+	if(guCookieField)
+		sprintf(cCookieField,"%.99s",ForeignKey("tField","cLabel",guCookieField));
+	if(guCookieTable)
+		sprintf(cCookieTable,"%.99s",ForeignKey("tTable","cLabel",guCookieTable));
+	if(guCookieProject)
+		sprintf(cCookieProject,"%.99s",ForeignKey("tProject","cLabel",guCookieProject));
+	printf("%s %s %s",cCookieField,cCookieTable,cCookieProject);
 
 	//Close header table
 	printf("</td></tr></table>\n");
@@ -1345,14 +1351,14 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
         if(mysql_num_rows(mysqlRes)==1)
         {
                 mysqlField=mysql_fetch_row(mysqlRes);
-        	if(mysql_errno(&gMysql))
-			return("FK Error");
 		sprintf(cQuery,"%.255s",mysqlField[0]);
+		mysql_free_result(mysqlRes);
                 return(cQuery);
         }
 	else
 	{
 		sprintf(cQuery,"%u",uKey);
+		mysql_free_result(mysqlRes);
         	return(cQuery);
 	}
 
