@@ -593,11 +593,11 @@ char *ParseTextAreaLines(char *cTextArea)
 
 void RemoveDefaultTables(unsigned uProject)
 {
-	char cValue[1024];
+	char cValue[2048];
 	char cLine[256];
 
         sprintf(cLine,"cDefaultTablesList_TemplateSet_%s",ForeignKey("tTemplateSet","cLabel",uTemplateSet));
-	GetConfiguration(cLine,cValue,1024,0,1);
+	GetConfiguration(cLine,cValue,2047,0,1);
 
 	while(1)
 	{

@@ -1,7 +1,0 @@
-12	uCreatedDate	1	1	1346894950	0	0	1	10	1	0			1002	Unix timestamp for creation date	10	0	0	0			20	0
-11	uCreatedBy	1	1	1346894950	0	0	1	13	1	0	"tClient","cLabel",uCreatedBy		1001	Record created by	10	0	0	0			20	0
-10	uOwner	1	1	1346894950	0	0	1	13	1	0	"tClient","cLabel",uOwner		1000	Record owner	10	0	0	0			20	0
-9	cLabel	1	1	1346894950	0	0	1	3	1	0			2	Short label	32	0	0	0			0	0
-8	uPBX	1	1	1346894950	0	0	1	1	1	0			1	Primary key	10	0	0	0			20	0
-13	uModBy	1	1	1346894950	0	0	1	13	1	0	"tClient","cLabel",uModBy		1003	Record modifed by	10	0	0	0			20	0
-14	uModDate	1	1	1346894950	0	0	1	11	1	0			1004	Unix timestamp for last update	10	0	0	0			20	0

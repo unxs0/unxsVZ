@@ -1,11 +1,10 @@
 /*
 FILE
-	svn ID removed
-	(Built initially by unixservice.com mysqlRAD2)
+	ttemplatefunc.c
 PURPOSE
-	Non schema-dependent table and application table related functions.
+	Non schema based ops
 AUTHOR
-	(C) 2001-2009 Gary Wallis for Unixservice.
+	(C) 2001-2017 Gary Wallis for Unixservice, LLC.
  
 */
 
@@ -248,11 +247,18 @@ void ExttTemplateListSelect(void)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tTemplate.uTemplate=%u"
-						" ORDER BY uTemplate",
-						uTemplate);
+		sprintf(cCat,"tTemplate.uTemplate=%u ORDER BY uTemplate", uTemplate);
 		strcat(gcQuery,cCat);
         }
+        if(!strcmp(gcFilter,"cLabel"))
+        {
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tTemplate.cLabel LIKE '%s%%' ORDER BY uTemplate",gcCommand);
+		strcat(gcQuery,cCat);
+	}
         else if(1)
         {
                 //None NO FILTER
@@ -272,6 +278,10 @@ void ExttTemplateListFilter(void)
                 printf("<option>uTemplate</option>");
         else
                 printf("<option selected>uTemplate</option>");
+        if(strcmp(gcFilter,"cLabel"))
+                printf("<option>cLabel</option>");
+        else
+                printf("<option selected>cLabel</option>");
         if(strcmp(gcFilter,"None"))
                 printf("<option>None</option>");
         else
@@ -290,10 +300,10 @@ void ExttTemplateNavBar(void)
 	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(uAllowMod(uOwner,uCreatedBy))
+	if(uOwner && uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy)) 
+	if(uOwner && uAllowDel(uOwner,uCreatedBy)) 
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -356,7 +366,10 @@ void tTemplateNavList(void)
         res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res))
 	{	
-        	printf("<p><u>tTemplateNavList</u><br>\n");
+		if(uProjectTemplateSet)
+        		printf("<p><u>tTemplateNavList Workflow</u><br>\n");
+		else
+        		printf("<p><u>tTemplateNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tTemplate"

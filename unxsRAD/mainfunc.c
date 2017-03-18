@@ -35,30 +35,10 @@ static char cTableList[64][32]={
 		"tTemplateType",
 		""};
 
-char cInitTableList[64][32]={
-		"tLogType",
-		"tStatus",
-		"tJobStatus",
-		"tServer",
-		"tFieldType",
-		"tProjectStatus",
-		"tConfiguration",
-		"tTemplate",
-		"tTemplateSet",
-		"tTemplateType",
-		"tProject",
-		"tTable",
-		"tField",
-		"tIndexType",
-		""};
-
 void ExtMainShell(int argc, char *argv[]);
-void Initialize(char *cPasswd);
-void Backup(char *cPasswd);
-void Restore(char *cPasswd, char *cTableName);
-void RestoreAll(char *cPasswd);
 void mySQLRootConnect(char *cPasswd);
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateType, char *cTemplateSet);
+void ExportTemplateFiles(char *cDir, char *cTemplateType, char *cTemplateSet);
 void ExtracttLog(char *cMonth, char *cYear, char *cPasswd, char *cTablePath);
 time_t cDateToUnixTime(char *cDate);
 void CreatetLogTable(char *cTableName);
@@ -236,26 +216,15 @@ void ExtMainShell(int argc, char *argv[])
 
 	if(argc==6 && !strcmp(argv[1],"ImportTemplateFile"))
                 ImportTemplateFile(argv[2],argv[3],argv[4],argv[5]);
-	else if(argc==3 && !strcmp(argv[1],"Initialize"))
-                Initialize(argv[2]);
-        else if(argc==3 && !strcmp(argv[1],"Backup"))
-                Backup(argv[2]);
-        else if(argc==4 && !strcmp(argv[1],"Restore"))
-                Restore(argv[2],argv[3]);
-        else if(argc==3 && !strcmp(argv[1],"RestoreAll"))
-                RestoreAll(argv[2]);
+	if(argc==5 && !strcmp(argv[1],"ExportTemplateFiles"))
+                ExportTemplateFiles(argv[2],argv[3],argv[4]);
 	else if(argc==6 && !strcmp(argv[1],"ExtracttLog"))
                	ExtracttLog(argv[2],argv[3],argv[4],argv[5]);
         else
 	{
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
-		printf("\tInitialize|Backup|RestoreAll <mysql root passwd>\n");
-		printf("\tRestore <mysql root passwd> <Restore table name>\n");
-		//printf("\nCrontab Ops:\n");
-		//printf("\tProcessJobQueue <cServer>\n");
-		//printf("\tProcessExtJobQueue <cServer>\n");
-		printf("\nSpecial Admin Ops:\n");
 		printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
+		printf("\tExportTemplateFiles <Base dir> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
 		printf("\n");
 	}
@@ -263,263 +232,6 @@ void ExtMainShell(int argc, char *argv[])
 
 
 }//void ExtMainShell(int argc, char *argv[])
-
-
-//ProjectFunctionStubs()
-
-
-void RestoreAll(char *cPasswd)
-{
-	char cInstallDir[256]={""};
-	register int i;
-
-	if(getenv("cInstallDir")!=NULL)
-	{
-		strncpy(cInstallDir,getenv("cInstallDir"),255);
-		gcHost[255]=0;
-	}
-
-	if(!cInstallDir[0])
-	{
-		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/ism-3.0\n");
-		exit(1);
-	}
-
-	printf("Restoring unxsRAD data from .txt file in %s/unxsRAD/data...\n\n",cInstallDir);
-
-	//connect as root to master db
-	mySQLRootConnect(cPasswd);
-
-	sprintf(gcQuery,"USE %s",DBNAME);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-
-	for(i=0;cTableList[i][0];i++)
-	{
-		sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s",
-				cInstallDir,cTableList[i],cTableList[i]);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			printf("%s\n",mysql_error(&gMysql));
-			exit(1);
-		}
-		printf("%s\n",cTableList[i]);
-	}
-
-	printf("\nDone\n");
-
-}//void RestoreAll(char *cPasswd)
-
-
-void Restore(char *cPasswd, char *cTableName)
-{
-	char cInstallDir[256]={""};
-
-	if(getenv("cInstallDir")!=NULL)
-	{
-		strncpy(cInstallDir,getenv("cInstallDir"),255);
-		gcHost[255]=0;
-	}
-
-	if(!cInstallDir[0])
-	{
-		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/ism-3.0\n");
-		exit(1);
-	}
-
-	printf("Restoring unxsRAD data from .txt file in %s/unxsRAD/data...\n\n",cInstallDir);
-
-	//connect as root to master db
-	mySQLRootConnect(cPasswd);
-
-	sprintf(gcQuery,"USE %s",DBNAME);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-
-	sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s",cInstallDir,cTableName,cTableName);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-
-	printf("%s\n\nDone\n",cTableName);
-
-}//void Restore(char *cPasswd, char *cTableName)
-
-
-void Backup(char *cPasswd)
-{
-	register int i;
-	char cInstallDir[256]={""};
-
-	if(getenv("cInstallDir")!=NULL)
-	{
-		strncpy(cInstallDir,getenv("cInstallDir"),255);
-		gcHost[255]=0;
-	}
-
-	if(!cInstallDir[0])
-	{
-		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/ism-3.0\n");
-		exit(1);
-	}
-
-	printf("Backing up unxsRAD data to .txt files in %s/unxsRAD/data...\n\n",cInstallDir);
-
-	//connect as root to master db
-	mySQLRootConnect(cPasswd);
-
-	sprintf(gcQuery,"USE %s",DBNAME);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-
-	for(i=0;cTableList[i][0];i++)
-	{
-		char cFileName[300];
-
-		sprintf(cFileName,"%s/unxsRAD/data/%s.txt"
-				,cInstallDir,cTableList[i]);
-		unlink(cFileName);
-
-		sprintf(gcQuery,"SELECT * INTO OUTFILE '%s' FROM %s",cFileName,cTableList[i]);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			printf("%s\n",mysql_error(&gMysql));
-			exit(1);
-		}
-		printf("%s\n",cTableList[i]);
-	}
-
-
-	printf("\nDone.\n");
-
-}//void Backup(char *cPasswd)
-
-
-void Initialize(char *cPasswd)
-{
-	char cInstallDir[256]={""};
-	register int i;
-
-	if(getenv("cInstallDir")!=NULL)
-	{
-		strncpy(cInstallDir,getenv("cInstallDir"),255);
-		gcHost[255]=0;
-	}
-
-	if(!cInstallDir[0])
-	{
-		printf("You must set cInstallDir env var first. Ex. (bash) export cInstallDir=/home/joe/unxsVZ\n");
-		exit(1);
-	}
-
-	printf("Creating db and setting permissions, installing data from %s/unxsRAD...\n\n",cInstallDir);
-
-	//connect as root to master db
-	mySQLRootConnect(cPasswd);
-
-	//Create database
-	sprintf(gcQuery,"CREATE DATABASE %s",DBNAME);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-
-	//Grant localaccess privileges.
-	sprintf(gcQuery,"GRANT ALL ON %s.* to %s@localhost IDENTIFIED BY '%s'",
-							DBNAME,DBLOGIN,DBPASSWD);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	
-	//Change to mysqlbind db. Then initialize some tables with needed data
-	sprintf(gcQuery,"USE %s",DBNAME);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-	
-	
-	CreatetAuthorize();
-	//And 1 standard example user
-	sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='Root',uCertClient=1,cIpMask='0.0.0.0',"
-				"uPerm=12,uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW()),cPasswd='..M0/uAvCFhis'");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-
-	CreatetClient();
-	sprintf(gcQuery,"INSERT INTO tClient SET cLabel='Root',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())");
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("%s\n",mysql_error(&gMysql));
-		exit(1);
-	}
-
-	//Create tables and install default data
-	//Standard RAD3 required tables
-        CreatetConfiguration();
-        CreatetGlossary();
-        CreatetJob();
-        CreatetJobStatus();
-        CreatetLog();
-        CreatetLogMonth();
-        CreatetLogType();
-        CreatetMonth();
-        CreatetServer();
-        CreatetStatus();
-        CreatetTemplate();
-        CreatetTemplateSet();
-        CreatetTemplateType();
-        CreatetFieldType();
-        CreatetField();
-        CreatetTable();
-        CreatetProject();
-        CreatetProjectStatus();
-        CreatetIndexType();
-
-        for(i=0;cInitTableList[i][0];i++)
-        {
-                sprintf(gcQuery,"LOAD DATA INFILE '%s/unxsRAD/data/%s.txt' REPLACE INTO TABLE %s",
-			cInstallDir,cInitTableList[i],cInitTableList[i]);
-                mysql_query(&gMysql,gcQuery);
-                if(mysql_errno(&gMysql))
-                {
-                        printf("%s\n",mysql_error(&gMysql));
-                        exit(1);
-                }
-        }
-
-        printf("Done\n");
-
-}//void Initialize(void)
 
 
 void mySQLRootConnect(char *cPasswd)
@@ -531,6 +243,74 @@ void mySQLRootConnect(char *cPasswd)
                 exit(1);
         }
 }//void mySQLRootConnect(void)
+
+
+void ExportTemplateFiles(char *cDir, char *cTemplateSet, char *cTemplateType)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+
+	printf("\nExportTemplateFiles(): Start\n");
+
+	TextConnectDb();
+
+	sprintf(gcQuery,"USE %s",DBNAME);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+
+
+	sprintf(gcQuery,"SELECT tTemplate.cLabel,tTemplate.cTemplate"
+			" FROM tTemplate,tTemplateType,tTemplateSet"
+			" WHERE tTemplate.uTemplateType=tTemplateType.uTemplateType"
+			" AND tTemplate.uTemplateSet=tTemplateSet.uTemplateSet"
+			" AND tTemplateType.cLabel='%s'"
+			" AND tTemplateSet.cLabel='%s'"
+				,cTemplateType,cTemplateSet);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(1);
+	}
+        mysqlRes=mysql_store_result(&gMysql);
+	char cPath[256]={""};
+	sprintf(cPath,"%.99s/%.32s",cDir,cTemplateSet);
+	if(mkdir(cPath,0755))
+	{
+		printf("mkdir() error: %s\n",cPath);
+		return;
+	}
+	sprintf(cPath,"%.99s/%.32s/%.32s",cDir,cTemplateSet,cTemplateType);
+	if(mkdir(cPath,0755))
+	{
+		printf("mkdir() error: %s\n",cPath);
+		return;
+	}
+        while((mysqlField=mysql_fetch_row(mysqlRes)))
+	{
+		FILE *fp;
+		char cFile[378]={""};
+		sprintf(cFile,"%s/%.99s",cPath,mysqlField[0]);
+		if((fp=fopen(cFile,"w"))!=NULL)
+		{
+			fprintf(fp,"%s",mysqlField[1]);
+			fclose(fp);
+		}
+		else
+		{
+			printf("fopen() error: %s\n",cFile);
+		}
+	}
+	mysql_free_result(mysqlRes);
+
+
+	printf("\nDone\n");
+
+}//void ExportTemplateFiles()
 
 
 void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *cTemplateType)

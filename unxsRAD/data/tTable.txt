@@ -1,1 +1,0 @@
-1	tPBX	1	1	1346893255	0	0	7	7	7	7	1	0	PBX Gateways	Asterisk PBXs or similar B2BUA	PBX Gateways	1

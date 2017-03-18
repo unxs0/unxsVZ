@@ -126,7 +126,7 @@ char *EncodeDoubleQuotes(char *cField);
 void YesNoPullDown(char *cFieldName,unsigned uSelect,unsigned uMode);
 void YesNo(unsigned uSelect);
 int ReadYesNoPullDown(const char *cLabel);
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
+char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 void GetClientOwner(unsigned uClient, unsigned *uOwner);
 void ExtMainShell(int argc, char *argv[]);
 void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode);

@@ -21,7 +21,7 @@ char gcQuery[8192]={""};
 static char *sgcBuildInfo=dsGitVersion;
 static FILE *gLfp=NULL;//log file
 char gcHostname[100]={""};
-static unsigned guTable=0;
+unsigned guTable=0;
 static char gcTableName[32]={""};
 static char gcTableNameLC[64]={""};
 static char gcTableKey[33]={""};
@@ -54,7 +54,7 @@ void funcModuleInsertQuery(FILE *fp);
 void funcModuleCreateQuery(FILE *fp);
 void AppFunctions(FILE *fp,char *cFunction);
 void StripQuotes(char *cLine);
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
+char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 char *WordToLower(char *cInput);
 void funcMakefileObjects(FILE *fp);
 void funcMakefileRules(FILE *fp);
@@ -1793,7 +1793,7 @@ void StripQuotes(char *cLine)
 }//void StripQuotes(char *cLine)
 
 
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
 {
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
@@ -1803,7 +1803,7 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
         sprintf(gcQuery,"SELECT %s FROM %s WHERE _rowid=%u",
                         cFieldName,cTableName,uKey);
         mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql)) return(mysql_error(&gMysql));
+        if(mysql_errno(&gMysql)) return("FK error");
 
         mysqlRes=mysql_store_result(&gMysql);
         if(mysql_num_rows(mysqlRes)==1)
@@ -1822,7 +1822,7 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
         	return(gcQuery);
 	}
 
-}//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+}//char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
 
 
 char *WordToLower(char *cInput)

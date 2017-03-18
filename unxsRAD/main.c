@@ -67,7 +67,7 @@ void GetSessionCookie(void);
 
 char gcFunction[100]={""};
 unsigned guListMode=0;
-char gcQuery[8192]={""};
+char gcQuery[65536]={""};
 char *gcQstr=gcQuery;
 static char *sgcBuildInfo=dsGitVersion;
 char gcRADStatus[32]={"start"};
@@ -75,7 +75,7 @@ char gcRADStatus[32]={"start"};
 //Local
 void Footer_ism3(void);
 void Header_ism3(char *cMsg, int iJs);
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
+char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 char *cEmailInput(char *cInput);
 void GetClientOwner(unsigned uClient, unsigned *uOwner);
 void htmlPlainTextError(const char *cError);
@@ -1331,7 +1331,7 @@ int ReadYesNoPullDown(const char *cLabel)
 }//ReadYesNoPullDown(char *cLabel)
 
 
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
 {
 	if(!uKey)
         	return("---");
@@ -1362,7 +1362,7 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
         	return(cQuery);
 	}
 
-}//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+}//char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
 
 
 void InitialInstall(void)

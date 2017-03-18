@@ -1,12 +1,9 @@
 /*
 FILE
 	tTemplate source code of unxsRAD.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	svn ID removed
+	(C) 2001-2017 Gary Wallis for Unixservice, LLC.
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in ttemplatefunc.h while 
-	RAD is still to be used.
+	Template storage.
 */
 
 
@@ -114,17 +111,11 @@ void ProcesstTemplateVars(pentry entries[], int x)
 
 void ProcesstTemplateListVars(pentry entries[], int x)
 {
-        register int i;
+        //register int i;
 
-        for(i=0;i<x;i++)
-        {
-                if(!strncmp(entries[i].name,"ED",2))
-                {
-                        sscanf(entries[i].name+2,"%u",&uTemplate);
-                        guMode=2002;
-                        tTemplate("");
-                }
-        }
+        //for(i=0;i<x;i++)
+        //{
+        //}
 }//void ProcesstTemplateListVars(pentry entries[], int x)
 
 
@@ -329,11 +320,11 @@ void tTemplateInput(unsigned uMode)
 ,LANG_FT_tTemplate_cTemplate);
 	if(guPermLevel>=7 && uMode)
 	{
-		printf(">%s</textarea></td></tr>\n",cTemplate);
+		printf(">%s</textarea></td></tr>\n",TransformAngleBrackets(cTemplate));
 	}
 	else
 	{
-		printf("disabled>%s</textarea></td></tr>\n",cTemplate);
+		printf("disabled>%s</textarea></td></tr>\n",TransformAngleBrackets(cTemplate));
 		printf("<input type=hidden name=cTemplate value=\"%s\" >\n",EncodeDoubleQuotes(cTemplate));
 	}
 //uOwner
@@ -392,8 +383,7 @@ void NewtTemplate(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate\
-				WHERE uTemplate=%u"
+	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE uTemplate=%u"
 							,uTemplate);
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
@@ -407,15 +397,13 @@ void NewtTemplate(unsigned uMode)
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(gcQuery,"New record %u added");
 	uTemplate=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tTemplate",uTemplate);
 	unxsRADLog(uTemplate,"tTemplate","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uTemplate);
-	tTemplate(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uTemplate);
+		tTemplate(gcQuery);
 	}
 
 }//NewtTemplate(unsigned uMode)
@@ -423,38 +411,31 @@ void NewtTemplate(unsigned uMode)
 
 void DeletetTemplate(void)
 {
-#ifdef ISM3FIELDS
 	sprintf(gcQuery,"DELETE FROM tTemplate WHERE uTemplate=%u AND ( uOwner=%u OR %u>9 )"
 					,uTemplate,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tTemplate WHERE uTemplate=%u"
-					,uTemplate);
-#endif
 	macro_mySQLQueryHTMLError;
 	//tTemplate("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uTemplate,"tTemplate","Del");
-#endif
 		tTemplate(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uTemplate,"tTemplate","DelError");
-#endif
 		tTemplate(LANG_NBR_RECNOTDELETED);
 	}
 
 }//void DeletetTemplate(void)
 
 
+//64k max gcQuery template size 65536
 void Insert_tTemplate(void)
 {
-
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tTemplate SET uTemplate=%u,cLabel='%s',uTemplateSet=%u,uTemplateType=%u,cComment='%s',cTemplate='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tTemplate SET uTemplate=%u,cLabel='%s',uTemplateSet=%u,"
+			"uTemplateType=%u,cComment='%s',cTemplate='%.65000s',uOwner=%u,uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTemplate
 			,TextAreaSave(cLabel)
 			,uTemplateSet
@@ -474,7 +455,9 @@ void Update_tTemplate(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tTemplate SET uTemplate=%u,cLabel='%s',uTemplateSet=%u,uTemplateType=%u,cComment='%s',cTemplate='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tTemplate SET uTemplate=%u,cLabel='%s',uTemplateSet=%u,"
+			"uTemplateType=%u,cComment='%s',cTemplate='%.65000s',uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uTemplate
 			,TextAreaSave(cLabel)
 			,uTemplateSet
@@ -494,7 +477,6 @@ void ModtTemplate(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -510,12 +492,6 @@ void ModtTemplate(void)
 	sprintf(gcQuery,"SELECT uTemplate,uModDate FROM tTemplate\
 				WHERE uTemplate=%u"
 						,uTemplate);
-#else
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate\
-				WHERE uTemplate=%u"
-						,uTemplate);
-#endif
-
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -525,19 +501,15 @@ void ModtTemplate(void)
 	if(i>1) tTemplate(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tTemplate(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tTemplate(field[0]);
 	if(mysql_errno(&gMysql)) htmlPlainTextError(mysql_error(&gMysql));
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tTemplate",uTemplate);
 	unxsRADLog(uTemplate,"tTemplate","Mod");
-#endif
 	tTemplate(gcQuery);
 
 }//ModtTemplate(void)
@@ -563,9 +535,19 @@ void tTemplateList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uTemplate<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uTemplateSet<td><font face=arial,helvetica color=white>uTemplateType<td><font face=arial,helvetica color=white>cComment<td><font face=arial,helvetica color=white>cTemplate<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black>"
+		"<td><font color=white>uTemplate"
+		"<td><font color=white>cLabel"
+		"<td><font color=white>uTemplateSet"
+		"<td><font color=white>uTemplateType"
+		"<td><font color=white>cComment"
+		"<td><font color=white>cTemplate (x)"
+		"<td><font color=white>uOwner"
+		"<td><font color=white>uCreatedBy"
+		"<td><font color=white>uCreatedDate"
+		"<td><font color=white>uModBy"
+		"<td><font color=white>uModDate"
+		"</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -574,40 +556,58 @@ void tTemplateList(void)
 		field=mysql_fetch_row(res);
 		if(!field)
 		{
-			printf("<tr><td><font face=arial,helvetica>End of data</table>");
+			printf("<tr><td>End of data</table>");
 			Footer_ism3();
 		}
-			if(guN % 2)
-				printf("<tr bgcolor=#BBE1D3>");
-			else
-				printf("<tr>");
+		if(guN % 2)
+			printf("<tr bgcolor=#BBE1D3>");
+		else
+			printf("<tr>");
+		char cBuf2[32];
+		sprintf(cBuf2,"%.31s",ForeignKey("tTemplateSet","cLabel",strtoul(field[2],NULL,10)));
+		char cBuf3[32];
+		sprintf(cBuf3,"%.31s",ForeignKey("tTemplateType","cLabel",strtoul(field[3],NULL,10)));
+		char cBuf6[32];
+		sprintf(cBuf6,"%.31s",ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10)));
+		char cBuf7[32];
+		sprintf(cBuf7,"%.31s",ForeignKey("tClient","cLabel",strtoul(field[7],NULL,10)));
 		time_t luTime8=strtoul(field[8],NULL,10);
 		char cBuf8[32];
 		if(luTime8)
 			ctime_r(&luTime8,cBuf8);
 		else
 			sprintf(cBuf8,"---");
+		char cBuf9[32];
+		sprintf(cBuf9,"%.31s",ForeignKey("tClient","cLabel",strtoul(field[9],NULL,10)));
 		time_t luTime10=strtoul(field[10],NULL,10);
 		char cBuf10[32];
 		if(luTime10)
 			ctime_r(&luTime10,cBuf10);
 		else
 			sprintf(cBuf10,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td><textarea disabled>%s</textarea><td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
+		printf("<td><a class=darkLink href=?gcFunction=tTemplate&uTemplate=%s>%s</a>"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td><textarea disabled>%s</textarea>"
+			"<td><textarea disabled></textarea>"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s""</tr>"
+			,field[0],field[0]
 			,field[1]
-			,ForeignKey("tTemplateSet","cLabel",strtoul(field[2],NULL,10))
-			,ForeignKey("tTemplateType","cLabel",strtoul(field[3],NULL,10))
-			,field[4]
-			,field[5]
-			,ForeignKey("tClient","cLabel",strtoul(field[6],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[7],NULL,10))
+			,cBuf2
+			,cBuf3
+			,TransformAngleBrackets(field[4])
+			//,TransformAngleBrackets(field[5])
+			,cBuf6
+			,cBuf7
 			,cBuf8
-			,ForeignKey("tClient","cLabel",strtoul(field[9],NULL,10))
+			,cBuf9
 			,cBuf10
 				);
-
 	}
 
 	printf("</table></form>\n");
@@ -618,7 +618,18 @@ void tTemplateList(void)
 
 void CreatetTemplate(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tTemplate ( uTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cComment TEXT NOT NULL DEFAULT '', cTemplate TEXT NOT NULL DEFAULT '', uTemplateSet INT UNSIGNED NOT NULL DEFAULT 0, uTemplateType INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tTemplate ("
+				" uTemplate INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+				" cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+				" uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
+				" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+				" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+				" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+				" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+				" cComment TEXT NOT NULL DEFAULT '',"
+				" cTemplate TEXT NOT NULL DEFAULT '',"
+				" uTemplateSet INT UNSIGNED NOT NULL DEFAULT 0,"
+				" uTemplateType INT UNSIGNED NOT NULL DEFAULT 0 )");
 	macro_mySQLQueryHTMLError;
 
 }//CreatetTemplate()
