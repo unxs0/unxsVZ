@@ -404,7 +404,7 @@ unsigned CreateModuleFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLoc
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cTemplate,cLabel FROM tTemplate WHERE uTemplate=%u",uTemplate);
+	sprintf(gcQuery,"SELECT cTemplate FROM tTemplate WHERE uTemplate=%u",uTemplate);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -416,14 +416,27 @@ unsigned CreateModuleFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLoc
 	{
 		struct t_template template;
 
+		char cSubDir[101]={""};
+		sprintf(cSubDir,"%.100s",ForeignKey("tTable","cSubDir",uTable));
+
 		sprintf(gcTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
 		sprintf(gcTableNameLC,"%.63s",gcTableName);
 		WordToLower(gcTableNameLC);
 		guTable=uTable;
 
 		FILE *fp;
-		char cFile[256]={""};
-		sprintf(cFile,"%.126s/%.126s.c",gcDirectory,gcTableNameLC);
+		char cFile[512]={""};
+		if(cSubDir[0])
+		{
+			sprintf(gcQuery,"mkdir -p %s/%s",gcDirectory,cSubDir);
+			if(system(gcQuery))
+				logfileLine("CreateModuleFile",gcQuery);
+			sprintf(cFile,"%.200s/%.100s/%.200s.c",gcDirectory,cSubDir,gcTableNameLC);
+		}
+		else
+		{
+			sprintf(cFile,"%.200s/%.200s.c",gcDirectory,gcTableNameLC);
+		}
 		if(uSourceLock)
 		{
 			if((fp=fopen(cFile,"r"))!=NULL)
@@ -495,7 +508,7 @@ unsigned CreateModuleFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLoc
 }//unsigned CreateModuleFile()
 
 
-unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable,unsigned uSourceLock)
+unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLock)
 {
 	unsigned uRetVal= -1;
 	logfileLine("CreateGenericFile","start");
@@ -517,9 +530,22 @@ unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable,unsigned uSourceL
 	{
 		struct t_template template;
 
+		char cSubDir[101]={""};
+		sprintf(cSubDir,"%.100s",ForeignKey("tTable","cSubDir",uTable));
+
 		FILE *fp=NULL;
-		char cFile[256]={""};
-		sprintf(cFile,"%.126s/%.126s",gcDirectory,field[1]);
+		char cFile[512]={""};
+		if(cSubDir[0])
+		{
+			sprintf(gcQuery,"mkdir -p %s/%s",gcDirectory,cSubDir);
+			if(system(gcQuery))
+				logfileLine("CreateGenericFile",gcQuery);
+			sprintf(cFile,"%.200s/%.100s/%.200s",gcDirectory,cSubDir,field[1]);
+		}
+		else
+		{
+			sprintf(cFile,"%.200s/%.200s",gcDirectory,field[1]);
+		}
 
 		if(uSourceLock)
 		{
@@ -578,7 +604,7 @@ unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable,unsigned uSour
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cTemplate,cLabel FROM tTemplate WHERE uTemplate=%u",uTemplate);
+	sprintf(gcQuery,"SELECT cTemplate FROM tTemplate WHERE uTemplate=%u",uTemplate);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -590,14 +616,27 @@ unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable,unsigned uSour
 	{
 		struct t_template template;
 
+		char cSubDir[101]={""};
+		sprintf(cSubDir,"%.100s",ForeignKey("tTable","cSubDir",uTable));
+
 		sprintf(gcTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
 		sprintf(gcTableNameLC,"%.63s",gcTableName);
 		WordToLower(gcTableNameLC);
 		guTable=uTable;
 
 		FILE *fp=NULL;
-		char cFile[256]={""};
-		sprintf(cFile,"%.126s/%.126sfunc.h",gcDirectory,gcTableNameLC);
+		char cFile[512]={""};
+		if(cSubDir[0])
+		{
+			sprintf(gcQuery,"mkdir -p %s/%s",gcDirectory,cSubDir);
+			if(system(gcQuery))
+				logfileLine("CreateModuleFuncFile",gcQuery);
+			sprintf(cFile,"%.200s/%.100s/%.200sfunc.h",gcDirectory,cSubDir,gcTableNameLC);
+		}
+		else
+		{
+			sprintf(cFile,"%.200s/%.200sfunc.h",gcDirectory,gcTableNameLC);
+		}
 		if(uSourceLock)
 		{
 			if((fp=fopen(cFile,"r"))!=NULL)

@@ -388,6 +388,8 @@
 #define LANG_FT_tTable_uSourceLock "New Table Creation Minimum uPermLevel"
 #define LANG_FL_tTable_cDescription "cDescription"
 #define LANG_FT_tTable_cDescription "New Table Creation Minimum uPermLevel"
+#define LANG_FL_tTable_cSubDir "cSubDir"
+#define LANG_FT_tTable_cSubDir "Source code sub directory"
 #define LANG_FL_tTable_cLegend "cLegend"
 #define LANG_FT_tTable_cLegend "New Table Creation Minimum uPermLevel"
 #define LANG_FL_tTable_cToolTip "cToolTip"

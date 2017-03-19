@@ -677,6 +677,7 @@ void AddTableFromDefaultTablesLine(char *cLine)
 	unsigned uOrder=0;
 	unsigned uSourceLock=0;
 	char cDescription[100]={""};
+	char cSubDir[100]={""};
 	unsigned uNewLevel=0;
 	unsigned uModLevel=0;
 	unsigned uDelLevel=0;
@@ -685,9 +686,9 @@ void AddTableFromDefaultTablesLine(char *cLine)
 	int iCount=0;
 
 	//tClient;1000;1;Organizations and their contacts;7;7;7;7;
-	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%u;%u;%99[a-zA-Z0-9 ];%u;%u;%u;%u;",cTable,&uOrder,&uSourceLock,
-						cDescription,&uNewLevel,&uModLevel,&uDelLevel,&uReadLevel);
-	if(!cTable[0] || iCount!=8)
+	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%u;%u;%99[a-zA-Z0-9 ];%u;%u;%u;%u;%99[a-zA-Z0-9\\./];",cTable,&uOrder,&uSourceLock,
+						cDescription,&uNewLevel,&uModLevel,&uDelLevel,&uReadLevel,cSubDir);
+	if(!cTable[0] || iCount<8)
 	{
 		char gcQuery[512];
 		sprintf(gcQuery,"Error2 iCount=%d %s;%u;%u;%s;%u;%u;%u;%u; (%s)",
@@ -709,19 +710,25 @@ void AddTableFromDefaultTablesLine(char *cLine)
 
 	if(uTable)
 	{
-		sprintf(gcQuery,"UPDATE tTable SET cLabel='%.32s',uTableOrder=%u,uSourceLock=%u,cDescription='%.100s',"
+		sprintf(gcQuery,"UPDATE tTable SET cLabel='%.32s',uTableOrder=%u,uSourceLock=%u,"
+			"cDescription='%.100s',cSubDir='%.100s',"
 			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uTable=%u",
-			cTable,uOrder,uSourceLock,cDescription,uNewLevel,uModLevel,uDelLevel,uReadLevel,guLoginClient,uTable);
+			cTable,uOrder,uSourceLock,
+			cDescription,cSubDir,
+			uNewLevel,uModLevel,uDelLevel,uReadLevel,guLoginClient,uTable);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
         	        htmlPlainTextError(mysql_error(&gMysql));
 	}
 	else
 	{
-		sprintf(gcQuery,"INSERT INTO tTable SET cLabel='%.32s',uTableOrder=%u,uSourceLock=%u,cDescription='%.100s',"
+		sprintf(gcQuery,"INSERT INTO tTable SET cLabel='%.32s',uTableOrder=%u,uSourceLock=%u,"
+			"cDescription='%.100s',cSubDir='%.100s',"
 			"cLegend='%.100s',cToolTip='%.100s',"
 			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,uProject=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-			cTable,uOrder,uSourceLock,cDescription,cDescription,cDescription,
+			cTable,uOrder,uSourceLock,
+			cDescription,cSubDir,
+			cDescription,cDescription,
 			uNewLevel,uModLevel,uDelLevel,uReadLevel,uProject,guCompany,guLoginClient);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))

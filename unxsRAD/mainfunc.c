@@ -48,6 +48,7 @@ void CalledByAlias(int iArgc,char *cArgv[]);
 void TextConnectDb(void);
 void DashBoard(const char *cOptionalMsg);
 void EncryptPasswdMD5(char *pw);
+void UpdateSchema(void);
 
 //ProjectFunctionProtos()
 
@@ -214,15 +215,18 @@ void ExtMainShell(int argc, char *argv[])
 		exit(0);
 	}
 
-	if(argc==6 && !strcmp(argv[1],"ImportTemplateFile"))
+        if(argc==2 && !strcmp(argv[1],"UpdateSchema"))
+                UpdateSchema();
+	else if(argc==6 && !strcmp(argv[1],"ImportTemplateFile"))
                 ImportTemplateFile(argv[2],argv[3],argv[4],argv[5]);
-	if(argc==5 && !strcmp(argv[1],"ExportTemplateFiles"))
+	else if(argc==5 && !strcmp(argv[1],"ExportTemplateFiles"))
                 ExportTemplateFiles(argv[2],argv[3],argv[4]);
 	else if(argc==6 && !strcmp(argv[1],"ExtracttLog"))
                	ExtracttLog(argv[2],argv[3],argv[4],argv[5]);
         else
 	{
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
+		printf("\tUpdateSchema\n");
 		printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 		printf("\tExportTemplateFiles <Base dir> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
@@ -780,6 +784,46 @@ void CreatetLogTable(char *cTableName)
 		exit(1);
 	}
 }//CreatetLogTable()
+
+
+void UpdateSchema(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	printf("UpdateSchema(): Start\n");
+
+	TextConnectDb();
+
+	//tTable
+	//
+	unsigned uTableSubDir=0;
+	sprintf(gcQuery,"SHOW COLUMNS IN tTable");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"cSubDir"))
+			uTableSubDir=1;
+	}
+       	mysql_free_result(res);
+	if(!uTableSubDir)
+	{
+		sprintf(gcQuery,"ALTER TABLE tTable ADD cSubDir VARCHAR(100) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added cSubDir to tTable\n");
+	}
+	//
+	//tTable
+	printf("UpdateSchema(): End\n");
+	
+}//void UpdateSchema(void)
 
 
 void NextMonthYear(char *cMonth,char *cYear,char *cNextMonth,char *cNextYear)

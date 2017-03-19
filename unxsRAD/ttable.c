@@ -27,7 +27,9 @@ static unsigned uTableOrder=0;
 static unsigned uSourceLock=0;
 static char cYesNouSourceLock[32]={""};
 //cDescription: Description of table function in project context
-static char cDescription[101]={""};
+static char cDescription[256]={""};
+//cSubDir: Optional subdir where source code is created for this table
+static char cSubDir[101]={""};
 //cLegend: Optional legend for table record group
 static char cLegend[101]={""};
 //cToolTip: Optional title link tool tip
@@ -54,7 +56,7 @@ static time_t uModDate=0;
 
 
 
-#define VAR_LIST_tTable "tTable.uTable,tTable.cLabel,tTable.uProject,tTable.uTableOrder,tTable.uSourceLock,tTable.cDescription,tTable.cLegend,tTable.cToolTip,tTable.uNewLevel,tTable.uModLevel,tTable.uDelLevel,tTable.uReadLevel,tTable.uOwner,tTable.uCreatedBy,tTable.uCreatedDate,tTable.uModBy,tTable.uModDate"
+#define VAR_LIST_tTable "tTable.uTable,tTable.cLabel,tTable.uProject,tTable.uTableOrder,tTable.uSourceLock,tTable.cDescription,tTable.cSubDir,tTable.cLegend,tTable.cToolTip,tTable.uNewLevel,tTable.uModLevel,tTable.uDelLevel,tTable.uReadLevel,tTable.uOwner,tTable.uCreatedBy,tTable.uCreatedDate,tTable.uModBy,tTable.uModDate"
 
  //Local only
 void Insert_tTable(void);
@@ -104,7 +106,9 @@ void ProcesstTableVars(pentry entries[], int x)
 			uSourceLock=ReadYesNoPullDown(cYesNouSourceLock);
 		}
 		else if(!strcmp(entries[i].name,"cDescription"))
-			sprintf(cDescription,"%.100s",entries[i].val);
+			sprintf(cDescription,"%.255s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cSubDir"))
+			sprintf(cSubDir,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cLegend"))
 			sprintf(cLegend,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cToolTip"))
@@ -138,17 +142,6 @@ void ProcesstTableVars(pentry entries[], int x)
 
 void ProcesstTableListVars(pentry entries[], int x)
 {
-        register int i;
-
-        for(i=0;i<x;i++)
-        {
-                if(!strncmp(entries[i].name,"ED",2))
-                {
-                        sscanf(entries[i].name+2,"%u",&uTable);
-                        guMode=2002;
-                        tTable("");
-                }
-        }
 }//void ProcesstTableListVars(pentry entries[], int x)
 
 
@@ -230,17 +223,18 @@ void tTable(const char *cResult)
 		sscanf(field[3],"%u",&uTableOrder);
 		sscanf(field[4],"%u",&uSourceLock);
 		sprintf(cDescription,"%.100s",field[5]);
-		sprintf(cLegend,"%.100s",field[6]);
-		sprintf(cToolTip,"%.100s",field[7]);
-		sscanf(field[8],"%u",&uNewLevel);
-		sscanf(field[9],"%u",&uModLevel);
-		sscanf(field[10],"%u",&uDelLevel);
-		sscanf(field[11],"%u",&uReadLevel);
-		sscanf(field[12],"%u",&uOwner);
-		sscanf(field[13],"%u",&uCreatedBy);
-		sscanf(field[14],"%lu",&uCreatedDate);
-		sscanf(field[15],"%u",&uModBy);
-		sscanf(field[16],"%lu",&uModDate);
+		sprintf(cSubDir,"%.100s",field[6]);
+		sprintf(cLegend,"%.100s",field[7]);
+		sprintf(cToolTip,"%.100s",field[8]);
+		sscanf(field[9],"%u",&uNewLevel);
+		sscanf(field[10],"%u",&uModLevel);
+		sscanf(field[11],"%u",&uDelLevel);
+		sscanf(field[12],"%u",&uReadLevel);
+		sscanf(field[13],"%u",&uOwner);
+		sscanf(field[14],"%u",&uCreatedBy);
+		sscanf(field[15],"%lu",&uCreatedDate);
+		sscanf(field[16],"%u",&uModBy);
+		sscanf(field[17],"%lu",&uModDate);
 
 		}
 
@@ -375,6 +369,19 @@ void tTableInput(unsigned uMode)
 	{
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cDescription value=\"%s\">\n",EncodeDoubleQuotes(cDescription));
+	}
+//cSubDir
+	OpenRow(LANG_FL_tTable_cSubDir,"black");
+	printf("<input title='%s' type=text name=cSubDir value=\"%s\" size=40 maxlength=100 "
+,LANG_FT_tTable_cSubDir,EncodeDoubleQuotes(cSubDir));
+	if(guPermLevel>=7 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cSubDir value=\"%s\">\n",EncodeDoubleQuotes(cSubDir));
 	}
 //cLegend
 	OpenRow(LANG_FL_tTable_cLegend,"black");
@@ -569,15 +576,17 @@ void DeletetTable(void)
 
 void Insert_tTable(void)
 {
-
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tTable SET uTable=%u,cLabel='%s',uProject=%u,uTableOrder=%u,uSourceLock=%u,cDescription='%s',cLegend='%s',cToolTip='%s',uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tTable SET uTable=%u,cLabel='%s',uProject=%u,uTableOrder=%u,uSourceLock=%u,"
+			"cDescription='%s',cSubDir='%s',cLegend='%s',cToolTip='%s',uNewLevel=%u,uModLevel=%u,uDelLevel=%u,"
+			"uReadLevel=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable
 			,TextAreaSave(cLabel)
 			,uProject
 			,uTableOrder
 			,uSourceLock
 			,TextAreaSave(cDescription)
+			,TextAreaSave(cSubDir)
 			,TextAreaSave(cLegend)
 			,TextAreaSave(cToolTip)
 			,uNewLevel
@@ -597,13 +606,16 @@ void Update_tTable(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tTable SET uTable=%u,cLabel='%s',uProject=%u,uTableOrder=%u,uSourceLock=%u,cDescription='%s',cLegend='%s',cToolTip='%s',uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tTable SET uTable=%u,cLabel='%s',uProject=%u,uTableOrder=%u,uSourceLock=%u,"
+			"cDescription='%s',cSubDir='%s',cLegend='%s',cToolTip='%s',uNewLevel=%u,uModLevel=%u,uDelLevel=%u,"
+			"uReadLevel=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uTable
 			,TextAreaSave(cLabel)
 			,uProject
 			,uTableOrder
 			,uSourceLock
 			,TextAreaSave(cDescription)
+			,TextAreaSave(cSubDir)
 			,TextAreaSave(cLegend)
 			,TextAreaSave(cToolTip)
 			,uNewLevel
@@ -691,9 +703,26 @@ void tTableList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uTable<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uProject<td><font face=arial,helvetica color=white>uTableOrder<td><font face=arial,helvetica color=white>uSourceLock<td><font face=arial,helvetica color=white>cDescription<td><font face=arial,helvetica color=white>cLegend<td><font face=arial,helvetica color=white>cToolTip<td><font face=arial,helvetica color=white>uNewLevel<td><font face=arial,helvetica color=white>uModLevel<td><font face=arial,helvetica color=white>uDelLevel<td><font face=arial,helvetica color=white>uReadLevel<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black>"
+			"<td><font color=white>uTable"
+			"<td><font color=white>cLabel"
+			"<td><font color=white>uProject"
+			"<td><font color=white>uTableOrder"
+			"<td><font color=white>uSourceLock"
+			"<td><font color=white>cDescription"
+			"<td><font color=white>cSubDir"
+			"<td><font color=white>cLegend"
+			"<td><font color=white>cToolTip"
+			"<td><font color=white>uNewLevel"
+			"<td><font color=white>uModLevel"
+			"<td><font color=white>uDelLevel"
+			"<td><font color=white>uReadLevel"
+			"<td><font color=white>uOwner"
+			"<td><font color=white>uCreatedBy"
+			"<td><font color=white>uCreatedDate"
+			"<td><font color=white>uModBy"
+			"<td><font color=white>uModDate"
+		"</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -705,33 +734,49 @@ void tTableList(void)
 			printf("<tr><td><font face=arial,helvetica>End of data</table>");
 			Footer_ism3();
 		}
-			if(guN % 2)
-				printf("<tr bgcolor=#BBE1D3>");
-			else
-				printf("<tr>");
+		if(guN % 2)
+			printf("<tr bgcolor=#BBE1D3>");
+		else
+			printf("<tr>");
 		long unsigned luYesNo4=strtoul(field[4],NULL,10);
 		char cBuf4[4];
 		if(luYesNo4)
 			sprintf(cBuf4,"Yes");
 		else
 			sprintf(cBuf4,"No");
-		time_t luTime14=strtoul(field[14],NULL,10);
-		char cBuf14[32];
-		if(luTime14)
-			ctime_r(&luTime14,cBuf14);
+		time_t luTime15=strtoul(field[15],NULL,10);
+		char cBuf15[32];
+		if(luTime15)
+			ctime_r(&luTime15,cBuf15);
 		else
-			sprintf(cBuf14,"---");
-		time_t luTime16=strtoul(field[16],NULL,10);
-		char cBuf16[32];
-		if(luTime16)
-			ctime_r(&luTime16,cBuf16);
+			sprintf(cBuf15,"---");
+		time_t luTime17=strtoul(field[17],NULL,10);
+		char cBuf17[32];
+		if(luTime17)
+			ctime_r(&luTime17,cBuf17);
 		else
-			sprintf(cBuf16,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			sprintf(cBuf17,"---");
+		char cBuf2[100];
+		sprintf(cBuf2,"%.99s",ForeignKey("tProject","cLabel",strtoul(field[2],NULL,10)));
+		char cBuf13[100];
+		sprintf(cBuf13,"%.99s",ForeignKey("tClient","cLabel",strtoul(field[13],NULL,10)));
+		char cBuf14[100];
+		sprintf(cBuf14,"%.99s",ForeignKey("tClient","cLabel",strtoul(field[14],NULL,10)));
+		char cBuf16[100];
+		sprintf(cBuf16,"%.99s",ForeignKey("tClient","cLabel",strtoul(field[16],NULL,10)));
+		printf("<td><a class=darkLink href=?gcFunction=tTemplate&uTemplate=%s>%s</a>"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
-			,ForeignKey("tProject","cLabel",strtoul(field[2],NULL,10))
+			,cBuf2
 			,field[3]
 			,cBuf4
 			,field[5]
@@ -741,11 +786,12 @@ void tTableList(void)
 			,field[9]
 			,field[10]
 			,field[11]
-			,ForeignKey("tClient","cLabel",strtoul(field[12],NULL,10))
-			,ForeignKey("tClient","cLabel",strtoul(field[13],NULL,10))
+			,field[12]
+			,cBuf13
 			,cBuf14
-			,ForeignKey("tClient","cLabel",strtoul(field[15],NULL,10))
+			,cBuf15
 			,cBuf16
+			,cBuf17
 				);
 
 	}
@@ -774,7 +820,8 @@ void CreatetTable(void)
 			"uSourceLock INT UNSIGNED NOT NULL DEFAULT 0,"
 			"cLegend VARCHAR(100) NOT NULL DEFAULT '',"
 			"cToolTip VARCHAR(100) NOT NULL DEFAULT '',"
-			"cDescription VARCHAR(100) NOT NULL DEFAULT '',"
+			"cDescription VARCHAR(255) NOT NULL DEFAULT '',"
+			"cSubDir VARCHAR(100) NOT NULL DEFAULT '',"
 			"uProject INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))

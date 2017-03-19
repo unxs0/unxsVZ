@@ -63,17 +63,17 @@ else
 	fi
 
 	if [ "$3" != "" ];then
-		cTemplateSet=$2;
+		cTemplateSet=$3;
 	fi
 
 	if [ "$4" != "" ];then
-		cTemplateType=$2;
+		cTemplateType=$4;
 	fi
 
 fi
 
 if [ -e "$cCGIDIR/unxsRAD.cgi" ]; then
-    for i in `find $cunxsRAD/templates/default/RAD4/ -maxdepth 1 -type f`; do
+    for i in `find $cunxsRAD/templates/$cTemplateSet/$cTemplateType/ -maxdepth 1 -type f`; do
         $cCGIDIR/unxsRAD.cgi ImportTemplateFile  `basename $i` $i $cTemplateSet $cTemplateType;
     done
 else
