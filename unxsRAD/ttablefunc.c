@@ -220,6 +220,30 @@ void ExttTableCommands(pentry entries[], int x)
 }//void ExttTableCommands(pentry entries[], int x)
 
 
+void htmlTemplateInfo(const char *cLabel);
+void htmlTemplateInfo(const char *cLabel)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tTemplateSet.cLabel,tTemplateType.cLabel FROM tTemplate,tTemplateSet,tTemplateType"
+			" WHERE tTemplate.cLabel='%s'"
+			" AND tTemplate.uTemplateSet=tTemplateSet.uTemplateSet"
+			" AND tTemplate.uTemplateType=tTemplateType.uTemplateType",cLabel);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<br>Has matching template with: %s/%s\n",
+				field[0],field[1]);
+	}
+        mysql_free_result(res);
+
+}//void htmlTemplateInfo(const char *cLabel)
+
+
 void ExttTableButtons(void)
 {
 	OpenFieldSet("tTable Aux Panel",100);
@@ -256,6 +280,7 @@ void ExttTableButtons(void)
 				printf("Loaded table belongs to current workflow project.");
 			else if(!guCookieProject)
 				printf("First of all tables (if any) loaded.");
+			htmlTemplateInfo(cLabel);
 			printf("<p><u>Operations</u><br>");
 			printf("<input type=submit class=largeButton title='Add standard primary key, cLabel and audit fields.'"
 				" name=gcCommand value='Add standard fields'>");
