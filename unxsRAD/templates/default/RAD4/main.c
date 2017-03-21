@@ -1758,19 +1758,26 @@ void ExtListSelect(const char *cTable,const char *cVarList)
 }//void ExtListSelect(...)
 
 
-void ExtSelect(const char *cTable,const char *cVarList)
+void ExtSelect(const char *cTable,const char *cVarList,unsigned uMaxResults)
 {
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT %s FROM %s ORDER BY u%s",
-					cVarList,cTable,cTable+1);
+	if(guPermLevel>11)//Root can read access all
+		sprintf(gcQuery,"SELECT %1$s FROM %2$s ORDER BY %2$s._rowid",
+					cVarList,cTable);
 	else 
 		sprintf(gcQuery,"SELECT %1$s FROM %3$s," TCLIENT
-				" WHERE %3$s.uOwner=tClient.uClient"
-				" AND (tClient.uClient=%2$u OR tClient.uOwner"
+				" WHERE %3$s.uOwner=" TCLIENT ".uClient"
+				" AND (" TCLIENT ".uClient=%2$u OR " TCLIENT ".uOwner"
 				" IN (SELECT uClient FROM " TCLIENT " WHERE uOwner=%2$u OR uClient=%2$u))"
-				" ORDER BY u%4$s",
+				" ORDER BY %3$s._rowid",
 					cVarList,guCompany,
-					cTable,cTable+1);
+					cTable);
+	if(uMaxResults)
+	{
+		char cLimit[33]={""};
+		sprintf(cLimit," LIMIT %u",uMaxResults);
+		strcat(gcQuery,cLimit);
+	}
+
 }//void ExtSelect(...)
 
 

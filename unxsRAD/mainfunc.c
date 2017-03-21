@@ -351,8 +351,16 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
 
 	if(!uTemplateSet)
 	{
-		printf("Could not find tTemplateSet.clabel=%s\n",cTemplateSet);
-		exit(1);
+		printf("Could not find tTemplateSet.clabel=%s creating!\n",cTemplateSet);
+		sprintf(gcQuery,"INSERT INTO tTemplateSet SET cLabel='%s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				cTemplateSet);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		uTemplateSet=mysql_insert_id(&gMysql);
 	}
 
 	//uTemplateType
@@ -370,12 +378,21 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
 
 	if(!uTemplateType)
 	{
-		printf("Could not find tTemplateType.clabel=%s\n",cTemplateType);
-		exit(1);
+		printf("Could not find tTemplateType.clabel=%s creating!\n",cTemplateType);
+		sprintf(gcQuery,"INSERT INTO tTemplateType SET cLabel='%s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				cTemplateType);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("%s\n",mysql_error(&gMysql));
+			exit(1);
+		}
+		uTemplateType=mysql_insert_id(&gMysql);
 	}
 
 	//uTemplate
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s'",cTemplate);
+	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s' AND uTemplateType=%u AND uTemplateSet=%u",
+			cTemplate,uTemplateType,uTemplateSet);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{

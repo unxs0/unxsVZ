@@ -1479,6 +1479,8 @@ void funcModuleVarList(FILE *fp)
 			" WHERE tField.uTable=tTable.uTable"
 			" AND tTable.uTable=%u"
 			" ORDER BY tField.uOrder",guTable);
+	if(guDebug)
+		logfileLine("funcModuleVarList",gcQuery);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -1805,6 +1807,9 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcModuleLanguage(fp);
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
+	else if(1)
+		logfileLine("AppFunctions.missing",cFunction);
+		
 
 }//void AppFunctions(FILE *fp,char *cFunction)
 

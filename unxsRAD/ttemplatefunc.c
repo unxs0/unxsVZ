@@ -333,25 +333,34 @@ void tTemplateNavList(void)
 	if(uProjectTemplateSet)
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE uTemplateSet=%u ORDER BY cLabel",uProjectTemplateSet);
+			sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel,tTemplateType.cLabel FROM tTemplate,tTemplateType"
+					" WHERE uTemplateSet=%u"
+					" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
+					" ORDER BY tTemplate.cLabel,tTemplate.uTemplateType",uProjectTemplateSet);
 		else
 			sprintf(gcQuery,"SELECT tTemplate.uTemplate,"
-					" tTemplate.cLabel"
-					" FROM tTemplate,tClient"
+					" tTemplate.cLabel,tTemplateType.cLabel"
+					" FROM tTemplate,tClient,tTemplateType"
 					" WHERE tTemplate.uOwner=tClient.uClient AND tTemplate.uTemplateSet=%u"
-					" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+					" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
+					" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+					" ORDER BY tTemplate.cLabel,tTemplate.uTemplateType",
 						uProjectTemplateSet, uContactParentCompany ,uContactParentCompany);
 	}
 	else
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate ORDER BY cLabel");
+			sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel,tTemplateType.cLabel FROM tTemplate,tTemplateType"
+					" WHERE tTemplate.uTemplateType=tTemplateType.uTemplateType"
+					" ORDER BY tTemplate.cLabel,tTemplate.uTemplateType");
 		else
 			sprintf(gcQuery,"SELECT tTemplate.uTemplate,"
-					" tTemplate.cLabel"
-					" FROM tTemplate,tClient"
+					" tTemplate.cLabel,tTemplateType.cLabel"
+					" FROM tTemplate,tClient,tTemplateType"
 					" WHERE tTemplate.uOwner=tClient.uClient"
-					" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+					" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
+					" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+					" ORDER BY tTemplate.cLabel,tTemplate.uTemplateType",
 						uContactParentCompany
 						,uContactParentCompany);
 	}
@@ -373,8 +382,8 @@ void tTemplateNavList(void)
 
 	        while((field=mysql_fetch_row(res)))
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tTemplate"
-				"&uTemplate=%s>%s</a><br>\n",
-				field[0],field[1]);
+				"&uTemplate=%s>%s/%s</a><br>\n",
+				field[0],field[1],field[2]);
 	}
         mysql_free_result(res);
 

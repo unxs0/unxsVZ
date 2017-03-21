@@ -15,7 +15,6 @@
 #
 
 cTemplateSet="default";
-cTemplateType="RAD4";
 if [ -d "$CGIDIR" ];then
 	cCGIDIR=${CGIDIR};
 	echo $cCGIDIR;
@@ -27,11 +26,10 @@ fi
 
 if [ "$cunxsRAD" != "" ] && [ "$cCGIDIR" != "" ];then
 	if [ "$1" == "--help" ];then
-		echo "usage: $0 [<template set> <template type>] | --help";
+		echo "usage: $0 [<template set>] | --help";
 		echo cgi-dir set via ENV $cCGIDIR;
 		echo unxsRAD dir set via ENV $cunxsRAD;
 		echo "	ttemplate set default is $cTemplateSet."
-		echo "	ttemplate type default is $cTemplateType"
 		exit;
 	fi
 
@@ -39,18 +37,14 @@ if [ "$cunxsRAD" != "" ] && [ "$cCGIDIR" != "" ];then
 		cTemplateSet=$2;
 	fi
 
-	if [ "$2" != "" ];then
-		cTemplateType=$2;
-	fi
 else
 	if [ "$2" == "" ] || [ "$1" == "--help" ];then
-		echo "usage: $0 <unxsRAD dir> <cgi-dir> [<template set> <template type>] | --help";
+		echo "usage: $0 <unxsRAD dir> <cgi-dir> [<template set>] | --help";
 		echo "	or export CGIDIR=/var/www/cgi-bin && export UNXSRAD=/home/unxs/unxsVZ/unxsRAD";
-			echo "	and then usage is only: $0 [<template set> <template type>]";
+			echo "	and then usage is only: $0 [<template set>]";
 		echo "	unxsRAD dir e.g. /home/unxs/unxsVZ/unxsRAD"
 		echo "	cgi-dir e.g. /var/www/cgi-bin"
 		echo "	ttemplate set default is $cTemplateSet."
-		echo "	ttemplate type default is $cTemplateType"
 		exit;
 	fi
 
@@ -65,16 +59,18 @@ else
 	if [ "$3" != "" ];then
 		cTemplateSet=$3;
 	fi
+fi
 
-	if [ "$4" != "" ];then
-		cTemplateType=$4;
-	fi
-
+if [ ! -d "$cunxsRAD/templates/$cTemplateSet" ]; then
+	echo "no dir $cunxsRAD/templates/$cTemplateSet";
+	exit 1;
 fi
 
 if [ -e "$cCGIDIR/unxsRAD.cgi" ]; then
-    for i in `find $cunxsRAD/templates/$cTemplateSet/$cTemplateType/ -maxdepth 1 -type f`; do
-        $cCGIDIR/unxsRAD.cgi ImportTemplateFile  `basename $i` $i $cTemplateSet $cTemplateType;
+    for i in `find $cunxsRAD/templates/$cTemplateSet/*/ -maxdepth 1 -type f`; do
+	cTemplateType=`echo $i | rev | cut -f 2 -d / | rev`;
+	cFilename=`echo $i | rev | cut -f 1 -d / | rev`;
+        $cCGIDIR/unxsRAD.cgi ImportTemplateFile $cFilename $i $cTemplateSet $cTemplateType;
     done
 else
 	echo "unxsRAD.cgi isn't present in the CGIDIR you've defined!";

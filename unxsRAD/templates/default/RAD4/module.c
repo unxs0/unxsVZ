@@ -1,23 +1,24 @@
 /*
 FILE
-	$Id: module.c 1955 2012-05-22 21:28:32Z Colin $
+	{{cTableNameLC}}.c
+	From unxsRAD RAD4 module.c template
 PURPOSE
 	Schema dependent RAD generated file.
 	Program app functionality can be developed in {{cTableNameLC}}func.h
 	while unxsRAD can still to be used to change this schema dependent file.
 AUTHOR
-	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
+	Template (C) 2001-2017 Gary Wallis for Unixservice, LLC.
 TEMPLATE VARS AND FUNCTIONS
-	ModuleCreateQuery
-	ModuleInsertQuery
-	ModuleListPrint
-	ModuleListTable
-	ModuleLoadVars
-	ModuleProcVars
-	ModuleRAD3Input
-	ModuleUpdateQuery
-	ModuleVars
-	ModuleVarList
+	funcModuleInput
+	funcModuleCreateQuery
+	funcModuleInsertQuery
+	funcModuleListPrint
+	funcModuleListTable
+	funcModuleLoadVars
+	funcModuleProcVars
+	funcModuleUpdateQuery
+	funcModuleVars
+	funcModuleVarList
 	cProject
 	cTableKey
 	cTableName
@@ -29,9 +30,9 @@ TEMPLATE VARS AND FUNCTIONS
 #include "mysqlrad.h"
 
 //Table Variables
-{{ModuleVars}}
+{{funcModuleVars}}
 
-#define VAR_LIST_{{cTableName}} "{{ModuleVarList}}"
+#define VAR_LIST_{{cTableName}} "{{funcModuleVarList}}"
 
  //Local only
 void Insert_{{cTableName}}(void);
@@ -60,7 +61,7 @@ void Process{{cTableName}}Vars(pentry entries[], int x)
 
 	for(i=0;i<x;i++)
 	{
-		{{ModuleProcVars}}
+		{{funcModuleProcVars}}
 	}
 
 	//After so we can overwrite form data if needed.
@@ -114,6 +115,13 @@ int {{cTableName}}Commands(pentry entries[], int x)
 }//{{cTableName}}Commands()
 
 
+void {{cTableName}}Input(unsigned uMode)
+{
+	{{funcModuleInput}}
+
+}//void {{cTableName}}Input(unsigned uMode)
+
+
 void {{cTableName}}(const char *cResult)
 {
 	MYSQL_RES *res;
@@ -157,7 +165,7 @@ void {{cTableName}}(const char *cResult)
 			PageMachine("",0,"");
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
-			{{ModuleLoadVars}}
+			{{funcModuleLoadVars}}
 		}
 
 	}//Internal Skip
@@ -215,14 +223,6 @@ void {{cTableName}}(const char *cResult)
 }//end of {{cTableName}}();
 
 
-void {{cTableName}}Input(unsigned uMode)
-{
-
-	{{ModuleRAD3Input}}
-
-}//void {{cTableName}}Input(unsigned uMode)
-
-
 void New{{cTableName}}(unsigned uMode)
 {
 	register int i=0;
@@ -270,7 +270,7 @@ void Delete{{cTableName}}(void)
 
 void Insert_{{cTableName}}(void)
 {
-	{{ModuleInsertQuery}}
+	{{funcModuleInsertQuery}}
 	macro_mySQLQueryHTMLError;
 
 }//void Insert_{{cTableName}}(void)
@@ -278,7 +278,7 @@ void Insert_{{cTableName}}(void)
 
 void Update_{{cTableName}}(char *cRowid)
 {
-	{{ModuleUpdateQuery}}
+	{{funcModuleUpdateQuery}}
 	macro_mySQLQueryHTMLError;
 
 }//void Update_{{cTableName}}(void)
@@ -344,7 +344,7 @@ void {{cTableName}}List(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	{{ModuleListTable}}
+	{{funcModuleListTable}}
 
 	mysql_data_seek(res,guStart-1);
 
@@ -360,7 +360,7 @@ void {{cTableName}}List(void)
 				printf("<tr bgcolor=#BBE1D3>");
 			else
 				printf("<tr>");
-		{{ModuleListPrint}}
+		{{funcModuleListPrint}}
 	}
 
 	printf("</table></form>\n");
@@ -369,5 +369,5 @@ void {{cTableName}}List(void)
 }//{{cTableName}}List()
 
 
-{{ModuleCreateQuery}}
+{{funcModuleCreateQuery}}
 

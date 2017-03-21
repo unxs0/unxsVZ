@@ -1,19 +1,19 @@
 /*
 FILE
-	$Id: modulefunc.h 1956 2012-05-24 21:38:56Z Colin $
+	{{ctableNameLC}}func.h
+	From unxsRAD RAD4 template modulefunc.h
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR
-	(C) 2001-2012 Gary Wallis for Unixservice, LLC.
+	Template (C) 2001-2017 Gary Wallis for Unixservice, LLC.
 TEMPLATE VARS AND FUNCTIONS
-	ModuleFunctionProcess
-	ModuleFunctionProtos
+	funcModulePrototypes
 	cProject
 	cTableKey
 	cTableName
 */
 
-{{ModuleFunctionProtos}}
+{{funcModulePrototypes}}
 
 void {{cTableName}}NavList(void);
 
@@ -33,7 +33,6 @@ void Ext{{cTableName}}Commands(pentry entries[], int x)
 
 	if(!strcmp(gcFunction,"{{cTableName}}Tools"))
 	{
-		{{ModuleFunctionProcess}}
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
 			if(guPermLevel>=9)
@@ -264,7 +263,7 @@ void Ext{{cTableName}}ListSelect(void)
 void Ext{{cTableName}}ListFilter(void)
 {
         //Filter
-        printf("   Filter on ");
+        printf(" Filter on ");
         printf("<select name=gcFilter>");
         if(strcmp(gcFilter,"{{cTableKey}}"))
                 printf("<option>{{cTableKey}}</option>");
@@ -299,7 +298,7 @@ void Ext{{cTableName}}NavBar(void)
 
 	printf(LANG_NBB_SKIPNEXT);
 	printf(LANG_NBB_SKIPLAST);
-	printf("   \n");
+	printf(" \n");
 
 }//void Ext{{cTableName}}NavBar(void)
 
@@ -345,6 +344,3 @@ void {{cTableName}}NavList(void)
         mysql_free_result(res);
 
 }//void {{cTableName}}NavList(void)
-
-
-

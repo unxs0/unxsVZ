@@ -138,6 +138,10 @@ void htmlPlainTextError(const char *cError);
 void TextError(const char *cError, unsigned uContinue);
 unsigned uAllowMod(const unsigned uOwner, const unsigned uCreatedBy);
 unsigned uAllowDel(const unsigned uOwner, const unsigned uCreatedBy);
+void ExtSelect(const char *cTable,const char *cVarList,unsigned uMaxResults);
+void ExtSelectSearch(const char *cTable,const char *cVarList,const char *cSearchField,const char *cSearch);
+void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
+void ExtListSelect(const char *cTable,const char *cVarList);
 
 void {{cProject}}Log(unsigned uTablePK, char *cTableName, char *cLogEntry);
 

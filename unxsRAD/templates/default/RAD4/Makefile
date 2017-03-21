@@ -1,17 +1,16 @@
 #
 #FILE
-#       {{cProject}}/makefile
-#       $Id: makefile.template 2979 2011-12-11 15:24:44Z Gary $
+#       {{cProject}}/Makefile
+#       From unxsRAD/templates/default/RAD4/Makefile template.
 #AUTHOR/LEGAL
-#       (C) 2001-2012 Gary Wallis for Unixservice. GPLv2 license applies.
-#
+#       Template (C) 2001-2017 Gary Wallis for Unixservice. GPLv2 license applies.
 #NOTES
-#       We only develop and test on Linux CentOS-5 and distribute via yum and rpm.
-#       Feel free to repackage for your OS and let us know.
+#	Only tested on modern CentOS and Ubuntu
 #
 
 #CFLAGS=-O -DLinux -Wall -pedantic
-CFLAGS= -DLinux -Wall
+GIT_VERSION := $(shell git describe --dirty --always --tags 2> /dev/null || echo "noGit")
+CFLAGS= -DLinux -Wall -DdsGitVersion=\"$(GIT_VERSION)\"
 RELEASE= 0.1
 #If using lib64 make sure you have adjusted if any errors emerge
 LIBS= -L/usr/lib/openisp -L/usr/lib64/mysql -lmysqlclient -lz -lcrypt -lm -lssl -ltemplate
@@ -60,14 +59,3 @@ install: {{cProject}}.cgi {{cProject}}
 	install -s {{cProject}} /usr/sbin/{{cProject}}
 	rm {{cProject}}.cgi
 	rm {{cProject}}
-
-distribution:
-	cd ..;  tar czvf {{cProject}}/{{cProject}}$(RELEASE).tar.gz --exclude .svn\
-		{{cProject}}/*.h\
-		{{cProject}}/*.c\
-		{{cProject}}/data\
-		{{cProject}}/docs\
-		{{cProject}}/makefile\
-		{{cProject}}/CHANGES\
-		{{cProject}}/LICENSE\
-		{{cProject}}/INSTALL
