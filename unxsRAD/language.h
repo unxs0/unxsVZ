@@ -428,7 +428,7 @@
 #define LANG_FL_tField_uIndexType "uIndexType"
 #define LANG_FT_tField_uIndexType "SQL Index If Any"
 #define LANG_FL_tField_cFKSpec "cFKSpec"
-#define LANG_FT_tField_cFKSpec "Foreign Key Table and Field"
+#define LANG_FT_tField_cFKSpec "Double Quoted Foreign Key Table and Field. E.g. \"tClient\",\"cLabel\""
 #define LANG_FL_tField_cExtIndex "cExtIndex"
 #define LANG_FT_tField_cExtIndex "Optional Multiple Index SQL Create Code"
 #define LANG_FL_tField_cTitle "cTitle"

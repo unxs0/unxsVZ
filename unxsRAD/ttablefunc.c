@@ -479,7 +479,8 @@ void tTableNavList(void)
 	if(guCookieProject)
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable WHERE uProject=%u AND SUBSTR(cLabel,1,1)='t' ORDER BY uTableOrder",
+			sprintf(gcQuery,"SELECT uTable,cLabel FROM tTable WHERE uProject=%u AND SUBSTR(cLabel,1,1)='t'"
+					" AND uTableOrder!=0 ORDER BY uTableOrder",
 				guCookieProject);
 		else
 			sprintf(gcQuery,"SELECT tTable.uTable,"

@@ -459,10 +459,30 @@ void tProjectTableNavList(void)
 
 	if(!uProject) return;
 
-	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uTable,cLabel,uTableOrder FROM tTable WHERE uProject=%u ORDER BY uTableOrder,cLabel",uProject);
+	if(guCookieProject)
+	{
+		//Do not show fake tables
+		if(guLoginClient==1 && guPermLevel>11)
+			sprintf(gcQuery,"SELECT uTable,cLabel,uTableOrder FROM tTable WHERE uProject=%u"
+					" AND uTableOrder!=0 ORDER BY uTableOrder",
+				guCookieProject);
+		else
+			sprintf(gcQuery,"SELECT tTable.uTable,"
+				" tTable.cLabel,tTable.uTableOrder"
+				" FROM tTable,tClient"
+				" WHERE tTable.uOwner=tClient.uClient"
+				" AND tTable.uProject=%u"
+				" AND uTableOrder!=0"
+				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" ORDER BY tTable.uTableOrder",
+					guCookieProject,guCompany,guLoginClient);
+	}
 	else
-		sprintf(gcQuery,"SELECT tTable.uTable,"
+	{
+		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
+			sprintf(gcQuery,"SELECT uTable,cLabel,uTableOrder FROM tTable WHERE uProject=%u ORDER BY uTableOrder,cLabel",uProject);
+		else
+			sprintf(gcQuery,"SELECT tTable.uTable,"
 				" tTable.cLabel,tTable.uTableOrder"
 				" FROM tTable,tClient"
 				" WHERE tTable.uOwner=tClient.uClient"
@@ -470,6 +490,7 @@ void tProjectTableNavList(void)
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
 				" ORDER BY tTable.uTableOrder,tTable.cLabel",
 					uProject,guCompany,guLoginClient);
+	}
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         {
@@ -482,7 +503,10 @@ void tProjectTableNavList(void)
 	if(mysql_num_rows(res))
 	{	
 		char *cColor;
-        	printf("<p><u>tTableNavList</u><br>\n");
+		if(guCookieProject)
+        		printf("<p><u>tTableNavList Workflow</u><br>\n");
+		else
+        		printf("<p><u>tTableNavList</u><br>\n");
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(atoi(field[0])==guCookieTable)

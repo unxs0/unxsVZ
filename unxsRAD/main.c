@@ -1,24 +1,16 @@
 /*
 FILE 
-	main.c
-	svn ID removed
-	mysqlRAD2.cgi created application file for unxsRAD.cgi
-	(tAuthorize.cPasswd template set)
-	mysqlRAD2 to mysqlRAD3 transition template
+	unxsRAD/main.c
 PURPOSE
 	Main cgi interface and common functions used for all the other
-	table tx.c files and their schema independent txfunc.h files -until
-	you mess with them in non standard ways...lol.
-	
-LEGAL
-	(C) Gary Wallis 2001-2007. All Rights Reserved.
+	table tx.c files and their schema independent txfunc.h files
+AUTHOR/LEGAL
+	(C) 2001-2017 Gary Wallis for Unixservice, LLC. All Rights Reserved.
 	LICENSE file should be included in distribution.
 OTHER
-	Only Linux supported by openisp.net. 
-	Please share your ports with us.
+	Tested only on CentOS and Ubuntu
 HELP
-	support @ openisp . net
-
+	unxsrad @ unxs . io
 */
 
 #include "mysqlrad.h"
@@ -110,12 +102,7 @@ int main(int iArgc, char *cArgv[])
 	register int x;
 	int cl=0;
 
-#if defined(Linux)
 	gethostname(gcHostname, 98);
-#else
-	//Solaris
-	sysinfo(SI_HOSTNAME, gcHostname, 98);
-#endif
 
 	if(!strstr(cArgv[0],"unxsRAD.cgi"))
 		CalledByAlias(iArgc,cArgv);
@@ -162,10 +149,13 @@ int main(int iArgc, char *cArgv[])
 				unxsRAD("");
 			else if(!strcmp(gcFunction,"Logout"))
 			{
-				printf("Set-Cookie: unxsRADLogin=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				printf("Set-Cookie: unxsRADPasswd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				printf("Set-Cookie: unxsRADSessionCookie=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+				printf("Set-Cookie: unxsRADLogin=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsRADPasswd=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: unxsRADSessionCookie=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
+					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
 				macro_mySQLQueryHTMLError;
 				gcCookie[0]=0;
                                 guPermLevel=0;
@@ -1609,8 +1599,8 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: unxsRADLogin=%s;\n",gcLogin);
-		printf("Set-Cookie: unxsRADPasswd=%s;\n",gcPasswd);
+		printf("Set-Cookie: unxsRADLogin=%s; secure; httponly;\n",gcLogin);
+		printf("Set-Cookie: unxsRADPasswd=%s; secure; httponly;\n",gcPasswd);
 		strncpy(gcUser,gcLogin,41);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;

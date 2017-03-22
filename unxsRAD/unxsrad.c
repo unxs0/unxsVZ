@@ -1326,9 +1326,11 @@ void funcModuleInput(FILE *fp)
 				fprintf(fp,"\t\ttTablePullDownOwner(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,0);\n"
 					,cTableName,cField,cFieldName,cFieldName,cField);
 				fprintf(fp,"\telse if(uMode)\n");
-				fprintf(fp,"\tprintf(\"<input title='%%s' type=text size=20 maxlength=20 name=%s value='%%u' >\\n\",LANG_FT_%s_%s,%s);\n"
-					,cField,gcTableName,cField,cField);
-				//We don't want admin or root users to be clobbered by a giant select
+				fprintf(fp,"\t\ttTablePullDown(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,1);\n"
+					,cTableName,cField,cFieldName,cFieldName,cField);
+				//fprintf(fp,"\tprintf(\"<input title='%%s' type=text size=20 maxlength=20 name=%s value='%%u' >\\n\",LANG_FT_%s_%s,%s);\n"
+				//	,cField,gcTableName,cField,cField);
+				//We don't want admin or root users to be clobbered by a giant select ??? TODO
 				//so we use a modifiable FK
 				fprintf(fp,"\telse if(1)\n\t{\n");
 				fprintf(fp,"\t\tprintf(\"<input type=text size=20 value='%%s' disabled>\\n\",ForeignKey(\"%s\",\"%s\",%s));\n"

@@ -139,6 +139,14 @@ void ExttFieldCommands(pentry entries[], int x)
 			{
                         	guMode=2002;
 				//Check entries here
+				if(cFKSpec[0])
+				{
+					char cTable[100]={""};
+					char cField[100]={""};
+					if(cFKSpec[strlen(cFKSpec)-1]!='"' || sscanf(cFKSpec,"\"%99[a-zA-Z0-9\\.]\",\"%99[a-zA-Z0-9\\.]\"",cTable,cField)!=2)
+						tField("cFKSpec not formatted correctly. E.g. \"tClient\",\"cLabel\"");
+				}
+				
                         	guMode=0;
 
 				uModBy=guLoginClient;

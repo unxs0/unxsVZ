@@ -72,17 +72,13 @@ void Process{{cTableName}}Vars(pentry entries[], int x)
 
 void Process{{cTableName}}ListVars(pentry entries[], int x)
 {
-        register int i;
-
-        for(i=0;i<x;i++)
-        {
-                if(!strncmp(entries[i].name,"ED",2))
-                {
-                        sscanf(entries[i].name+2,"%u",&{{cTableKey}});
-                        guMode=2002;
-                        {{cTableName}}("");
-                }
-        }
+        //register int i;
+        //for(i=0;i<x;i++)
+        //{
+        //	if(!strcmp(entries[i].name,"example"))
+        //	{
+        //	}
+        //}
 }//void Process{{cTableName}}ListVars(pentry entries[], int x)
 
 

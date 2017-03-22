@@ -1,14 +1,13 @@
 /*
 FILE 
-	main.c
-	From unxsRAD RAD main.c template file.
+	{{cProject}}/main.c
+	From unxsRAD RAD4 main.c template file.
 	unxsRAD created application file for {{cProject}}.cgi
 PURPOSE
 	Main cgi interface and common functions used for all the other
-	table tx.c files and their schema independent txfunc.h files -until
-	you mess with them in non standard ways.
+	table tx.c files and their schema independent txfunc.h files
 AUTHOR/LEGAL
-	(C) Gary Wallis 2001-2017 for Unixservice, LLC. All Rights Reserved.
+	Template (C) Gary Wallis 2001-2017 for Unixservice, LLC. All Rights Reserved.
 	LICENSE file should be included in distribution.
 OTHER
 	Only tested on CentOS and Ubuntu
@@ -491,11 +490,11 @@ void ProcessControlVars(pentry entries[], int x)
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(entries[i].name,"gcFilter"))
-			strcpy(gcFilter,entries[i].val);
+			sprintf(gcFilter,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gcCommand"))
-			strcpy(gcCommand,entries[i].val);
+			sprintf(gcCommand,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gcFind"))
-			strcpy(gcFind,entries[i].val);
+			sprintf(gcFind,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gluRowid"))
 			sscanf(entries[i].val,"%lu",&gluRowid);
 	}
@@ -695,10 +694,10 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
         }
 
         //Extended functionality
-        strncpy(cLocalTableName,cTableName,255);
+        sprintf(cLocalTableName,"%.255s",cTableName);
         if((cp=strchr(cLocalTableName,';')))
         {
-                strncpy(cSelectName,cp+1,32);
+                sprintf(cSelectName,"%.33s",cp+1);
                 cSelectName[32]=0;
                 *cp=0;
         }
@@ -785,14 +784,13 @@ void tTablePullDown(const char *cTableName, const char *cFieldName,
         }
 
         //Extended functionality
-        strncpy(cLocalTableName,cTableName,255);
+        sprintf(cLocalTableName,"%.255s",cTableName);
         if((cp=strchr(cLocalTableName,';')))
         {
-                strncpy(cSelectName,cp+1,32);
+                sprintf(cSelectName,"%.33s",cp+1);
                 cSelectName[32]=0;
                 *cp=0;
-        }
-
+	}
 
         sprintf(gcQuery,"SELECT _rowid,%s FROM %s ORDER BY %s",
                                 cFieldName,cLocalTableName,cOrderby);
@@ -1344,7 +1342,7 @@ void SetLogin(void)
 	{
 		printf("Set-Cookie: {{cProject}}Login=%s; secure; httponly;\n",gcLogin);
 		printf("Set-Cookie: {{cProject}}Passwd=%s; secure; httponly;\n",gcPasswd);
-		strncpy(gcUser,gcLogin,41);
+		sprintf(gcUser,"%.99s",gcLogin);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
 		{{cProject}}("DashBoard");
@@ -1367,7 +1365,7 @@ int iValidLogin(int mode)
 	//Notes:
 	//Mode=1 means we have encrypted passwd from cookie
 
-	strcpy(cPassword,cGetPasswd(gcLogin));
+	sprintf(cPassword,"%.99s",cGetPasswd(gcLogin));
 	if(cPassword[0])
 	{
 		if(!mode)
@@ -1433,7 +1431,7 @@ char *cGetPasswd(char *gcLogin)
 	mysqlRes=mysql_store_result(&gMysql);
 	cPasswd[0]=0;
 	if((mysqlField=mysql_fetch_row(mysqlRes)))
-		strcpy(cPasswd,mysqlField[0]);
+		sprintf(cPasswd,"%.99s",mysqlField[0]);
 	mysql_free_result(mysqlRes);
 
 	
@@ -1450,13 +1448,11 @@ void SSLCookieLogin(void)
 	char *ptr,*ptr2;
 
 	//Parse out login and passwd from cookies
-#ifdef SSLONLY
 	if(getenv("HTTPS")==NULL) 
 		{{cProject}}("Non SSL access denied");
-#endif
 
 	if(getenv("HTTP_COOKIE")!=NULL)
-		strncpy(gcCookie,getenv("HTTP_COOKIE"),1022);
+		sprintf(gcCookie,"%.1023s",getenv("HTTP_COOKIE"));
 	
 	if(gcCookie[0])
 	{
@@ -1467,12 +1463,12 @@ void SSLCookieLogin(void)
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
-			strncpy(gcLogin,ptr,99);
+			sprintf(gcLogin,"%.99s",ptr);
 			*ptr2=';';
 		}
 		else
 		{
-			strncpy(gcLogin,ptr,99);
+			sprintf(gcLogin,"%.99s",ptr);
 		}
 	}
 	if((ptr=strstr(gcCookie,"{{cProject}}Passwd=")))
@@ -1481,12 +1477,12 @@ void SSLCookieLogin(void)
 		if((ptr2=strchr(ptr,';')))
 		{
 			*ptr2=0;
-			strncpy(gcPasswd,ptr,20);
+			sprintf(gcPasswd,"%.99s",ptr);
 			*ptr2=';';
 		}
 		else
 		{
-			strncpy(gcPasswd,ptr,20);
+			sprintf(gcPasswd,"%.99s",ptr);
 		}
 	}
 	
@@ -1495,7 +1491,7 @@ void SSLCookieLogin(void)
 	if(!iValidLogin(1))
 		htmlSSLLogin();
 
-	strncpy(gcUser,gcLogin,41);
+	sprintf(gcUser,"%.99s",gcLogin);
 	GetPLAndClient(gcUser);
 	if(!guPermLevel || !guLoginClient)
 		{{cProject}}("Access denied");
