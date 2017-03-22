@@ -104,15 +104,16 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 					tAuthorize("Must provide a passwd");
 				}
 
-				if(cClrPasswd[0])
+				if(cClrPasswd[0] && strncmp(cPasswd,"$1$",3) && strncmp(cPasswd,"$5$",3) 
+							&& strncmp(cPasswd,"$6$",3))
 				{
 					sprintf(cPasswd,"%.35s",cClrPasswd);
-					EncryptPasswdWithSalt(cPasswd,"..");
+					EncryptPasswd(cPasswd);
 				}
 				else
 				{
-					if(strncmp(cPasswd,"..",2))
-						EncryptPasswdWithSalt(cPasswd,"..");
+					if(strncmp(cPasswd,"$1$",3) && strncmp(cPasswd,"$5$",3) && strncmp(cPasswd,"$6$",3))
+						EncryptPasswd(cPasswd);
 				}
 
 				uModBy=guLoginClient;

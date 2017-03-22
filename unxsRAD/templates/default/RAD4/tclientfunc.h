@@ -38,6 +38,7 @@ unsigned IsAuthUser(char *cLabel, unsigned uOwner, unsigned uCertClient);
 void PermLevelDropDown(char *cuPerm);
 
 void EncryptPasswdWithSalt(char *cPasswd,char *cSalt);
+void EncryptPasswd(char *cPasswd);
 void GetClientMaxParams(unsigned uClient,unsigned *uMaxSites,unsigned *uMaxIPs);
 const char *cUserLevel(unsigned uPermLevel);
 unsigned uMaxClientsReached(unsigned uClient);
@@ -241,7 +242,7 @@ void ExttClientCommands(pentry entries[], int x)
 				}
 		
 				sprintf(cClrPasswd,"%.32s",cPasswd);
-				EncryptPasswdWithSalt(cPasswd,"..");
+				EncryptPasswd(cPasswd);
 				//if(uPerm==12) uClient=1;//uCertClient root alias temp hack
 				sprintf(gcQuery,"INSERT INTO tAuthorize SET cLabel='%s',uPerm=%u,uCertClient=%u,cPasswd='%s',uOwner=%u,uCreatedBy=%u,"
 						"uCreatedDate=UNIX_TIMESTAMP(NOW()),cIPMask='0.0.0.0',cClrPasswd='%s'",

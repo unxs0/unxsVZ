@@ -1,21 +1,19 @@
 /*
 FILE 
 	main.c
-	$Id: main.c 2082 2012-09-06 01:44:03Z Dylan $
+	From unxsRAD RAD main.c template file.
 	unxsRAD created application file for {{cProject}}.cgi
 PURPOSE
 	Main cgi interface and common functions used for all the other
 	table tx.c files and their schema independent txfunc.h files -until
 	you mess with them in non standard ways.
-	
-LEGAL
-	(C) Gary Wallis 2001-2012. All Rights Reserved.
+AUTHOR/LEGAL
+	(C) Gary Wallis 2001-2017 for Unixservice, LLC. All Rights Reserved.
 	LICENSE file should be included in distribution.
 OTHER
-	Only tested on CentOS 5
+	Only tested on CentOS and Ubuntu
 HELP
-	support @ unixservice . com
-
+	unxsrad @ unxs . io
 */
 
 #include "mysqlrad.h"
@@ -35,7 +33,7 @@ unsigned guEnd;
 unsigned guI;
 unsigned guN=SHOWPAGE;
 char gcCommand[100];
-static char cLogKey[16]={"Ksdj458jssdUjf79"};
+static char cLogKey[16]={"Ksdj4Ap8dgqBk22"};
 char gcFilter[100];
 char gcFind[100];
 unsigned guMode;
@@ -63,8 +61,8 @@ char gcFunction[100]={""};
 unsigned guListMode=0;
 char gcQuery[8192]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo="$Id: main.c 2082 2012-09-06 01:44:03Z Dylan $";
-char *gcRADStatus="Start";
+char *gcBuildInfo=dsGitVersion;
+char *gcRADStatus="Unknown";
 
 //Local
 void Footer_ism3(void);
@@ -73,6 +71,7 @@ const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned
 char *cEmailInput(char *cInput);
 void GetClientOwner(unsigned uClient, unsigned *uOwner);
 void htmlPlainTextError(const char *cError);
+void GetConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer, unsigned uHtml);
 
 //Ext
 int iExtMainCommands(pentry entries[], int x);
@@ -126,7 +125,6 @@ int main(int iArgc, char *cArgv[])
 
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{
-
 		SSLCookieLogin();
 
 	        gcl = getenv("QUERY_STRING");
@@ -152,9 +150,9 @@ int main(int iArgc, char *cArgv[])
 				{{cProject}}("");
 			else if(!strcmp(gcFunction,"Logout"))
 			{
-				printf("Set-Cookie: {{cProject}}Login=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				printf("Set-Cookie: {{cProject}}Passwd=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-				printf("Set-Cookie: {{cProject}}SessionCookie=; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: {{cProject}}Login=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: {{cProject}}Passwd=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				printf("Set-Cookie: {{cProject}}SessionCookie=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=6,uPermLevel=%u,"
 						"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,"
 						"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -1344,8 +1342,8 @@ void SetLogin(void)
 {
 	if( iValidLogin(0) )
 	{
-		printf("Set-Cookie: {{cProject}}Login=%s;\n",gcLogin);
-		printf("Set-Cookie: {{cProject}}Passwd=%s;\n",gcPasswd);
+		printf("Set-Cookie: {{cProject}}Login=%s; secure; httponly;\n",gcLogin);
+		printf("Set-Cookie: {{cProject}}Passwd=%s; secure; httponly;\n",gcPasswd);
 		strncpy(gcUser,gcLogin,41);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;
@@ -1363,7 +1361,7 @@ void SetLogin(void)
 char *cGetPasswd(char *gcLogin);
 int iValidLogin(int mode)
 {
-	char salt[3]={'/','D',0};
+	char cSalt[16]={""};
 	char cPassword[100]={""};
 
 	//Notes:
@@ -1374,12 +1372,22 @@ int iValidLogin(int mode)
 	{
 		if(!mode)
 		{
-			strncpy(salt,cPassword,2);
-			EncryptPasswdWithSalt(gcPasswd,salt);
+			//MD5-SHA vs DES salt determination
+			if(cPassword[0]=='$' && cPassword[2]=='$' && cPassword[1]=='1')
+				sprintf(cSalt,"%.12s",cPassword);
+			else if(cPassword[0]=='$' && cPassword[2]=='$' && (cPassword[1]=='5' || cPassword[1]=='6'))
+				sprintf(cSalt,"%.14s",cPassword);
+			else
+				sprintf(cSalt,"%.2s",cPassword);
+			EncryptPasswdWithSalt(gcPasswd,cSalt);
 			if(!strcmp(gcPasswd,cPassword)) 
 			{
 				//tLogType.cLabel='backend login'->uLogType=6
-				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
+				sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login ok %.99s',"
+						"uLogType=6,uPermLevel=%u,uLoginClient=%u,cLogin='%.99s',"
+						"cHost='%.99s',cServer='%.99s',uOwner=1,uCreatedBy=1,"
+						"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+							gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
 				macro_mySQLQueryHTMLError;
 				return 1;
 			}
@@ -1511,18 +1519,113 @@ void htmlSSLLogin(void)
 }//void htmlSSLLogin(void)
 
 
-void EncryptPasswdWithSalt(char *pw, char *salt)
+//Passwd stuff
+void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt)
 {
-	char passwd[102]={""};
-	char *cpw;
+	char cPasswd[100]={""};
+	char *cp;
 			
-	strcpy(passwd,pw);
-				
-	cpw=crypt(passwd,salt);
+	sprintf(cPasswd,"%.99s",gcPasswd);
+	cp=crypt(cPasswd,cSalt);
+	sprintf(gcPasswd,"%.99s",cp);
 
-	strcpy(pw,cpw);
+}//void EncryptPasswdWithSalt(char *gcPasswd, char *cSalt)
 
-}//void EncryptPasswdWithSalt(char *pw, char *salt)
+static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
+        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+void to64(s, v, n)
+  register char *s;
+  register long v;
+  register int n;
+{
+    while (--n >= 0) {
+        *s++ = itoa64[v&0x3f];
+        v >>= 6;
+    }
+}//void to64(s, v, n)
+
+#include <openssl/pem.h>
+//public domain code
+char *base64encode (const void *b64_encode_this, int encode_this_many_bytes)
+{
+    BIO *b64_bio, *mem_bio;
+    BUF_MEM *mem_bio_mem_ptr;
+    b64_bio = BIO_new(BIO_f_base64());
+    mem_bio = BIO_new(BIO_s_mem());
+    BIO_push(b64_bio, mem_bio);
+    BIO_set_flags(b64_bio, BIO_FLAGS_BASE64_NO_NL);
+    BIO_write(b64_bio, b64_encode_this, encode_this_many_bytes);
+    int i=BIO_flush(b64_bio);
+    BIO_get_mem_ptr(mem_bio, &mem_bio_mem_ptr);
+    i=BIO_set_close(mem_bio, BIO_NOCLOSE);
+    BIO_free_all(b64_bio);
+    BUF_MEM_grow(mem_bio_mem_ptr, (*mem_bio_mem_ptr).length + 1);
+    (*mem_bio_mem_ptr).data[(*mem_bio_mem_ptr).length] = '\0';
+
+    return (*mem_bio_mem_ptr).data;
+
+}//char *base64encode (const void *b64_encode_this, int encode_this_many_bytes)
+void EncryptPasswd(char *cPw)
+{
+	FILE *fp;
+	fp=fopen("/dev/urandom","r");
+	char cRandomData[18];
+	fread(cRandomData,1,18,fp);
+	fclose(fp);
+
+	char *cpPwd="";
+	char cMethod[16] ={""}; 
+	GetConfiguration("cCryptMethod",cMethod,15,0,0);
+	if(!strcmp(cMethod,"SHA256") || !strcmp(cMethod,"SHA512"))
+	{
+		char cSalt[] = "$5$0123456789$";
+		sprintf(cSalt+3,"%.10s",base64encode(cRandomData,10));
+		cpPwd=crypt(cPw,cSalt);
+	}
+	else //MD5 default not secure but small and fast
+	{
+		char cSalt[] = "$1$01234567$";
+		sprintf(cSalt+3,"%.8s",base64encode(cRandomData,8));
+		cpPwd=crypt(cPw,cSalt);
+	}
+	sprintf(cPw,"%.99s",cpPwd);
+
+}//void EncryptPasswd(char *cPw)
+
+
+void GeneratePasswd(char *dest)
+{
+	static int srand_called=0;
+	size_t len=0;
+	char *p=dest;
+	int three_in_a_row=0;
+	int arr[128]={0x0};
+
+	if(!srand_called)
+	{
+		srandom(time(NULL));
+		srand_called=1;
+	}
+	*dest=0x0; /* int the destination string*/
+	for(len=6 + rand()%3; len; len--, p++) /* gen characters */
+	{
+		char *q=dest;
+		*p=(rand()%2)? rand()%26 + 97: rand()%10 + 48;
+		p[1]=0x0;
+		arr[(int) *p]++;                         /* check values */
+		if(arr[(int) *p]==3)
+		{
+			for(q=dest; q[2]>0 && !three_in_a_row; q++)	
+				if(*q==q[1] && q[1]==q[2])
+			   		three_in_a_row=1;
+		}
+		if(three_in_a_row || arr[(int) *p]> 3 )
+			GeneratePasswd(dest);        /* values do not pass try again */
+	}
+
+}//void GeneratePasswd(char *dest)
+
 
 
 
@@ -1864,3 +1967,39 @@ void GetSessionCookie(void)
 	}
 }//void GetSessionCookie(void)
 
+
+void GetConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer, unsigned uHtml)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+
+        char cQuery[1024];
+	char cExtra[100]={""};
+
+        sprintf(cQuery,"SELECT cValue,cComment FROM tConfiguration WHERE cLabel='%s'",
+			cName);
+	if(uServer)
+	{
+		sprintf(cExtra," AND uServer=%u",uServer);
+		strcat(cQuery,cExtra);
+	}
+        mysql_query(&gMysql,cQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(uHtml)
+        	        htmlPlainTextError(mysql_error(&gMysql));
+		else
+        	        TextError(mysql_error(&gMysql),0);
+	}
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+	{
+		char cFormat[16];
+        	sprintf(cFormat,"%%.%us",uValueSize-1);
+        	sprintf(cValue,cFormat,field[0]);
+		if(!strncmp(cValue,"cComment",8))
+        		sprintf(cValue,cFormat,field[1]);
+	}
+        mysql_free_result(res);
+
+}//void GetConfiguration()

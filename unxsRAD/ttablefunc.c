@@ -272,7 +272,9 @@ void ExttTableButtons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
-			printf("Here we manage project tables.");
+			printf("Here we manage mostly project tables. We also have included misc source code files"
+				" and even data init .txt files. The other tables refer to templates that are"
+				" required to build or initialize the target apps.");
 			printf("<p><u>Record Context Info</u><br>");
 			if(guCookieProject && guCookieProject!=uProject)
 				printf("Current workflow project has no tables.");

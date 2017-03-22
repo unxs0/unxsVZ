@@ -1896,7 +1896,8 @@ void funcMakefileObjects(FILE *fp)
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
-			" ORDER BY uTableOrder",guProject);
+			" AND cLabel NOT LIKE '%%.txt'"
+			" ORDER BY tTable.uTableOrder",guProject);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -1920,6 +1921,7 @@ void funcMakefileRules(FILE *fp)
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND cLabel NOT LIKE '%%.txt'"
 			" ORDER BY uTableOrder",guProject);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -1948,6 +1950,7 @@ void funcModulePrototypes(FILE *fp)
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND cLabel NOT LIKE '%%.txt'"
 			" ORDER BY uTableOrder",guProject);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -1988,6 +1991,7 @@ void funcMainGetMenu(FILE *fp)
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND cLabel NOT LIKE '%%.txt'"
 			" ORDER BY uTableOrder",guProject);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -2021,6 +2025,7 @@ void funcMainNavBars(FILE *fp)
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND cLabel NOT LIKE '%%.txt'"
 			" ORDER BY uTableOrder",guProject);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -2056,6 +2061,7 @@ void funcMainPostFunctions(FILE *fp)
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND cLabel NOT LIKE '%%.txt'"
 			" ORDER BY uTableOrder",guProject);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -2081,6 +2087,7 @@ void funcMainTabMenu(FILE *fp)
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND cLabel NOT LIKE '%%.txt'"
 			" ORDER BY uTableOrder",guProject);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -2118,6 +2125,7 @@ void funcMainInitTableList(FILE *fp)
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND cLabel NOT LIKE '%%.txt'"
 			" ORDER BY uTableOrder",guProject);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -2149,6 +2157,7 @@ void funcMainCreateTables(FILE *fp)
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND cLabel NOT LIKE '%%.txt'"
 			" ORDER BY uTableOrder",guProject);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))

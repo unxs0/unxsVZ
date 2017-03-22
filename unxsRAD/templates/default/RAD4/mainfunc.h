@@ -995,33 +995,3 @@ void TextError(const char *cError, unsigned uContinue)
 
 }//void TextError(const char *cError, unsigned uContinue)
 
-//Passwd stuff
-static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
-        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-void to64(s, v, n)
-  register char *s;
-  register long v;
-  register int n;
-{
-    while (--n >= 0) {
-        *s++ = itoa64[v&0x3f];
-        v >>= 6;
-    }
-}//void to64(s, v, n)
-
-
-void EncryptPasswdMD5(char *pw)
-{
-	char cSalt[] = "$1$01234567$";
-        char *cpw;
-
-    	(void)srand((int)time((time_t *)NULL));
-    	to64(&cSalt[3],rand(),8);
-	
-	cpw = crypt(pw,cSalt);
-	strcpy(pw,cpw);
-
-}//void EncryptPasswdMD5(char *pw)
-//End passwd stuff ;)
-

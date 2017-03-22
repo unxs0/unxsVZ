@@ -144,6 +144,9 @@ void ExtSelectRow(const char *cTable,const char *cVarList,unsigned uRow);
 void ExtListSelect(const char *cTable,const char *cVarList);
 
 void {{cProject}}Log(unsigned uTablePK, char *cTableName, char *cLogEntry);
+void GetConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer, unsigned uHtml);
+void EncryptPasswdWithSalt(char *cPasswd,char *cSalt);
+void EncryptPasswd(char *cPasswd);
 
  //Standard tInputFunc functions
 char *WordToLower(char *cInput);
