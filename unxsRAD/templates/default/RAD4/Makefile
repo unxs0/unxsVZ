@@ -14,7 +14,7 @@ CFLAGS= -DLinux -Wall -DdsGitVersion=\"$(GIT_VERSION)\"
 RELEASE= 0.1
 #If using lib64 make sure you have adjusted if any errors emerge
 LIBS= -L/usr/lib/openisp -L/usr/lib64/mysql -lmysqlclient -lz -lcrypt -lm -lssl -ltemplate
-CGIDIR=/var/www/unxs/cgi-bin/
+CGIDIR=/var/www/cgi-bin/
 
 all: {{cProject}}.cgi {{cProject}}
 

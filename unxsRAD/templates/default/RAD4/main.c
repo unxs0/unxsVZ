@@ -429,10 +429,10 @@ void Header_ism3(char *title, int js)
 	//close first col
 	printf("</td><td align=right valign=bottom>\n");
 
-	printf("%s %s %s",
-		ForeignKey("tField","cLabel",guCookieField),
-		ForeignKey("tTable","cLabel",guCookieTable),
-		ForeignKey("tProject","cLabel",guCookieProject));
+	//printf("%s %s %s",
+	//	ForeignKey("tField","cLabel",guCookieField),
+	//	ForeignKey("tTable","cLabel",guCookieTable),
+	//	ForeignKey("tProject","cLabel",guCookieProject));
 
 	//Close header table
 	printf("</td></tr></table>\n");
