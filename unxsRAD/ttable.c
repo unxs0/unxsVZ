@@ -1,14 +1,9 @@
 /*
 FILE
-	tTable source code of unxsRAD.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2009 for Unixservice
-	svn ID removed
+	ttable.c
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in ttablefunc.h while 
-	RAD is still to be used.
+	RAD4 table data
 */
-
 
 #include "mysqlrad.h"
 
@@ -46,7 +41,6 @@ static unsigned uReadLevel=0;
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
 static unsigned uCreatedBy=0;
-#define ISM3FIELDS
 //uCreatedDate: Unix seconds date last insert
 static time_t uCreatedDate=0;
 //uModBy: uClient for last update
@@ -55,6 +49,8 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
+//cDescription: Description of table function in project context
+static char *cImport="#import data format\n\n#one field per line:\n#cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec]\n\n#tFieldType.cLabel can be:\n#BigInt Unsigned\n#Date Time\n#Decimal\n#Foreign Key\n#Int Unsigned\n#Select Table\n#Select Table Owner\n#Text\n#Time Stamp\n#Unixtime\n#Varchar\n#Varchar Unique Key\n#Yes/No\n#Empty lines and lines starting with a # are ignored\n\n";
 
 #define VAR_LIST_tTable "tTable.uTable,tTable.cLabel,tTable.uProject,tTable.uTableOrder,tTable.uSourceLock,tTable.cDescription,tTable.cSubDir,tTable.cLegend,tTable.cToolTip,tTable.uNewLevel,tTable.uModLevel,tTable.uDelLevel,tTable.uReadLevel,tTable.uOwner,tTable.uCreatedBy,tTable.uCreatedDate,tTable.uModBy,tTable.uModDate"
 
@@ -62,6 +58,7 @@ static time_t uModDate=0;
 void Insert_tTable(void);
 void Update_tTable(char *cRowid);
 void ProcesstTableListVars(pentry entries[], int x);
+void tTableFieldEntry(unsigned uMode);
 
  //In tTablefunc.c file included below
 void ExtProcesstTableVars(pentry entries[], int x);
@@ -131,7 +128,8 @@ void ProcesstTableVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
-
+		else if(!strcmp(entries[i].name,"cImport"))
+			cImport=entries[i].val;
 	}
 
 	//After so we can overwrite form data if needed.
@@ -277,9 +275,12 @@ void tTable(const char *cResult)
 
         printf("</td><td valign=top>");
 	//
-	OpenFieldSet("tTable Record Data",100);
 
-	if(guMode==2000 || guMode==2002)
+	if(guMode==10000)
+		tTableFieldEntry(1);
+	else if(guMode==10001)
+		tTableFieldEntry(0);
+	else if(guMode==2000 || guMode==2002)
 		tTableInput(1);
 	else
 		tTableInput(0);
@@ -296,13 +297,39 @@ void tTable(const char *cResult)
 }//end of tTable();
 
 
+void tTableFieldEntry(unsigned uMode)
+{
+
+	OpenFieldSet("tTable Field Import Data",100);
+//uTable
+	OpenRow(LANG_FL_tTable_uTable,"black");
+	printf("<input title='%s' type=text name=uTable value=%u size=16 maxlength=10 ",LANG_FT_tTable_uTable,uTable);
+	printf("disabled></td></tr>\n");
+	printf("<input type=hidden name=uTable value=%u >\n",uTable);
+//cLabel
+	OpenRow(LANG_FL_tTable_cLabel,"black");
+	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 ",LANG_FT_tTable_cLabel,EncodeDoubleQuotes(cLabel));
+	printf("disabled></td></tr>\n");
+	printf("<input type=hidden name=cLabel value=\"%s\">\n",EncodeDoubleQuotes(cLabel));
+//uProject
+	OpenRow(LANG_FL_tTable_uProject,"black");
+	printf("<input type=text size=20 value='%s' disabled>\n",ForeignKey("tProject","cLabel",uProject));
+	printf("<input type=hidden size=20 maxlength=20 name=uProject value=%u >\n",uProject);
+//cImport
+	OpenRow(LANG_FL_tTable_cImport,"black");
+	printf("<textarea title='%s' cols=80 wrap=soft rows=16 name=cImport ",LANG_FT_tTable_cImport);
+	printf(">%s</textarea></td></tr>\n",cImport);
+
+}//void tTableFieldEntry(unsigned uMode)
+
+
 void tTableInput(unsigned uMode)
 {
 
+	OpenFieldSet("tTable Record Data",100);
 //uTable
 	OpenRow(LANG_FL_tTable_uTable,"black");
-	printf("<input title='%s' type=text name=uTable value=%u size=16 maxlength=10 "
-,LANG_FT_tTable_uTable,uTable);
+	printf("<input title='%s' type=text name=uTable value=%u size=16 maxlength=10 ",LANG_FT_tTable_uTable,uTable);
 	if(guPermLevel>=20 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -314,8 +341,7 @@ void tTableInput(unsigned uMode)
 	}
 //cLabel
 	OpenRow(LANG_FL_tTable_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
-,LANG_FT_tTable_cLabel,EncodeDoubleQuotes(cLabel));
+	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 ",LANG_FT_tTable_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -340,8 +366,7 @@ void tTableInput(unsigned uMode)
 	//}
 //uTableOrder
 	OpenRow(LANG_FL_tTable_uTableOrder,"black");
-	printf("<input title='%s' type=text name=uTableOrder value=%u size=16 maxlength=10 "
-,LANG_FT_tTable_uTableOrder,uTableOrder);
+	printf("<input title='%s' type=text name=uTableOrder value=%u size=16 maxlength=10 ",LANG_FT_tTable_uTableOrder,uTableOrder);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -359,8 +384,8 @@ void tTableInput(unsigned uMode)
 		YesNoPullDown("uSourceLock",uSourceLock,0);
 //cDescription
 	OpenRow(LANG_FL_tTable_cDescription,"black");
-	printf("<input title='%s' type=text name=cDescription value=\"%s\" size=40 maxlength=100 "
-,LANG_FT_tTable_cDescription,EncodeDoubleQuotes(cDescription));
+	printf("<input title='%s' type=text name=cDescription value=\"%s\" size=40 maxlength=100 ",
+		LANG_FT_tTable_cDescription,EncodeDoubleQuotes(cDescription));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -372,8 +397,8 @@ void tTableInput(unsigned uMode)
 	}
 //cSubDir
 	OpenRow(LANG_FL_tTable_cSubDir,"black");
-	printf("<input title='%s' type=text name=cSubDir value=\"%s\" size=40 maxlength=100 "
-,LANG_FT_tTable_cSubDir,EncodeDoubleQuotes(cSubDir));
+	printf("<input title='%s' type=text name=cSubDir value=\"%s\" size=40 maxlength=100 ",
+		LANG_FT_tTable_cSubDir,EncodeDoubleQuotes(cSubDir));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -386,7 +411,7 @@ void tTableInput(unsigned uMode)
 //cLegend
 	OpenRow(LANG_FL_tTable_cLegend,"black");
 	printf("<input title='%s' type=text name=cLegend value=\"%s\" size=40 maxlength=100 "
-,LANG_FT_tTable_cLegend,EncodeDoubleQuotes(cLegend));
+		,LANG_FT_tTable_cLegend,EncodeDoubleQuotes(cLegend));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -399,7 +424,7 @@ void tTableInput(unsigned uMode)
 //cToolTip
 	OpenRow(LANG_FL_tTable_cToolTip,"black");
 	printf("<input title='%s' type=text name=cToolTip value=\"%s\" size=40 maxlength=100 "
-,LANG_FT_tTable_cToolTip,EncodeDoubleQuotes(cToolTip));
+		,LANG_FT_tTable_cToolTip,EncodeDoubleQuotes(cToolTip));
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -412,7 +437,7 @@ void tTableInput(unsigned uMode)
 //uNewLevel
 	OpenRow(LANG_FL_tTable_uNewLevel,"black");
 	printf("<input title='%s' type=text name=uNewLevel value=%u size=16 maxlength=10 "
-,LANG_FT_tTable_uNewLevel,uNewLevel);
+		,LANG_FT_tTable_uNewLevel,uNewLevel);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -425,7 +450,7 @@ void tTableInput(unsigned uMode)
 //uModLevel
 	OpenRow(LANG_FL_tTable_uModLevel,"black");
 	printf("<input title='%s' type=text name=uModLevel value=%u size=16 maxlength=10 "
-,LANG_FT_tTable_uModLevel,uModLevel);
+		,LANG_FT_tTable_uModLevel,uModLevel);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -438,7 +463,7 @@ void tTableInput(unsigned uMode)
 //uDelLevel
 	OpenRow(LANG_FL_tTable_uDelLevel,"black");
 	printf("<input title='%s' type=text name=uDelLevel value=%u size=16 maxlength=10 "
-,LANG_FT_tTable_uDelLevel,uDelLevel);
+		,LANG_FT_tTable_uDelLevel,uDelLevel);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -451,7 +476,7 @@ void tTableInput(unsigned uMode)
 //uReadLevel
 	OpenRow(LANG_FL_tTable_uReadLevel,"black");
 	printf("<input title='%s' type=text name=uReadLevel value=%u size=16 maxlength=10 "
-,LANG_FT_tTable_uReadLevel,uReadLevel);
+		,LANG_FT_tTable_uReadLevel,uReadLevel);
 	if(guPermLevel>=7 && uMode)
 	{
 		printf("></td></tr>\n");
@@ -464,23 +489,15 @@ void tTableInput(unsigned uMode)
 //uOwner
 	OpenRow(LANG_FL_tTable_uOwner,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 	else
-	{
-	printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
-	}
+		printf("%s<input type=hidden name=uOwner value=%u >\n",ForeignKey("tClient","cLabel",uOwner),uOwner);
 //uCreatedBy
 	OpenRow(LANG_FL_tTable_uCreatedBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 	else
-	{
-	printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
-	}
+		printf("%s<input type=hidden name=uCreatedBy value=%u >\n",ForeignKey("tClient","cLabel",uCreatedBy),uCreatedBy);
 //uCreatedDate
 	OpenRow(LANG_FL_tTable_uCreatedDate,"black");
 	if(uCreatedDate)
@@ -491,13 +508,9 @@ void tTableInput(unsigned uMode)
 //uModBy
 	OpenRow(LANG_FL_tTable_uModBy,"black");
 	if(guPermLevel>=20 && uMode)
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 	else
-	{
-	printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
-	}
+		printf("%s<input type=hidden name=uModBy value=%u >\n",ForeignKey("tClient","cLabel",uModBy),uModBy);
 //uModDate
 	OpenRow(LANG_FL_tTable_uModDate,"black");
 	if(uModDate)
@@ -507,8 +520,6 @@ void tTableInput(unsigned uMode)
 	printf("<input type=hidden name=uModDate value=%lu >\n",uModDate);
 	printf("</tr>\n");
 
-
-
 }//void tTableInput(unsigned uMode)
 
 
@@ -517,9 +528,7 @@ void NewtTable(unsigned uMode)
 	register int i=0;
 	MYSQL_RES *res;
 
-	sprintf(gcQuery,"SELECT uTable FROM tTable\
-				WHERE uTable=%u"
-							,uTable);
+	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE uTable=%u",uTable);
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -531,15 +540,13 @@ void NewtTable(unsigned uMode)
 	Insert_tTable();
 	//sprintf(gcQuery,"New record %u added");
 	uTable=mysql_insert_id(&gMysql);
-#ifdef ISM3FIELDS
 	uCreatedDate=luGetCreatedDate("tTable",uTable);
 	unxsRADLog(uTable,"tTable","New");
-#endif
 
 	if(!uMode)
 	{
-	sprintf(gcQuery,LANG_NBR_NEWRECADDED,uTable);
-	tTable(gcQuery);
+		sprintf(gcQuery,LANG_NBR_NEWRECADDED,uTable);
+		tTable(gcQuery);
 	}
 
 }//NewtTable(unsigned uMode)
@@ -547,27 +554,17 @@ void NewtTable(unsigned uMode)
 
 void DeletetTable(void)
 {
-#ifdef ISM3FIELDS
-	sprintf(gcQuery,"DELETE FROM tTable WHERE uTable=%u AND ( uOwner=%u OR %u>9 )"
-					,uTable,guLoginClient,guPermLevel);
-#else
-	sprintf(gcQuery,"DELETE FROM tTable WHERE uTable=%u"
-					,uTable);
-#endif
+	sprintf(gcQuery,"DELETE FROM tTable WHERE uTable=%u AND ( uOwner=%u OR %u>9 )",uTable,guLoginClient,guPermLevel);
 	macro_mySQLQueryHTMLError;
 	//tTable("Record Deleted");
 	if(mysql_affected_rows(&gMysql)>0)
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uTable,"tTable","Del");
-#endif
 		tTable(LANG_NBR_RECDELETED);
 	}
 	else
 	{
-#ifdef ISM3FIELDS
 		unxsRADLog(uTable,"tTable","DelError");
-#endif
 		tTable(LANG_NBR_RECNOTDELETED);
 	}
 
@@ -635,7 +632,6 @@ void ModtTable(void)
 	register int i=0;
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-#ifdef ISM3FIELDS
 	unsigned uPreModDate=0;
 
 	//Mod select gcQuery
@@ -651,12 +647,6 @@ void ModtTable(void)
 	sprintf(gcQuery,"SELECT uTable,uModDate FROM tTable\
 				WHERE uTable=%u"
 						,uTable);
-#else
-	sprintf(gcQuery,"SELECT uTable FROM tTable\
-				WHERE uTable=%u"
-						,uTable);
-#endif
-
 	macro_mySQLRunAndStore(res);
 	i=mysql_num_rows(res);
 
@@ -666,18 +656,14 @@ void ModtTable(void)
 	if(i>1) tTable(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);
-#ifdef ISM3FIELDS
 	sscanf(field[1],"%u",&uPreModDate);
 	if(uPreModDate!=uModDate) tTable(LANG_NBR_EXTMOD);
-#endif
 
 	Update_tTable(field[0]);
 	//sprintf(query,"record %s modified",field[0]);
 	sprintf(gcQuery,LANG_NBRF_REC_MODIFIED,field[0]);
-#ifdef ISM3FIELDS
 	uModDate=luGetModDate("tTable",uTable);
 	unxsRADLog(uTable,"tTable","Mod");
-#endif
 	tTable(gcQuery);
 
 }//ModtTable(void)

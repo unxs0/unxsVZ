@@ -412,6 +412,8 @@
 #define LANG_FT_tTable_uModBy "uClient for last update"
 #define LANG_FL_tTable_uModDate "uModDate"
 #define LANG_FT_tTable_uModDate "Unix seconds date last update"
+#define LANG_FL_tTable_cImport "cImport"
+#define LANG_FT_tTable_cImport "Field data for import in special format"
 //tField
 #define LANG_FL_tField_uField "uField"
 #define LANG_FT_tField_uField "Primary Key"
