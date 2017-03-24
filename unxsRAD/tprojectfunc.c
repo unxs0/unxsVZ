@@ -591,7 +591,7 @@ char *ParseTextAreaLines(char *cTextArea)
 			if(cRetVal[0]=='\n' || cRetVal[0]==13)
 			{
 				uStart=uEnd=0;
-				return("");
+				return(" ");//Return a single space so we can exit on \0 string
 			}
 
 			if(cTextArea[uEnd+1]==10)

@@ -10,6 +10,12 @@ AUTHOR
 //ModuleFunctionProtos()
 void AddDefaultFields(void);
 
+void RemoveTableFields(char *cValue);
+void AddTableFields(char *cValue);
+void RemoveTableFieldLine(char *cLine);
+void AddTableFieldLine(char *cLine);
+char *ParseTextAreaLines(char *cTextArea);//see tprojectfunc.c
+
 void tTableNavList(void);
 void tTableFieldNavList(void);
 void RemoveAllFields(void);
@@ -28,6 +34,7 @@ void ExtProcesstTableVars(pentry entries[], int x)
 void ExttTableCommands(pentry entries[], int x)
 {
 
+	char cTextarea[4096]={""};
 	if(!strcmp(gcFunction,"tTableTools"))
 	{
 		//ModuleFunctionProcess()
@@ -227,7 +234,30 @@ void ExttTableCommands(pentry entries[], int x)
 				tTable("Error: Denied by permissions settings");
 			}
 		}
-                else if(!strcmp(gcCommand,"Import Field Data"))
+                else if(!strcmp(gcCommand,"Add Table Fields"))
+                {
+                        ProcesstTableVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>=7)
+			{
+				guMode=10000;
+				//check
+				if(!cImport[0])
+					tTable("Error: cImport empty");
+				if(!uTable)
+					tTable("Error: no uTable");
+				if(!uProject)
+					tTable("Error: no uProject");
+				guMode=10001;
+				sprintf(cTextarea,"%.4095s",cImport);
+				AddTableFields(cTextarea);
+				tTable("Added Table Fields");
+			}
+			else
+			{
+				tTable("Error: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Remove Table Fields"))
                 {
                         ProcesstTableVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>=7)
@@ -237,7 +267,9 @@ void ExttTableCommands(pentry entries[], int x)
 				if(!cImport[0])
 					tTable("Error: cImport empty");
 				guMode=10001;
-				tTable("Field Data Imported");
+				sprintf(cTextarea,"%.4095s",cImport);
+				RemoveTableFields(cTextarea);
+				tTable("Removed Table Fields");
 			}
 			else
 			{
@@ -284,9 +316,12 @@ void ExttTableButtons(void)
 				printf("Back to tTable <a href=?gcFunction=tTable"
 					"&uTable=%u>%s</a><br>\n",uTable,cLabel);
                         printf("<p><u>Field Import Operations</u><br>");
-			printf("<p><input title='Parse pasted information and try to import as new fields'"
+			printf("<p><input title='Parse cImport and attempt to add fields to this table'"
 					" type=submit class=largeButton"
-					" name=gcCommand value='Import Field Data'>\n");
+					" name=gcCommand value='Add Table Fields'>\n");
+			printf("<p><input title='Parse cImport and attempt to remove the fields from this table'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Remove Table Fields'>\n");
 			tTableFieldNavList();
                 break;
                 case 2000:
@@ -803,12 +838,6 @@ void RemoveAllFields(void)
 }//void RemoveAllFields(void)
 
 
-void RemoveTableFields(char *cValue);
-void AddTableFields(char *cValue);
-void RemoveTableFieldLine(char *cLine);
-void AddTableFieldLine(char *cLine);
-char *ParseTextAreaLines(char *cTextArea);
-
 void RemoveTableFields(char *cValue)
 {
 	char cLine[256];
@@ -820,7 +849,7 @@ void RemoveTableFields(char *cValue)
 		if(!cLine[0]) break;
 		RemoveTableFieldLine(cLine);
 	}
-}//void RemoveDefaultTables(unsigned uProject)
+}//void RemoveTableFields(char *cValue)
 
 
 void AddTableFields(char *cValue)
@@ -855,18 +884,21 @@ void RemoveTableFieldLine(char *cLine)
 	//uPaciente;Numero de paciente;Select Table Owner;10;"tPaciente","cLabel"
 	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/\\.%% ];%31[a-zA-Z0-9 ];%u;%32[a-zA-Z0-9\",]",
 					cLabel,cTitle,cFieldType,&uOrder,cFKSpec);
-	if(!cLabel[0] || iCount!=1)
+	//debug1
+	//sprintf(gcQuery,"(%d) %s;%s;%s;%u;%s",iCount,cLabel,cTitle,cFieldType,uOrder,cFKSpec);
+	//tTable(gcQuery);
+
+	if(!cLabel[0] || iCount<4)
 	{
 		char gcQuery[512];
 		sprintf(gcQuery,"Error1 %s",cLine);
 		tTable(gcQuery);
 	}
 
-	tTable("d1");
-
         MYSQL_RES *res;
         MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uField FROM tField WHERE cLabel='%.32s' AND uTable=%u",cLabel,uTable);
+	sprintf(gcQuery,"SELECT uField FROM tField WHERE cLabel='%.32s' AND uTable=%u AND uProject='%u'",
+			cLabel,uTable,uProject);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         	htmlPlainTextError(mysql_error(&gMysql));
@@ -874,14 +906,15 @@ void RemoveTableFieldLine(char *cLine)
         if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&uField);
         mysql_free_result(res);
-
-
 	if(uField)
 	{
-		sprintf(gcQuery,"DELETE FROM tField WHERE uField=%u AND uTable=%u",uField,uTable);
+		sprintf(gcQuery,"DELETE FROM tField WHERE uField=%u",uField);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
-        	        htmlPlainTextError(mysql_error(&gMysql));
+		{
+			sprintf(gcQuery,"%s",mysql_error(&gMysql));
+			tTable(gcQuery);
+		}
 	}
 
 }//void RemoveTableFieldLine(char *cLine)
@@ -896,23 +929,26 @@ void AddTableFieldLine(char *cLine)
 	unsigned uFieldType=0;
 	unsigned uOrder=0;
 	char cFKSpec[32]={""};
+	unsigned uSQLSize=10;//default for all except Varchar types
 
 	int iCount=0;
 	unsigned uField=0;
 
-	//cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec]
+	char gcQuery[512];
+	//cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec]/[uSQLSize for Varchars]
 	//cLastname;Last name;Varchar Unique Key;21;
 	//uPaciente;Numero de paciente;Select Table Owner;10;"tPaciente","cLabel"
 	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/\\.%% ];%31[a-zA-Z0-9 ];%u;%32[a-zA-Z0-9\",]",
 					cLabel,cTitle,cFieldType,&uOrder,cFKSpec);
+	//debug1
+	//sprintf(gcQuery,"(%d) %s;%s;%s;%u;%s",iCount,cLabel,cTitle,cFieldType,uOrder,cFKSpec);
+	//tTable(gcQuery);
+
 	if( iCount<4 || !cLabel[0] || !cTitle[0] || !cFieldType[0] || !uOrder)
 	{
-		char gcQuery[512];
 		sprintf(gcQuery,"Error1 %s",cLine);
 		tTable(gcQuery);
 	}
-
-	tTable("d2");
 
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -926,10 +962,26 @@ void AddTableFieldLine(char *cLine)
         mysql_free_result(res);
 	if(!uFieldType)
 	{
-		char gcQuery[512];
 		sprintf(gcQuery,"Error2 no such field type %s",cFieldType);
 		tTable(gcQuery);
 	}
+
+	if(strstr(cFieldType,"Varchar"))
+	{
+		uSQLSize=0;
+		sscanf(cFKSpec,"%u",&uSQLSize);
+		if(!uSQLSize)
+		{
+			sprintf(gcQuery,"%s Varchar requires size in last col: ;[cFKSpec]/[uSQLSize];",cLabel);
+			tTable(gcQuery);
+		}
+		cFKSpec[0]=0;
+	}
+
+	//debug2
+	//sprintf(gcQuery,"(%d %u) %s;%s;%s;%u;%s",iCount,uFieldType,cLabel,cTitle,cFieldType,uOrder,cFKSpec);
+	//tTable(gcQuery);
+
 
 	sprintf(gcQuery,"SELECT uField FROM tField WHERE cLabel='%.32s' AND uProject=%u AND uTable=%u",
 				cLabel,uProject,uTable);
@@ -944,10 +996,11 @@ void AddTableFieldLine(char *cLine)
 	{
 		sprintf(gcQuery,"UPDATE tField SET"
 				" cLabel='%.32s',"
-				" uFieldOrder=%u,"
+				" uOrder=%u,"
 				" uFieldType=%u,"
 				" cTitle='%.100s',"
 				" cFKSpec='%.32s',"
+				" uSQLSize='%u',"
 				" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uField=%u",
 					cLabel,
@@ -955,31 +1008,43 @@ void AddTableFieldLine(char *cLine)
 					uFieldType,
 					cTitle,
 					cFKSpec,
+					uSQLSize,
 					guLoginClient,
 						uField);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
-        	        htmlPlainTextError(mysql_error(&gMysql));
+		{
+			sprintf(gcQuery,"%s",mysql_error(&gMysql));
+			tTable(gcQuery);
+		}
 	}
 	else
 	{
 		sprintf(gcQuery,"INSERT INTO tField SET"
+				" uTable=%u,"
+				" uProject=%u,"
 				" cLabel='%.32s',"
-				" uFieldOrder=%u,"
+				" uOrder=%u,"
 				" uFieldType=%u,"
 				" cTitle='%.100s',"
 				" cFKSpec='%.32s',"
-				" uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				" uSQLSize='%u',"
+				" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+					uTable,
+					uProject,
 					cLabel,
 					uOrder,
 					uFieldType,
 					cTitle,
 					cFKSpec,
-					guLoginClient);
+					uSQLSize,
+					guCompany,guLoginClient);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
-        	        htmlPlainTextError(mysql_error(&gMysql));
+		{
+			sprintf(gcQuery,"%s",mysql_error(&gMysql));
+			tTable(gcQuery);
+		}
 	}
-
 
 }//void AddTableFieldLine(char *cLine)
