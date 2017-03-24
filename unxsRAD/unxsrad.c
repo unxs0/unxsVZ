@@ -1748,6 +1748,9 @@ void funcModuleCreateQuery(FILE *fp)
 			case(COLTYPE_VARCHAR):
 				fprintf(fp,"\t\t\"%s VARCHAR(%s) %s",field[0],field[3],field[1]);
 			break;
+			case(COLTYPE_TEXT):
+				fprintf(fp,"\t\t\"%s TEXT %s",field[0],field[1]);
+			break;
 		}
 		switch(uIndexType)
 		{
