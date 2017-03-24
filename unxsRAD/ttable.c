@@ -317,7 +317,7 @@ void tTableFieldEntry(unsigned uMode)
 	printf("<input type=hidden size=20 maxlength=20 name=uProject value=%u >\n",uProject);
 //cImport
 	OpenRow(LANG_FL_tTable_cImport,"black");
-	printf("<textarea title='%s' cols=80 wrap=soft rows=16 name=cImport ",LANG_FT_tTable_cImport);
+	printf("<textarea style='font-size: 10pt' title='%s' cols=80 wrap=soft rows=16 name=cImport ",LANG_FT_tTable_cImport);
 	printf(">%s</textarea></td></tr>\n",cImport);
 
 }//void tTableFieldEntry(unsigned uMode)
@@ -750,7 +750,7 @@ void tTableList(void)
 		sprintf(cBuf14,"%.99s",ForeignKey("tClient","cLabel",strtoul(field[14],NULL,10)));
 		char cBuf16[100];
 		sprintf(cBuf16,"%.99s",ForeignKey("tClient","cLabel",strtoul(field[16],NULL,10)));
-		printf("<td><a class=darkLink href=?gcFunction=tTemplate&uTemplate=%s>%s</a>"
+		printf("<td><a class=darkLink href=?gcFunction=tTable&uTable=%s>%s</a>"
 				"<td>%s"
 				"<td>%s"
 				"<td>%s"

@@ -10,11 +10,13 @@ AUTHOR
 //ModuleFunctionProtos()
 void AddDefaultFields(void);
 
+void htmlTemplateInfo(const char *cLabel);
+char *ParseTextAreaLines(char *cTextArea);//see tprojectfunc.c
 void RemoveTableFields(char *cValue);
 void AddTableFields(char *cValue);
 void RemoveTableFieldLine(char *cLine);
 void AddTableFieldLine(char *cLine);
-char *ParseTextAreaLines(char *cTextArea);//see tprojectfunc.c
+void ExportTableFields(void);
 
 void tTableNavList(void);
 void tTableFieldNavList(void);
@@ -266,6 +268,10 @@ void ExttTableCommands(pentry entries[], int x)
 				//check
 				if(!cImport[0])
 					tTable("Error: cImport empty");
+				if(!uTable)
+					tTable("Error: no uTable");
+				if(!uProject)
+					tTable("Error: no uProject");
 				guMode=10001;
 				sprintf(cTextarea,"%.4095s",cImport);
 				RemoveTableFields(cTextarea);
@@ -276,11 +282,31 @@ void ExttTableCommands(pentry entries[], int x)
 				tTable("Error: Denied by permissions settings");
 			}
 		}
+                else if(!strcmp(gcCommand,"Export Table Fields"))
+                {
+                        ProcesstTableVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>=7)
+			{
+				guMode=10000;
+				//check
+				if(!uTable)
+					tTable("Error: no uTable");
+				if(!uProject)
+					tTable("Error: no uProject");
+				if(!cImport[0])
+				guMode=10001;
+				ExportTableFields();
+				tTable("Table Fields Exported");
+			}
+			else
+			{
+				tTable("Error: Denied by permissions settings");
+			}
+		}
 	}
 }//void ExttTableCommands(pentry entries[], int x)
 
 
-void htmlTemplateInfo(const char *cLabel);
 void htmlTemplateInfo(const char *cLabel)
 {
 	MYSQL_RES *res;
@@ -322,6 +348,9 @@ void ExttTableButtons(void)
 			printf("<p><input title='Parse cImport and attempt to remove the fields from this table'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Remove Table Fields'>\n");
+			printf("<p><input title='Export current fields into cImport text area. Current contents will be lost!'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Export Table Fields'>\n");
 			tTableFieldNavList();
                 break;
                 case 2000:
@@ -1048,3 +1077,38 @@ void AddTableFieldLine(char *cLine)
 	}
 
 }//void AddTableFieldLine(char *cLine)
+
+
+void ExportTableFields(void)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	char gcQuery[512];
+	static char cImportBuffer[4096];
+	sprintf(gcQuery,"SELECT "
+				" tField.cLabel,"
+				" tField.cTitle,"
+				" tFieldType.cLabel,"
+				" tField.uOrder,"
+				" IF(tField.cFKSpec!='',tField.cFKSpec,tField.uSQLSize)"
+				" FROM tField,tFieldType WHERE tFieldType.uFieldType=tField.uFieldType AND"
+				" tField.uTable=%u AND"
+				" tField.uProject=%u"
+				" ORDER BY tField.uOrder",
+					uTable,
+					uProject);
+       	mysql_query(&gMysql,gcQuery);
+       	if(mysql_errno(&gMysql))
+	{
+		sprintf(gcQuery,"%s",mysql_error(&gMysql));
+		tTable(gcQuery);
+	}
+        res=mysql_store_result(&gMysql);
+        while((field=mysql_fetch_row(res)) && strlen(cImportBuffer)<(4095-512))
+	{
+		sprintf(gcQuery,"%s;%s;%s;%s;%s;\n",field[0],field[1],field[2],field[3],field[4]);
+		strcat(cImportBuffer,gcQuery);
+	}
+        mysql_free_result(res);
+	cImport=cImportBuffer;
+}//void ExportTableFields(void)
