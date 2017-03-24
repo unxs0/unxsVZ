@@ -7,6 +7,9 @@ LEGAL
 	(C) 2012-2017 Gary Wallis for Unixservice, LLC. All Rights Reserved.
 	LICENSE file should be included in distribution.
 OTHER
+	TODO every single embeded mini templates (the printf's with code in them) 
+	in this file can and should be eventually moved in to the 
+	general tTemplate system.
 HELP
 
 */
@@ -736,6 +739,31 @@ void funcModuleListPrint(FILE *fp)
 			fprintf(fp,"\t\tif(luYesNo%d)\n\t\t\tsprintf(cBuf%d,\"Yes\");\n",i,i);
 			fprintf(fp,"\t\telse\n\t\t\tsprintf(cBuf%d,\"No\");\n",i);
 		}
+		else if(uFieldType==COLTYPE_FOREIGNKEY ||
+				uFieldType==COLTYPE_SELECTTABLE ||
+				uFieldType==COLTYPE_SELECTTABLE_OWNER )//Index into another table
+		{
+			char cTableName[32]={""};
+			char cTableNameKey[32]={""};
+			char cFieldName[32]={""};
+			char *cp;
+			//cFKSpec
+			if((cp=strchr(field[2],',')))
+			{
+				*cp=0;
+				sprintf(cTableName,"%.31s",field[2]);
+				StripQuotes(cTableName);
+				sprintf(cTableNameKey,"u%.30s",cTableName+1);//RAD4 primary key standard naming convention
+				sprintf(cFieldName,"%.31s",cp+1);
+				if((cp=strchr(cFieldName,',')))
+					*cp=0;
+				StripQuotes(cFieldName);
+			}
+			fprintf(fp,"\t\tchar cBuf%d[128];\n",i);
+			fprintf(fp,"\t\tsprintf(cBuf%d,\"<a class=darkLink href=?gcFunction=%s&%s=%%.32s>%%.32s</a>\",\n",i,cTableName,cTableNameKey);
+			fprintf(fp,"\t\t\tfield[%d],\n",i);
+			fprintf(fp,"\t\t\tForeignKey(\"%s\",\"%s\",strtoul(field[%d],NULL,10)));\n",cTableName,cFieldName,i);
+		}
 		i++;
 	}
 
@@ -779,25 +807,10 @@ void funcModuleListPrint(FILE *fp)
 			first=0;
 		}
 
-		if(uFieldType==COLTYPE_FOREIGNKEY ||
+		if(uFieldType == COLTYPE_UNIXTIME ||
+				uFieldType==COLTYPE_FOREIGNKEY ||
 				uFieldType==COLTYPE_SELECTTABLE ||
-				uFieldType==COLTYPE_SELECTTABLE_OWNER )//Index into another table
-		{
-			char cTableName[32]={""};
-			char cFieldName[32]={""};
-			char *cp;
-			if((cp=strchr(field[2],',')))
-			{
-				*cp=0;
-				sprintf(cTableName,"%.31s",field[2]);
-				sprintf(cFieldName,"%.31s",cp+1);
-				if((cp=strchr(cFieldName,',')))
-					*cp=0;
-			}
-			fprintf(fp,"\t\t\t,ForeignKey(%s,%s,strtoul(field[%d],NULL,10))\n",
-							cTableName,cFieldName,i++);
-		}
-		else if(uFieldType == COLTYPE_UNIXTIME ||
+				uFieldType==COLTYPE_SELECTTABLE_OWNER ||
 				uFieldType == COLTYPE_UNIXTIMECREATE ||
 				uFieldType == COLTYPE_UNIXTIMEUPDATE ||
 				uFieldType ==COLTYPE_YESNO )
@@ -819,7 +832,7 @@ void funcModuleListPrint(FILE *fp)
 	fprintf(fp,"\t\t\t\t);\n");
 	mysql_free_result(res);
 
-}//void ModuleListPrint(FILE *fp)
+}//void funcModuleListPrint(FILE *fp)
 
 
 void funcModuleListTable(FILE *fp)

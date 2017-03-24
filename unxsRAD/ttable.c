@@ -50,7 +50,7 @@ static time_t uModDate=0;
 
 
 //cDescription: Description of table function in project context
-static char *cImport="#import data format\n\n#one field per line:\n#cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec]\n\n#tFieldType.cLabel can be:\n#BigInt Unsigned\n#Date Time\n#Decimal\n#Foreign Key\n#Int Unsigned\n#Select Table\n#Select Table Owner\n#Text\n#Time Stamp\n#Unixtime\n#Varchar\n#Varchar Unique Key\n#Yes/No\n#Empty lines and lines starting with a # are ignored\n\n";
+static char *cImport="#import data format\n#one field per line:\n#cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec/uSQLSize]\n#\n#tFieldType.cLabel can be:\n#BigInt Unsigned\n#Date Time\n#Decimal\n#Foreign Key\n#Int Unsigned\n#Select Table\n#Select Table Owner\n#Text\n#Time Stamp\n#Unixtime\n#Varchar\n#Varchar Unique Key\n#Yes/No\n#Empty lines stop processing and lines starting with a # or a space are ignored\n";
 
 #define VAR_LIST_tTable "tTable.uTable,tTable.cLabel,tTable.uProject,tTable.uTableOrder,tTable.uSourceLock,tTable.cDescription,tTable.cSubDir,tTable.cLegend,tTable.cToolTip,tTable.uNewLevel,tTable.uModLevel,tTable.uDelLevel,tTable.uReadLevel,tTable.uOwner,tTable.uCreatedBy,tTable.uCreatedDate,tTable.uModBy,tTable.uModDate"
 
@@ -742,14 +742,22 @@ void tTableList(void)
 			ctime_r(&luTime17,cBuf17);
 		else
 			sprintf(cBuf17,"---");
-		char cBuf2[100];
-		sprintf(cBuf2,"%.99s",ForeignKey("tProject","cLabel",strtoul(field[2],NULL,10)));
-		char cBuf13[100];
-		sprintf(cBuf13,"%.99s",ForeignKey("tClient","cLabel",strtoul(field[13],NULL,10)));
-		char cBuf14[100];
-		sprintf(cBuf14,"%.99s",ForeignKey("tClient","cLabel",strtoul(field[14],NULL,10)));
-		char cBuf16[100];
-		sprintf(cBuf16,"%.99s",ForeignKey("tClient","cLabel",strtoul(field[16],NULL,10)));
+		char cBuf2[128];
+		sprintf(cBuf2,"<a class=darkLink href=?gcFunction=tProject&uProject=%.32s>%.32s</a>",
+				field[2],
+				ForeignKey("tProject","cLabel",strtoul(field[2],NULL,10)));
+		char cBuf13[128];
+		sprintf(cBuf13,"<a class=darkLink href=?gcFunction=tClient&uClient=%.32s>%.32s</a>",
+				field[13],
+				ForeignKey("tClient","cLabel",strtoul(field[13],NULL,10)));
+		char cBuf14[128];
+		sprintf(cBuf14,"<a class=darkLink href=?gcFunction=tClient&uClient=%.32s>%.32s</a>",
+				field[14],
+				ForeignKey("tClient","cLabel",strtoul(field[14],NULL,10)));
+		char cBuf16[128];
+		sprintf(cBuf16,"<a class=darkLink href=?gcFunction=tClient&uClient=%.32s>%.32s</a>",
+				field[16],
+				ForeignKey("tClient","cLabel",strtoul(field[16],NULL,10)));
 		printf("<td><a class=darkLink href=?gcFunction=tTable&uTable=%s>%s</a>"
 				"<td>%s"
 				"<td>%s"

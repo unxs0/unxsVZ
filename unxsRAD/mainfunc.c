@@ -226,7 +226,7 @@ void ExtMainShell(int argc, char *argv[])
         else
 	{
 		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
-		printf("\tUpdateSchema\n");
+		printf("\tUpdateSchema (!First backup your db! You have been warned)\n");
 		printf("\tImportTemplateFile <tTemplate.cLabel> <filespec> <tTemplateSet.cLabel> <tTemplateType.cLabel>\n");
 		printf("\tExportTemplateFiles <Base dir> <tTemplateSet.cLabel>\n");
 		printf("\tExtracttLog <Mon> <Year> <mysql root passwd> <path to mysql table>\n");
@@ -806,6 +806,7 @@ void UpdateSchema(void)
 	//tTable
 	//
 	unsigned uTableSubDir=0;
+	unsigned uTableClass=0;
 	sprintf(gcQuery,"SHOW COLUMNS IN tTable");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -816,6 +817,8 @@ void UpdateSchema(void)
 	{
 		if(!strcmp(field[0],"cSubDir"))
 			uTableSubDir=1;
+		else if(!strcmp(field[0],"uClass"))
+			uTableClass=1;
 	}
        	mysql_free_result(res);
 	if(!uTableSubDir)
@@ -827,8 +830,68 @@ void UpdateSchema(void)
 		else
 			printf("Added cSubDir to tTable\n");
 	}
+	if(!uTableClass)
+	{
+		sprintf(gcQuery,"ALTER TABLE tTable ADD uClass INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uClass to tTable\n");
+		//Try to fix but warn
+		printf("Trying to fix existing default tables. Check!\n");
+		sprintf(gcQuery,"UPDATE tTable SET uClass=%u WHERE uTableOrder>=1000",uDEFAULTCLASS);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Ran: %s. Check results!\n",gcQuery);
+	}
 	//
 	//tTable
+	
+	//tField
+	//
+	unsigned uFieldClass=0;
+	sprintf(gcQuery,"SHOW COLUMNS IN tField");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		printf("%s\n",mysql_error(&gMysql));
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!strcmp(field[0],"uClass"))
+			uFieldClass=1;
+	}
+       	mysql_free_result(res);
+	if(!uFieldClass)
+	{
+		sprintf(gcQuery,"ALTER TABLE tField ADD uClass INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uClass to tField\n");
+
+		//Try to fix but warn
+		printf("Trying to fix existing default fields. Check!\n");
+		sprintf(gcQuery,"UPDATE tField SET uClass=%u WHERE uOrder>=1000",uDEFAULTCLASS);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Ran: %s. Check results!\n",gcQuery);
+		sprintf(gcQuery,"UPDATE tField SET uClass=%u WHERE uOrder<=2 AND (cTitle='Primary key' OR cTitle='Short label')",uDEFAULTCLASS);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Ran: %s. Check results!\n",gcQuery);
+	}
+	//
+	//tField
+	
 	printf("UpdateSchema(): End\n");
 	
 }//void UpdateSchema(void)

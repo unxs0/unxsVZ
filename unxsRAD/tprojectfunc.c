@@ -696,7 +696,6 @@ void RemoveTableFromDefaultTablesLine(char *cLine)
 
 void AddTableFromDefaultTablesLine(char *cLine)
 {
-
 	char cTable[32]={""};
 	unsigned uOrder=0;
 	unsigned uSourceLock=0;
@@ -709,12 +708,13 @@ void AddTableFromDefaultTablesLine(char *cLine)
 	unsigned uTable=0;
 	int iCount=0;
 
+	char gcQuery[512];
+
 	//tClient;1000;1;Organizations and their contacts;7;7;7;7;
 	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%u;%u;%99[a-zA-Z0-9 ];%u;%u;%u;%u;%99[a-zA-Z0-9\\./];",cTable,&uOrder,&uSourceLock,
 						cDescription,&uNewLevel,&uModLevel,&uDelLevel,&uReadLevel,cSubDir);
 	if(!cTable[0] || iCount<8)
 	{
-		char gcQuery[512];
 		sprintf(gcQuery,"Error2 iCount=%d %s;%u;%u;%s;%u;%u;%u;%u; (%s)",
 				iCount,cTable,uOrder,uSourceLock,cDescription,uNewLevel,uModLevel,uDelLevel,uReadLevel,cLine);
 		tProject(gcQuery);
@@ -725,7 +725,10 @@ void AddTableFromDefaultTablesLine(char *cLine)
 	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u",cTable,uProject);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
-        	htmlPlainTextError(mysql_error(&gMysql));
+	{
+        	sprintf(gcQuery,"%.511s",mysql_error(&gMysql));
+		tProject(gcQuery);
+	}
         res=mysql_store_result(&gMysql);
         if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&uTable);
@@ -736,27 +739,41 @@ void AddTableFromDefaultTablesLine(char *cLine)
 	{
 		sprintf(gcQuery,"UPDATE tTable SET cLabel='%.32s',uTableOrder=%u,uSourceLock=%u,"
 			"cDescription='%.100s',cSubDir='%.100s',"
-			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uTable=%u",
+			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,"
+			"uModBy=%u,uClass=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uTable=%u",
 			cTable,uOrder,uSourceLock,
 			cDescription,cSubDir,
-			uNewLevel,uModLevel,uDelLevel,uReadLevel,guLoginClient,uTable);
+			uNewLevel,uModLevel,uDelLevel,uReadLevel,
+			guLoginClient,uDEFAULTCLASS,
+				uTable);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
-        	        htmlPlainTextError(mysql_error(&gMysql));
+		{
+        		sprintf(gcQuery,"%.511s",mysql_error(&gMysql));
+			tProject(gcQuery);
+		}
 	}
 	else
 	{
 		sprintf(gcQuery,"INSERT INTO tTable SET cLabel='%.32s',uTableOrder=%u,uSourceLock=%u,"
 			"cDescription='%.100s',cSubDir='%.100s',"
 			"cLegend='%.100s',cToolTip='%.100s',"
-			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,uProject=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,"
+			"uProject=%u,uClass=%u,"
+			"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cTable,uOrder,uSourceLock,
 			cDescription,cSubDir,
 			cDescription,cDescription,
-			uNewLevel,uModLevel,uDelLevel,uReadLevel,uProject,guCompany,guLoginClient);
+			uNewLevel,uModLevel,uDelLevel,uReadLevel,
+			uProject,uDEFAULTCLASS,
+				guCompany,guLoginClient);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
-        	        htmlPlainTextError(mysql_error(&gMysql));
+		{
+        		sprintf(gcQuery,"%.511s",mysql_error(&gMysql));
+			tProject(gcQuery);
+		}
 	}
 
 

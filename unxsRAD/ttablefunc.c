@@ -521,16 +521,33 @@ void ExttTableListSelect(void)
 				,uContactParentCompany);
 
 	//Changes here must be reflected below in ExttTableListFilter()
-        if(!strcmp(gcFilter,"uTable"))
+        if(!strcmp(gcFilter,"uProject"))
+        {
+                sscanf(gcCommand,"%u",&uProject);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tTable.uProject=%u ORDER BY uTable",uProject);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"cDescription"))
+        {
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tTable.cDescription LIKE '%s' ORDER BY uTable",gcCommand);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uTable"))
         {
                 sscanf(gcCommand,"%u",&uTable);
 		if(guPermLevel<10)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tTable.uTable=%u"
-						" ORDER BY uTable",
-						uTable);
+		sprintf(cCat,"tTable.uTable=%u ORDER BY uTable",uTable);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -548,6 +565,14 @@ void ExttTableListFilter(void)
         //Filter
         printf("&nbsp;&nbsp;&nbsp;Filter on ");
         printf("<select name=gcFilter>");
+        if(strcmp(gcFilter,"uProject"))
+                printf("<option>uProject</option>");
+        else
+                printf("<option selected>uProject</option>");
+        if(strcmp(gcFilter,"cDescription"))
+                printf("<option>cDescription</option>");
+        else
+                printf("<option selected>cDescription</option>");
         if(strcmp(gcFilter,"uTable"))
                 printf("<option>uTable</option>");
         else
@@ -572,10 +597,10 @@ void ExttTableNavBar(void)
 	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(uAllowMod(uOwner,uCreatedBy))
+	if(!guListMode && uAllowMod(uOwner,uCreatedBy))
 		printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy)) 
+	if(!guListMode && uAllowDel(uOwner,uCreatedBy)) 
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)
@@ -775,78 +800,85 @@ void AddDefaultFields(void)
 	//Primary key: Given tSomething then it will be uSomething	
 	char cFieldName[32]={""};
 	sprintf(cFieldName,"u%.30s",cLabel+1);
-	sprintf(gcQuery,"INSERT INTO tField SET uTable=%u,uProject=%u,cLabel='%s',uOrder=1,"
+	sprintf(gcQuery,"INSERT INTO tField SET uTable=%u,uProject=%u,cLabel='%s',uOrder=1,uClass=%u,"
 			"cTitle='Primary key',uFieldType=%u,uSQLSize=10,uModLevel=20,uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
 			cFieldName,
+			uDEFAULTCLASS,
 			uRADPRI,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		tTable(gcQuery);
 
 	//cLabel
-	sprintf(gcQuery,"INSERT INTO tField SET uTable=%u,uProject=%u,cLabel='cLabel',uOrder=2,"
+	sprintf(gcQuery,"INSERT INTO tField SET uTable=%u,uProject=%u,cLabel='cLabel',uOrder=2,uClass=%u,"
 			"cTitle='Short label',uFieldType=%u,uSQLSize=32,uHtmlXSize=40,uHtmlYSize=1,uHtmlMax=32,uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
+			uDEFAULTCLASS,
 			uVARCHAR,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		tTable(gcQuery);
 
 	//uOwner
-	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uOwner',uOrder=1000,"
+	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uOwner',uOrder=1000,uClass=%u,"
 			"cTitle='Record owner',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uOwner',uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
+			uDEFAULTCLASS,
 			uFOREIGNKEY,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		tTable(gcQuery);
 
 	//uCreatedBy
-	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedBy',uOrder=1001,"
+	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedBy',uOrder=1001,uClass=%u,"
 			"cTitle='Record created by',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uCreatedBy',uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
+			uDEFAULTCLASS,
 			uFOREIGNKEY,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		tTable(gcQuery);
 
 	//uCreatedDate
-	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedDate',uOrder=1002,"
+	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uCreatedDate',uOrder=1002,uClass=%u,"
 			"cTitle='Unix timestamp for creation date',uFieldType=%u,uSQLSize=10,uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
+			uDEFAULTCLASS,
 			uUNIXTIMECREATE,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		tTable(gcQuery);
 
 	//uModBy
-	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uModBy',uOrder=1003,"
+	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uModBy',uOrder=1003,uClass=%u,"
 			"cTitle='Record modifed by',uFieldType=%u,uSQLSize=10,cFKSpec='\"tClient\",\"cLabel\",uModBy',uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
+			uDEFAULTCLASS,
 			uFOREIGNKEY,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		tTable(gcQuery);
 
 	//uModDate
-	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uModDate',uOrder=1004,"
+	sprintf(gcQuery,"INSERT INTO tField SET uModLevel=20,uTable=%u,uProject=%u,cLabel='uModDate',uOrder=1004,uClass=%u,"
 			"cTitle='Unix timestamp for last update',uFieldType=%u,uSQLSize=10,uOwner=%u,"
 			"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable,
 			uProject,
+			uDEFAULTCLASS,
 			uUNIXTIMEUPDATE,guCompany,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -1093,10 +1125,12 @@ void ExportTableFields(void)
 				" IF(tField.cFKSpec!='',tField.cFKSpec,tField.uSQLSize)"
 				" FROM tField,tFieldType WHERE tFieldType.uFieldType=tField.uFieldType AND"
 				" tField.uTable=%u AND"
-				" tField.uProject=%u"
+				" tField.uProject=%u AND"
+				" tField.uClass!=%u"
 				" ORDER BY tField.uOrder",
 					uTable,
-					uProject);
+					uProject,
+					uDEFAULTCLASS);
        	mysql_query(&gMysql,gcQuery);
        	if(mysql_errno(&gMysql))
 	{

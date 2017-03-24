@@ -71,6 +71,11 @@ AUTHOR
 #define COLTYPE_VARCHARUKEY 1009
 #define COLTYPE_UNIXTIME 2000
 
+//tTable and tField uClass defines
+#define uSTDCLASS 0
+#define uDEFAULTCLASS 100
+
+
 extern char gcHost[];
 extern char gcHostname[];
 extern char gcUser[];
