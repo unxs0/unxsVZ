@@ -385,7 +385,7 @@ void ExttOSTemplateButtons(void)
 
 		default:
 
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("Make sure that the cLabel entries (new or modified) have a corresponding "
 				"/vz/template/cache/&lt;cLabel&gt;.tar.gz file on all unxsVZ controlled "
 				"nodes. Please note the 32 character limitation on older versions of the "

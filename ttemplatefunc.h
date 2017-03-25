@@ -137,7 +137,7 @@ void ExttTemplateButtons(void)
                 break;
 
 		default:
-			printf("<p><u>Table Tips</u><br>");
+			printf("<p><u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("tTemplate stores diverse templates. These may be used for system configuration"
 				" files or for unxsVZ interfaces and tools.<br>\n");
 			if(uTemplate)

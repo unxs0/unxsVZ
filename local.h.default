@@ -4,15 +4,15 @@ FILE
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL
-        Copyright 2001-2016 Gary Wallis for Unixservice, LLC.
+        Copyright 2001-2017 Gary Wallis for Unixservice, LLC.
 */
 
-#define LOCALCOPYRIGHT "&copy; 2000-2013 Unixservice, LLC. All Rights Reserved."
+#define LOCALCOPYRIGHT "&copy; 2000-2017 Unixservice, LLC. All Rights Reserved."
 
-//Change for your setup DO NOT USE THESE DEFAULTS: DANGER!
-//If both are NULL compile error TODO report BUG
-#define DBIP0 NULL
-#define DBIP1 NULL
+//mysqld should be carefully firewalled or available by socket only!
+//empty strings for DBIP's means use local socket for mysql_connect
+#define DBIP0 ""
+#define DBIP1 ""
 #define DBNAME "unxsvz"
 #define DBLOGIN "unxsvz"
 #define DBPASSWD "wsxedc"

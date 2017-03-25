@@ -1,12 +1,12 @@
 /*
 FILE 
 	unxsVZ/unxsvz.c
-	svn ID removed
 PURPOSE
+	unxsVZ node agent
 	Move the jobqueue out of the cgi.
 NOTES
 AUTHOR/LEGAL
-	(C) 2011-2015 Gary Wallis for Unixservice, LLC.
+	(C) 2011-2017 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 FREE HELP
 	support @ openisp . net
@@ -21,8 +21,8 @@ FREE HELP
 
 MYSQL gMysql;
 MYSQL gMysqlUBC;
-char *gcUBCDBIP0;//must be set to DBIP0 to be used as alternative
-char *gcUBCDBIP1;
+char *gcUBCDBIP0={""};//must be set to DBIP0 to be used as alternative
+char *gcUBCDBIP1={""};
 char gcUBCDBIP0Buffer[32]={""};
 char gcUBCDBIP1Buffer[32]={""};
 FILE *gLfp=NULL;
@@ -76,7 +76,7 @@ void GatherHardwareInfo(unsigned uNode);
 void AddContainers(void);
 void CreateDNSJobAPI(const char *cIPv4,const char *cHostname,const char *cuContainer);
 
-static char cRELEASE[64]={"svn ID removed
+static char *cRELEASE=GitVersion;
 
 void ExtMainShell(int argc, char *argv[])
 {
@@ -100,7 +100,7 @@ void ExtMainShell(int argc, char *argv[])
                 CreateDNSJobAPI(argv[2],argv[3],argv[4]);
         else
 	{
-		printf("\n%s %s\nMenu\n",argv[0],cRELEASE);
+		printf("\n%s Release:%s\nMenu\n",argv[0],cRELEASE);
 		printf("\tAddHardwareNode <Datacenter cLabel>\n");
 		printf("\tAddContainers\n");
 		printf("\tProcessJobQueue\n");

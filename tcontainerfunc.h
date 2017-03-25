@@ -1,11 +1,10 @@
 /*
 FILE
-	svn ID removed
-	(Built initially by unixservice.com mysqlRAD2)
+	tcontainerfunc.h
 PURPOSE
 	Non schema-dependent table and application table related functions.
 AUTHOR/LEGAL
-	(C) 2001-2013 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2017 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file included.
 NOTES
 	mySQL 5.0+ now required
@@ -3348,7 +3347,7 @@ void ExttContainerButtons(void)
                 break;
 
 		default:
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("Setup or modify a container by selecting a meaningful cLabel,"
 				" a correct datacenter and hardware node. You usually should start with"
 				" a similar container. Most properties are created by data collection agents"

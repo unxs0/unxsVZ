@@ -123,7 +123,7 @@ void ExttPermButtons(void)
                 break;
 
 		default:
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("Granular control of access to tables, columns and interface named data items."
 				" Linked to tAuthorize.uPerm usually.");
 			printf("<p><u>Record Context Info</u><br>");

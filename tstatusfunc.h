@@ -137,7 +137,7 @@ void ExttStatusButtons(void)
                 break;
 
 		default:
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("<p><u>Record Context Info</u><br>");
 			tStatusNavList();
 	}

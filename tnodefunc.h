@@ -1,10 +1,10 @@
 /*
 FILE
-	svn ID removed
+	tnodefunc.h
 PURPOSE
-	Non schema-dependent table and application table related functions.
+	tNode aux functions.
 AUTHOR/LEGAL
-	(C) 2001-2014 Gary Wallis for Unixservice, LLC. GPLv2 license applies.
+	(C) 2001-2017 Gary Wallis for Unixservice, LLC. GPLv2 license applies.
  
 */
 
@@ -722,7 +722,7 @@ void ExttNodeButtons(void)
 
 		default:
 			OpenFieldSet("tNode Aux Panel",100);
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("Hardware nodes are defined here. Hardware nodes host containers, and allow"
 				" for the autonomic migration to other nodes that may be better suited"
 				" at specific points in time to accomplish QoS or other system admin"

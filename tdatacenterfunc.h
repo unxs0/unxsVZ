@@ -1,11 +1,10 @@
 /*
 FILE
-	svn ID removed
-	(Built initially by unixservice.com mysqlRAD2)
+	tdatacenterfunc.h
 PURPOSE
-	Non schema-dependent table and application table related functions.
+	tDatacenter aux functions.
 AUTHOR
-	(C) 2001-2009 Unixservice, LLC.
+	(C) 2001-2017 Gary Wallis for Unixservice, LLC.
 */
 
 static unsigned uClone=0;
@@ -414,7 +413,7 @@ void ExttDatacenterButtons(void)
                 break;
 
 		default:
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("A datacenter is a collection of hardware nodes."
 					" These hardware nodes need not be located in the same"
 					" physical datacenter. Hardware nodes host VZ containers."

@@ -917,7 +917,7 @@ void ExttIPButtons(void)
                 break;
 
 		default:
-			printf("<p><u>Table Tips</u><br>");
+			printf("<p><u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("IPs used and available for container and new hardware node"
 				" deployment are tracked and maintained here.<p>You can add available IPs <i>en masse</i>"
 				" via the cIPRange at the [Modify] stage. For example 192.168.0.1/28 would add 16 IPs"

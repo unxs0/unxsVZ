@@ -161,7 +161,7 @@ void ExttConfigurationButtons(void)
                 break;
 
 		default:
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("This table is used for configuration settings used by the "
 				"system that are of a more general nature than tProperty values. "
 				"Like tProperty if a tConfiguration.cLabel has an entry in tGlossary "

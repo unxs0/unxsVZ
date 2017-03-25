@@ -287,7 +287,7 @@ void ExttConfigButtons(void)
 
 		default:
 			//ve-dns2.conf-sample
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("Make sure that the cLabel entries (new or modified) have a corresponding "
 				"/etc/vz/conf//ve-&lt;cLabel&gt;.conf-sample file on all unxsVZ controlled "
 				"nodes. Please note the 32 character limitation."

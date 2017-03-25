@@ -276,12 +276,11 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
 	if(!uDatacenter) return(2);
 
 	logfileLine("unxsVZ:ConnectToOptionalUBCDb","start");
-	//If no deal use main db as default
-	if(DBIP0==NULL || !DBIP0[0])
+	if(!DBIP0[0])
 	{
 		gcUBCDBIP0="";
 	}
-	else if(DBIP0[0])
+	else
 	{
 		if(sscanf(DBIP0,"%u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
 		{
@@ -290,11 +289,11 @@ unsigned ConnectToOptionalUBCDb(unsigned uDatacenter,unsigned uPrivate)
 			logfileLine("unxsVZ:ConnectToOptionalUBCDb default0",gcUBCDBIP0Buffer);
 		}
 	}
-	if(DBIP1==NULL || !DBIP1[0])
+	if(!DBIP1[0])
 	{
 		gcUBCDBIP1="";
 	}
-	else if(DBIP1[0])
+	else
 	{
 		if(sscanf(DBIP1,"%u.%u.%u.%u",&uA,&uB,&uC,&uD)==4)
 		{

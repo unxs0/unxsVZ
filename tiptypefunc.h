@@ -1,12 +1,10 @@
 /*
 FILE
-	svn ID removed
-	(Built initially by unixservice.com mysqlRAD2)
+	tiptypefunc.h
 PURPOSE
-	Non schema-dependent table and application table related functions.
+	tIpType aux functions
 AUTHOR
-	(C) 2001-2016 Gary Wallis for Unixservice, LLC.
- 
+	(C) 2001-2017 Gary Wallis for Unixservice, LLC.
 */
 
 //ModuleFunctionProtos()
@@ -125,6 +123,7 @@ void ExttIPTypeButtons(void)
                 break;
 
 		default:
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 
 			tIPTypeNavList();
 	}
