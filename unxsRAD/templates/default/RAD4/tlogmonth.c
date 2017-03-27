@@ -230,7 +230,7 @@ void tLogMonth(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tLogMonth",1);
+	HeaderRAD4(":: tLogMonth",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -278,7 +278,7 @@ void tLogMonth(const char *cResult)
 	printf("<tr><td colspan=2>");
         ExttLogMonthAuxTable();
 
-	Footer_ism3();
+	FooterRAD4();
 
 }//end of tLogMonth();
 
@@ -492,7 +492,7 @@ void tLogMonthList(void)
 		if(!field)
 		{
 			printf("<tr><td><font face=arial,helvetica>End of data</table>");
-			Footer_ism3();
+			FooterRAD4();
 		}
 			if(guN % 2)
 				printf("<tr bgcolor=#BBE1D3>");
@@ -532,7 +532,7 @@ void tLogMonthList(void)
 	}
 
 	printf("</table></form>\n");
-	Footer_ism3();
+	FooterRAD4();
 
 }//tLogMonthList()
 

@@ -675,8 +675,13 @@ unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable,unsigned uSour
 
 		template.cpName[3]="cProject";
 		template.cpValue[3]=gcProject;
+
+		char cToolTip[256]={"cToolTip"};
+		sprintf(cToolTip,"%.255s",ForeignKey("tTable","cToolTip",uTable));
+		template.cpName[4]="cToolTip";
+		template.cpValue[4]=cToolTip;
 			
-		template.cpName[4]="";
+		template.cpName[5]="";
 
 		Template(field[0],&template,fp);
 		fclose(fp);

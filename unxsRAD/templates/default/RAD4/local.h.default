@@ -41,8 +41,9 @@ LEGAL
 //#define SSLONLY
 
 //You should customize these for your own ISP
-#define EXTISPNAME "openisp"
-#define EXTISPURL "openisp.net"
+#define EXTISPNAME "unxs.io"
+#define EXTISPURL "unxs.io"
+#define HEADER_TITLE "{{cProject}}"
 
 
 //End-users: Do not change these!

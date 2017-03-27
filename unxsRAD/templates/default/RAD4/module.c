@@ -166,7 +166,7 @@ void {{cTableName}}(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: {{cTableTitle}}",0);
+	HeaderRAD4(":: {{cTableTitle}}",0);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -214,7 +214,7 @@ void {{cTableName}}(const char *cResult)
 	printf("<tr><td colspan=2>");
         Ext{{cTableName}}AuxTable();
 
-	Footer_ism3();
+	FooterRAD4();
 
 }//end of {{cTableName}}();
 
@@ -350,7 +350,7 @@ void {{cTableName}}List(void)
 		if(!field)
 		{
 			printf("<tr><td><font face=arial,helvetica>End of data</table>");
-			Footer_ism3();
+			FooterRAD4();
 		}
 			if(guN % 2)
 				printf("<tr bgcolor=#BBE1D3>");
@@ -360,7 +360,7 @@ void {{cTableName}}List(void)
 	}
 
 	printf("</table></form>\n");
-	Footer_ism3();
+	FooterRAD4();
 
 }//{{cTableName}}List()
 

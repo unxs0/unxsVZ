@@ -184,7 +184,7 @@ void tMonth(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tMonth",1);
+	HeaderRAD4(":: tMonth",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -232,7 +232,7 @@ void tMonth(const char *cResult)
 	printf("<tr><td colspan=2>");
         ExttMonthAuxTable();
 
-	Footer_ism3();
+	FooterRAD4();
 
 }//end of tMonth();
 
@@ -497,7 +497,7 @@ void tMonthList(void)
 		if(!field)
 		{
 			printf("<tr><td><font face=arial,helvetica>End of data</table>");
-			Footer_ism3();
+			FooterRAD4();
 		}
 			if(guN % 2)
 				printf("<tr bgcolor=#BBE1D3>");
@@ -529,7 +529,7 @@ void tMonthList(void)
 	}
 
 	printf("</table></form>\n");
-	Footer_ism3();
+	FooterRAD4();
 
 }//tMonthList()
 

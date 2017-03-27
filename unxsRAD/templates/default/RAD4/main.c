@@ -58,14 +58,14 @@ void GetSessionCookie(void);
 
 char gcFunction[100]={""};
 unsigned guListMode=0;
-char gcQuery[8192]={""};
+char gcQuery[65536]={""};
 char *gcQstr=gcQuery;
-char *gcBuildInfo=dsGitVersion;
+static char *gcBuildInfo=dsGitVersion;
 char *gcRADStatus="Unknown";
 
 //Local
-void Footer_ism3(void);
-void Header_ism3(char *cMsg, int iJs);
+void FooterRAD4(void);
+void HeaderRAD4(char *cMsg, int iJs);
 const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 char *cEmailInput(char *cInput);
 void GetClientOwner(unsigned uClient, unsigned *uOwner);
@@ -218,150 +218,38 @@ int main(int iArgc, char *cArgv[])
 
 void {{cProject}}(const char *cResult)
 {
-	Header_ism3("Main",0);
+	HeaderRAD4("Main",0);
 
         if(cResult[0])
 		DashBoard(cResult);
         else
                 ExtMainContent();
 
-	Footer_ism3();
+	FooterRAD4();
 
 }//void {{cProject}}(const char *cResult)
 
 
 void StyleSheet(void)
 {
-	printf("<style type=\"text/css\">\n");
-	printf("<!--\n");
-
-	printf("input.smallButton {width:50px;}\n");
-	printf("input.medButton {width:100px;}\n");
-	printf("input.largeButton {width:150px;}\n");
-	printf("input.warnButton {color:red;}\n");
-	printf("input.lwarnButton {color:red;width:150px;}\n");
-	printf("input.alertButton {color:#DAA520;}\n");
-	printf("input.lalertButton {color:#DAA520;width:150px;}\n");
-	printf("input.revButton {color:white;background:black;}\n");
-	printf("input.lrevButton {color:white;background:black;width:150px;}\n");
-	printf("A.darkLink {color:black; text-decoration:none;}\n");
-	printf("A.darkLink:hover {color:blue; text-decoration:underline;}\n");
-	printf("A:hover {color:blue; text-decoration:underline;}\n");
-
-	printf("textarea {font-family: Arial,Helvetica; font-size: 11px;}\n");
-	printf("pre {font-family: Arial,Helvetica; font-size: 11px;}\n");
-	printf("input {font-family: Arial,Helvetica; font-size: 11px;}\n");
-	printf("select {font-family: Arial,Helvetica; font-size: 11px;}\n");
-
-	printf("body\n");
-	printf("{\n");
-	printf("\tmargin-top: 0px;\n");
-	printf("\tmargin-bottom: 12px;\n");
-	printf("\tmargin-left: 12px;\n");
-	printf("\tmargin-right: 10px;\n");
-	printf("\tfont-family: Arial,Helvetica;\n");
-	printf("\t#font-size: 85%%;\n");
-	printf("\tfont-size: 65%%;\n");
-	printf("\tline-height: 135%%;\n");
-	printf("\tpadding: 0px;\n");
-	printf("}\n");
-
-	printf("br.clearall\n");
-	printf("{\n");
-	printf("\tclear: both;\n");
-	printf("}\n");
-
-	printf("td\n");
-	printf("{\n");
-	printf("\tfont-family: Arial,Helvetica;\n");
-	printf("}\n");
-
-	printf("#menuholder\n");
-	printf("{\n");
-	printf("\t#width: 100%%;\n");
-	printf("}\n");
-
-	printf("#menutab\n");
-	printf("{\n");
-	printf("\tbackground: #e5e5e5 url('/images/hairline.gif') repeat-x bottom center;\n");
-	printf("\tborder-top: 0px solid #BEBFBF;\n");
-	printf("\tborder-right: 1px solid #BEBFBF;\n");
-	printf("\tmargin-top: 8px;\n");
-	printf("}\n");
-
-	printf("#topline\n");
-	printf("{\n");
-	printf("\t#width: 100%%;\n");
-	printf("\tbackground: transparent url('/images/hairline.gif') repeat-x top center;\n");
-	printf("}\n");
-
-	printf("#menutab ul, #menutab ol\n");
-	printf("{\n");
-	printf("\tmargin: 0;\n");
-	printf("\tpadding: 0px 0px 0;\n");
-	printf("\tlist-style: none;\n");
-	printf("}\n");
-
-	printf("#menutab li\n");
-	printf("{\n");
-	printf("\tfloat: left;\n");
-	printf("\tbackground: url('/images/left.gif') no-repeat left top;\n");
-	printf("\tmargin: 0;\n");
-	printf("\tpadding: 0 0 0 9px;\n");
-	printf("}\n");
-
-	printf("#menutab a, #menutab a.last\n");
-	printf("{\n");
-	printf("\tfloat:left;\n");
-	printf("\tdisplay: block;\n");
-	printf("\tbackground: url('/images/right.gif') no-repeat right top;\n");
-	printf("\tpadding: 5px 15px 2px 6px;\n");
-	printf("\tcolor: #222;\n");
-	printf("\ttext-decoration: none;\n");
-	printf("}\n");
-
-	printf("/* Commented Backslash Hack\n");
-	printf("\thides rule from IE5-Mac \\*/\n");
-	printf("\t#menutab a, #menutab a.last {float:none;}\n");
-	printf("/* End IE5-Mac hack */\n");
-
-	printf("#menutab a.last\n");
-	printf("{\n");
-	printf("\tbackground: url('/images/right_last.gif') no-repeat right top;\n");
-	printf("\tpadding: 5px 17px 2px 6px;\n");
-	printf("}\n");
-
-	printf("#menutab a:hover\n");
-	printf("{\n");
-	printf("\tcolor: black;\n");
-	printf("\ttext-decoration: underline;\n");
-	printf("}\n");
-
-	printf("#menutab #current\n");
-	printf("{\n");
-	printf("\tbackground-image: url('/images/left_on.gif');\n");
-	printf("}\n");
-
-	printf("#menutab #current a\n");
-	printf("{\n");
-	printf("\tbackground-image: url('/images/right_on.gif');\n");
-	printf("\tpadding-bottom: 3px;\n");
-	printf("\ttext-decoration: none;\n");
-	printf("}\n");
-
-	printf("-->\n");
-	printf("</style>\n");
+	printf("<!-- StyleSheet() -->\n");
+	printf("<link rel=stylesheet type=text/css href=/css/radBackend.css />\n");
 
 }//void StyleSheet(void)
 
 
+/*
+* Uses Clean Calendar
+* Copyright 2007-2009 Marc Grabanski (m@marcgrabanski.com) http://marcgrabanski.com
+* Project Page: http://marcgrabanski.com/article/clean-calendar
+* Under the MIT License
+*
+* Install only two files in your html/js dir
+*/
 void jsCalendarHeader(void)
 {
-        printf("<link rel='stylesheet' type='text/css' media='all' href='/js/calendar-blue.css'/>\n");
+        printf("<link rel='stylesheet' type='text/css' media='all' href='/js/calendar.css'/>\n");
         printf("<script type='text/javascript' src='/js/calendar.js'></script>\n");
-        printf("<script type='text/javascript' src='/js/calendar-en.js'></script>\n");
-        printf("<script type='text/javascript' src='/js/calendar-setup.js'></script>\n");
-
 }//void jsCalendarHeader(void)
 
 
@@ -371,48 +259,54 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
         if(!uMode)
                 sprintf(cMode,"disabled");
 
-        printf("<input id='%s' class='field_input' type='text' name='%s' value='%s' size=40 style='display: ; \
-                vertical-align: middle; ' %s >\n",cInputName,cInputName,cValue,cMode);
-
-        if(uMode)
-        {
-                printf("<img date_trigger='1' class='record_button' date_field='%s' id='date_trigger_%s_501' src='/images/calendar.gif' \
-                        onmouseout='swapClass(event); this.src='/images/calendar.gif' ' onmouseover='swapClass(event); this.src='/images/calendar_mo.gif' \
-                        onmousedown='this.style.top = '1px'; this.style.left = '1px'' onmouseup='this.style.top = '0px'; this.style.left = '0px'' \
-                        style='position: relative; vertical-align: middle; display: ; ' title='Date selector'/>\n",cInputName,cInputName);
-                printf("<script type='text/javascript'>\n \
-                        Calendar.setup({\n \
-                        inputField     :    '%s',\n \
-                        ifFormat : '%%Y-%%m-%%d',\n \
-                        button         :    'date_trigger_%s_501',\n \
-                        align          :    'bR',\n \
-                        singleClick    :    true,\n \
-                        weekNumbers    :    false,\n \
-                        step           :    1,\n \
-                        timeFormat : 12\n \
-                        });</script>\n",cInputName,cInputName);
-        }
-        else
-                printf("<input type=hidden name='%s' value='%s'>\n",cInputName,cValue);
+	printf("<input type=text title='Enter date US style month/day/full-year'"
+			" class=calendarSelectDate name='%s' value='%s' %s ><div id=calendarDiv></div>",cInputName,cValue,cMode);
 
 }//void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 
 
-void Header_ism3(char *title, int js)
+void jsToggleCheckboxes(void)
+{
+        printf("<script>"
+		"function checkAll(checkname, toggle)"
+		"{"
+		"	for (i = 0; i < checkname.length; i++)"
+		"	if( checkname[i].name.indexOf(\"NoCA\")==(-1) )"
+		"	{"
+		"		checkname[i].checked = toggle.checked? true:false"
+		"	}"
+		"}"
+		"</script>");
+}//void jsToggleCheckboxes(void)
+
+
+void HeaderRAD4(char *cTitle, int iJs)
 {
 	printf("Content-type: text/html\n\n");
-	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-        printf("<html><head><title>{{cProject}} %s </title>",title);
+	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\""
+			" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
+        printf("<html><head><title>"HEADER_TITLE" %s %s </title>",gcHostname,cTitle);
 	printf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\n");
-	StyleSheet();
-        if(js)
+        if(iJs==1)
+	{
                 jsCalendarHeader();
-
-	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/rad.ico>"
-		"</head><body><form action={{cProject}}.cgi method=post><blockquote>\n");
-
-	//Open header table
-	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td valign=bottom><img src=/images/rad.png>\n");
+	}
+        else if(iJs==2)
+	{
+		jsToggleCheckboxes();
+	}
+        else if(iJs==3)
+	{
+                jsCalendarHeader();
+		jsToggleCheckboxes();
+	}
+	StyleSheet();
+	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
+	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/rad.ico?v=2>\n");
+	printf("</head><body><form name=formMain action={{cProject}}.cgi method=post><blockquote>\n");
+	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td align=left valign=bottom>\n");
+	if(!strncmp(gcFunction,"Main",4))
+		printf("<img src=/images/rad.png>&nbsp;&nbsp;\n");
 
 	{{funcMainNavBars}}
 
@@ -463,16 +357,16 @@ void Header_ism3(char *title, int js)
 	printf("\t</div>\n");
 	printf("</div>\n");
 
-}//Header_ism3(char *title, int js)
+}//HeaderRAD4(char *title, int js)
 
 
-void Footer_ism3(void)
+void FooterRAD4(void)
 {
 	printf("</blockquote>");
 
 	exit(0);
 
-}//Footer_ism3(void)
+}//FooterRAD4(void)
 
 
 void NoSuchFunction(void)
@@ -571,7 +465,7 @@ if(iLmode)
 	}
 
 	guListMode=1;
-	Header_ism3(cFuncName,0);
+	HeaderRAD4(cFuncName,0);
 
 	if(!guI) 
         {
@@ -1503,14 +1397,14 @@ void SSLCookieLogin(void)
 
 void htmlSSLLogin(void)
 {
-        Header_ism3("",0);
+        HeaderRAD4("",0);
 
 	printf("<p>\n");
 	printf("Login: <input type=text size=20 maxlength=98 name=gcLogin>\n");
 	printf(" Passwd: <input type=password size=20 maxlength=20 name=gcPasswd>\n");
 	printf("<font size=1> <input type=submit name=gcFunction value=Login>\n");
 
-        Footer_ism3();
+        FooterRAD4();
 
 }//void htmlSSLLogin(void)
 
