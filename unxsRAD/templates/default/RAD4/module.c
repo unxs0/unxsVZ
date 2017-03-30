@@ -51,6 +51,8 @@ void Ext{{cTableName}}ListSelect(void);
 void Ext{{cTableName}}ListFilter(void);
 void Ext{{cTableName}}AuxTable(void);
 
+char static *sgcBuildInfo="{{sgcBuildInfo}}";
+
 #include "{{cTableNameLC}}func.h"
 
  //Table Variables Assignment Function

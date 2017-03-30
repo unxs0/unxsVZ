@@ -61,6 +61,7 @@ unsigned guListMode=0;
 char gcQuery[65536]={""};
 char *gcQstr=gcQuery;
 static char *gcBuildInfo=dsGitVersion;
+static char *sgcBuildInfo="{{sgcBuildInfo}}";
 char *gcRADStatus="Unknown";
 
 //Local
