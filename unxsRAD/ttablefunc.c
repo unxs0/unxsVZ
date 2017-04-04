@@ -943,7 +943,7 @@ void RemoveTableFieldLine(char *cLine)
 	//cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec]
 	//cLastname;Last name;Varchar Unique Key;21;
 	//uPaciente;Numero de paciente;Select Table Owner;10;"tPaciente","cLabel"
-	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/\\.%% ];%31[a-zA-Z0-9 ];%u;%32[a-zA-Z0-9\",]",
+	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/+\\.%% ];%31[a-zA-Z0-9 ];%u;%32[a-zA-Z0-9\",]",
 					cLabel,cTitle,cFieldType,&uOrder,cFKSpec);
 	//debug1
 	//sprintf(gcQuery,"(%d) %s;%s;%s;%u;%s",iCount,cLabel,cTitle,cFieldType,uOrder,cFKSpec);
@@ -999,7 +999,7 @@ void AddTableFieldLine(char *cLine)
 	//cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec]/[uSQLSize for Varchars]
 	//cLastname;Last name;Varchar Unique Key;21;
 	//uPaciente;Numero de paciente;Select Table Owner;10;"tPaciente","cLabel"
-	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/\\.%% ];%31[a-zA-Z0-9 ];%u;%32[a-zA-Z0-9\",]",
+	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/+\\.%% ];%31[a-zA-Z0-9 ];%u;%32[a-zA-Z0-9\",]",
 					cLabel,cTitle,cFieldType,&uOrder,cFKSpec);
 	//debug1
 	//sprintf(gcQuery,"(%d) %s;%s;%s;%u;%s",iCount,cLabel,cTitle,cFieldType,uOrder,cFKSpec);
