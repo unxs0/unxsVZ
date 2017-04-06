@@ -36,6 +36,7 @@ char gcRADStatus[32]={"Unknown"};
 char gcDirectory[256]={""};
 char gcRADDataDir[100]={"/home/unxs/unxsVZ/unxsRAD/appdata/"};
 char gcAppSummary[256]={"No application summary"};
+char gcuJs[3]={"0"};
 
 //prototype TOC
 void ProcessJobQueue(void);
@@ -507,7 +508,10 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 		template.cpName[10]="gcProjectStatus";
 		template.cpValue[10]=gcProjectStatus;
 
-		template.cpName[11]="";
+		template.cpName[11]="uJs";
+		template.cpValue[11]=gcuJs;
+
+		template.cpName[12]="";
 
 		Template(field[0],&template,fp);
 		fclose(fp);
@@ -1353,17 +1357,26 @@ void funcModuleVarList(FILE *fp)
         res=mysql_store_result(&gMysql);
 	unsigned uFirst=0;
 	unsigned uRADType=0;
+	sprintf(gcuJs,"0");
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[1],"%u",&uRADType);
 
 		if(uFirst) fprintf(fp,",");
 
+		//testing a simple hack
+		if(uRADType==COLTYPE_DATETIME)
+			sprintf(gcuJs,"1");
 		if(uRADType==COLTYPE_DATEEUR)
+		{
+			sprintf(gcuJs,"1");
 			fprintf(fp,"DATE_FORMAT(%s.%s,'%%d/%%m/%%Y')",gcTableName,field[0]);
-			
+		}	
 		else
+		{
 			fprintf(fp,"%s.%s",gcTableName,field[0]);
+		}
+
 
 		uFirst=1;
 	}

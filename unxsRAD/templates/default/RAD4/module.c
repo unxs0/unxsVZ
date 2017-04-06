@@ -168,7 +168,7 @@ void {{cTableName}}(const char *cResult)
 
 	}//Internal Skip
 
-	HeaderRAD4(":: {{cTableTitle}}",0);
+	HeaderRAD4(":: {{cTableTitle}}",{{uJs}});
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
