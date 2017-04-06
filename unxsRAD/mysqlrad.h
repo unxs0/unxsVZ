@@ -70,6 +70,7 @@ AUTHOR
 #define COLTYPE_UINTUKEY 1008
 #define COLTYPE_VARCHARUKEY 1009
 #define COLTYPE_UNIXTIME 2000
+#define COLTYPE_DATEEUR 1300
 
 //tTable and tField uClass defines
 #define uSTDCLASS 0

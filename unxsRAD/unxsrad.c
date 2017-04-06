@@ -849,14 +849,15 @@ void funcModuleProcVars(FILE *fp)
 
 			case COLTYPE_CHAR:
 			case COLTYPE_DATETIME:
+			case COLTYPE_DATEEUR:
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
 				//cExtIndex can be used for input validation functions. Fix this TODO
 				if(field[8][0])
-					fprintf(fp,"\t\t\tsprintf(%s,\"%%.%us\",%s(entries[i].val));\n",cField,uHtmlXSize,field[8]);
+					fprintf(fp,"\t\t\tsprintf(%s,\"%%.%us\",%s(entries[i].val));\n",cField,uSQLSize,field[8]);
 				else
-					fprintf(fp,"\t\t\tsprintf(%s,\"%%.%us\",entries[i].val);\n",cField,uHtmlXSize);
+					fprintf(fp,"\t\t\tsprintf(%s,\"%%.%us\",entries[i].val);\n",cField,uSQLSize);
 			break;
 
 			case COLTYPE_DECIMAL:
@@ -1023,7 +1024,16 @@ void funcModuleInput(FILE *fp)
 			break;
 
 			case COLTYPE_DATETIME:
-				fprintf(fp,"\t//%s COLTYPE_UNIXTIME\n",cField);
+				fprintf(fp,"\t//%s COLTYPE_DATETIME\n",cField);
+				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
+				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
+				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),1);\n",cField,cField);
+				fprintf(fp,"\telse\n");
+				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),0);\n",cField,cField);
+			break;
+
+			case COLTYPE_DATEEUR:
+				fprintf(fp,"\t//%s COLTYPE_DATEEUR\n",cField);
 				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
 				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
 				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),1);\n",cField,cField);
@@ -1252,6 +1262,14 @@ void funcModuleVars(FILE *fp)
 				fprintf(fp,"static char %s[20]={\"2000-01-01 00:00:00\"};\n",field[0]);
 			break;
 
+			case COLTYPE_DATEEUR:
+			if(field[3][0])
+				fprintf(fp,"static char %s[20]={\"%s\"};\n",
+					field[0],field[3]);
+			else
+				fprintf(fp,"static char %s[20]={\"01/01/1900\"};\n",field[0]);
+			break;
+
 			case COLTYPE_TIMESTAMP:
 				fprintf(fp,"static char %s[20]={\"Never modified\"};\n",
 					field[0]);
@@ -1318,9 +1336,10 @@ void funcModuleVarList(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT tField.cLabel"
-			" FROM tField,tTable"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+			" FROM tField,tTable,tFieldType"
 			" WHERE tField.uTable=tTable.uTable"
+			" AND tField.uFieldType=tFieldType.uFieldType"
 			" AND tTable.uTable=%u"
 			" ORDER BY tField.uOrder",guTable);
 	if(guDebug)
@@ -1333,10 +1352,19 @@ void funcModuleVarList(FILE *fp)
         }
         res=mysql_store_result(&gMysql);
 	unsigned uFirst=0;
+	unsigned uRADType=0;
 	while((field=mysql_fetch_row(res)))
 	{
+		sscanf(field[1],"%u",&uRADType);
+
 		if(uFirst) fprintf(fp,",");
-		fprintf(fp,"%s.%s",gcTableName,field[0]);
+
+		if(uRADType==COLTYPE_DATEEUR)
+			fprintf(fp,"DATE_FORMAT(%s.%s,'%%d/%%m/%%Y')",gcTableName,field[0]);
+			
+		else
+			fprintf(fp,"%s.%s",gcTableName,field[0]);
+
 		uFirst=1;
 	}
 	mysql_free_result(res);
@@ -1389,12 +1417,17 @@ void funcModuleUpdateQuery(FILE *fp)
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
-			case(COLTYPE_TEXT):
+			case COLTYPE_TEXT:
 				fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 			break;
 
-			case(COLTYPE_UNIXTIMEUPDATE):
+			case COLTYPE_UNIXTIMEUPDATE:
 				fprintf(fp,"\t\t\"%s=UNIX_TIMESTAMP(NOW())",field[0]);
+			break;
+
+			case COLTYPE_DATEEUR:
+				//STR_TO_DATE('20/2/2011','%d/%m/%Y')
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y')",field[0]);
 			break;
 		}
 		uFirst=1;
@@ -1422,10 +1455,11 @@ void funcModuleUpdateQuery(FILE *fp)
 
 			case COLTYPE_CHAR:
 			case COLTYPE_DATETIME:
+			case COLTYPE_DATEEUR:
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
-			case(COLTYPE_TEXT):
+			case COLTYPE_TEXT:
 				fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",field[0]);
 			break;
 
@@ -1488,12 +1522,17 @@ void funcModuleInsertQuery(FILE *fp)
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
-			case(COLTYPE_TEXT):
+			case COLTYPE_TEXT:
 				fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 			break;
 
 			case(COLTYPE_UNIXTIMECREATE):
 				fprintf(fp,"\t\t\"%s=UNIX_TIMESTAMP(NOW())",field[0]);
+			break;
+
+			case COLTYPE_DATEEUR:
+				//STR_TO_DATE('20/2/2011','%d/%m/%Y')
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y')",field[0]);
 			break;
 		}
 		uFirst=1;
@@ -1515,14 +1554,15 @@ void funcModuleInsertQuery(FILE *fp)
 			default:
 				fprintf(fp,"\t\t\t,%s\n",field[0]);
 			break;
-			case(COLTYPE_RADPRI):
+			case COLTYPE_RADPRI:
 			break;
 			case COLTYPE_CHAR:
 			case COLTYPE_DATETIME:
+			case COLTYPE_DATEEUR:
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
-			case(COLTYPE_TEXT):
+			case COLTYPE_TEXT:
 				fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",field[0]);
 			break;
 			case(COLTYPE_UNIXTIMECREATE):
@@ -1579,6 +1619,10 @@ void funcModuleCreateQuery(FILE *fp)
 			break;
 			case(COLTYPE_TEXT):
 				fprintf(fp,"\t\t\"%s TEXT %s",field[0],field[1]);
+			break;
+			case COLTYPE_DATETIME:
+			case COLTYPE_DATEEUR:
+				fprintf(fp,"\t\t\"%s DATETIME %s",field[0],field[1]);
 			break;
 		}
 		switch(uIndexType)

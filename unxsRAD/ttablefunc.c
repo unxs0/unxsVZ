@@ -1089,7 +1089,10 @@ void AddTableFieldLine(char *cLine)
 				" uFieldType=%u,"
 				" cTitle='%.100s',"
 				" cFKSpec='%.32s',"
-				" uSQLSize='%u',"
+				" uSQLSize=%u,"
+				" uHtmlXSize='40',"
+				" uHtmlYSize='1',"
+				" uHtmlMax=%u,"
 				" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 					uTable,
 					uProject,
@@ -1098,6 +1101,7 @@ void AddTableFieldLine(char *cLine)
 					uFieldType,
 					cTitle,
 					cFKSpec,
+					uSQLSize,
 					uSQLSize,
 					guCompany,guLoginClient);
         	mysql_query(&gMysql,gcQuery);

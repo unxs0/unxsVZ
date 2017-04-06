@@ -261,7 +261,7 @@ void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
                 sprintf(cMode,"disabled");
 
 	printf("<input type=text title='Enter date US style month/day/full-year'"
-			" class=calendarSelectDate name='%s' value='%s' %s ><div id=calendarDiv></div>",cInputName,cValue,cMode);
+			" class=calendarSelectDate name='%s' size=40 maxlength=32 value='%s' %s ><div id=calendarDiv></div>",cInputName,cValue,cMode);
 
 }//void jsCalendarInput(char *cInputName,char *cValue,unsigned uMode)
 
