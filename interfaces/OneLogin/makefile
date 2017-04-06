@@ -76,6 +76,9 @@ install: interface.cgi ./templates/Footer
 	@ cp -ai ./templates.default/* ./templates/;
 
 install-bootstrap: 
+	mkdir -p /var/www/unxs/html/bs/css/
+	mkdir -p /var/www/unxs/html/bs/js/
+	mkdir -p /var/www/unxs/html/bs/fonts/
 	cp css/*.css /var/www/unxs/html/bs/css/
 	cp js/*.js /var/www/unxs/html/bs/js/
 	cp fonts/* /var/www/unxs/html/bs/fonts/

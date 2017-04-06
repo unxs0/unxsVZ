@@ -12,7 +12,7 @@ NOTES
 */
 
 #include "interface.h"
-#include "../../local.h"
+#include "local.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>

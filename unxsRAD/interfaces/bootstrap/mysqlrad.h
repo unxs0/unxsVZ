@@ -29,7 +29,6 @@ AUTHOR
 #include <locale.h>
 #include <monetary.h>
 
-#include "language.h"
 #include "local.h"
 
  //Native MySQL fields

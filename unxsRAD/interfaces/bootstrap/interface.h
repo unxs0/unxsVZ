@@ -1,7 +1,6 @@
 /*
 FILE
-	interface.h
-	svn ID removed
+	unxsRAD/interfaces/bootstrap/interface.h
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
 	(C) 2015-2016 Gary Wallis for Unixservice, LLC.
@@ -9,11 +8,11 @@ AUTHOR
 */
 
 #define INTERFACE_HEADER_TITLE ""
-#define INTERFACE_COPYRIGHT "<font color=gray>Telco quality VOIP provisioning software &copy; 2015,2016 Unixservice, LLC. All Rights Reserved.</font>"
+#define INTERFACE_COPYRIGHT "<font color=gray>Mobile Centric Software &copy; 2015,2016 Unixservice, LLC. All Rights Reserved.</font>"
 
 
-#include "../../mysqlrad.h"
-#include "../../local.h"
+#include "mysqlrad.h"
+#include "local.h"
 #include <ctype.h>
 #include <openisp/template.h>
 //#include <lber.h>
@@ -41,8 +40,8 @@ AUTHOR
 #define IP_BLOCK_DASH 2
 
 //Depend on correctly preconfigured tTemplateSet and tTemplateType:
-#define uPLAINSET	11
-#define uOneLogin	41
+#define uPLAINSET	1
+#define uOneLogin	14
 
 void InterfaceConnectDb(void);
 
@@ -60,7 +59,7 @@ const char *cUserLevel(unsigned uPermLevel);
 char *TextAreaSave(char *cField);
 char *FQDomainName(char *cInput);
 void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
+const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template);
 void InterfaceLogoutFirewallJobs(unsigned uLoginClient);
 void InterfaceLoginFirewallJobs(unsigned uLoginClient);
