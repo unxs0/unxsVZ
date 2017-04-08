@@ -68,6 +68,84 @@ void htmlLoginPage(char *cTitle, char *cTemplateName);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
 
 
+void jsonTableRows(char const *cTable);
+void jsonTableRows(char const *cTable)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cQuery[1028]={""};
+	char cColumnName[64][64];
+	unsigned uColumn=0;
+
+	printf("Content-type: text/json\n\n");
+	printf("[\n");
+
+	sprintf(cQuery,"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS"
+					" WHERE TABLE_SCHEMA='unxsrad' AND TABLE_NAME='%s';",cTable);
+	mysql_query(&gMysql,cQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("\t{\n");
+		printf("\t\t'status' : 'error',\n");
+		printf("\t\t'message' : 'error: %s',\n",mysql_error(&gMysql));
+		printf("\t}\n");
+		printf("]\n");
+		exit(0);
+	}
+	res=mysql_store_result(&gMysql);
+	unsigned uNumRows=0;
+	if((uNumRows=mysql_num_rows(res))>0)
+	{
+		while((field=mysql_fetch_row(res)) && uColumn<64)
+		{
+			sprintf(cColumnName[uColumn],"%.63s",field[0]);
+			uColumn++;
+		}
+	}
+	mysql_free_result(res);
+
+	sprintf(cQuery,"SELECT * FROM %.99s",cTable);
+	mysql_query(&gMysql,cQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("\t{\n");
+		printf("\t\t'status' : 'error',\n");
+		printf("\t\t'message' : 'error: %s',\n",mysql_error(&gMysql));
+		printf("\t}\n");
+		printf("]\n");
+		exit(0);
+	}
+	res=mysql_store_result(&gMysql);
+	uNumRows=0;
+	if((uNumRows=mysql_num_rows(res))>0)
+	{
+		unsigned uLast=0;
+		unsigned register i;
+		unsigned uFirst;
+		while((field=mysql_fetch_row(res)))
+		{
+			printf("\t{");
+			uFirst=1;
+			for(i=0;i<uColumn;i++)
+			{
+				if(!uFirst)
+					printf(", ");
+				printf("\"%s\": \"%s\"",cColumnName[i],field[i]);
+				uFirst=0;
+			}
+			printf("}");
+			if((++uLast)<uNumRows)
+				printf(",\n");
+			else
+				printf("\n");
+		}
+	}
+	mysql_free_result(res);
+	printf("]\n");
+	exit(0);
+
+}//void jsonTableRows(char const *cTable)
+
 
 int main(int argc, char *argv[])
 {
@@ -82,15 +160,12 @@ int main(int argc, char *argv[])
 
 	if(getenv("REMOTE_ADDR")!=NULL)
 		sprintf(gcHost,"%.99s",getenv("REMOTE_ADDR"));
-
-	if(getenv("HTTP_USER_AGENT")!=NULL)
-	{
-		if(strstr(getenv("HTTP_USER_AGENT"),"Firefox"))
-			guBrowserFirefox=1;
-	}
+	else
+		jsonTableRows("tLog");
 
 	gethostname(gcHostname,98);
 
+	char cTable[100]={""};
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{
 		//Get	
@@ -108,6 +183,8 @@ int main(int argc, char *argv[])
 				sprintf(gcFunction,"%.99s",gentries[i].val);
 			else if(!strcmp(gentries[i].name,"gcPage"))
 				sprintf(gcPage,"%.99s",gentries[i].val);
+                	else if(!strcmp(gentries[i].name,"cTable"))
+				sprintf(cTable,"%.99s",gentries[i].val);
 		}
 		if(gcPage[0])
 		{
@@ -118,7 +195,6 @@ int main(int argc, char *argv[])
 	else
 	{
 		//Post
-		
 		cl = atoi(getenv("CONTENT_LENGTH"));
 		for(i=0;cl && (!feof(stdin)) && i<MAXPOSTVARS ;i++)
 		{
@@ -137,6 +213,8 @@ int main(int argc, char *argv[])
 				sprintf(gcPasswd,"%.99s",entries[i].val);
                 	else if(!strcmp(entries[i].name,"gcOTP"))
 				sprintf(gcOTP,"%.15s",entries[i].val);
+                	else if(!strcmp(entries[i].name,"cTable"))
+				sprintf(cTable,"%.99s",entries[i].val);
 		}
 	}
 
@@ -174,6 +252,9 @@ int main(int argc, char *argv[])
 	//First page after valid login
 	if(!strcmp(gcFunction,"Login"))
 		htmlUser();
+	//Special JSON data commands
+	else if(!strcmp(gcFunction,"TableRows") && cTable[0])
+		jsonTableRows(cTable);
 
 	//Per page command tree
 	UserCommands(entries,i);
