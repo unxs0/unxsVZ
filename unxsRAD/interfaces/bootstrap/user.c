@@ -192,9 +192,9 @@ void UserCommands(pentry entries[], int x)
 
 void htmlUser(void)
 {
-	htmlHeader("OneLogin","UserHeader");
-	htmlUserPage("OneLogin","User.Body");
-	htmlFooter("UserFooter");
+	htmlHeader("User","User.Header");
+	htmlUserPage("User","User.Body");
+	htmlFooter("User.Footer");
 
 }//void htmlUser(void)
 
@@ -374,7 +374,7 @@ unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient)
 void htmlOperationsInfo(void)
 {
 
-	htmlHeader("OneLogin","UserHeader");
+	htmlHeader("User","UserHeader");
 
         MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -400,7 +400,7 @@ void htmlOperationsInfo(void)
 void htmlLoginInfo(void)
 {
 
-	htmlHeader("OneLogin","UserHeader");
+	htmlHeader("User","UserHeader");
 
         MYSQL_RES *res;
 	MYSQL_ROW field;

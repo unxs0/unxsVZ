@@ -4,11 +4,11 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="unxsVZ OneLogin user tab">
-    <meta name="author" content="(C) Unixservice, LLC. 2014-2015">
+    <meta name="description" content="unxsRAD User tab">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2017">
     <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico>
 
-    <title>{{gcBrand}} OneLogin</title>
+    <title>{{gcBrand}}</title>
 
     <!-- Bootstrap core CSS -->
     <link href="/bs/css/bootstrap.min.css" rel="stylesheet">
@@ -27,15 +27,12 @@
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{{cCGI}}?gcPage=User&guContainer={{guContainer}}">{{gcBrand}} OneLogin</a>
+          <a class="navbar-brand" href="{{cCGI}}?gcPage=Project">{{gcBrand}}</a>
         </div><!--/navbar-header-->
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="{{cCGI}}?gcPage=User&guContainer={{guContainer}}">User</a></li>
-            <li><a href="{{cCGI}}?gcPage=PBX&guContainer={{guContainer}}">PBX</a></li>
-            <li><a href="{{cCGI}}?gcPage=About&guContainer={{guContainer}}">About</a></li>
-            <li><a href="{{cCGI}}?gcPage=Contact&guContainer={{guContainer}}">Contact</a></li>
-            {{cPrivilegedContainerMenu}}
+            <li class="active"><a href="{{cCGI}}?gcPage=User">User</a></li>
+            <li><a href="{{cCGI}}?gcPage=Project">Project</a></li>
             <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
           </ul>
         </div><!-- /.nav-collapse -->
@@ -48,15 +45,10 @@
 
         <div class="col-xs-12 col-sm-9">
 
-          <div class="jumbotron">
-        	<h3 class="form-signin-heading">Info</h3>
+          <div>
+        	<h4>User {{gcName}}</h4>
 		<h5>{{funcMOTD}}</h5>
-		<h3>Saved Session Data</h3>
-		<h5>
-		PBX hostname: {{gcCtHostname}}<br>
-		PBX VEID: {{guContainer}}<br>
-		</h5>
-          </div><!-- "jumbotron" -->
+          </div>
 
 <!-- start jquery collapse Login History-->
 <div class="panel panel-default" id="panel3">

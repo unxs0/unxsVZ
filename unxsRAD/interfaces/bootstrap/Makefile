@@ -21,14 +21,17 @@ help:
 	@echo "make install-test"
 	@echo "make install-bootstrap"
 
-interface.cgi: main.o cgi.o mysqlconnect.o user.o
-	cc main.o cgi.o mysqlconnect.o user.o -o interface.cgi $(LIBS)
+interface.cgi: main.o cgi.o mysqlconnect.o user.o project.o
+	cc main.o cgi.o mysqlconnect.o user.o project.o -o interface.cgi $(LIBS)
 
 main.o: main.c interface.h local.h ../../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
 
 user.o: user.c interface.h local.h ../../mysqlrad.h
 	cc -c user.c -o user.o $(CFLAGS)
+
+project.o: project.c interface.h local.h ../../mysqlrad.h
+	cc -c project.c -o project.o $(CFLAGS)
 
 mysqlconnect.o: mysqlconnect.c  local.h interface.h
 	cc -o mysqlconnect.o -c mysqlconnect.c $(CFLAGS)

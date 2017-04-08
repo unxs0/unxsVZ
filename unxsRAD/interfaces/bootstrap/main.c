@@ -68,84 +68,6 @@ void htmlLoginPage(char *cTitle, char *cTemplateName);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
 
 
-void jsonTableRows(char const *cTable);
-void jsonTableRows(char const *cTable)
-{
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-	char cQuery[1028]={""};
-	char cColumnName[64][64];
-	unsigned uColumn=0;
-
-	printf("Content-type: text/json\n\n");
-	printf("[\n");
-
-	sprintf(cQuery,"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS"
-					" WHERE TABLE_SCHEMA='unxsrad' AND TABLE_NAME='%s';",cTable);
-	mysql_query(&gMysql,cQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("\t{\n");
-		printf("\t\t'status' : 'error',\n");
-		printf("\t\t'message' : 'error: %s',\n",mysql_error(&gMysql));
-		printf("\t}\n");
-		printf("]\n");
-		exit(0);
-	}
-	res=mysql_store_result(&gMysql);
-	unsigned uNumRows=0;
-	if((uNumRows=mysql_num_rows(res))>0)
-	{
-		while((field=mysql_fetch_row(res)) && uColumn<64)
-		{
-			sprintf(cColumnName[uColumn],"%.63s",field[0]);
-			uColumn++;
-		}
-	}
-	mysql_free_result(res);
-
-	sprintf(cQuery,"SELECT * FROM %.99s",cTable);
-	mysql_query(&gMysql,cQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("\t{\n");
-		printf("\t\t'status' : 'error',\n");
-		printf("\t\t'message' : 'error: %s',\n",mysql_error(&gMysql));
-		printf("\t}\n");
-		printf("]\n");
-		exit(0);
-	}
-	res=mysql_store_result(&gMysql);
-	uNumRows=0;
-	if((uNumRows=mysql_num_rows(res))>0)
-	{
-		unsigned uLast=0;
-		unsigned register i;
-		unsigned uFirst;
-		while((field=mysql_fetch_row(res)))
-		{
-			printf("\t{");
-			uFirst=1;
-			for(i=0;i<uColumn;i++)
-			{
-				if(!uFirst)
-					printf(", ");
-				printf("\"%s\": \"%s\"",cColumnName[i],field[i]);
-				uFirst=0;
-			}
-			printf("}");
-			if((++uLast)<uNumRows)
-				printf(",\n");
-			else
-				printf("\n");
-		}
-	}
-	mysql_free_result(res);
-	printf("]\n");
-	exit(0);
-
-}//void jsonTableRows(char const *cTable)
-
 
 int main(int argc, char *argv[])
 {
@@ -190,6 +112,8 @@ int main(int argc, char *argv[])
 		{
 			if(!strcmp(gcPage,"User"))
 				UserGetHook(gentries,i);
+			else if(!strcmp(gcPage,"Project"))
+				ProjectGetHook(gentries,i);
 		}
 	}
 	else
@@ -258,6 +182,7 @@ int main(int argc, char *argv[])
 
 	//Per page command tree
 	UserCommands(entries,i);
+	ProjectCommands(entries,i);
 	
 	//default logged in page
 	htmlUser();
@@ -268,11 +193,11 @@ int main(int argc, char *argv[])
 
 void htmlLogin(void)
 {
-	htmlHeader("OneLogin","LoginHeader");
+	htmlHeader("unxsRAD","LoginHeader");
 	if(guRequireOTPLogin)
-		htmlLoginPage("OneLogin","ZLoginOTP.Body");
+		htmlLoginPage("unxsRAD","LoginOTP.Body");
 	else
-		htmlLoginPage("OneLogin","ZLogin.Body");
+		htmlLoginPage("unxsRAD","Login.Body");
 	htmlFooter("LoginFooter");
 
 }//void htmlLogin(void)

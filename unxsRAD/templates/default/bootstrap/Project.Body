@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="unxsRAD Project tab">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2017">
+    <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico>
+
+    <title>{{gcBrand}}</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/bs/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/bs/css/footable.bootstrap.min.css" />
+
+    <!-- Custom styles for this template -->
+    <link href="/bs/css/offcanvas.css" rel="stylesheet">
+    <link href="/bs/css/collapse.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+    <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{{cCGI}}?gcPage=Project">{{gcBrand}}</a>
+        </div><!--/navbar-header-->
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="{{cCGI}}?gcPage=User">User</a></li>
+            <li class="active"><a href="{{cCGI}}?gcPage=Project">Project</a></li>
+            <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
+          </ul>
+        </div><!-- /.nav-collapse -->
+      </div><!-- /.container -->
+    </nav><!-- /.navbar -->
+
+    <div class="container">
+
+      <div class="row row-offcanvas row-offcanvas-right">
+
+        <div class="col-xs-12 col-sm-9">
+
+<h3>Project</h3>
+<table class="table" data-paging="true" data-editing="true" data-sorting="true"></table>
+
+        </div><!--/.col-xs-12.col-sm-9-->
+
+        </div><!--/row-->
+      </div><!--/container-->
+
+
+      <hr>
+
+      <footer>
+        <p>{{gcCopyright}}</p>
+      </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="/bs/js/bootstrap.min.js"></script>
+    <script src="/bs/js/offcanvas.js"></script>
+    <script src="/bs/js/footable.min.js"></script>
+
+<script>
+jQuery(function($){
+
+	ft=FooTable.init($('.table'),{
+        "rows": $.post('{{cCGI}}','gcFunction=ProjectRows'),
+        "columns": $.post('{{cCGI}}','gcFunction=ProjectCols'),
+	editing: {
+			enabled: true,
+			deleteRow: function(row){
+				if (confirm('Are you sure you want to delete the row?')){
+					row.delete();
+				}
+			},
+			editRow: function(row){
+				if (confirm('Are you sure you want to edit the row?')){
+					row.delete();
+				}
+			},
+			addRow: function(row){
+				if (confirm('Are you sure you want to add a new row?')){
+					row.delete();
+				}
+			}
+		}
+	});
+});
+
+</script>
+
+  </body>
+</html>
