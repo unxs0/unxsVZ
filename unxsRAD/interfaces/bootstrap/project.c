@@ -21,14 +21,25 @@ void jsonProjectRows(void);
 void jsonProjectCols(void);
 void jsonTableRows(char const *cTable);
 
+static char cName[64]={""};
+static char cStatus[64]={""};
+static char cTemplate[64]={""};
+unsigned uProject=0;
+
 void ProcessProjectVars(pentry entries[], int x)
 {
 	register int i;
 	
 	for(i=0;i<x;i++)
 	{
-		//if(!strcmp(entries[i].name,"cCurPasswd"))
-		//	sprintf(cCurPasswd,"%.32s",entries[i].val);
+		if(!strcmp(entries[i].name,"cName"))
+			sprintf(cName,"%.63s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cStatus"))
+			sprintf(cStatus,"%.63s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cTemplate"))
+			sprintf(cTemplate,"%.63s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uProject"))
+			sscanf(entries[i].val,"%u",&uProject);
 	}
 
 }//void ProcessProjectVars(pentry entries[], int x)
@@ -61,6 +72,13 @@ void ProjectCommands(pentry entries[], int x)
 		jsonProjectRows();
 	else if(!strcmp(gcFunction,"ProjectCols"))
 		jsonProjectCols();
+	else if(!strcmp(gcFunction,"AddProject"))
+	{
+		ProcessProjectVars(entries,x);
+		printf("Content-type: text/plain\n\n");
+		printf("cName: %s; cStatus: %s; cTemplate: %s; uProject: %u;\n",cName,cStatus,cTemplate,uProject);
+		exit(0);
+	}
 
 }//void ProjectCommands(pentry entries[], int x)
 
@@ -167,9 +185,9 @@ void jsonProjectRows(void)
 		{
 			printf("\t{");
 			printf("\"uProject\": \"%s\","
-				" \"tProject.cLabel\": \"%s\","
-				" \"tProjectStatus.cLabel\": \"%s\","
-				" \"tTemplateSet.cLabel\": \"%s\""
+				" \"cName\": \"%s\","
+				" \"cStatus\": \"%s\","
+				" \"cTemplate\": \"%s\""
 					,field[0],field[1],field[2],field[3]);
 			printf("}");
 			if((++uLast)<uNumRows)
@@ -189,10 +207,10 @@ void jsonProjectCols(void)
 {
 	printf("Content-type: text/json\n\n");
 	printf("[\n");
-	printf("\t{\"name\": \"uProject\", \"title\": \"Project unique ID\"},\n");
-	printf("\t{\"name\": \"tProject.cLabel\", \"title\": \"Project name\"},\n");
-	printf("\t{\"name\": \"tProjectStatus.cLabel\", \"title\": \"Project status\"},\n");
-	printf("\t{\"name\": \"tTemplateSet.cLabel\", \"title\": \"Project template set\", \"breakpoints\": \"xs sm\"}\n");
+	printf("\t{\"name\": \"uProject\", \"title\": \"Unique Project ID\"},\n");
+	printf("\t{\"name\": \"cName\", \"title\": \"Name\"},\n");
+	printf("\t{\"name\": \"cStatus\", \"title\": \"Status\"},\n");
+	printf("\t{\"name\": \"cTemplate\", \"title\": \"Template\", \"breakpoints\": \"xs sm\"}\n");
 	printf("]\n");
 	exit(0);
 }//void jsonProjectCols(void)

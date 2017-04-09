@@ -47,7 +47,57 @@
         <div class="col-xs-12 col-sm-9">
 
 <h3>Project</h3>
-<table class="table" data-paging="true" data-editing="true" data-sorting="true"></table>
+<table class="table" data-paging="true" data-editing="true" data-sorting="true" data-filtering="true"></table>
+
+<!-- Editing Modal Markup -->
+<div class="modal fade" id="editor-modal" tabindex="-1" role="dialog" aria-labelledby="editor-title">
+	<style scoped>
+		/* provides a red astrix to denote required fields - this should be included in common stylesheet */
+		.form-group.required .control-label:after {
+			content:"*";
+			color:red;
+			margin-left: 4px;
+		}
+	</style>
+	<div class="modal-dialog" role="document">
+		<form class="modal-content form-horizontal" id="editor">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">x</span></button>
+				<h4 class="modal-title" id="editor-title">Add Row</h4>
+			</div>
+			<div class="modal-body">
+				<input type="number" id="uProject" name="uProject" class="hidden"/>
+				<input type="text" id="gcFunction" name="gcFunction" class="hidden" value="AddProject"/>
+				<div class="form-group required">
+					<label for="cName" class="col-sm-3 control-label">cName</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="cName" name="cName"
+							placeholder="ProjectX" required>
+					</div>
+				</div>
+				<div class="form-group required">
+					<label for="cStatus" class="col-sm-3 control-label">cStatus</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="cStatus" name="cStatus"
+							 placeholder="Start" required>
+					</div>
+				</div>
+				<div class="form-group required">
+					<label for="cTemplate" class="col-sm-3 control-label">cTemplate</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="cTemplate" name="cTemplate"
+							 placeholder="default" required>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="submit" class="btn btn-primary">Save changes</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+			</div>
+		</form>
+	</div>
+</div>
+
 
         </div><!--/.col-xs-12.col-sm-9-->
 
@@ -71,7 +121,9 @@
 
 <script>
 jQuery(function($){
-
+	var $modal = $('#editor-modal'),
+	$editor = $('#editor'),
+	$editorTitle = $('#editor-title'),
 	ft=FooTable.init($('.table'),{
         "rows": $.post('{{cCGI}}','gcFunction=ProjectRows'),
         "columns": $.post('{{cCGI}}','gcFunction=ProjectCols'),
@@ -87,12 +139,40 @@ jQuery(function($){
 					row.delete();
 				}
 			},
-			addRow: function(row){
-				if (confirm('Are you sure you want to add a new row?')){
-					row.delete();
-				}
+			addRow: function(){
+					$modal.removeData('row');
+					$editor[0].reset();
+					$editorTitle.text('Add a new row');
+					$modal.modal('show');
 			}
 		}
+	});
+
+	uid = 10001;
+
+	$editor.on('submit', function(e){
+		if (this.checkValidity && !this.checkValidity()) return;
+		e.preventDefault();
+		var row = $modal.data('row'),
+			values = {
+				uProject: $editor.find('#uProject').val(),
+				cName: $editor.find('#cName').val(),
+				cStatus: $editor.find('#cStatus').val(),
+				cTemplate: $editor.find('#cTemplate').val()
+			};
+
+		if (row instanceof FooTable.Row){
+			row.val(values);
+		} else {
+			values.uProject = uid++;
+			ft.rows.add(values);
+        		$.post('{{cCGI}}',$( "#editor" ).serialize(),
+					function(retval){
+						var r = retval;
+						console.log(r);
+					});
+		}
+		$modal.modal('hide');
 	});
 });
 
