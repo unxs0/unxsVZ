@@ -52,6 +52,7 @@ void ProjectGetHook(entry gentries[],int x)
 	//{
 	//}
 
+	//API Get
 	if(!strcmp(gcFunction,"ProjectRows"))
 		jsonProjectRows();
 	else if(!strcmp(gcFunction,"ProjectCols"))
@@ -68,6 +69,8 @@ void ProjectCommands(pentry entries[], int x)
 		ProcessProjectVars(entries,x);
 		htmlProject();
 	}
+
+	//API Post
 	if(!strcmp(gcFunction,"ProjectRows"))
 		jsonProjectRows();
 	else if(!strcmp(gcFunction,"ProjectCols"))
@@ -76,7 +79,65 @@ void ProjectCommands(pentry entries[], int x)
 	{
 		ProcessProjectVars(entries,x);
 		printf("Content-type: text/plain\n\n");
-		printf("cName: %s; cStatus: %s; cTemplate: %s; uProject: %u;\n",cName,cStatus,cTemplate,uProject);
+		if(cName[0] && cStatus[0] && cTemplate[0])
+		{
+			char *cp;
+			//no sql injection
+			if((cp=strchr(cName,'\''))) *cp=0;
+			if((cp=strchr(cStatus,'\''))) *cp=0;
+			if((cp=strchr(cTemplate,'\''))) *cp=0;
+
+			unsigned uProjectStatus=0;
+			unsigned uTemplateSet=0;
+        		MYSQL_RES *res;
+	        	MYSQL_ROW field;
+			sprintf(gcQuery,"SELECT uStatus FROM tProjectStatus WHERE cLabel='%.31s'",cStatus);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("0 %s\n",mysql_error(&gMysql));
+				exit(0);
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uProjectStatus);
+			if(!uProjectStatus)
+			{
+				printf("0 No such project status: %s\n",cStatus);
+				exit(0);
+			}
+			sprintf(gcQuery,"SELECT uTemplateSet FROM tTemplateSet WHERE cLabel='%.31s'",cTemplate);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("0 %s\n",mysql_error(&gMysql));
+				exit(0);
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uTemplateSet);
+			if(!uTemplateSet)
+			{
+				printf("0 No such template set: %s\n",cTemplate);
+				exit(0);
+			}
+			sprintf(gcQuery,"INSERT INTO tProject SET cLabel='%.31s',"
+					"uProjectStatus=%u,"
+					"uTemplateSet=%u,"
+					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						,cName,uProjectStatus,uTemplateSet,guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("0 %s\n",mysql_error(&gMysql));
+				exit(0);
+			}
+			printf("%llu\n",mysql_insert_id(&gMysql));
+		}
+		else
+		{
+			printf("0 no cName etc.\n");
+		}
 		exit(0);
 	}
 

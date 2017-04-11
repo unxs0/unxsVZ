@@ -148,8 +148,6 @@ jQuery(function($){
 		}
 	});
 
-	uid = 10001;
-
 	$editor.on('submit', function(e){
 		if (this.checkValidity && !this.checkValidity()) return;
 		e.preventDefault();
@@ -164,12 +162,13 @@ jQuery(function($){
 		if (row instanceof FooTable.Row){
 			row.val(values);
 		} else {
-			values.uProject = uid++;
-			ft.rows.add(values);
         		$.post('{{cCGI}}',$( "#editor" ).serialize(),
 					function(retval){
 						var r = retval;
-						console.log(r);
+						values.uProject = +r;
+						console.log( 'AddProject result:' + r);
+						if ( values.uProject > 0 )
+							ft.rows.add(values);
 					});
 		}
 		$modal.modal('hide');
