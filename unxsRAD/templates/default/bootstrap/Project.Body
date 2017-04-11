@@ -63,16 +63,15 @@
 		<form class="modal-content form-horizontal" id="editor">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">x</span></button>
-				<h4 class="modal-title" id="editor-title">Add Row</h4>
+				<h4 class="modal-title" id="editor-title">Add New Project</h4>
 			</div>
 			<div class="modal-body">
 				<input type="number" id="uProject" name="uProject" class="hidden"/>
-				<input type="text" id="gcFunction" name="gcFunction" class="hidden" value="AddProject"/>
 				<div class="form-group required">
 					<label for="cName" class="col-sm-3 control-label">cName</label>
 					<div class="col-sm-9">
 						<input type="text" class="form-control" id="cName" name="cName"
-							placeholder="ProjectX" required>
+							placeholder="unxsSomething" required>
 					</div>
 				</div>
 				<div class="form-group required">
@@ -91,13 +90,38 @@
 				</div>
 			</div>
 			<div class="modal-footer">
-				<button type="submit" class="btn btn-primary">Save changes</button>
+				<button type="submit" class="btn btn-primary">Create Project</button>
 				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
 			</div>
 		</form>
 	</div>
 </div>
 
+<!-- Delete Modal Markup -->
+<div class="modal fade" id="delete-modal" tabindex="-1" role="dialog" aria-labelledby="delete-title">
+	<div class="modal-dialog" role="document">
+		<form class="modal-content form-horizontal" id="delform">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">x</span></button>
+				<h4 class="modal-title" id="delete-title">Delete This Project</h4>
+			</div>
+			<div class="modal-body">
+				<input type="number" id="uProject" name="uProject" class="hidden"/>
+				<div class="form-group required">
+					<label for="cName" class="col-sm-3 control-label">cName</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="cName" name="cName"
+							placeholder="unxsSomething" disabled>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="submit" class="btn btn-primary">Delete Project</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+			</div>
+		</form>
+	</div>
+</div>
 
         </div><!--/.col-xs-12.col-sm-9-->
 
@@ -121,18 +145,25 @@
 
 <script>
 jQuery(function($){
-	var $modal = $('#editor-modal'),
+	var $editorModal = $('#editor-modal'),
 	$editor = $('#editor'),
 	$editorTitle = $('#editor-title'),
+
+	$deleteModal = $('#delete-modal'),
+	$delform= $('#delform'),
+	$deleteTitle = $('#delete-title'),
+
 	ft=FooTable.init($('.table'),{
         "rows": $.post('{{cCGI}}','gcFunction=ProjectRows'),
         "columns": $.post('{{cCGI}}','gcFunction=ProjectCols'),
 	editing: {
 			enabled: true,
 			deleteRow: function(row){
-				if (confirm('Are you sure you want to delete the row?')){
-					row.delete();
-				}
+					var values = row.val();
+					$delform.find('#uProject').val(values.uProject);
+					$delform.find('#cName').val(values.cName);
+					$deleteModal.data('row', row);
+					$deleteModal.modal('show');
 			},
 			editRow: function(row){
 				if (confirm('Are you sure you want to edit the row?')){
@@ -140,18 +171,41 @@ jQuery(function($){
 				}
 			},
 			addRow: function(){
-					$modal.removeData('row');
+					$editorModal.removeData('row');
 					$editor[0].reset();
-					$editorTitle.text('Add a new row');
-					$modal.modal('show');
+					$editorTitle.text('Add New Project');
+					$editorModal.modal('show');
 			}
 		}
+	});
+
+	$delform.on('submit', function(d){
+		if (this.checkValidity && !this.checkValidity()) return;
+		d.preventDefault();
+		var row = $deleteModal.data('row'),
+			values = {
+				uProject: $delform.find('#uProject').val(),
+				cName: $delform.find('#cName').val()
+			};
+		console.log( 'DelProject values.uProject:' + values.uProject + ' ' + values.cName );
+
+        $.post('{{cCGI}}?gcFunction=DelProject','uProject=' + values.uProject + '&' + 'cName=' + values.cName,
+					function(retval){
+						var r = retval;
+						values.uProject = +r;
+						console.log( 'DelProject result:' + r );
+						if ( values.uProject > 0 )
+							row.delete();
+						else
+							alert('Delete error:' + r);
+					});
+		$deleteModal.modal('hide');
 	});
 
 	$editor.on('submit', function(e){
 		if (this.checkValidity && !this.checkValidity()) return;
 		e.preventDefault();
-		var row = $modal.data('row'),
+		var row = $editorModal.data('row'),
 			values = {
 				uProject: $editor.find('#uProject').val(),
 				cName: $editor.find('#cName').val(),
@@ -162,16 +216,18 @@ jQuery(function($){
 		if (row instanceof FooTable.Row){
 			row.val(values);
 		} else {
-        		$.post('{{cCGI}}',$( "#editor" ).serialize(),
+        		$.post('{{cCGI}}?gcFunction=AddProject',$( "#editor" ).serialize(),
 					function(retval){
 						var r = retval;
 						values.uProject = +r;
 						console.log( 'AddProject result:' + r);
 						if ( values.uProject > 0 )
 							ft.rows.add(values);
+						else
+							alert('Add error:' + r);
 					});
 		}
-		$modal.modal('hide');
+		$editorModal.modal('hide');
 	});
 });
 

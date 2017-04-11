@@ -374,12 +374,15 @@ unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient)
 void htmlOperationsInfo(void)
 {
 
-	htmlHeader("User","UserHeader");
+	htmlHeader("User","User.Header");
 
         MYSQL_RES *res;
 	MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer FROM tLog WHERE uLogType!=8 AND"
-			" (uCreatedBy=%u OR uLoginClient=%u OR uOwner=%u) ORDER BY uCreatedDate DESC LIMIT 50",guLoginClient,guLoginClient,guLoginClient);
+	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer"
+			" FROM tLog WHERE uLogType!=8 AND"
+			" (uCreatedBy=%u OR uLoginClient=%u OR uOwner=%u)"
+			" ORDER BY uCreatedDate DESC LIMIT 20",
+				guLoginClient,guLoginClient,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -400,12 +403,13 @@ void htmlOperationsInfo(void)
 void htmlLoginInfo(void)
 {
 
-	htmlHeader("User","UserHeader");
+	htmlHeader("User","User.Header");
 
         MYSQL_RES *res;
 	MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer FROM tLog WHERE uLoginClient=%u"
-			" AND uLogType=8 ORDER BY uCreatedDate DESC LIMIT 50",guLoginClient);
+	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer"
+			" FROM tLog WHERE uLoginClient=%u"
+			" AND uLogType=8 ORDER BY uCreatedDate DESC LIMIT 20",guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{

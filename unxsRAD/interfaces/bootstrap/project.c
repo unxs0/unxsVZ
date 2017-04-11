@@ -24,14 +24,18 @@ void jsonTableRows(char const *cTable);
 static char cName[64]={""};
 static char cStatus[64]={""};
 static char cTemplate[64]={""};
-unsigned uProject=0;
+static unsigned uProject=0;
 
 void ProcessProjectVars(pentry entries[], int x)
 {
 	register int i;
 	
+	char *cp;
 	for(i=0;i<x;i++)
 	{
+		//no sql injection
+		if((cp=strchr(entries[i].val,'\''))) *cp=0;
+
 		if(!strcmp(entries[i].name,"cName"))
 			sprintf(cName,"%.63s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cStatus"))
@@ -71,6 +75,8 @@ void ProjectCommands(pentry entries[], int x)
 	}
 
 	//API Post
+        MYSQL_RES *res;
+	MYSQL_ROW field;
 	if(!strcmp(gcFunction,"ProjectRows"))
 		jsonProjectRows();
 	else if(!strcmp(gcFunction,"ProjectCols"))
@@ -81,21 +87,13 @@ void ProjectCommands(pentry entries[], int x)
 		printf("Content-type: text/plain\n\n");
 		if(cName[0] && cStatus[0] && cTemplate[0])
 		{
-			char *cp;
-			//no sql injection
-			if((cp=strchr(cName,'\''))) *cp=0;
-			if((cp=strchr(cStatus,'\''))) *cp=0;
-			if((cp=strchr(cTemplate,'\''))) *cp=0;
-
 			unsigned uProjectStatus=0;
 			unsigned uTemplateSet=0;
-        		MYSQL_RES *res;
-	        	MYSQL_ROW field;
 			sprintf(gcQuery,"SELECT uStatus FROM tProjectStatus WHERE cLabel='%.31s'",cStatus);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				printf("0 %s\n",mysql_error(&gMysql));
+				printf("%s\n",mysql_error(&gMysql));
 				exit(0);
 			}
 			res=mysql_store_result(&gMysql);
@@ -103,14 +101,14 @@ void ProjectCommands(pentry entries[], int x)
 				sscanf(field[0],"%u",&uProjectStatus);
 			if(!uProjectStatus)
 			{
-				printf("0 No such project status: %s\n",cStatus);
+				printf("No such project status: %s\n",cStatus);
 				exit(0);
 			}
 			sprintf(gcQuery,"SELECT uTemplateSet FROM tTemplateSet WHERE cLabel='%.31s'",cTemplate);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				printf("0 %s\n",mysql_error(&gMysql));
+				printf("%s\n",mysql_error(&gMysql));
 				exit(0);
 			}
 			res=mysql_store_result(&gMysql);
@@ -118,7 +116,7 @@ void ProjectCommands(pentry entries[], int x)
 				sscanf(field[0],"%u",&uTemplateSet);
 			if(!uTemplateSet)
 			{
-				printf("0 No such template set: %s\n",cTemplate);
+				printf("No such template set: %s\n",cTemplate);
 				exit(0);
 			}
 			sprintf(gcQuery,"INSERT INTO tProject SET cLabel='%.31s',"
@@ -129,14 +127,78 @@ void ProjectCommands(pentry entries[], int x)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				printf("0 %s\n",mysql_error(&gMysql));
+				printf("%s\n",mysql_error(&gMysql));
 				exit(0);
 			}
 			printf("%llu\n",mysql_insert_id(&gMysql));
 		}
 		else
 		{
-			printf("0 no cName etc.\n");
+			printf("No cName etc.\n");
+		}
+		exit(0);
+	}
+	else if(!strcmp(gcFunction,"DelProject"))
+	{
+		ProcessProjectVars(entries,x);
+
+		printf("Content-type: text/plain\n\n");
+		if(guPermLevel<7)
+		{
+			printf("insufficient permissions for delete\n");
+			exit(0);
+		}
+		if(uProject && cName[0])
+		{
+			sprintf(gcQuery,"SELECT uProject FROM tTable WHERE uProject=%u",uProject);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				exit(0);
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				printf("Project has tables not deleted\n");
+				exit(0);
+			}
+			sprintf(gcQuery,"SELECT uProject FROM tProject"
+					" WHERE uProject=%u AND cLabel='%s'"
+					" AND (uCreatedBy=%u OR (uOwner=%u AND %u>=10))",
+						uProject,cName,guLoginClient,guOrg,guPermLevel);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				printf("%s\n",mysql_error(&gMysql));
+				exit(0);
+			}
+			res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+			{
+				sprintf(gcQuery,"DELETE FROM tProject"
+					" WHERE uProject=%u AND cLabel='%s'"
+					" AND (uCreatedBy=%u OR (uOwner=%u AND %u>=10))",
+						uProject,cName,guLoginClient,guOrg,guPermLevel);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					exit(0);
+				}
+				if(mysql_affected_rows(&gMysql)>0)
+					printf("%u\n",uProject);
+				else
+					printf("Project not deleted. Unexpected mysql_affected_rows() error\n");
+			}
+			else
+			{
+				printf("Project not deleted. Insuficient permissions. guOrg=%u guPermLevel=%u\n",guOrg,guPermLevel);
+			}
+		}
+		else
+		{
+			printf("Project not found %u/%s\n",uProject,cName);
 		}
 		exit(0);
 	}

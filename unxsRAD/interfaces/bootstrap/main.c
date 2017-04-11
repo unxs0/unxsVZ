@@ -118,6 +118,19 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
+		//Post with get
+		gcl = getenv("QUERY_STRING");
+		for(i=0;gcl[0] != '\0' && i<MAXGETVARS;i++)
+		{
+			getword(gentries[i].val,gcl,'&');
+			plustospace(gentries[i].val);
+			unescape_url(gentries[i].val);
+			getword(gentries[i].name,gentries[i].val,'=');
+
+			if(!strcmp(gentries[i].name,"gcFunction"))
+				sprintf(gcFunction,"%.99s",gentries[i].val);
+		}
+
 		//Post
 		cl = atoi(getenv("CONTENT_LENGTH"));
 		for(i=0;cl && (!feof(stdin)) && i<MAXPOSTVARS ;i++)
