@@ -90,7 +90,7 @@
 				</div>
 			</div>
 			<div class="modal-footer">
-				<button type="submit" class="btn btn-primary">Create Project</button>
+				<button type="submit" class="btn btn-primary" id="editor-button" >Create Project</button>
 				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
 			</div>
 		</form>
@@ -148,6 +148,7 @@ jQuery(function($){
 	var $editorModal = $('#editor-modal'),
 	$editor = $('#editor'),
 	$editorTitle = $('#editor-title'),
+	$editorButton = $('#editor-button'),
 
 	$deleteModal = $('#delete-modal'),
 	$delform= $('#delform'),
@@ -159,22 +160,29 @@ jQuery(function($){
 	editing: {
 			enabled: true,
 			deleteRow: function(row){
-					var values = row.val();
-					$delform.find('#uProject').val(values.uProject);
-					$delform.find('#cName').val(values.cName);
-					$deleteModal.data('row', row);
-					$deleteModal.modal('show');
+				var values = row.val();
+				$delform.find('#uProject').val(values.uProject);
+				$delform.find('#cName').val(values.cName);
+				$deleteModal.data('row', row);
+				$deleteModal.modal('show');
 			},
 			editRow: function(row){
-				if (confirm('Are you sure you want to edit the row?')){
-					row.delete();
-				}
+				var values = row.val();
+				$editor.find('#uProject').val(values.uProject);
+				$editor.find('#cName').val(values.cName);
+				$editor.find('#cStatus').val(values.cStatus);
+				$editor.find('#cTemplate').val(values.cTemplate);
+				$editorModal.data('row', row);
+				$editorTitle.text('Update Project ' + values.uProject);
+				$editorButton.text('Update Project');
+				$editorModal.modal('show');
 			},
 			addRow: function(){
-					$editorModal.removeData('row');
-					$editor[0].reset();
-					$editorTitle.text('Add New Project');
-					$editorModal.modal('show');
+				$editorModal.removeData('row');
+				$editor[0].reset();
+				$editorTitle.text('Add New Project');
+				$editorButton.text('Add Project');
+				$editorModal.modal('show');
 			}
 		}
 	});
@@ -193,11 +201,11 @@ jQuery(function($){
 					function(retval){
 						var r = retval;
 						values.uProject = +r;
-						console.log( 'DelProject result:' + r );
+						console.log( 'DelProject result: ' + r );
 						if ( values.uProject > 0 )
 							row.delete();
 						else
-							alert('Delete error:' + r);
+							alert('Delete error: ' + r);
 					});
 		$deleteModal.modal('hide');
 	});
@@ -214,17 +222,26 @@ jQuery(function($){
 			};
 
 		if (row instanceof FooTable.Row){
-			row.val(values);
+        		$.post('{{cCGI}}?gcFunction=ModProject',$( "#editor" ).serialize(),
+					function(retval){
+						var r = retval;
+						values.uProject = +r;
+						console.log( 'ModProject result: ' + r);
+						if ( values.uProject > 0 )
+							row.val(values);
+						else
+							alert('Modify error: ' + r);
+					});
 		} else {
         		$.post('{{cCGI}}?gcFunction=AddProject',$( "#editor" ).serialize(),
 					function(retval){
 						var r = retval;
 						values.uProject = +r;
-						console.log( 'AddProject result:' + r);
+						console.log( 'AddProject result: ' + r);
 						if ( values.uProject > 0 )
 							ft.rows.add(values);
 						else
-							alert('Add error:' + r);
+							alert('Add error: ' + r);
 					});
 		}
 		$editorModal.modal('hide');

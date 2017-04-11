@@ -81,10 +81,15 @@ void ProjectCommands(pentry entries[], int x)
 		jsonProjectRows();
 	else if(!strcmp(gcFunction,"ProjectCols"))
 		jsonProjectCols();
-	else if(!strcmp(gcFunction,"AddProject"))
+	else if(!strcmp(gcFunction,"AddProject") || !strcmp(gcFunction,"ModProject"))
 	{
 		ProcessProjectVars(entries,x);
 		printf("Content-type: text/plain\n\n");
+		if(guPermLevel<7)
+		{
+			printf("insufficient permissions for add/mod\n");
+			exit(0);
+		}
 		if(cName[0] && cStatus[0] && cTemplate[0])
 		{
 			unsigned uProjectStatus=0;
@@ -119,18 +124,60 @@ void ProjectCommands(pentry entries[], int x)
 				printf("No such template set: %s\n",cTemplate);
 				exit(0);
 			}
-			sprintf(gcQuery,"INSERT INTO tProject SET cLabel='%.31s',"
+			if(uProject)
+			{
+				sprintf(gcQuery,"SELECT uProject FROM tProject WHERE uProject=%u"
+					" AND (uCreatedBy=%u OR (uOwner=%u AND %u>=10))",
+						uProject,guLoginClient,guOrg,guPermLevel);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					exit(0);
+				}
+				res=mysql_store_result(&gMysql);
+				uProject=0;
+				if((field=mysql_fetch_row(res)))
+				{
+					sscanf(field[0],"%u",&uProject);
+				}
+				else
+				{
+					printf("Insufficient permission to modify project %u\n",uProject);
+					exit(0);
+				}
+			}
+			if(!uProject)
+			{
+				sprintf(gcQuery,"INSERT INTO tProject SET cLabel='%.31s',"
 					"uProjectStatus=%u,"
 					"uTemplateSet=%u,"
 					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 						,cName,uProjectStatus,uTemplateSet,guOrg,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				printf("%s\n",mysql_error(&gMysql));
-				exit(0);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					exit(0);
+				}
+				printf("%llu\n",mysql_insert_id(&gMysql));
 			}
-			printf("%llu\n",mysql_insert_id(&gMysql));
+			else
+			{
+				sprintf(gcQuery,"UPDATE tProject SET cLabel='%.31s',"
+					"uProjectStatus=%u,"
+					"uTemplateSet=%u,"
+					"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+					" WHERE uProject=%u"
+						,cName,uProjectStatus,uTemplateSet,guLoginClient,uProject);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					printf("%s\n",mysql_error(&gMysql));
+					exit(0);
+				}
+				printf("%u\n",uProject);
+			}
 		}
 		else
 		{
@@ -143,7 +190,7 @@ void ProjectCommands(pentry entries[], int x)
 		ProcessProjectVars(entries,x);
 
 		printf("Content-type: text/plain\n\n");
-		if(guPermLevel<7)
+		if(guPermLevel<10)
 		{
 			printf("insufficient permissions for delete\n");
 			exit(0);
