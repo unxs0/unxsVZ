@@ -377,7 +377,8 @@ void jsonProjectCols(void)
 {
 	printf("Content-type: text/json\n\n");
 	printf("[\n");
-	printf("\t{\"name\": \"uProject\", \"title\": \"Unique Project ID\"},\n");
+	//printf("\t{\"name\": \"uProject\", \"title\": \"Unique Project ID\", \"filterable\": false },\n");
+	printf("\t{\"name\": \"uProject\", \"title\": \"Project ID\" },\n");
 	printf("\t{\"name\": \"cName\", \"title\": \"Name\"},\n");
 	printf("\t{\"name\": \"cStatus\", \"title\": \"Status\"},\n");
 	printf("\t{\"name\": \"cTemplate\", \"title\": \"Template\", \"breakpoints\": \"xs sm\"}\n");

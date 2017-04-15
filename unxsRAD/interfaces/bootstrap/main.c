@@ -60,9 +60,6 @@ int iValidLogin(int mode);
 void SSLCookieLogin(void);
 void SetLogin(void);
 void GetPLAndClient(char *cUser);
-#ifdef cLDAPURI
-void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization);
-#endif
 void htmlLogin(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
@@ -469,20 +466,7 @@ void SSLCookieLogin(void)
 	//First try tClient/tAuthorize system
 	if(!iValidLogin(1))
 	{
-#ifdef cLDAPURI
-		//Then LDAP system
-		if(!iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
-		{
-			htmlLogin();
-		}
-		else
-		{
-			sprintf(gcUser,"%.41s",gcLogin);
-			GetPLAndClientLDAP(gcUser,gcOrgName);
-		}
-#else
 		htmlLogin();
-#endif
 	}
 	else
 	{
@@ -544,55 +528,6 @@ void GetPLAndClient(char *cUser)
 
 }//void GetPLAndClient()
 
-
-#ifdef cLDAPURI
-void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization)
-{
-        MYSQL_RES *mysqlRes;
-        MYSQL_RES *mysqlRes2;
-        MYSQL_ROW mysqlField;
-        MYSQL_ROW mysqlField2;
-
-	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cOrganization);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	mysqlRes=mysql_store_result(&gMysql);
-	if((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		sscanf(mysqlField[0],"%u",&guOrg);
-		guLoginClient=guOrg;
-		sprintf(gcName,"%.100s",cLogin);
-		//Fixed LDAP perm level. Could be extended via optional LDAP attr
-		guPermLevel=8;
-
-		//Also add this LDAP cLogin to cOriganization if does already exist
-		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cLogin);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		mysqlRes2=mysql_store_result(&gMysql);
-		if((mysqlField2=mysql_fetch_row(mysqlRes2)))
-		{
-			sscanf(mysqlField2[0],"%u",&guLoginClient);
-		}
-		else
-		{
-			//Could extend this to add cInfo from optional LDAP attr. Same for cEmail
-			sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cInfo='LDAP',cCode='Contact',"
-				"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					cLogin,guOrg);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			guLoginClient=mysql_insert_id(&gMysql);
-		}
-		mysql_free_result(mysqlRes2);
-	}
-	mysql_free_result(mysqlRes);
-
-}//void GetPLAndClientLDAP()
-#endif
 
 void EncryptPasswdWithSalt(char *pw, char *salt)
 {
