@@ -288,11 +288,31 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 
 	WordToLower(cTable);
 
+	//hacking the interfaces/bootstrap style template lookup
+	char cSubDir[101]={""};
+	char cTemplateType[100]={""};
+	sprintf(cSubDir,"%.100s",ForeignKey("tTable","cSubDir",uTable));
+	if(cSubDir[0])
+	{
+		char *cp;
+		if((cp=strchr(cSubDir,'/')))
+		{
+			sprintf(cTemplateType,"%.99s",cp+1);
+		}
+			
+	}
+
 	//Here we decide which template to use exact match 
 	//else if using uTemplate != 0;
-
+	
 	//e.g. makefile, e.g. footable.bootstrap.min.css
-	sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE cLabel='%s' AND uTemplateSet=%u",cTable,uTemplateSet);
+	if(cTemplateType[0])
+		sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel FROM tTemplate,tTemplateType"
+				" WHERE tTemplate.cLabel='%s' AND tTemplate.uTemplateSet=%u"
+				" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
+				" AND tTemplateType.cLabel='%s'",cTable,uTemplateSet,cTemplateType);
+	else
+		sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE cLabel='%s' AND uTemplateSet=%u",cTable,uTemplateSet);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -302,7 +322,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		if(guDebug) logfileLine("CreateFile",field[1]);
+		if(guDebug) logfileLine("CreateFile1",field[1]);
 		sscanf(field[0],"%u",&uTemplate);
 		if(uTemplate && uTable)
 			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,field[1]);
@@ -313,7 +333,13 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 		return(uRetVal);
 
 	//e.g. template based tConfiguration where template tconfiguration.c exists
-	sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE cLabel='%s.c' AND uTemplateSet=%u",cTable,uTemplateSet);
+	if(cTemplateType[0])
+		sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel FROM tTemplate,tTemplateType"
+				" WHERE tTemplate.cLabel='%s.c' AND tTemplate.uTemplateSet=%u"
+				" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
+				" AND tTemplateType.cLabel='%s'",cTable,uTemplateSet,cTemplateType);
+	else
+		sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE cLabel='%s.c' AND uTemplateSet=%u",cTable,uTemplateSet);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -323,18 +349,25 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		if(guDebug) logfileLine("CreateFile",field[1]);
+		if(guDebug) logfileLine("CreateFile2",field[1]);
 		sscanf(field[0],"%u",&uTemplate);
 		if(uTemplate && uTable)
 			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,field[1]);
 	}
 	mysql_free_result(res);
 
-	if(uTemplate || uRetVal)
+	//Do the func.h and the .c 
+	if(uRetVal)
 		return(uRetVal);
 
 	//e.g. template based tClient where tclientfunc.h template exists
-	sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE cLabel='%sfunc.h' AND uTemplateSet=%u",cTable,uTemplateSet);
+	if(cTemplateType[0])
+		sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel FROM tTemplate,tTemplateType"
+				" WHERE tTemplate.cLabel='%sfunc.h' AND tTemplate.uTemplateSet=%u"
+				" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
+				" AND tTemplateType.cLabel='%s'",cTable,uTemplateSet,cTemplateType);
+	else
+		sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE cLabel='%sfunc.h' AND uTemplateSet=%u",cTable,uTemplateSet);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -344,7 +377,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		logfileLine("CreateFile",field[1]);
+		logfileLine("CreateFile5",field[1]);
 		sscanf(field[0],"%u",&uTemplate);
 		if(uTemplate && uTable)
 			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,field[1]);
@@ -355,18 +388,24 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 		return(uRetVal);
 
 	//No specific template found for table use module.c and modulefunc.h
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='modulefunc.h' AND uTemplateSet=%u",uTemplateSet);
+	if(cTemplateType[0])
+		sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel FROM tTemplate,tTemplateType"
+				" WHERE tTemplate.cLabel='tablefunc.h' AND tTemplate.uTemplateSet=%u"
+				" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
+				" AND tTemplateType.cLabel='%s'",uTemplateSet,cTemplateType);
+	else
+		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='modulefunc.h' AND uTemplateSet=%u",uTemplateSet);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
 		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
 		return(-1);
 	}
-	       res=mysql_store_result(&gMysql);
+	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
 		sprintf(cFileName,"%.93sfunc.h",cTable);
-		if(guDebug) logfileLine("CreateFile",cFileName);
+		if(guDebug) logfileLine("CreateFile3",cFileName);
 		sscanf(field[0],"%u",&uTemplate);
 		if(uTemplate && uTable)
 			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,cFileName);
@@ -377,7 +416,13 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 	if(uRetVal)
 		return(uRetVal);
 
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='module.c' AND uTemplateSet=%u",uTemplateSet);
+	if(cTemplateType[0])
+		sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel FROM tTemplate,tTemplateType"
+				" WHERE tTemplate.cLabel='table.c' AND tTemplate.uTemplateSet=%u"
+				" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
+				" AND tTemplateType.cLabel='%s'",uTemplateSet,cTemplateType);
+	else
+		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='module.c' AND uTemplateSet=%u",uTemplateSet);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -388,7 +433,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 	if((field=mysql_fetch_row(res)))
 	{
 		sprintf(cFileName,"%.97s.c",cTable);
-		if(guDebug) logfileLine("CreateFile",cFileName);
+		if(guDebug) logfileLine("CreateFile4",cFileName);
 		sscanf(field[0],"%u",&uTemplate);
 		if(uTemplate && uTable)
 			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,cFileName);

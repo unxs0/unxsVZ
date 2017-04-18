@@ -329,7 +329,7 @@ void ExttTableCommands(pentry entries[], int x)
 				tTable("Error: Denied by permissions settings");
 			}
 		}
-                else if(!strcmp(gcCommand,"Add Source Code Tables"))
+                else if(!strcmp(gcCommand,"Add Interface Tables"))
                 {
                         ProcesstTableVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>=7)
@@ -338,14 +338,33 @@ void ExttTableCommands(pentry entries[], int x)
 				//check
 				if(!cImport[0])
 					tTable("Error: cImport empty");
-				if(!uTable)
-					tTable("Error: no uTable");
 				if(!uProject)
 					tTable("Error: no uProject");
 				guMode=10001;
 				sprintf(cTextarea,"%.4095s",cImport);
 				AddTables(cTextarea);
-				tTable("Added Source Code Tables");
+				tTable("Added Interface Tables");
+			}
+			else
+			{
+				tTable("Error: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Remove Interface Tables"))
+                {
+                        ProcesstTableVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>=7)
+			{
+				guMode=10000;
+				//check
+				if(!cImport[0])
+					tTable("Error: cImport empty");
+				if(!uProject)
+					tTable("Error: no uProject");
+				guMode=10001;
+				sprintf(cTextarea,"%.4095s",cImport);
+				RemoveTables(cTextarea);
+				tTable("Interface Tables Removed");
 			}
 			else
 			{
@@ -403,9 +422,12 @@ void ExttTableButtons(void)
 			printf("<p><input title='Export source code tables into cImport text area. Current contents will be lost!'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Export Interface Tables'>\n");
-			printf("<p><input title='Parse cImport and attempt to add source tables'"
+			printf("<p><input title='Parse cImport and attempt to add interface source code tables'"
 					" type=submit class=largeButton"
-					" name=gcCommand value='Add Source Code Tables'>\n");
+					" name=gcCommand value='Add Interface Tables'>\n");
+			printf("<p><input title='Parse cImport and attempt to remove interface source code tables'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Remove Interface Tables'>\n");
 			tTableFieldNavList();
                 break;
                 case 2000:
@@ -689,8 +711,8 @@ void tTableNavList(void)
 	if(guCookieProject)
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT uTable,cLabel,cSubDir FROM tTable WHERE uProject=%u AND SUBSTR(cLabel,1,1)='t'"
-					" AND uTableOrder!=0 ORDER BY uTableOrder",
+			sprintf(gcQuery,"SELECT uTable,cLabel,cSubDir FROM tTable WHERE uProject=%u "
+					" ORDER BY cSubDir,uTableOrder",
 				guCookieProject);
 		else
 			sprintf(gcQuery,"SELECT tTable.uTable,"
@@ -699,20 +721,20 @@ void tTableNavList(void)
 				" WHERE tTable.uOwner=tClient.uClient"
 				" AND tTable.uProject=%u"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" ORDER BY tTable.uTableOrder",
+				" ORDER BY tTable.cSubDir,tTable.uTableOrder,",
 					guCookieProject,guCompany,guLoginClient);
 	}
 	else
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT uTable,cLabel,cSubDir FROM tTable ORDER BY uTableOrder");
+			sprintf(gcQuery,"SELECT uTable,cLabel,cSubDir FROM tTable ORDER BY cSubDir,uTableOrder");
 		else
 			sprintf(gcQuery,"SELECT tTable.uTable,"
 				" tTable.cLabel,tTable.cSubDir"
 				" FROM tTable,tClient"
 				" WHERE tTable.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" ORDER BY tTable.uTableOrder",
+				" ORDER BY tTable.cSubDir,tTable.uTableOrder,",
 					guCompany,guLoginClient);
 	}
         mysql_query(&gMysql,gcQuery);
@@ -1256,52 +1278,32 @@ void AddTables(char *cValue)
 
 void RemoveTableLine(char *cLine)
 {
-
 	char cLabel[32]={""};
-	char cTitle[100]={""};
-	char cFieldType[32]={""};
-	unsigned uOrder=0;
-	char cFKSpec[32]={""};
+	char cSubDir[100]={""};
 
 	int iCount=0;
-	unsigned uField=0;
 
-	//cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec]
-	//cLastname;Last name;Varchar Unique Key;21;
-	//uPaciente;Numero de paciente;Select Table Owner;10;"tPaciente","cLabel"
-	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/+\\.%% ];%31[a-zA-Z0-9 ];%u;%32[a-zA-Z0-9\",]",
-					cLabel,cTitle,cFieldType,&uOrder,cFKSpec);
-	//debug1
-	//sprintf(gcQuery,"(%d) %s;%s;%s;%u;%s",iCount,cLabel,cTitle,cFieldType,uOrder,cFKSpec);
-	//tTable(gcQuery);
+	char gcQuery[512];
+	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/+\\.];",
+					cLabel,cSubDir);
 
-	if(!cLabel[0] || iCount<4)
+	if( iCount<2 || !cLabel[0] || !cSubDir[0] )
 	{
-		char gcQuery[512];
 		sprintf(gcQuery,"Error1 %s",cLine);
 		tTable(gcQuery);
 	}
 
-        MYSQL_RES *res;
-        MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uField FROM tField WHERE cLabel='%.32s' AND uTable=%u AND uProject='%u'",
-			cLabel,uTable,uProject);
+	sprintf(gcQuery,"DELETE FROM tTable WHERE"
+			" cLabel='%.32s' AND"
+			" cSubDir='%s' AND"
+			" uProject=%u AND"
+			" uClass!=%u"
+				,cLabel,cSubDir,uProject,uDEFAULTCLASS);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
-        	htmlPlainTextError(mysql_error(&gMysql));
-        res=mysql_store_result(&gMysql);
-        if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"%u",&uField);
-        mysql_free_result(res);
-	if(uField)
 	{
-		sprintf(gcQuery,"DELETE FROM tField WHERE uField=%u",uField);
-        	mysql_query(&gMysql,gcQuery);
-        	if(mysql_errno(&gMysql))
-		{
-			sprintf(gcQuery,"%s",mysql_error(&gMysql));
-			tTable(gcQuery);
-		}
+		sprintf(gcQuery,"%s",mysql_error(&gMysql));
+		tTable(gcQuery);
 	}
 
 }//void RemoveTableLine(char *cLine)
@@ -1328,7 +1330,7 @@ void AddTableLine(char *cLine)
 
         MYSQL_RES *res;
         MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u",cLabel,uProject);
+	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u AND uClass!=%u",cLabel,uProject,uDEFAULTCLASS);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         	htmlPlainTextError(mysql_error(&gMysql));
@@ -1344,7 +1346,7 @@ void AddTableLine(char *cLine)
 				" WHERE uTable=%u",
 					cSubDir,
 					guLoginClient,
-						uTable);
+					uTable);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
 		{
@@ -1385,9 +1387,10 @@ void ExportTables(void)
 				" tTable.cSubDir"
 				" FROM tTable WHERE"
 				" tTable.uProject=%u"
-				" AND tTable.cSubDir LIKE 'interface/%%'"
-				" ORDER BY tTable.uTableOrder",
-					uProject);
+				" AND tTable.uClass!=%u"
+				" AND tTable.cSubDir LIKE 'interfaces/%%'"
+				" ORDER BY tTable.cSubDir,tTable.uTableOrder",
+					uProject,uDEFAULTCLASS);
        	mysql_query(&gMysql,gcQuery);
        	if(mysql_errno(&gMysql))
 	{

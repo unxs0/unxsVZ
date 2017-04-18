@@ -673,7 +673,8 @@ void RemoveTableFromDefaultTablesLine(char *cLine)
 
         MYSQL_RES *res;
         MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u",cTable,uProject);
+	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u AND uClass=%u",
+			cTable,uProject,uDEFAULTCLASS);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         	htmlPlainTextError(mysql_error(&gMysql));
@@ -722,7 +723,8 @@ void AddTableFromDefaultTablesLine(char *cLine)
 
         MYSQL_RES *res;
         MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u",cTable,uProject);
+	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u AND uClass=%u",
+				cTable,uProject,uDEFAULTCLASS);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -740,12 +742,12 @@ void AddTableFromDefaultTablesLine(char *cLine)
 		sprintf(gcQuery,"UPDATE tTable SET cLabel='%.32s',uTableOrder=%u,uSourceLock=%u,"
 			"cDescription='%.100s',cSubDir='%.100s',"
 			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,"
-			"uModBy=%u,uClass=%u,"
+			"uModBy=%u,"
 			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uTable=%u",
 			cTable,uOrder,uSourceLock,
 			cDescription,cSubDir,
 			uNewLevel,uModLevel,uDelLevel,uReadLevel,
-			guLoginClient,uDEFAULTCLASS,
+			guLoginClient,
 				uTable);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
