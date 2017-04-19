@@ -230,13 +230,13 @@ void ExttTableCommands(pentry entries[], int x)
 			else
 				tTable("<blink>Error</blink>: Denied by permissions settings");
 		}
-                else if(!strcmp(gcCommand,"Field Import"))
+                else if(!strcmp(gcCommand,"Import"))
                 {
                         ProcesstTableVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>=7)
 			{
 				guMode=10000;
-				tTable("Field Import");
+				tTable("Import");
 			}
 			else
 			{
@@ -405,20 +405,22 @@ void ExttTableButtons(void)
 		//Import Field
                 case 10000:
                 case 10001:
-			OpenFieldSet("tTable Aux Field Import Panel",100);
+			OpenFieldSet("tTable Import Panel",100);
 			if(cLabel[0] && uTable)
 				printf("Back to tTable <a href=?gcFunction=tTable"
 					"&uTable=%u>%s</a><br>\n",uTable,cLabel);
-                        printf("<p><u>Field Import Operations</u><br>");
+                        printf("<p><u>Import Operations</u><br>");
+                        printf("<fieldset><legend>Fields</legend>");
+			printf("<p><input title='Export current fields into cImport text area. Current contents will be lost!'"
+					" type=submit class=largeButton"
+					" name=gcCommand value='Export Table Fields'>\n");
 			printf("<p><input title='Parse cImport and attempt to add fields to this table'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Add Table Fields'>\n");
 			printf("<p><input title='Parse cImport and attempt to remove the fields from this table'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Remove Table Fields'>\n");
-			printf("<p><input title='Export current fields into cImport text area. Current contents will be lost!'"
-					" type=submit class=largeButton"
-					" name=gcCommand value='Export Table Fields'>\n");
+                        printf("</fieldset><fieldset><legend>Tables</legend>");
 			printf("<p><input title='Export source code tables into cImport text area. Current contents will be lost!'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Export Interface Tables'>\n");
@@ -428,6 +430,7 @@ void ExttTableButtons(void)
 			printf("<p><input title='Parse cImport and attempt to remove interface source code tables'"
 					" type=submit class=largeButton"
 					" name=gcCommand value='Remove Interface Tables'>\n");
+                        printf("</fieldset>\n");
 			tTableFieldNavList();
                 break;
                 case 2000:
@@ -477,12 +480,8 @@ void ExttTableButtons(void)
 			printf("<br><input type=submit class=largeButton"
 				" title='Select and keep this table marked for current work flow. Release any selected field.'"
 				" name=gcCommand value='Select'>");
-			if(uTable && !uSourceLock)
-				printf("<br><input type=submit class=largeButton title='Open the field import data panel.'"
-					" name=gcCommand value='Field Import'>");
-			else if(uTable)
-				printf("<br><input disabled type=submit class=largeButton title='Open the field import data panel.'"
-					" name=gcCommand value='Field Import'>");
+			printf("<br><input type=submit class=largeButton title='Open the field and table import panel.'"
+					" name=gcCommand value='Import'>");
 			tTableNavList();
 			tTableFieldNavList();
 	}
@@ -1317,10 +1316,11 @@ void AddTableLine(char *cLine)
 
 	int iCount=0;
 	unsigned uTable=0;
+	unsigned uTableOrder=0;
 
 	char gcQuery[512];
-	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/+\\.];",
-					cLabel,cSubDir);
+	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/+\\.];%u;",
+					cLabel,cSubDir,&uTableOrder);
 
 	if( iCount<2 || !cLabel[0] || !cSubDir[0] )
 	{
@@ -1330,7 +1330,8 @@ void AddTableLine(char *cLine)
 
         MYSQL_RES *res;
         MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u AND uClass!=%u",cLabel,uProject,uDEFAULTCLASS);
+	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u AND uClass!=%u AND cSubDir!=''",
+					cLabel,uProject,uDEFAULTCLASS);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         	htmlPlainTextError(mysql_error(&gMysql));
@@ -1342,9 +1343,11 @@ void AddTableLine(char *cLine)
 	{
 		sprintf(gcQuery,"UPDATE tTable SET"
 				" cSubDir='%.99s',"
+				" uTableOrder=%u,"
 				" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uTable=%u",
 					cSubDir,
+					uTableOrder,
 					guLoginClient,
 					uTable);
         	mysql_query(&gMysql,gcQuery);
@@ -1360,10 +1363,12 @@ void AddTableLine(char *cLine)
 				" uProject=%u,"
 				" cLabel='%.32s',"
 				" cSubDir='%.99s',"
+				" uTableOrder=%u,"
 				" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 					uProject,
 					cLabel,
 					cSubDir,
+					uTableOrder,
 					guCompany,guLoginClient);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
@@ -1384,12 +1389,13 @@ void ExportTables(void)
 	static char cImportBuffer[4096];
 	sprintf(gcQuery,"SELECT "
 				" tTable.cLabel,"
-				" tTable.cSubDir"
+				" tTable.cSubDir,"
+				" tTable.uTableOrder"
 				" FROM tTable WHERE"
 				" tTable.uProject=%u"
 				" AND tTable.uClass!=%u"
 				" AND tTable.cSubDir LIKE 'interfaces/%%'"
-				" ORDER BY tTable.cSubDir,tTable.uTableOrder",
+				" ORDER BY tTable.uTableOrder, tTable.uTable",
 					uProject,uDEFAULTCLASS);
        	mysql_query(&gMysql,gcQuery);
        	if(mysql_errno(&gMysql))
@@ -1400,7 +1406,7 @@ void ExportTables(void)
         res=mysql_store_result(&gMysql);
         while((field=mysql_fetch_row(res)) && strlen(cImportBuffer)<(4095-512))
 	{
-		sprintf(gcQuery,"%s;%s;\n",field[0],field[1]);
+		sprintf(gcQuery,"%s;%s;%s;\n",field[0],field[1],field[2]);
 		strcat(cImportBuffer,gcQuery);
 	}
         mysql_free_result(res);

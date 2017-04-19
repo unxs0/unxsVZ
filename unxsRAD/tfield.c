@@ -869,7 +869,8 @@ void CreatetField(void)
 				" cFormDefault VARCHAR(100) NOT NULL DEFAULT '',"
 				" cSQLDefault VARCHAR(100) NOT NULL DEFAULT '',"
 				" uModLevel INT UNSIGNED NOT NULL DEFAULT 0,"
-				" uReadLevel INT UNSIGNED NOT NULL DEFAULT 0 )");
+				" uReadLevel INT UNSIGNED NOT NULL DEFAULT 0,"
+				" uClass INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

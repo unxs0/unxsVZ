@@ -967,3 +967,40 @@ const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned
 	}
 
 }//const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+
+
+int ReadPullDownOwner(const char *cTableName,const char *cFieldName,
+				const char *cLabel,const unsigned uOwner)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+
+        unsigned int iRowid=0;//Not found
+
+        sprintf(gcQuery,"SELECT _rowid FROM %s WHERE %s='%s' AND (uOwner=%u OR uOwner=%u)",
+                        cTableName,cFieldName,TextAreaSave((char *) cLabel),uOwner,guOrg);
+        macro_mySQLRunAndStore(mysqlRes);
+        if((mysqlField=mysql_fetch_row(mysqlRes)))
+        	sscanf(mysqlField[0],"%u",&iRowid);
+        mysql_free_result(mysqlRes);
+        return(iRowid);
+
+}//ReadPullDownOwner()
+
+
+int ReadPullDown(const char *cTableName,const char *cFieldName,const char *cLabel)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+
+        unsigned int iRowid=0;//Not found
+
+        sprintf(gcQuery,"select _rowid from %s where %s='%s'",
+                        cTableName,cFieldName,TextAreaSave((char *) cLabel));
+        macro_mySQLRunAndStore(mysqlRes);
+        if((mysqlField=mysql_fetch_row(mysqlRes)))
+        	sscanf(mysqlField[0],"%u",&iRowid);
+        mysql_free_result(mysqlRes);
+        return(iRowid);
+
+}//ReadPullDown(char *cTableName,char *cLabel)

@@ -807,6 +807,7 @@ void UpdateSchema(void)
 	//
 	unsigned uTableSubDir=0;
 	unsigned uTableClass=0;
+	unsigned uTableTemplateType=0;
 	sprintf(gcQuery,"SHOW COLUMNS IN tTable");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -819,6 +820,8 @@ void UpdateSchema(void)
 			uTableSubDir=1;
 		else if(!strcmp(field[0],"uClass"))
 			uTableClass=1;
+		else if(!strcmp(field[0],"uTemplateType"))
+			uTableTemplateType=1;
 	}
        	mysql_free_result(res);
 	if(!uTableSubDir)
@@ -846,6 +849,15 @@ void UpdateSchema(void)
 			printf("%s\n",mysql_error(&gMysql));
 		else
 			printf("Ran: %s. Check results!\n",gcQuery);
+	}
+	if(!uTableTemplateType)
+	{
+		sprintf(gcQuery,"ALTER TABLE tTable ADD uTemplateType INT UNSIGNED NOT NULL DEFAULT 0");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added uTemplateType to tTable\n");
 	}
 	//
 	//tTable

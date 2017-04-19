@@ -50,7 +50,7 @@ static time_t uModDate=0;
 
 
 //cDescription: Description of table function in project context
-static char *cImport="#import data format\n#one field per line:\n#cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec/uSQLSize]\n#\n#tFieldType.cLabel can be:\n#BigInt Unsigned\n#Date Time\n#Decimal\n#Foreign Key\n#Int Unsigned\n#Select Table\n#Select Table Owner\n#Text\n#Time Stamp\n#Unixtime\n#Varchar\n#Varchar Unique Key\n#Yes/No\n#Empty lines stop processing and lines starting with a # or a space are ignored\n";
+static char *cImport="#Import field data format:\n#one field per line:\n#cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec/uSQLSize]\n#\n#tFieldType.cLabel can be:\n#BigInt Unsigned\n#Date Time\n#Decimal\n#Foreign Key\n#Int Unsigned\n#Select Table\n#Select Table Owner\n#Text\n#Time Stamp\n#Unixtime\n#Varchar\n#Varchar Unique Key\n#Yes/No\n#Empty lines stop processing and lines starting with a # or a space are ignored. Try the export options for more info.\n";
 
 #define VAR_LIST_tTable "tTable.uTable,tTable.cLabel,tTable.uProject,tTable.uTableOrder,tTable.uSourceLock,tTable.cDescription,tTable.cSubDir,tTable.cLegend,tTable.cToolTip,tTable.uNewLevel,tTable.uModLevel,tTable.uDelLevel,tTable.uReadLevel,tTable.uOwner,tTable.uCreatedBy,tTable.uCreatedDate,tTable.uModBy,tTable.uModDate"
 
@@ -300,7 +300,7 @@ void tTable(const char *cResult)
 void tTableFieldEntry(unsigned uMode)
 {
 
-	OpenFieldSet("tTable Field Import Data",100);
+	OpenFieldSet("Import Data",100);
 //uTable
 	OpenRow(LANG_FL_tTable_uTable,"black");
 	printf("<input title='%s' type=text name=uTable value=%u size=16 maxlength=10 ",LANG_FT_tTable_uTable,uTable);
@@ -816,7 +816,9 @@ void CreatetTable(void)
 			"cToolTip VARCHAR(100) NOT NULL DEFAULT '',"
 			"cDescription VARCHAR(255) NOT NULL DEFAULT '',"
 			"cSubDir VARCHAR(100) NOT NULL DEFAULT '',"
-			"uProject INT UNSIGNED NOT NULL DEFAULT 0 )");
+			"uProject INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uTemplateType INT UNSIGNED NOT NULL DEFAULT 0,"
+			"uClass INT UNSIGNED NOT NULL DEFAULT 0 )");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

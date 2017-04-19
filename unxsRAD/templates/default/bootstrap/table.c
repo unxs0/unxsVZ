@@ -20,12 +20,9 @@ void html{{cTableName}}(void);
 void html{{cTableName}}Page(char *cTitle, char *cTemplateName);
 void json{{cTableName}}Rows(void);
 void json{{cTableName}}Cols(void);
-void jsonTableRows(char const *cTable);
 
-static char cName[64]={""};
-static char cStatus[64]={""};
-static char cTemplate[64]={""};
-static unsigned {{cTableKey}}=0;
+//funcModuleVars
+{{funcModuleVars}}
 
 void Process{{cTableName}}Vars(pentry entries[], int x)
 {
@@ -37,14 +34,9 @@ void Process{{cTableName}}Vars(pentry entries[], int x)
 		//no sql injection
 		if((cp=strchr(entries[i].val,'\''))) *cp=0;
 
-		if(!strcmp(entries[i].name,"cName"))
-			sprintf(cName,"%.63s",entries[i].val);
-		else if(!strcmp(entries[i].name,"cStatus"))
-			sprintf(cStatus,"%.63s",entries[i].val);
-		else if(!strcmp(entries[i].name,"cTemplate"))
-			sprintf(cTemplate,"%.63s",entries[i].val);
-		else if(!strcmp(entries[i].name,"{{cTableKey}}"))
-			sscanf(entries[i].val,"%u",&{{cTableKey}});
+		//funcModuleProcVars
+		{{funcModuleProcVars}}
+
 	}
 
 }//void Process{{cTableName}}Vars(pentry entries[], int x)
@@ -91,70 +83,21 @@ void {{cTableName}}Commands(pentry entries[], int x)
 			printf("insufficient permissions for add/mod\n");
 			exit(0);
 		}
-		if(cName[0] && cStatus[0] && cTemplate[0])
+
+		//Check data
+		if(1)
 		{
-			unsigned {{cTableKey}}Status=0;
-			unsigned uTemplateSet=0;
-			sprintf(gcQuery,"SELECT uStatus FROM {{cTableName}}Status WHERE cLabel='%.31s'",cStatus);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				printf("%s\n",mysql_error(&gMysql));
-				exit(0);
-			}
-			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-				sscanf(field[0],"%u",&{{cTableKey}}Status);
-			if(!{{cTableKey}}Status)
-			{
-				printf("No such project status: %s\n",cStatus);
-				exit(0);
-			}
-			sprintf(gcQuery,"SELECT uTemplateSet FROM tTemplateSet WHERE cLabel='%.31s'",cTemplate);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				printf("%s\n",mysql_error(&gMysql));
-				exit(0);
-			}
-			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-				sscanf(field[0],"%u",&uTemplateSet);
-			if(!uTemplateSet)
-			{
-				printf("No such template set: %s\n",cTemplate);
-				exit(0);
-			}
-			if({{cTableKey}})
-			{
-				sprintf(gcQuery,"SELECT {{cTableKey}} FROM {{cTableName}} WHERE {{cTableKey}}=%u"
-					" AND (uCreatedBy=%u OR (uOwner=%u AND %u>=10))",
-						{{cTableKey}},guLoginClient,guOrg,guPermLevel);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					printf("%s\n",mysql_error(&gMysql));
-					exit(0);
-				}
-				res=mysql_store_result(&gMysql);
-				{{cTableKey}}=0;
-				if((field=mysql_fetch_row(res)))
-				{
-					sscanf(field[0],"%u",&{{cTableKey}});
-				}
-				else
-				{
-					printf("Insufficient permission to modify project %u\n",{{cTableKey}});
-					exit(0);
-				}
-			}
+			printf("Insufficient permission to modify project %u\n",{{cTableKey}});
+			exit(0);
+		}
+		else
+		{
+			//Update or Insert
 			if(!{{cTableKey}})
 			{
-				sprintf(gcQuery,"INSERT INTO {{cTableName}} SET cLabel='%.31s',"
-					"{{cTableKey}}Status=%u,"
-					"uTemplateSet=%u,"
-					"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-						,cName,{{cTableKey}}Status,uTemplateSet,guOrg,guLoginClient);
+				sprintf(gcQuery,"INSERT INTO {{cTableName}}"
+					" SET uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						,guOrg,guLoginClient);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -165,12 +108,9 @@ void {{cTableName}}Commands(pentry entries[], int x)
 			}
 			else
 			{
-				sprintf(gcQuery,"UPDATE {{cTableName}} SET cLabel='%.31s',"
-					"{{cTableKey}}Status=%u,"
-					"uTemplateSet=%u,"
-					"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+				sprintf(gcQuery,"UPDATE {{cTableName}} SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 					" WHERE {{cTableKey}}=%u"
-						,cName,{{cTableKey}}Status,uTemplateSet,guLoginClient,{{cTableKey}});
+						,guLoginClient,{{cTableKey}});
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -180,10 +120,7 @@ void {{cTableName}}Commands(pentry entries[], int x)
 				printf("%u\n",{{cTableKey}});
 			}
 		}
-		else
-		{
-			printf("No cName etc.\n");
-		}
+		printf("Unexpected condition\n");
 		exit(0);
 	}
 	else if(!strcmp(gcFunction,"Del{{cTableName}}"))
@@ -196,25 +133,13 @@ void {{cTableName}}Commands(pentry entries[], int x)
 			printf("insufficient permissions for delete\n");
 			exit(0);
 		}
-		if({{cTableKey}} && cName[0])
+		//check data
+		if({{cTableKey}})
 		{
-			sprintf(gcQuery,"SELECT {{cTableKey}} FROM tTable WHERE {{cTableKey}}=%u",{{cTableKey}});
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-			{
-				printf("%s\n",mysql_error(&gMysql));
-				exit(0);
-			}
-			res=mysql_store_result(&gMysql);
-			if((field=mysql_fetch_row(res)))
-			{
-				printf("{{cTableName}} has tables not deleted\n");
-				exit(0);
-			}
 			sprintf(gcQuery,"SELECT {{cTableKey}} FROM {{cTableName}}"
-					" WHERE {{cTableKey}}=%u AND cLabel='%s'"
+					" WHERE {{cTableKey}}=%u"
 					" AND (uCreatedBy=%u OR (uOwner=%u AND %u>=10))",
-						{{cTableKey}},cName,guLoginClient,guOrg,guPermLevel);
+						{{cTableKey}},guLoginClient,guOrg,guPermLevel);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
@@ -225,9 +150,9 @@ void {{cTableName}}Commands(pentry entries[], int x)
 			if((field=mysql_fetch_row(res)))
 			{
 				sprintf(gcQuery,"DELETE FROM {{cTableName}}"
-					" WHERE {{cTableKey}}=%u AND cLabel='%s'"
+					" WHERE {{cTableKey}}=%u"
 					" AND (uCreatedBy=%u OR (uOwner=%u AND %u>=10))",
-						{{cTableKey}},cName,guLoginClient,guOrg,guPermLevel);
+						{{cTableKey}},guLoginClient,guOrg,guPermLevel);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -246,7 +171,7 @@ void {{cTableName}}Commands(pentry entries[], int x)
 		}
 		else
 		{
-			printf("{{cTableName}} not found %u/%s\n",{{cTableKey}},cName);
+			printf("{{cTableName}} not found %u\n",{{cTableKey}});
 		}
 		exit(0);
 	}
@@ -332,11 +257,9 @@ void json{{cTableName}}Rows(void)
 	printf("Content-type: text/json\n\n");
 	printf("[\n");
 
-	sprintf(cQuery,"SELECT {{cTableName}}.{{cTableKey}},{{cTableName}}.cLabel,{{cTableName}}Status.cLabel,tTemplateSet.cLabel"
-			" FROM {{cTableName}},{{cTableName}}Status,tTemplateSet"
-			" WHERE {{cTableName}}.{{cTableKey}}Status={{cTableName}}Status.uStatus"
-			" AND {{cTableName}}.uTemplateSet=tTemplateSet.uTemplateSet"
-			" AND {{cTableName}}.uOwner=%u",guOrg);
+	sprintf(cQuery,"SELECT {{cTableName}}.{{cTableKey}},{{cTableName}}.cLabel,tClient.cLabel"
+			" FROM {{cTableName}},tClient"
+			" WHERE {{cTableName}}.uOwner=%u AND tClient.uClient={{cTableName}}.uOwner",guOrg);
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -356,10 +279,9 @@ void json{{cTableName}}Rows(void)
 		{
 			printf("\t{");
 			printf("\"{{cTableKey}}\": \"%s\","
-				" \"cName\": \"%s\","
-				" \"cStatus\": \"%s\","
-				" \"cTemplate\": \"%s\""
-					,field[0],field[1],field[2],field[3]);
+				" \"cLabel\": \"%s\","
+				" \"cOwner\": \"%s\""
+					,field[0],field[1],field[2]);
 			printf("}");
 			if((++uLast)<uNumRows)
 				printf(",\n");
@@ -380,88 +302,8 @@ void json{{cTableName}}Cols(void)
 	printf("[\n");
 	//printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"Unique {{cTableName}} ID\", \"filterable\": false },\n");
 	printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"{{cTableName}} ID\" },\n");
-	printf("\t{\"name\": \"cName\", \"title\": \"Name\"},\n");
-	printf("\t{\"name\": \"cStatus\", \"title\": \"Status\"},\n");
-	printf("\t{\"name\": \"cTemplate\", \"title\": \"Template\", \"breakpoints\": \"xs sm\"}\n");
+	printf("\t{\"name\": \"cLabel\", \"title\": \"Label\"},\n");
+	printf("\t{\"name\": \"cOwner\", \"title\": \"Owner\", \"breakpoints\": \"xs sm\"}\n");
 	printf("]\n");
 	exit(0);
 }//void json{{cTableName}}Cols(void)
-
-
-void jsonTableRows(char const *cTable)
-{
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-	char cQuery[1028]={""};
-	char cColumnName[64][64];
-	unsigned uColumn=0;
-
-	printf("Content-type: text/json\n\n");
-	printf("[\n");
-
-	sprintf(cQuery,"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS"
-					" WHERE TABLE_SCHEMA='unxsrad' AND TABLE_NAME='%s';",cTable);
-	mysql_query(&gMysql,cQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("\t{\n");
-		printf("\t\t'status' : 'error',\n");
-		printf("\t\t'message' : 'error: %s',\n",mysql_error(&gMysql));
-		printf("\t}\n");
-		printf("]\n");
-		exit(0);
-	}
-	res=mysql_store_result(&gMysql);
-	unsigned uNumRows=0;
-	if((uNumRows=mysql_num_rows(res))>0)
-	{
-		while((field=mysql_fetch_row(res)) && uColumn<64)
-		{
-			sprintf(cColumnName[uColumn],"%.63s",field[0]);
-			uColumn++;
-		}
-	}
-	mysql_free_result(res);
-
-	sprintf(cQuery,"SELECT * FROM %.99s",cTable);
-	mysql_query(&gMysql,cQuery);
-	if(mysql_errno(&gMysql))
-	{
-		printf("\t{\n");
-		printf("\t\t'status' : 'error',\n");
-		printf("\t\t'message' : 'error: %s',\n",mysql_error(&gMysql));
-		printf("\t}\n");
-		printf("]\n");
-		exit(0);
-	}
-	res=mysql_store_result(&gMysql);
-	uNumRows=0;
-	if((uNumRows=mysql_num_rows(res))>0)
-	{
-		unsigned uLast=0;
-		unsigned register i;
-		unsigned uFirst;
-		while((field=mysql_fetch_row(res)))
-		{
-			printf("\t{");
-			uFirst=1;
-			for(i=0;i<uColumn;i++)
-			{
-				if(!uFirst)
-					printf(", ");
-				printf("\"%s\": \"%s\"",cColumnName[i],field[i]);
-				uFirst=0;
-			}
-			printf("}");
-			if((++uLast)<uNumRows)
-				printf(",\n");
-			else
-				printf("\n");
-		}
-	}
-	mysql_free_result(res);
-	printf("]\n");
-	exit(0);
-
-}//void jsonTableRows(char const *cTable)
-

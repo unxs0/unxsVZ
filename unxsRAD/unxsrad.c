@@ -30,6 +30,7 @@ static char gcTableNameLC[64]={""};
 static char gcTableKey[33]={""};
 static char gcProjectStatus[33]={""};
 unsigned guProject=0;
+unsigned guTemplateType=0;
 char gcProject[32]={"Project"};
 char gcProjectLC[32]={"project"};
 char gcRADStatus[32]={"Unknown"};
@@ -42,7 +43,7 @@ char gcuJs[3]={"0"};
 void ProcessJobQueue(void);
 void MakeSourceCodeJob(unsigned uJob,char const *cJobData);
 void logfileLine(const char *cFunction,const char *cLogline);
-unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned uSourceLock);
+unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned uSourceLock,unsigned uTemplateType);
 unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLock,char const *cFileName);
 unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable);
 void funcModuleListPrint(FILE *fp);
@@ -176,6 +177,7 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 	unsigned uTable=0;
 	unsigned uSourceLock=0;
 	unsigned uTemplateSet=0;
+	unsigned uTemplateType=0;
 	unsigned uOnce=1;
 
 	logfileLine("MakeSourceCodeJob","start");
@@ -207,7 +209,7 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 	//If uSourceLock==1 then if file does not exist we create if not we do not replace
 	sprintf(gcQuery,"SELECT tProject.cLabel,tTable.cLabel,tTable.uTable,"
 			"tProject.uTemplateSet,tTable.uSourceLock,"
-			"tProjectStatus.cLabel"
+			"tProjectStatus.cLabel,tTable.uTemplateType"
 			" FROM tProject,tTable,tProjectStatus"
 			" WHERE tTable.uProject=tProject.uProject AND"
 			" tProject.uProjectStatus=tProjectStatus.uStatus AND"
@@ -234,13 +236,14 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 		}
 		sscanf(field[2],"%u",&uTable);
 		sscanf(field[4],"%u",&uSourceLock);
+		sscanf(field[6],"%u",&uTemplateType);
 		if(guDebug)
 		{
 			sprintf(gcQuery,"%s uTable:%u:%u",field[1],uTable,uSourceLock);
 			logfileLine("MakeSourceCodeJob",gcQuery);
 		}
 		sprintf(gcProjectStatus,"%.32s",field[5]);
-		if(CreateFile(uTemplateSet,uTable,field[1],uSourceLock))
+		if(CreateFile(uTemplateSet,uTable,field[1],uSourceLock,uTemplateType))
 			break;
 		else
 			logfileLine("CreateFile","end");
@@ -275,7 +278,7 @@ void logfileLine(const char *cFunction,const char *cLogline)
 }//void logfileLine(char *cLogline)
 
 
-unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned uSourceLock)
+unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned uSourceLock,unsigned uTemplateType)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -288,31 +291,17 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 
 	WordToLower(cTable);
 
-	//hacking the interfaces/bootstrap style template lookup
-	char cSubDir[101]={""};
-	char cTemplateType[100]={""};
-	sprintf(cSubDir,"%.100s",ForeignKey("tTable","cSubDir",uTable));
-	if(cSubDir[0])
-	{
-		char *cp;
-		if((cp=strchr(cSubDir,'/')))
-		{
-			sprintf(cTemplateType,"%.99s",cp+1);
-		}
-			
-	}
+	//for funcXXXXX
+	guTemplateType=uTemplateType;
 
 	//Here we decide which template to use exact match 
 	//else if using uTemplate != 0;
-	
 	//e.g. makefile, e.g. footable.bootstrap.min.css
-	if(cTemplateType[0])
-		sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel FROM tTemplate,tTemplateType"
-				" WHERE tTemplate.cLabel='%s' AND tTemplate.uTemplateSet=%u"
-				" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
-				" AND tTemplateType.cLabel='%s'",cTable,uTemplateSet,cTemplateType);
-	else
-		sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE cLabel='%s' AND uTemplateSet=%u",cTable,uTemplateSet);
+	sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate"
+				" WHERE cLabel='%s'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,cTable,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -333,13 +322,11 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 		return(uRetVal);
 
 	//e.g. template based tConfiguration where template tconfiguration.c exists
-	if(cTemplateType[0])
-		sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel FROM tTemplate,tTemplateType"
-				" WHERE tTemplate.cLabel='%s.c' AND tTemplate.uTemplateSet=%u"
-				" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
-				" AND tTemplateType.cLabel='%s'",cTable,uTemplateSet,cTemplateType);
-	else
-		sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE cLabel='%s.c' AND uTemplateSet=%u",cTable,uTemplateSet);
+	sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate"
+				" WHERE cLabel='%s.c'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,cTable,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -361,13 +348,11 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 		return(uRetVal);
 
 	//e.g. template based tClient where tclientfunc.h template exists
-	if(cTemplateType[0])
-		sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel FROM tTemplate,tTemplateType"
-				" WHERE tTemplate.cLabel='%sfunc.h' AND tTemplate.uTemplateSet=%u"
-				" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
-				" AND tTemplateType.cLabel='%s'",cTable,uTemplateSet,cTemplateType);
-	else
-		sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate WHERE cLabel='%sfunc.h' AND uTemplateSet=%u",cTable,uTemplateSet);
+	sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate"
+				" WHERE cLabel='%sfunc.h'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,cTable,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -388,13 +373,11 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 		return(uRetVal);
 
 	//No specific template found for table use module.c and modulefunc.h
-	if(cTemplateType[0])
-		sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel FROM tTemplate,tTemplateType"
-				" WHERE tTemplate.cLabel='tablefunc.h' AND tTemplate.uTemplateSet=%u"
-				" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
-				" AND tTemplateType.cLabel='%s'",uTemplateSet,cTemplateType);
-	else
-		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='modulefunc.h' AND uTemplateSet=%u",uTemplateSet);
+	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate"
+				" WHERE cLabel='modulefunc.h'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -416,13 +399,11 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 	if(uRetVal)
 		return(uRetVal);
 
-	if(cTemplateType[0])
-		sprintf(gcQuery,"SELECT tTemplate.uTemplate,tTemplate.cLabel FROM tTemplate,tTemplateType"
-				" WHERE tTemplate.cLabel='table.c' AND tTemplate.uTemplateSet=%u"
-				" AND tTemplate.uTemplateType=tTemplateType.uTemplateType"
-				" AND tTemplateType.cLabel='%s'",uTemplateSet,cTemplateType);
-	else
-		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='module.c' AND uTemplateSet=%u",uTemplateSet);
+	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate"
+				" WHERE cLabel='module.c'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1844,9 +1825,10 @@ void funcMakefileObjects(FILE *fp)
 	sprintf(gcQuery,"SELECT cLabel"
 			" FROM tTable"
 			" WHERE uProject=%u"
+			" AND uTemplateType=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY tTable.uTableOrder",guProject);
+			" ORDER BY uTableOrder",guProject,guTemplateType);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -1869,9 +1851,10 @@ void funcMakefileRules(FILE *fp)
 	sprintf(gcQuery,"SELECT cLabel"
 			" FROM tTable"
 			" WHERE uProject=%u"
+			" AND uTemplateType=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" ORDER BY uTableOrder",guProject,guTemplateType);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -1882,7 +1865,10 @@ void funcMakefileRules(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		WordToLower(field[0]);
-		fprintf(fp,"%1$s.o: %1$s.c mysqlrad.h language.h %1$sfunc.h local.h\n",field[0]);
+		if(guTemplateType==14)//bootstrap fix asap
+			fprintf(fp,"%1$s.o: %1$s.c interface.h local.h ../../mysqlrad.h\n",field[0]);
+		else
+			fprintf(fp,"%1$s.o: %1$s.c mysqlrad.h language.h %1$sfunc.h local.h\n",field[0]);
 		fprintf(fp,"\tcc -c %1$s.c -o %1$s.o $(CFLAGS)\n\n",field[0]);
 	}
 	mysql_free_result(res);

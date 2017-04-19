@@ -120,6 +120,8 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
 void tTablePullDownReadOnly(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector);
 int ReadPullDown(const char *cTableName,const char *cFieldName,const char *cLabel);
+int ReadPullDownOwner(const char *cTableName,const char *cFieldName,
+				const char *cLabel,const unsigned uOwner);
 char *TextAreaSave(char *cField);
 char *TransformAngleBrackets(char *cField);
 char *EncodeDoubleQuotes(char *cField);
