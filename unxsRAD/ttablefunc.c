@@ -1330,8 +1330,8 @@ void AddTableLine(char *cLine)
 
         MYSQL_RES *res;
         MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u AND uClass!=%u AND cSubDir!=''",
-					cLabel,uProject,uDEFAULTCLASS);
+	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u AND uTemplateType=%u'",
+					cLabel,uProject,uTEMPLATETYPE_BOOTSTRAP);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
         	htmlPlainTextError(mysql_error(&gMysql));
@@ -1344,10 +1344,12 @@ void AddTableLine(char *cLine)
 		sprintf(gcQuery,"UPDATE tTable SET"
 				" cSubDir='%.99s',"
 				" uTableOrder=%u,"
+				" uTemplateType=%u,"
 				" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uTable=%u",
 					cSubDir,
 					uTableOrder,
+					uTEMPLATETYPE_BOOTSTRAP,
 					guLoginClient,
 					uTable);
         	mysql_query(&gMysql,gcQuery);
@@ -1364,11 +1366,13 @@ void AddTableLine(char *cLine)
 				" cLabel='%.32s',"
 				" cSubDir='%.99s',"
 				" uTableOrder=%u,"
+				" uTemplateType=%u,"
 				" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 					uProject,
 					cLabel,
 					cSubDir,
 					uTableOrder,
+					uTEMPLATETYPE_BOOTSTRAP,
 					guCompany,guLoginClient);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))

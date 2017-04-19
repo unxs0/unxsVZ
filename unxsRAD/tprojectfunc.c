@@ -740,12 +740,12 @@ void AddTableFromDefaultTablesLine(char *cLine)
 	if(uTable)
 	{
 		sprintf(gcQuery,"UPDATE tTable SET cLabel='%.32s',uTableOrder=%u,uSourceLock=%u,"
-			"cDescription='%.100s',cSubDir='%.100s',"
+			"cDescription='%.100s',cSubDir='%.100s',uTemplateType=%u,"
 			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,"
 			"uModBy=%u,"
 			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uTable=%u",
 			cTable,uOrder,uSourceLock,
-			cDescription,cSubDir,
+			cDescription,cSubDir,uTEMPLATETYPE_BOOTSTRAP,
 			uNewLevel,uModLevel,uDelLevel,uReadLevel,
 			guLoginClient,
 				uTable);
@@ -762,13 +762,13 @@ void AddTableFromDefaultTablesLine(char *cLine)
 			"cDescription='%.100s',cSubDir='%.100s',"
 			"cLegend='%.100s',cToolTip='%.100s',"
 			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,"
-			"uProject=%u,uClass=%u,"
+			"uProject=%u,uClass=%u,uTemplateType=%u"
 			"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cTable,uOrder,uSourceLock,
 			cDescription,cSubDir,
 			cDescription,cDescription,
 			uNewLevel,uModLevel,uDelLevel,uReadLevel,
-			uProject,uDEFAULTCLASS,
+			uProject,uDEFAULTCLASS,uTEMPLATETYPE_BOOTSTRAP,
 				guCompany,guLoginClient);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))

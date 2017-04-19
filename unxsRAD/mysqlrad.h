@@ -63,6 +63,30 @@ AUTHOR
 //tTable and tField uClass defines
 #define uSTDCLASS 0
 #define uDEFAULTCLASS 100
+//Be careful provided table tTemplateType must match
+//mysql> select * from tTemplateType;
+//+---------------+-------------+--------+------------+--------------+--------+------------+
+//| uTemplateType | cLabel      | uOwner | uCreatedBy | uCreatedDate | uModBy | uModDate   |
+//+---------------+-------------+--------+------------+--------------+--------+------------+
+//|             1 | RAD4        |      1 |          1 |   1346895225 |      0 |          0 |
+//|             2 | Makefile    |      1 |          1 |   1489764523 |      0 |          0 |
+//|             3 | interface   |      1 |          1 |   1489764567 |      0 |          0 |
+//|             4 | agent       |      1 |          1 |   1489764580 |      0 |          0 |
+//|             5 | css         |      1 |          1 |   1489764593 |      0 |          0 |
+//|             6 | js          |      1 |          1 |   1489764605 |      0 |          0 |
+//|             7 | html        |      1 |          1 |   1489764616 |      0 |          0 |
+//|             8 | data        |      1 |          1 |   1489764707 |      0 |          0 |
+//|             9 | docs        |      1 |          1 |   1489764716 |      0 |          0 |
+//|            10 | images      |      1 |          1 |   1489764730 |      0 |          0 |
+//|            11 | utils       |      1 |          1 |   1489764770 |      0 |          0 |
+//|            12 | Other       |      1 |          1 |   1489764895 |      1 | 1489765216 |
+//|            13 | interfaceFT |      1 |          1 |   1490042482 |      0 |          0 |
+//|            14 | bootstrap   |      1 |          1 |   1491521550 |      0 |          0 |
+//+---------------+-------------+--------+------------+--------------+--------+------------+
+//
+#define uTEMPLATETYPE_RAD4 1
+#define uTEMPLATETYPE_BOOTSTRAP 14
+#define uTEMPLATETYPE_DATA 8
 
 
 extern char gcHost[];
