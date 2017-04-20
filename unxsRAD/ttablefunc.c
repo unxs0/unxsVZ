@@ -20,14 +20,16 @@ void ExportTableFields(void);
 
 void tTableNavList(void);
 void tTableFieldNavList(void);
-void RemoveAllFields(void);
+void RemoveAllFields(unsigned uTable,unsigned uProject);
 
 
-void RemoveTables(char *cValue);
-void AddTables(char *cValue);
-void RemoveTableLine(char *cLine);
-void AddTableLine(char *cLine);
-void ExportTables(void);
+void RemoveInterfaceTables(char *cValue);
+void AddInterfaceTables(char *cValue);
+void RemoveInterfaceTableLine(char *cLine);
+void AddInterfaceTableLine(char *cLine);
+void ExportInterfaceTables(void);
+void CopyAllFields(unsigned uTargetTable, unsigned uSourceTable);
+void CopyFieldsFromSameNameTable(unsigned uTargetTable,unsigned uProject);
 
 void ExtProcesstTableVars(pentry entries[], int x)
 {
@@ -208,7 +210,7 @@ void ExttTableCommands(pentry entries[], int x)
 				if(!uProject)
 					tTable("<blink>Error</blink>: No uProject");
                         	guMode=0;
-				RemoveAllFields();
+				RemoveAllFields(uTable,uProject);
 				tTable("All fields removed");
 			}
 			else
@@ -321,7 +323,7 @@ void ExttTableCommands(pentry entries[], int x)
 					tTable("Error: no uProject");
 				if(!cImport[0])
 				guMode=10001;
-				ExportTables();
+				ExportInterfaceTables();
 				tTable("Tables Exported");
 			}
 			else
@@ -342,7 +344,7 @@ void ExttTableCommands(pentry entries[], int x)
 					tTable("Error: no uProject");
 				guMode=10001;
 				sprintf(cTextarea,"%.4095s",cImport);
-				AddTables(cTextarea);
+				AddInterfaceTables(cTextarea);
 				tTable("Added Interface Tables");
 			}
 			else
@@ -363,8 +365,47 @@ void ExttTableCommands(pentry entries[], int x)
 					tTable("Error: no uProject");
 				guMode=10001;
 				sprintf(cTextarea,"%.4095s",cImport);
-				RemoveTables(cTextarea);
+				RemoveInterfaceTables(cTextarea);
 				tTable("Interface Tables Removed");
+			}
+			else
+			{
+				tTable("Error: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Copy Fields"))
+                {
+                        ProcesstTableVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>=7)
+			{
+                        	guMode=0;
+				if(!uTable)
+					tTable("No table");
+				if(uTemplateType!=uTEMPLATETYPE_BOOTSTRAP)
+					tTable("Not a boostrap table");
+                        	guMode=201;
+				tTable("Confirm Copy Fields");
+			}
+			else
+			{
+				tTable("Error: Denied by permissions settings");
+			}
+		}
+                else if(!strcmp(gcCommand,"Confirm Copy Fields"))
+                {
+                        ProcesstTableVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>=7)
+			{
+                        	guMode=201;
+				if(!uTable)
+					tTable("No table");
+				if(!uProject)
+					tTable("No project");
+				if(uTemplateType!=uTEMPLATETYPE_BOOTSTRAP)
+					tTable("Not a boostrap table");
+                        	guMode=0;
+				CopyFieldsFromSameNameTable(uTable,uProject);
+				tTable("Fields Copied");
 			}
 			else
 			{
@@ -458,6 +499,13 @@ void ExttTableButtons(void)
 				" name=gcCommand value='Confirm Remove'>");
                 break;
 
+                case 201:
+			OpenFieldSet("tTable Aux Panel",100);
+			printf("<p><u>Think twice!</u><br>");
+			printf("<br><input type=submit class=lwarnButton title='Copy all fields from same name RAD4 table in this same project'"
+				" name=gcCommand value='Confirm Copy Fields'>");
+                break;
+
 		default:
 			OpenFieldSet("tTable Aux Panel",100);
 			printf("<u>Table Tips</u><br>");
@@ -473,15 +521,21 @@ void ExttTableButtons(void)
 				printf("First of all tables (if any) loaded.");
 			htmlTemplateInfo(cLabel);
 			printf("<p><u>Operations</u><br>");
-			printf("<input type=submit class=largeButton title='Add standard primary key, cLabel and audit fields.'"
+			if(uTable)
+			{
+				printf("<input type=submit class=largeButton title='Add standard primary key, cLabel and audit fields.'"
 				" name=gcCommand value='Add standard fields'>");
-			printf("<br><input type=submit class=lwarnButton title='Remove all fields from the loaded table.'"
+				printf("<br><input type=submit class=lwarnButton title='Remove all fields from the loaded table.'"
 				" name=gcCommand value='Remove all fields'>");
-			printf("<br><input type=submit class=largeButton"
+				printf("<br><input type=submit class=largeButton"
 				" title='Select and keep this table marked for current work flow. Release any selected field.'"
 				" name=gcCommand value='Select'>");
+			}
 			printf("<br><input type=submit class=largeButton title='Open the field and table import panel.'"
 					" name=gcCommand value='Import'>");
+			if(uTable && uTemplateType==uTEMPLATETYPE_BOOTSTRAP)
+				printf("<br><input type=submit class=largeButton title='Copy Fields from RAD4 same name table in this same project'"
+					" name=gcCommand value='Copy Fields'>");
 			tTableNavList();
 			tTableFieldNavList();
 	}
@@ -711,7 +765,7 @@ void tTableNavList(void)
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 			sprintf(gcQuery,"SELECT uTable,cLabel,cSubDir FROM tTable WHERE uProject=%u "
-					" ORDER BY cSubDir,uTableOrder",
+					" ORDER BY uTemplateType,cSubDir,uTableOrder",
 				guCookieProject);
 		else
 			sprintf(gcQuery,"SELECT tTable.uTable,"
@@ -720,20 +774,20 @@ void tTableNavList(void)
 				" WHERE tTable.uOwner=tClient.uClient"
 				" AND tTable.uProject=%u"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" ORDER BY tTable.cSubDir,tTable.uTableOrder,",
+				" ORDER BY tTable.uTemplateType,tTable.cSubDir,tTable.uTableOrder,",
 					guCookieProject,guCompany,guLoginClient);
 	}
 	else
 	{
 		if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-			sprintf(gcQuery,"SELECT uTable,cLabel,cSubDir FROM tTable ORDER BY cSubDir,uTableOrder");
+			sprintf(gcQuery,"SELECT uTable,cLabel,cSubDir FROM tTable ORDER BY uTemplateType,cSubDir,uTableOrder");
 		else
 			sprintf(gcQuery,"SELECT tTable.uTable,"
 				" tTable.cLabel,tTable.cSubDir"
 				" FROM tTable,tClient"
 				" WHERE tTable.uOwner=tClient.uClient"
 				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" ORDER BY tTable.cSubDir,tTable.uTableOrder,",
+				" ORDER BY tTable.uTemplateType,tTable.cSubDir,tTable.uTableOrder,",
 					guCompany,guLoginClient);
 	}
         mysql_query(&gMysql,gcQuery);
@@ -980,7 +1034,7 @@ void AddDefaultFields(void)
 }//void AddDefaultFields(void)
 
 
-void RemoveAllFields(void)
+void RemoveAllFields(unsigned uTable,unsigned uProject)
 {
 	sprintf(gcQuery,"DELETE FROM tField WHERE uTable=%u AND uProject=%u",
 			uTable,
@@ -989,7 +1043,7 @@ void RemoveAllFields(void)
 	if(mysql_errno(&gMysql))
 		tTable(mysql_error(&gMysql));
 
-}//void RemoveAllFields(void)
+}//void RemoveAllFields()
 
 
 //Bulk editors
@@ -1246,7 +1300,7 @@ void ExportTableFields(void)
 }//void ExportTableFields(void)
 
 
-void RemoveTables(char *cValue)
+void RemoveInterfaceTables(char *cValue)
 {
 	char cLine[256];
 	while(1)
@@ -1255,12 +1309,12 @@ void RemoveTables(char *cValue)
 		if(cLine[0]=='#') continue;
 		if(cLine[0]==' ') continue;
 		if(!cLine[0]) break;
-		RemoveTableLine(cLine);
+		RemoveInterfaceTableLine(cLine);
 	}
-}//void RemoveTables(char *cValue)
+}//void RemoveInterfaceTables(char *cValue)
 
 
-void AddTables(char *cValue)
+void AddInterfaceTables(char *cValue)
 {
 	char cLine[256];
 	while(1)
@@ -1269,17 +1323,16 @@ void AddTables(char *cValue)
 		if(cLine[0]=='#') continue;
 		if(cLine[0]==' ') continue;
 		if(!cLine[0]) break;
-		AddTableLine(cLine);
+		AddInterfaceTableLine(cLine);
 	}
 
-}//void AddTables(unsigned uProject)
+}//void AddInterfaceTables(unsigned uProject)
 
 
-void RemoveTableLine(char *cLine)
+void RemoveInterfaceTableLine(char *cLine)
 {
 	char cLabel[32]={""};
 	char cSubDir[100]={""};
-
 	int iCount=0;
 
 	char gcQuery[512];
@@ -1292,23 +1345,41 @@ void RemoveTableLine(char *cLine)
 		tTable(gcQuery);
 	}
 
-	sprintf(gcQuery,"DELETE FROM tTable WHERE"
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uTable=0;
+	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE"
 			" cLabel='%.32s' AND"
 			" cSubDir='%s' AND"
 			" uProject=%u AND"
-			" uClass!=%u"
-				,cLabel,cSubDir,uProject,uDEFAULTCLASS);
+			" uTemplateType=%u"
+				,cLabel,cSubDir,uProject,uTEMPLATETYPE_BOOTSTRAP);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
 		sprintf(gcQuery,"%s",mysql_error(&gMysql));
 		tTable(gcQuery);
 	}
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uTable);
 
-}//void RemoveTableLine(char *cLine)
+		sprintf(gcQuery,"DELETE FROM tTable WHERE uTable=%u",uTable);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+		{
+			sprintf(gcQuery,"%s",mysql_error(&gMysql));
+			tTable(gcQuery);
+		}
+		if(mysql_affected_rows(&gMysql)>0)
+			RemoveAllFields(uTable,uProject);
+	}
+
+}//void RemoveInterfaceTableLine(char *cLine)
 
 
-void AddTableLine(char *cLine)
+void AddInterfaceTableLine(char *cLine)
 {
 
 	char cLabel[32]={""};
@@ -1330,7 +1401,7 @@ void AddTableLine(char *cLine)
 
         MYSQL_RES *res;
         MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u AND uTemplateType=%u'",
+	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u AND uTemplateType=%u",
 					cLabel,uProject,uTEMPLATETYPE_BOOTSTRAP);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -1344,12 +1415,10 @@ void AddTableLine(char *cLine)
 		sprintf(gcQuery,"UPDATE tTable SET"
 				" cSubDir='%.99s',"
 				" uTableOrder=%u,"
-				" uTemplateType=%u,"
 				" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uTable=%u",
 					cSubDir,
 					uTableOrder,
-					uTEMPLATETYPE_BOOTSTRAP,
 					guLoginClient,
 					uTable);
         	mysql_query(&gMysql,gcQuery);
@@ -1382,10 +1451,10 @@ void AddTableLine(char *cLine)
 		}
 	}
 
-}//void AddTableLine(char *cLine)
+}//void AddInterfaceTableLine(char *cLine)
 
 
-void ExportTables(void)
+void ExportInterfaceTables(void)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
@@ -1397,10 +1466,9 @@ void ExportTables(void)
 				" tTable.uTableOrder"
 				" FROM tTable WHERE"
 				" tTable.uProject=%u"
-				" AND tTable.uClass!=%u"
-				" AND tTable.cSubDir LIKE 'interfaces/%%'"
+				" AND tTable.uTemplateType=%u"
 				" ORDER BY tTable.uTableOrder, tTable.uTable",
-					uProject,uDEFAULTCLASS);
+					uProject,uTEMPLATETYPE_BOOTSTRAP);
        	mysql_query(&gMysql,gcQuery);
        	if(mysql_errno(&gMysql))
 	{
@@ -1415,4 +1483,77 @@ void ExportTables(void)
 	}
         mysql_free_result(res);
 	cImport=cImportBuffer;
-}//void ExportTables(void)
+
+}//void ExportInterfaceTables(void)
+
+
+void CopyFieldsFromSameNameTable(unsigned uTargetTable,unsigned uProject)
+{
+	if(!uTable)
+		return;
+
+	char gcQuery[1024];
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uSourceTable=0;
+	sprintf(gcQuery,"SELECT uTable FROM tTable"
+			" WHERE cLabel=(SELECT cLabel FROM tTable WHERE uTable=%u LIMIT 1)"
+			" AND uTemplateType=%u AND uProject=%u"
+				,uTargetTable,uTEMPLATETYPE_RAD4,uProject);
+       	mysql_query(&gMysql,gcQuery);
+       	if(mysql_errno(&gMysql))
+	{
+		sprintf(gcQuery,"%s",mysql_error(&gMysql));
+		tTable(gcQuery);
+	}
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uSourceTable);
+        mysql_free_result(res);
+
+	if(uSourceTable)
+	{
+		CopyAllFields(uTargetTable,uSourceTable);
+		sprintf(gcQuery,"UPDATE tTable SET uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u WHERE uTable=%u",
+						guLoginClient,uTargetTable);
+       		mysql_query(&gMysql,gcQuery);
+       		if(mysql_errno(&gMysql))
+		{
+			sprintf(gcQuery,"%s",mysql_error(&gMysql));
+			tTable(gcQuery);
+		}
+		uModDate=luGetModDate("tTable",uTable);
+		uModBy=guLoginClient;
+	}
+	else
+	{
+		tTable("No source table found");
+	}
+
+}//void CopyFieldsFromSameNameTable()
+
+
+void CopyAllFields(unsigned uTargetTable, unsigned uSourceTable)
+{
+	char gcQuery[1024];
+	sprintf(gcQuery,"INSERT INTO tField"
+			"("
+			" cLabel,uProject,uTable,uOrder,uFieldType,uIndexType,cFKSpec,"
+			" cExtIndex,cTitle,uSQLSize,uHtmlXSize,uHtmlYSize,uHtmlMax,cFormDefault,"
+			" cSQLDefault,uReadLevel,uModLevel,uOwner,uCreatedBy,uCreatedDate"
+			")"
+			" SELECT "
+			" cLabel,uProject,%u,uOrder,uFieldType,uIndexType,cFKSpec,"
+			" cExtIndex,cTitle,uSQLSize,uHtmlXSize,uHtmlYSize,uHtmlMax,cFormDefault,"
+			" cSQLDefault,uReadLevel,uModLevel,%u,%u,UNIX_TIMESTAMP(NOW())"
+			" FROM tField WHERE uTable=%u",uTargetTable,guCompany,guLoginClient,uSourceTable);
+       	mysql_query(&gMysql,gcQuery);
+       	if(mysql_errno(&gMysql))
+	{
+		sprintf(gcQuery,"%s",mysql_error(&gMysql));
+		tTable(gcQuery);
+	}
+	if(mysql_affected_rows(&gMysql)<1)
+		tTable("No fields added!");
+
+}//void CopyAllFields(unsigned uTargetTable, unsigned uSourceTable)

@@ -16,6 +16,11 @@ static char cLabel[33]={""};
 //uProject: Table Belongs to this Project
 static unsigned uProject=0;
 static char cuProjectPullDown[256]={""};
+//uTemplateType: The type of template, e.g. bootstrap or RAD4
+static unsigned uTemplateType=0;
+static char cuTemplateTypePullDown[256]={""};
+//uClass display only for standard tables vs user tables
+static unsigned uClass=0;
 //uTableOrder: Table Menu Order
 static unsigned uTableOrder=0;
 //uSourceLock: Allow overwrite of table source code
@@ -52,7 +57,7 @@ static time_t uModDate=0;
 //cDescription: Description of table function in project context
 static char *cImport="#Import field data format:\n#one field per line:\n#cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec/uSQLSize]\n#\n#tFieldType.cLabel can be:\n#BigInt Unsigned\n#Date Time\n#Decimal\n#Foreign Key\n#Int Unsigned\n#Select Table\n#Select Table Owner\n#Text\n#Time Stamp\n#Unixtime\n#Varchar\n#Varchar Unique Key\n#Yes/No\n#Empty lines stop processing and lines starting with a # or a space are ignored. Try the export options for more info.\n";
 
-#define VAR_LIST_tTable "tTable.uTable,tTable.cLabel,tTable.uProject,tTable.uTableOrder,tTable.uSourceLock,tTable.cDescription,tTable.cSubDir,tTable.cLegend,tTable.cToolTip,tTable.uNewLevel,tTable.uModLevel,tTable.uDelLevel,tTable.uReadLevel,tTable.uOwner,tTable.uCreatedBy,tTable.uCreatedDate,tTable.uModBy,tTable.uModDate"
+#define VAR_LIST_tTable "tTable.uTable,tTable.cLabel,tTable.uProject,tTable.uTableOrder,tTable.uSourceLock,tTable.cDescription,tTable.cSubDir,tTable.cLegend,tTable.cToolTip,tTable.uNewLevel,tTable.uModLevel,tTable.uDelLevel,tTable.uReadLevel,tTable.uOwner,tTable.uCreatedBy,tTable.uCreatedDate,tTable.uModBy,tTable.uModDate,tTable.uClass,tTable.uTemplateType"
 
  //Local only
 void Insert_tTable(void);
@@ -86,6 +91,15 @@ void ProcesstTableVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uTable);
 		else if(!strcmp(entries[i].name,"cLabel"))
 			sprintf(cLabel,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uClass"))
+			sscanf(entries[i].val,"%u",&uClass);
+		else if(!strcmp(entries[i].name,"uTemplateType"))
+			sscanf(entries[i].val,"%u",&uTemplateType);
+		else if(!strcmp(entries[i].name,"cuTemplateTypePullDown"))
+		{
+			sprintf(cuTemplateTypePullDown,"%.255s",entries[i].val);
+			uTemplateType=ReadPullDown("tTemplateType","cLabel",cuTemplateTypePullDown);
+		}
 		else if(!strcmp(entries[i].name,"uProject"))
 			sscanf(entries[i].val,"%u",&uProject);
 		else if(!strcmp(entries[i].name,"cuProjectPullDown"))
@@ -233,6 +247,8 @@ void tTable(const char *cResult)
 		sscanf(field[15],"%lu",&uCreatedDate);
 		sscanf(field[16],"%u",&uModBy);
 		sscanf(field[17],"%lu",&uModDate);
+		sscanf(field[18],"%u",&uClass);
+		sscanf(field[19],"%u",&uTemplateType);
 
 		}
 
@@ -315,6 +331,10 @@ void tTableFieldEntry(unsigned uMode)
 	OpenRow(LANG_FL_tTable_uProject,"black");
 	printf("<input type=text size=20 value='%s' disabled>\n",ForeignKey("tProject","cLabel",uProject));
 	printf("<input type=hidden size=20 maxlength=20 name=uProject value=%u >\n",uProject);
+//uTemplateType
+	OpenRow(LANG_FL_tTable_uTemplateType,"black");
+	printf("<input type=text size=20 value='%s' disabled>\n",ForeignKey("tTemplateType","cLabel",uTemplateType));
+	printf("<input type=hidden size=20 maxlength=20 name=uTemplateType value=%u >\n",uTemplateType);
 //cImport
 	OpenRow(LANG_FL_tTable_cImport,"black");
 	printf("<textarea style='font-size: 10pt' title='%s' cols=80 wrap=soft rows=16 name=cImport ",LANG_FT_tTable_cImport);
@@ -353,17 +373,26 @@ void tTableInput(unsigned uMode)
 	}
 //uProject
 	OpenRow(LANG_FL_tTable_uProject,"black");
-	//if(guPermLevel>=7 && guPermLevel<10 && uMode)
-	//	tTablePullDownOwner("tProject;cuProjectPullDown","cLabel","cLabel",uProject,1);
-	//else if(guPermLevel<10 && !uMode)
-	//	tTablePullDownOwner("tProject;cuProjectPullDown","cLabel","cLabel",uProject,0);
-	//else if(uMode)
-	//printf("<input title='%s' type=text size=20 maxlength=20 name=uProject value=%u >\n",LANG_FT_tTable_uProject,uProject);
-	//else if(1)
-	//{
-		printf("<input type=text size=20 value='%s' disabled>\n",ForeignKey("tProject","cLabel",uProject));
-		printf("<input type=hidden size=20 maxlength=20 name=uProject value=%u >\n",uProject);
-	//}
+	printf("<input type=text size=20 value='%s' disabled>\n",ForeignKey("tProject","cLabel",uProject));
+	printf("<input type=hidden size=20 maxlength=20 name=uProject value=%u >\n",uProject);
+//uClass
+	OpenRow(LANG_FL_tTable_uClass,"black");
+	printf("<input title='%s' type=text name=uClass value=%u size=16 maxlength=10 ",LANG_FT_tTable_uClass,uClass);
+	if(guPermLevel>=7 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=uClass value=%u >\n",uClass);
+	}
+//uTemplateType
+	OpenRow(LANG_FL_tTable_uTemplateType,"black");
+	if(guPermLevel>=7 && uMode)
+		tTablePullDown("tTemplateType;cuTemplateTypePullDown","cLabel","cLabel",uTemplateType,1);
+	else
+		tTablePullDown("tTemplateType;cuTemplateTypePullDown","cLabel","cLabel",uTemplateType,0);
 //uTableOrder
 	OpenRow(LANG_FL_tTable_uTableOrder,"black");
 	printf("<input title='%s' type=text name=uTableOrder value=%u size=16 maxlength=10 ",LANG_FT_tTable_uTableOrder,uTableOrder);
@@ -574,12 +603,14 @@ void DeletetTable(void)
 void Insert_tTable(void)
 {
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tTable SET uTable=%u,cLabel='%s',uProject=%u,uTableOrder=%u,uSourceLock=%u,"
+	sprintf(gcQuery,"INSERT INTO tTable SET uTable=%u,cLabel='%s',uProject=%u,uClass=%u,uTemplateType=%u,uTableOrder=%u,uSourceLock=%u,"
 			"cDescription='%s',cSubDir='%s',cLegend='%s',cToolTip='%s',uNewLevel=%u,uModLevel=%u,uDelLevel=%u,"
 			"uReadLevel=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable
 			,TextAreaSave(cLabel)
 			,uProject
+			,uClass
+			,uTemplateType
 			,uTableOrder
 			,uSourceLock
 			,TextAreaSave(cDescription)
@@ -603,12 +634,14 @@ void Update_tTable(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tTable SET uTable=%u,cLabel='%s',uProject=%u,uTableOrder=%u,uSourceLock=%u,"
+	sprintf(gcQuery,"UPDATE tTable SET uTable=%u,cLabel='%s',uProject=%u,uClass=%u,uTemplateType=%u,uTableOrder=%u,uSourceLock=%u,"
 			"cDescription='%s',cSubDir='%s',cLegend='%s',cToolTip='%s',uNewLevel=%u,uModLevel=%u,uDelLevel=%u,"
 			"uReadLevel=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uTable
 			,TextAreaSave(cLabel)
 			,uProject
+			,uClass
+			,uTemplateType
 			,uTableOrder
 			,uSourceLock
 			,TextAreaSave(cDescription)
@@ -708,6 +741,8 @@ void tTableList(void)
 			"<td><font color=white>uCreatedDate"
 			"<td><font color=white>uModBy"
 			"<td><font color=white>uModDate"
+			"<td><font color=white>uClass"
+			"<td><font color=white>uTemplateType"
 		"</tr>");
 
 	mysql_data_seek(res,guStart-1);
@@ -766,7 +801,18 @@ void tTableList(void)
 				"<td>%s"
 				"<td>%s"
 				"<td>%s"
-				"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s</tr>"
 			,field[0]
 			,field[0]
 			,field[1]
@@ -786,6 +832,8 @@ void tTableList(void)
 			,cBuf15
 			,cBuf16
 			,cBuf17
+			,field[18]
+			,field[19]
 				);
 
 	}
