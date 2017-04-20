@@ -400,7 +400,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 		return(uRetVal);
 
 	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate"
-				" WHERE cLabel='module.c'"
+				" WHERE (cLabel='module.c' OR cLabel='table.c')"
 				" AND uTemplateSet=%u"
 				" AND uTemplateType=%u"
 					,uTemplateSet,uTemplateType);
