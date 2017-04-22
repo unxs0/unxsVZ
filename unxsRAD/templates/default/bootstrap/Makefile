@@ -21,8 +21,8 @@ help:
 	@echo "make install-test"
 	@echo "make install-bootstrap"
 
-interface.cgi: {{funcMakefileObjects}} project.o user.o main.o cgi.o mysqlconnect.o
-	cc {{funcMakefileObjects}} project.o user.o main.o cgi.o mysqlconnect.o -o interface.cgi $(LIBS)
+interface.cgi: {{funcMakefileObjects}} user.o main.o cgi.o mysqlconnect.o
+	cc {{funcMakefileObjects}} user.o main.o cgi.o mysqlconnect.o -o interface.cgi $(LIBS)
 
 {{funcMakefileRules}}
 
@@ -31,9 +31,6 @@ main.o: main.c interface.h local.h ../../mysqlrad.h
 
 user.o: user.c interface.h local.h ../../mysqlrad.h
 	cc -c user.c -o user.o $(CFLAGS)
-
-project.o: project.c interface.h local.h ../../mysqlrad.h
-	cc -c project.c -o project.o $(CFLAGS)
 
 mysqlconnect.o: mysqlconnect.c  local.h interface.h
 	cc -o mysqlconnect.o -c mysqlconnect.c $(CFLAGS)

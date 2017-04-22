@@ -63,9 +63,12 @@ char *WordToLower(char *cInput);
 void funcMakefileObjects(FILE *fp);
 void funcMakefileRules(FILE *fp);
 void funcModulePrototypes(FILE *fp);
+void funcBootstrapModulePrototypes(FILE *fp);
 void funcMainGetMenu(FILE *fp);
+void funcBootstrapMainGetMenu(FILE *fp);
 void funcMainNavBars(FILE *fp);
 void funcMainPostFunctions(FILE *fp);
+void funcBootstrapMainPostFunctions(FILE *fp);
 void funcMainTabMenu(FILE *fp);
 void funcMainInitTableList(FILE *fp);
 void funcMainCreateTables(FILE *fp);
@@ -1721,12 +1724,16 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcMakefileRules(fp);
 	else if(!strcmp(cFunction,"funcModulePrototypes"))
 		funcModulePrototypes(fp);
+	else if(!strcmp(cFunction,"funcBootstrapModulePrototypes"))
+		funcBootstrapModulePrototypes(fp);
 	else if(!strcmp(cFunction,"funcMainGetMenu"))
 		funcMainGetMenu(fp);
+	else if(!strcmp(cFunction,"funcBootstrapMainGetMenu"))
+		funcBootstrapMainGetMenu(fp);
 	else if(!strcmp(cFunction,"funcMainNavBars"))
 		funcMainNavBars(fp);
-	else if(!strcmp(cFunction,"funcMainPostFunctions"))
-		funcMainPostFunctions(fp);
+	else if(!strcmp(cFunction,"funcBootstrapMainPostFunctions"))
+		funcBootstrapMainPostFunctions(fp);
 	else if(!strcmp(cFunction,"funcMainTabMenu"))
 		funcMainTabMenu(fp);
 	else if(!strcmp(cFunction,"funcMainInitTableList"))
@@ -1876,6 +1883,50 @@ void funcMakefileRules(FILE *fp)
 }//void funcMakefileRules(FILE *fp)
 
 
+void funcBootstrapModulePrototypes(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	fprintf(fp,"//funcBootstrapModulePrototypes()\n");
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND cLabel NOT LIKE '%%.txt'"
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_BOOTSTRAP);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"//%s\n",field[0]);
+		fprintf(fp,"void %sCommands(pentry entries[], int x);\n",field[0]);
+		fprintf(fp,"void %s(const char *results);\n",field[0]);
+		fprintf(fp,"void Process%sVars(pentry entries[], int x);\n",field[0]);
+		fprintf(fp,"void %sContent(void);\n",field[0]);
+		fprintf(fp,"void %sInputContent(void);\n",field[0]);
+		fprintf(fp,"void %sInput(unsigned uMode);\n",field[0]);
+		fprintf(fp,"void %sList(void);\n",field[0]);
+		fprintf(fp,"void New%s(unsigned uMode);\n",field[0]);
+		fprintf(fp,"void Mod%s(void);\n",field[0]);
+		fprintf(fp,"void Create%s(void);\n",field[0]);
+		fprintf(fp,"void Delete%s(void);\n",field[0]);
+		fprintf(fp,"void %sGetHook(entry gentries[], int x);\n",field[0]);
+		fprintf(fp,"void Ext%sNavBar(void);\n",field[0]);
+		fprintf(fp,"\n");
+	}
+	mysql_free_result(res);
+
+}//void funcBootstrapModulePrototypes(FILE *fp)
+
+
 void funcModulePrototypes(FILE *fp)
 {
        	MYSQL_RES *res;
@@ -1886,7 +1937,8 @@ void funcModulePrototypes(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -1917,6 +1969,40 @@ void funcModulePrototypes(FILE *fp)
 }//void funcModulePrototypes(FILE *fp)
 
 
+void funcBootstrapMainGetMenu(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_BOOTSTRAP);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	fprintf(fp,"//funcBootstrapMainGetMenu()\n");
+	unsigned uFirst=1;
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uFirst)
+			fprintf(fp,"\t\t\tif(!strcmp(gcFunction,\"%s\"))\n",field[0]);
+		else
+			fprintf(fp,"\t\t\telse if(!strcmp(gcFunction,\"%s\"))\n",field[0]);
+		fprintf(fp,"\t\t\t\t%sGetHook(gentries,x);\n",field[0]);
+		uFirst=0;
+	}
+        mysql_free_result(res);
+
+}//void funcBootstrapMainGetMenu(FILE *fp)
+
+
 void funcMainGetMenu(FILE *fp)
 {
        	MYSQL_RES *res;
@@ -1927,7 +2013,8 @@ void funcMainGetMenu(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -1961,7 +2048,8 @@ void funcMainNavBars(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -1987,6 +2075,32 @@ void funcMainNavBars(FILE *fp)
 }//void funcMainNavBars(FILE *ofp)
 
 
+void funcBootstrapMainPostFunctions(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_BOOTSTRAP);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	fprintf(fp,"//funcBootstrapMainPostFunctions()\n");
+	while((field=mysql_fetch_row(res)))
+		fprintf(fp,"\t%sCommands(entries,x);\n",field[0]);
+        mysql_free_result(res);
+
+}//void funcBootstrapMainPostFunctions(FILE *fp)
+
+
 void funcMainPostFunctions(FILE *fp)
 {
        	MYSQL_RES *res;
@@ -1997,7 +2111,8 @@ void funcMainPostFunctions(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2023,7 +2138,8 @@ void funcMainTabMenu(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2061,7 +2177,8 @@ void funcMainInitTableList(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2093,7 +2210,8 @@ void funcMainCreateTables(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2118,7 +2236,8 @@ void funcModuleLanguage(FILE *fp)
 			" FROM tField,tTable"
 			" WHERE tField.uTable=tTable.uTable"
 			" AND tTable.uProject=%u"
-			" ORDER BY tField.uOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{

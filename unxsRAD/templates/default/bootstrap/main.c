@@ -1,6 +1,7 @@
 /*
 FILE 
-	unxsRAD/interfaces/bootstrap/main.c
+	{{cProject}}/interfaces/bootstrap/main.c
+	template unxsRAD/templates/default/bootstrap/main.c
 AUTHOR/LEGAL
 	(C) 2010-2017 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.
@@ -71,7 +72,7 @@ int main(int argc, char *argv[])
 	pentry entries[MAXPOSTVARS];
 	entry gentries[MAXGETVARS];
 	char *gcl;
-	register int i;
+	register int x;
 	int cl=0;
 
 
@@ -79,8 +80,6 @@ int main(int argc, char *argv[])
 
 	if(getenv("REMOTE_ADDR")!=NULL)
 		sprintf(gcHost,"%.99s",getenv("REMOTE_ADDR"));
-	else
-		jsonTableRows("tLog");
 
 	gethostname(gcHostname,98);
 
@@ -91,64 +90,63 @@ int main(int argc, char *argv[])
 		SSLCookieLogin();
 		
 		gcl = getenv("QUERY_STRING");
-		for(i=0;gcl[0] != '\0' && i<MAXGETVARS;i++)
+		for(x=0;gcl[0] != '\0' && x<MAXGETVARS;x++)
 		{
-			getword(gentries[i].val,gcl,'&');
-			plustospace(gentries[i].val);
-			unescape_url(gentries[i].val);
-			getword(gentries[i].name,gentries[i].val,'=');
+			getword(gentries[x].val,gcl,'&');
+			plustospace(gentries[x].val);
+			unescape_url(gentries[x].val);
+			getword(gentries[x].name,gentries[x].val,'=');
 
-			if(!strcmp(gentries[i].name,"gcFunction"))
-				sprintf(gcFunction,"%.99s",gentries[i].val);
-			else if(!strcmp(gentries[i].name,"gcPage"))
-				sprintf(gcPage,"%.99s",gentries[i].val);
-                	else if(!strcmp(gentries[i].name,"cTable"))
-				sprintf(cTable,"%.99s",gentries[i].val);
+			if(!strcmp(gentries[x].name,"gcFunction"))
+				sprintf(gcFunction,"%.99s",gentries[x].val);
+			else if(!strcmp(gentries[x].name,"gcPage"))
+				sprintf(gcPage,"%.99s",gentries[x].val);
+                	else if(!strcmp(gentries[x].name,"cTable"))
+				sprintf(cTable,"%.99s",gentries[x].val);
 		}
 		if(gcPage[0])
 		{
 			if(!strcmp(gcPage,"User"))
-				UserGetHook(gentries,i);
-			else if(!strcmp(gcPage,"Project"))
-				ProjectGetHook(gentries,i);
+				UserGetHook(gentries,x);
 		}
+		{{funcBootstrapMainGetMenu}}
 	}
 	else
 	{
 		//Post with get
 		gcl = getenv("QUERY_STRING");
-		for(i=0;gcl[0] != '\0' && i<MAXGETVARS;i++)
+		for(x=0;gcl[0] != '\0' && x<MAXGETVARS;x++)
 		{
-			getword(gentries[i].val,gcl,'&');
-			plustospace(gentries[i].val);
-			unescape_url(gentries[i].val);
-			getword(gentries[i].name,gentries[i].val,'=');
+			getword(gentries[x].val,gcl,'&');
+			plustospace(gentries[x].val);
+			unescape_url(gentries[x].val);
+			getword(gentries[x].name,gentries[x].val,'=');
 
-			if(!strcmp(gentries[i].name,"gcFunction"))
-				sprintf(gcFunction,"%.99s",gentries[i].val);
+			if(!strcmp(gentries[x].name,"gcFunction"))
+				sprintf(gcFunction,"%.99s",gentries[x].val);
 		}
 
 		//Post
 		cl = atoi(getenv("CONTENT_LENGTH"));
-		for(i=0;cl && (!feof(stdin)) && i<MAXPOSTVARS ;i++)
+		for(x=0;cl && (!feof(stdin)) && x<MAXPOSTVARS ;x++)
 		{
-			entries[i].val = fmakeword(stdin,'&',&cl);
-			plustospace(entries[i].val);
-			unescape_url(entries[i].val);
-			entries[i].name = makeword(entries[i].val,'=');
+			entries[x].val = fmakeword(stdin,'&',&cl);
+			plustospace(entries[x].val);
+			unescape_url(entries[x].val);
+			entries[x].name = makeword(entries[x].val,'=');
 			
-			if(!strcmp(entries[i].name,"gcFunction"))
-				sprintf(gcFunction,"%.99s",entries[i].val);
-			else if(!strcmp(entries[i].name,"gcPage"))
-				sprintf(gcPage,"%.99s",entries[i].val);
-			else if(!strcmp(entries[i].name,"gcLogin"))
-				sprintf(gcLogin,"%.99s",entries[i].val);
-			else if(!strcmp(entries[i].name,"gcPasswd"))
-				sprintf(gcPasswd,"%.99s",entries[i].val);
-                	else if(!strcmp(entries[i].name,"gcOTP"))
-				sprintf(gcOTP,"%.15s",entries[i].val);
-                	else if(!strcmp(entries[i].name,"cTable"))
-				sprintf(cTable,"%.99s",entries[i].val);
+			if(!strcmp(entries[x].name,"gcFunction"))
+				sprintf(gcFunction,"%.99s",entries[x].val);
+			else if(!strcmp(entries[x].name,"gcPage"))
+				sprintf(gcPage,"%.99s",entries[x].val);
+			else if(!strcmp(entries[x].name,"gcLogin"))
+				sprintf(gcLogin,"%.99s",entries[x].val);
+			else if(!strcmp(entries[x].name,"gcPasswd"))
+				sprintf(gcPasswd,"%.99s",entries[x].val);
+                	else if(!strcmp(entries[x].name,"gcOTP"))
+				sprintf(gcOTP,"%.15s",entries[x].val);
+                	else if(!strcmp(entries[x].name,"cTable"))
+				sprintf(cTable,"%.99s",entries[x].val);
 		}
 	}
 
@@ -158,8 +156,8 @@ int main(int argc, char *argv[])
 		if(!strncmp(gcFunction,"Logout",5))
 		{
 			//8 idnsOrg log type, need to globally add 9 for OneLogin
-			printf("Set-Cookie: OneLoginLogin=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			printf("Set-Cookie: OneLoginPasswd=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: {{cProject}}SessionId=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: {{cProject}}SessionHash=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=8,uPermLevel=%u,"
 					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -186,13 +184,11 @@ int main(int argc, char *argv[])
 	//First page after valid login
 	if(!strcmp(gcFunction,"Login"))
 		htmlUser();
-	//Special JSON data commands
-	else if(!strcmp(gcFunction,"TableRows") && cTable[0])
-		jsonTableRows(cTable);
 
 	//Per page command tree
-	UserCommands(entries,i);
-	ProjectCommands(entries,i);
+	UserCommands(entries,x);
+	//Main Post Menu
+	{{funcBootstrapMainPostFunctions}}
 	
 	//default logged in page
 	htmlUser();
@@ -203,11 +199,11 @@ int main(int argc, char *argv[])
 
 void htmlLogin(void)
 {
-	htmlHeader("unxsRAD","LoginHeader");
+	htmlHeader("{{cProject}}","LoginHeader");
 	if(guRequireOTPLogin)
-		htmlLoginPage("unxsRAD","LoginOTP.Body");
+		htmlLoginPage("{{cProject}}","LoginOTP.Body");
 	else
-		htmlLoginPage("unxsRAD","Login.Body");
+		htmlLoginPage("{{cProject}}","Login.Body");
 	htmlFooter("LoginFooter");
 
 }//void htmlLogin(void)
@@ -432,9 +428,9 @@ void SSLCookieLogin(void)
 	
 	if(gcCookie[0])
 	{
-		if((cP=strstr(gcCookie,"OneLoginLogin=")))
+		if((cP=strstr(gcCookie,"{{cProject}}SessionId=")))
 		{
-			cP+=strlen("OneLoginLogin=");
+			cP+=strlen("{{cProject}}SessionId=");
 			if((cP2=strchr(cP,';')))
 			{
 				*cP2=0;
@@ -446,9 +442,9 @@ void SSLCookieLogin(void)
 				sprintf(gcLogin,"%.99s",cP);
 			}
 		}
-		if((cP=strstr(gcCookie,"OneLoginPasswd=")))
+		if((cP=strstr(gcCookie,"{{cProject}}SessionHash=")))
 		{
-			cP+=strlen("OneLoginPasswd=");
+			cP+=strlen("{{cProject}}SessionHash=");
 			if((cP2=strchr(cP,';')))
 			{
 				*cP2=0;
@@ -730,8 +726,8 @@ void SetLogin(void)
 {
 	if(iValidLogin(0))
 	{
-		printf("Set-Cookie: OneLoginLogin=%s; secure;\n",gcLogin);
-		printf("Set-Cookie: OneLoginPasswd=%s; secure;\n",gcPasswd);
+		printf("Set-Cookie: {{cProject}}SessionId=%s; secure;\n",gcLogin);
+		printf("Set-Cookie: {{cProject}}SessionHash=%s; secure;\n",gcPasswd);
 		sprintf(gcUser,"%.41s",gcLogin);
 		GetPLAndClient(gcUser);
 		guSSLCookieLogin=1;

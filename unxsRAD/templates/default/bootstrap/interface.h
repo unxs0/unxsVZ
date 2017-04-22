@@ -7,7 +7,7 @@ AUTHOR
 
 */
 
-#define INTERFACE_HEADER_TITLE "unxsRAD"
+#define INTERFACE_HEADER_TITLE "{{cProject}}"
 #define INTERFACE_COPYRIGHT "<font color=gray>Mobile Centric Software by Unixservice, LLC.</font>"
 
 
@@ -97,6 +97,8 @@ extern char gcOTPInfo[];
 //Menu
 //
 
+{{funcBootstrapModulePrototypes}}
+
 //user.c
 void ProcessUserVars(pentry entries[], int x);
 void UserGetHook(entry gentries[],int x);
@@ -107,16 +109,5 @@ void funcMOTD(FILE *fp);
 void funcOperationHistory(FILE *fp);
 void funcLoginHistory(FILE *fp);
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
-
-//project.c
-void ProcessProjectVars(pentry entries[], int x);
-void ProjectGetHook(entry gentries[],int x);
-void ProjectCommands(pentry entries[], int x);
-void htmlProject(void);
-void htmlProjectPage(char *cTitle, char *cTemplateName);
-void jsonProjectRows(void);
-void jsonProjectCols(void);
-void jsonTableRows(char const *cTable);
-
 
 void logfileLine(const char *cFunction,const char *cLogline);
