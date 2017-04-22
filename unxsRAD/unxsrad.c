@@ -47,6 +47,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLock,char const *cFileName);
 unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable);
 void funcModuleListPrint(FILE *fp);
+void funcBashEnvProject(FILE *fp);
 void funcModuleListTable(FILE *fp);
 void funcModuleLoadVars(FILE *fp);
 void funcModuleProcVars(FILE *fp);
@@ -75,6 +76,7 @@ void funcMainCreateTables(FILE *fp);
 void funcModuleLanguage(FILE *fp);
 void GetRADConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer);
 void funcConfiguration(FILE *fp,char *cFunction);
+void Template2(char *cTemplate, struct t_template *template, FILE *fp);
 
 
 //external prototypes
@@ -500,7 +502,9 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 		//Do not parse data templates. We need to pass on {{cVars/funcXXX}}.
 		if(uTemplateType==uTEMPLATETYPE_DATA)
 		{
-			template.cpName[0]="";
+			if(guDebug)
+				logfileLine("CreateGenericFile","uTEMPLATETYPE_DATA not parsing");
+			fprintf(fp,field[0]);
 		}
 		else
 		{	
@@ -551,9 +555,22 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 			template.cpValue[11]=gcuJs;
 	
 			template.cpName[12]="";
+
+			//Place special keyword in template file at top
+			//to use [[Vars]] instead of {{Vars}}
+			//this is useful for parsing templates that are templates
+			//themselves
+			if(strstr(field[0],"unxsRAD.Template2"))
+			{
+				logfileLine("CreateGenericFile","Template2");
+				Template2(field[0],&template,fp);
+			}
+			else
+			{
+				Template(field[0],&template,fp);
+			}
 		}
 
-		Template(field[0],&template,fp);
 		fclose(fp);
 		uRetVal=0;
 	}
@@ -1743,6 +1760,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcBootstrapMainGetMenu(fp);
 	else if(!strcmp(cFunction,"funcMainNavBars"))
 		funcMainNavBars(fp);
+	else if(!strcmp(cFunction,"funcMainPostFunctions"))
+		funcMainPostFunctions(fp);
 	else if(!strcmp(cFunction,"funcBootstrapMainPostFunctions"))
 		funcBootstrapMainPostFunctions(fp);
 	else if(!strcmp(cFunction,"funcMainTabMenu"))
@@ -1755,6 +1774,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcModuleLanguage(fp);
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
+	else if(!strncmp(cFunction,"funcBashEnvProject",17))
+		funcBashEnvProject(fp);
 	else if(1)
 		logfileLine("AppFunctions.missing",cFunction);
 		
@@ -1833,6 +1854,15 @@ char *WordToLower(char *cInput)
 	return(cInput);
 
 }//char *WordToLower(char *cInput)
+
+
+void funcBashEnvProject(FILE *fp)
+{
+	//Need to improve Template lib to handle triple {${{cProject}}}
+	//substitution
+	fprintf(fp,"${%s}",gcProject);
+
+}//void funcBashEnvProject(FILE *fp)
 
 
 void funcMakefileObjects(FILE *fp)
@@ -2323,4 +2353,84 @@ void funcConfiguration(FILE *fp,char *cFunction)
         mysql_free_result(res);
 
 }//void funcConfiguration(FILE *fp,char *cFunction)
+
+
+//Pass the template contents in one buffer: cTemplate
+//Variables [[cLikeThis]] in the cTemplate are replaced if t_template
+//setup correctly.
+void Template2(char *cTemplate, struct t_template *template, FILE *fp)
+{
+	register int i,uState=0,j=0,k=0;
+	char cVarName[256]={""};
+	char cVarNameS1[1024]={""};
+
+	for(i=0;cTemplate[i];i++)
+	{
+		if(cTemplate[i]=='[' && uState==0 && cTemplate[i+1]=='[')
+		{
+			uState=1;
+			continue;
+		}
+		else if(cTemplate[i]=='[' && uState==1 )
+		{
+			uState=2;
+			continue;
+		}
+		else if(cTemplate[i]==']' && uState==2 )
+		{
+			uState=3;
+			continue;
+		}
+		else if(cTemplate[i]==']' && uState==1 )
+		{
+			uState=0;
+			cVarNameS1[k]=0;
+			fprintf(fp,"[%s]",cVarNameS1);
+			k=0;
+			continue;
+		}
+		else if(cTemplate[i]==']' && uState==3 )
+		{
+			register int n=0,uMatch=0;
+
+			uState=0;
+			cVarName[j]=0;
+			while(template->cpName[n][0])
+			{
+				if(!strcmp(template->cpName[n],cVarName))
+				{
+					fprintf(fp,"%s",template->cpValue[n]);
+					uMatch=1;
+				}
+				n++;
+				if(n>99) break;
+			}
+			if(!uMatch)
+			{
+				if(cVarName[0]=='f')
+				{
+					//Every application that links to this lib
+					//needs to supply this function
+					AppFunctions(fp,cVarName);
+				}
+			}
+			j=0;
+			continue;
+		}
+		if(uState==1)
+		{
+			if(k>1023) return;
+			cVarNameS1[k++]=cTemplate[i];
+			continue;
+		}
+		else if(uState==2)
+		{
+			if(j>254) return;
+			cVarName[j++]=cTemplate[i];
+			continue;
+		}
+		fputc((int)cTemplate[i],fp);
+	}
+
+}//int Template2()
 
