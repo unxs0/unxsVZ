@@ -1,6 +1,7 @@
 /*
 FILE
-        unxsRAD/interface/bootstrap/local.h.default
+	{{cProject}}/interfaces/bootstrap/local.h.default
+        Template unxsRAD/templates/default/bootstrap/local.h.default
 PURPOSE
         Localization constants, configuration settings and release info.
 LEGAL
@@ -13,8 +14,8 @@ LEGAL
 //DBIP0 an DBIP1 can not be NULL amymore. Empty string is the same as NULL.
 #define DBIP0 ""
 #define DBIP1 ""
-#define DBNAME "unxsrad"
-#define DBLOGIN "unxsrad"
+#define DBNAME "{{cProjectLC}}"
+#define DBLOGIN "{{cProjectLC}}"
 #define DBPASSWD "wsxedc"
 #define DBPORT 0
 #define DBSOCKET NULL
@@ -33,7 +34,7 @@ LEGAL
 //You should customize these for your own ISP
 #define EXTISPNAME "unxs.io"
 #define EXTISPURL "unxs.io"
-#define HEADER_TITLE "unxsRAD"
+#define HEADER_TITLE "{{cProject}}"
 
 #define RELEASE "1.0"
 #define REV ".1"

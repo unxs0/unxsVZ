@@ -1,9 +1,10 @@
 /*
 FILE
-	unxsRAD/interfaces/bootstrap/interface.h
+	{{cProject}}/interfaces/bootstrap/interface.h
+	Template unxsRAD/templates/default/bootstrap/interface.h
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
-	(C) 2015-2016 Gary Wallis for Unixservice, LLC.
+	(C) 2015-2017 Gary Wallis for Unixservice, LLC.
 
 */
 

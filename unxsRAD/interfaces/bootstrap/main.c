@@ -203,12 +203,12 @@ int main(int argc, char *argv[])
 
 void htmlLogin(void)
 {
-	htmlHeader("unxsRAD","LoginHeader");
+	htmlHeader("unxsRAD","Default.Header");
 	if(guRequireOTPLogin)
 		htmlLoginPage("unxsRAD","LoginOTP.Body");
 	else
 		htmlLoginPage("unxsRAD","Login.Body");
-	htmlFooter("LoginFooter");
+	htmlFooter("Default.Footer");
 
 }//void htmlLogin(void)
 

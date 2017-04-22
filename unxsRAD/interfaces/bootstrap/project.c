@@ -255,9 +255,9 @@ void ProjectCommands(pentry entries[], int x)
 
 void htmlProject(void)
 {
-	htmlHeader("Project","Project.Header");
+	htmlHeader("Project","Default.Header");
 	htmlProjectPage("Project","Project.Body");
-	htmlFooter("Project.Footer");
+	htmlFooter("Default.Footer");
 
 }//void htmlProject(void)
 

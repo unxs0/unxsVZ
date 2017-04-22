@@ -443,7 +443,7 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cTemplate FROM tTemplate WHERE uTemplate=%u",uTemplate);
+	sprintf(gcQuery,"SELECT cTemplate,uTemplateType FROM tTemplate WHERE uTemplate=%u",uTemplate);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -451,8 +451,10 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 		return(uRetVal);
 	}
 	res=mysql_store_result(&gMysql);
+	unsigned uTemplateType=0;
 	if((field=mysql_fetch_row(res)))
 	{
+		sscanf(field[1],"%u",&uTemplateType);
 		struct t_template template;
 
 		char cSubDir[101]={""};
@@ -493,54 +495,63 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 			mysql_free_result(res);
 			return(1);
 		}
-			
-		template.cpName[0]="cProject";
-		template.cpValue[0]=gcProject;
-			
-		template.cpName[1]="cProjectLC";
-		template.cpValue[1]=gcProjectLC;
-			
-		template.cpName[2]="gcRADStatus";
-		template.cpValue[2]=gcRADStatus;
-			
-		template.cpName[3]="gcAppSummary";
-		char *cp;
-		if((cp=strchr(gcAppSummary,'\n')))
-			*cp=0;
-		if((cp=strchr(gcAppSummary,'\r')))
-			*cp=0;
-		template.cpValue[3]=gcAppSummary;
+		
 
-		template.cpName[4]="cTableName";
-		template.cpValue[4]=gcTableName;
+		//Do not parse data templates. We need to pass on {{cVars/funcXXX}}.
+		if(uTemplateType==uTEMPLATETYPE_DATA)
+		{
+			template.cpName[0]="";
+		}
+		else
+		{	
+			template.cpName[0]="cProject";
+			template.cpValue[0]=gcProject;
 			
-		template.cpName[5]="cTableNameLC";
-		template.cpValue[5]=gcTableNameLC;
+			template.cpName[1]="cProjectLC";
+			template.cpValue[1]=gcProjectLC;
 			
-		sprintf(gcTableKey,"u%.31s",gcTableName+1);//New table name includes table type t prefix
-		template.cpName[6]="cTableKey";
-		template.cpValue[6]=gcTableKey;
-
-		char cTableTitle[32]={"Title"};
-		sprintf(cTableTitle,"%.31s",ForeignKey("tTable","cLegend",uTable));
-		template.cpName[7]="cTableTitle";
-		template.cpValue[7]=cTableTitle;
+			template.cpName[2]="gcRADStatus";
+			template.cpValue[2]=gcRADStatus;
 			
-		char cToolTip[256]={"cToolTip"};
-		sprintf(cToolTip,"%.255s",ForeignKey("tTable","cToolTip",uTable));
-		template.cpName[8]="cToolTip";
-		template.cpValue[8]=cToolTip;
+			template.cpName[3]="gcAppSummary";
+			char *cp;
+			if((cp=strchr(gcAppSummary,'\n')))
+				*cp=0;
+			if((cp=strchr(gcAppSummary,'\r')))
+				*cp=0;
+			template.cpValue[3]=gcAppSummary;
 
-		template.cpName[9]="sgcBuildInfo";
-		template.cpValue[9]=sgcBuildInfo;
-
-		template.cpName[10]="gcProjectStatus";
-		template.cpValue[10]=gcProjectStatus;
-
-		template.cpName[11]="uJs";
-		template.cpValue[11]=gcuJs;
-
-		template.cpName[12]="";
+			template.cpName[4]="cTableName";
+			template.cpValue[4]=gcTableName;
+			
+			template.cpName[5]="cTableNameLC";
+			template.cpValue[5]=gcTableNameLC;
+			
+			sprintf(gcTableKey,"u%.31s",gcTableName+1);//New table name includes table type t prefix
+			template.cpName[6]="cTableKey";
+			template.cpValue[6]=gcTableKey;
+	
+			char cTableTitle[32]={"Title"};
+			sprintf(cTableTitle,"%.31s",ForeignKey("tTable","cLegend",uTable));
+			template.cpName[7]="cTableTitle";
+			template.cpValue[7]=cTableTitle;
+				
+			char cToolTip[256]={"cToolTip"};
+			sprintf(cToolTip,"%.255s",ForeignKey("tTable","cToolTip",uTable));
+			template.cpName[8]="cToolTip";
+			template.cpValue[8]=cToolTip;
+	
+			template.cpName[9]="sgcBuildInfo";
+			template.cpValue[9]=sgcBuildInfo;
+	
+			template.cpName[10]="gcProjectStatus";
+			template.cpValue[10]=gcProjectStatus;
+	
+			template.cpName[11]="uJs";
+			template.cpValue[11]=gcuJs;
+	
+			template.cpName[12]="";
+		}
 
 		Template(field[0],&template,fp);
 		fclose(fp);

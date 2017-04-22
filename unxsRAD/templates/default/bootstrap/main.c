@@ -199,12 +199,12 @@ int main(int argc, char *argv[])
 
 void htmlLogin(void)
 {
-	htmlHeader("{{cProject}}","LoginHeader");
+	htmlHeader("{{cProject}}","Default.Header");
 	if(guRequireOTPLogin)
 		htmlLoginPage("{{cProject}}","LoginOTP.Body");
 	else
 		htmlLoginPage("{{cProject}}","Login.Body");
-	htmlFooter("LoginFooter");
+	htmlFooter("Default.Footer");
 
 }//void htmlLogin(void)
 

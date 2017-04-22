@@ -181,9 +181,9 @@ void {{cTableName}}Commands(pentry entries[], int x)
 
 void html{{cTableName}}(void)
 {
-	htmlHeader("{{cTableName}}","{{cTableName}}.Header");
+	htmlHeader("{{cTableName}}","Default.Header");
 	html{{cTableName}}Page("{{cTableName}}","{{cTableName}}.Body");
-	htmlFooter("{{cTableName}}.Footer");
+	htmlFooter("Default.Footer");
 
 }//void html{{cTableName}}(void)
 

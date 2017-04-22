@@ -192,9 +192,9 @@ void UserCommands(pentry entries[], int x)
 
 void htmlUser(void)
 {
-	htmlHeader("User","User.Header");
+	htmlHeader("User","Default.Header");
 	htmlUserPage("User","User.Body");
-	htmlFooter("User.Footer");
+	htmlFooter("Default.Footer");
 
 }//void htmlUser(void)
 
@@ -374,7 +374,7 @@ unsigned uValidPasswd(char *cPasswd,unsigned guLoginClient)
 void htmlOperationsInfo(void)
 {
 
-	htmlHeader("User","User.Header");
+	htmlHeader("User","Default.Header");
 
         MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -403,7 +403,7 @@ void htmlOperationsInfo(void)
 void htmlLoginInfo(void)
 {
 
-	htmlHeader("User","User.Header");
+	htmlHeader("User","Default.Header");
 
         MYSQL_RES *res;
 	MYSQL_ROW field;
