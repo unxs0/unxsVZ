@@ -38,9 +38,11 @@ AUTHOR
 #define IP_BLOCK_CIDR 1
 #define IP_BLOCK_DASH 2
 
-//Depend on correctly preconfigured tTemplateSet and tTemplateType:
-#define uPLAINSET	1
-#define uOneLogin	14
+//Depend on correctly preconfigured tTemplateSet
+#define uDEFAULT	1
+//and tTemplateType:
+#define uRAD4		1	
+#define uBOOTSTRAP	2
 
 void InterfaceConnectDb(void);
 

@@ -25,6 +25,7 @@ static char *sgcBuildInfo=dsGitVersion;
 static FILE *gLfp=NULL;//log file
 char gcHostname[100]={""};
 unsigned guTable=0;
+static char gcTableNameBS[32]={""};
 static char gcTableName[32]={""};
 static char gcTableNameLC[64]={""};
 static char gcTableKey[33]={""};
@@ -77,6 +78,7 @@ void funcModuleLanguage(FILE *fp);
 void GetRADConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer);
 void funcConfiguration(FILE *fp,char *cFunction);
 void Template2(char *cTemplate, struct t_template *template, FILE *fp);
+void funcBootstrapNavItems(FILE *fp);
 
 
 //external prototypes
@@ -290,10 +292,12 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 	unsigned uRetVal=0;
 	unsigned uTemplate=0;
 	char cFileName[100]={""};
+	char cTableName[100]={""};
 
 	logfileLine("CreateFile","start");
 	if(guDebug) logfileLine("CreateFile",cTable);
 
+	sprintf(cTableName,"%.99s",cTable);
 	WordToLower(cTable);
 
 	//for funcXXXXX
@@ -404,28 +408,54 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 	if(uRetVal)
 		return(uRetVal);
 
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate"
+	if(!strstr(cTableName,".Body"))
+	{
+		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate"
 				" WHERE (cLabel='module.c' OR cLabel='table.c')"
 				" AND uTemplateSet=%u"
 				" AND uTemplateType=%u"
 					,uTemplateSet,uTemplateType);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
-		return(-1);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+			return(-1);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cFileName,"%.97s.c",cTable);
+			if(guDebug) logfileLine("CreateFile4",cFileName);
+			sscanf(field[0],"%u",&uTemplate);
+			if(uTemplate && uTable)
+				uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,cFileName);
+		}
 	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
+	else
 	{
-		sprintf(cFileName,"%.97s.c",cTable);
-		if(guDebug) logfileLine("CreateFile4",cFileName);
-		sscanf(field[0],"%u",&uTemplate);
-		if(uTemplate && uTable)
-			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,cFileName);
+		//interface templates Template2 tTable.Body
+		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate"
+				" WHERE cLabel='tTable.Body'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,uTemplateSet,uTemplateType);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+			return(-1);
+		}
+        	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cFileName,"%.99s",cTableName);
+			if(guDebug) logfileLine("CreateFile5",cFileName);
+			sscanf(field[0],"%u",&uTemplate);
+			if(uTemplate && uTable)
+				uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,cFileName);
+		}
 	}
 	mysql_free_result(res);
-
 	if(uTemplate || uRetVal)
 		return(uRetVal);
 
@@ -554,7 +584,18 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 			template.cpName[11]="uJs";
 			template.cpValue[11]=gcuJs;
 	
-			template.cpName[12]="";
+			template.cpName[12]="cTable";
+			char cTable[100]={""};
+			sprintf(cTable,"%.99s",gcTableName);
+			if((cp=strchr(cTable,'.')))
+				*cp=0;
+			template.cpValue[12]=cTable;
+			
+			sprintf(gcTableNameBS,"%.31s",gcTableName+1);//New table name includes table type t prefix
+			template.cpName[13]="cTableNameBS";
+			template.cpValue[13]=gcTableNameBS;
+	
+			template.cpName[14]="";
 
 			//Place special keyword in template file at top
 			//to use [[Vars]] instead of {{Vars}}
@@ -1772,10 +1813,13 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcMainCreateTables(fp);
 	else if(!strcmp(cFunction,"funcModuleLanguage"))
 		funcModuleLanguage(fp);
+	else if(!strcmp(cFunction,"funcBashEnvProject"))
+		funcBashEnvProject(fp);
+	else if(!strcmp(cFunction,"funcBootstrapNavItems"))
+		funcBootstrapNavItems(fp);
+	//special func that has variants
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
-	else if(!strncmp(cFunction,"funcBashEnvProject",17))
-		funcBashEnvProject(fp);
 	else if(1)
 		logfileLine("AppFunctions.missing",cFunction);
 		
@@ -2015,7 +2059,7 @@ void funcBootstrapMainGetMenu(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cLabel"
+	sprintf(gcQuery,"SELECT cLabel,SUBSTR(cLabel,2)"
 			" FROM tTable"
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
@@ -2033,9 +2077,9 @@ void funcBootstrapMainGetMenu(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		if(uFirst)
-			fprintf(fp,"\t\t\tif(!strcmp(gcFunction,\"%s\"))\n",field[0]);
+			fprintf(fp,"\t\t\tif(!strcmp(gcPage,\"%s\"))\n",field[1]);
 		else
-			fprintf(fp,"\t\t\telse if(!strcmp(gcFunction,\"%s\"))\n",field[0]);
+			fprintf(fp,"\t\t\telse if(!strcmp(gcPage,\"%s\"))\n",field[1]);
 		fprintf(fp,"\t\t\t\t%sGetHook(gentries,x);\n",field[0]);
 		uFirst=0;
 	}
@@ -2434,3 +2478,31 @@ void Template2(char *cTemplate, struct t_template *template, FILE *fp)
 
 }//int Template2()
 
+
+void funcBootstrapNavItems(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	fprintf(fp,"<!-- funcBootstrapNavItems() -->\n");
+
+	sprintf(gcQuery,"SELECT SUBSTR(cLabel,2)"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_BOOTSTRAP);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+            	fprintf(fp,"            <li><a href=\"{{cCGI}}?gcPage=%1$s\">%1$s</a></li>\n",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void funcBootstrapNavItems(FILE *fp)

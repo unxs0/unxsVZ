@@ -108,8 +108,8 @@ int main(int argc, char *argv[])
 		{
 			if(!strcmp(gcPage,"User"))
 				UserGetHook(gentries,x);
+			{{funcBootstrapMainGetMenu}}
 		}
-		{{funcBootstrapMainGetMenu}}
 	}
 	else
 	{
@@ -216,7 +216,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelectInterface(cTemplateName,uPLAINSET,uOneLogin);
+		TemplateSelectInterface(cTemplateName,uDEFAULT,uBOOTSTRAP);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -285,7 +285,7 @@ void htmlHeader(char *cTitle, char *cTemplateName)
 		MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelectInterface(cTemplateName,uPLAINSET,uOneLogin);
+		TemplateSelectInterface(cTemplateName,uDEFAULT,uBOOTSTRAP);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -320,7 +320,7 @@ void htmlFooter(char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelectInterface(cTemplateName,uPLAINSET,uOneLogin);
+		TemplateSelectInterface(cTemplateName,uDEFAULT,uBOOTSTRAP);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -912,7 +912,7 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelectInterface(cTemplateName,uPLAINSET,uOneLogin);
+		TemplateSelectInterface(cTemplateName,uDEFAULT,uBOOTSTRAP);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{

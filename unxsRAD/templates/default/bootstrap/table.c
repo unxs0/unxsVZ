@@ -50,9 +50,9 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 	//}
 
 	//API Get
-	if(!strcmp(gcFunction,"{{cTableName}}Rows"))
+	if(!strcmp(gcFunction,"{{cTableNameBS}}Rows"))
 		json{{cTableName}}Rows();
-	else if(!strcmp(gcFunction,"{{cTableName}}Cols"))
+	else if(!strcmp(gcFunction,"{{cTableNameBS}}Cols"))
 		json{{cTableName}}Cols();
 	html{{cTableName}}();
 
@@ -61,7 +61,7 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 
 void {{cTableName}}Commands(pentry entries[], int x)
 {
-	if(!strcmp(gcPage,"{{cTableName}}"))
+	if(!strcmp(gcPage,"{{cTableNameBS}}"))
 	{
 		Process{{cTableName}}Vars(entries,x);
 		html{{cTableName}}();
@@ -70,11 +70,11 @@ void {{cTableName}}Commands(pentry entries[], int x)
 	//API Post
         MYSQL_RES *res;
 	MYSQL_ROW field;
-	if(!strcmp(gcFunction,"{{cTableName}}Rows"))
+	if(!strcmp(gcFunction,"{{cTableNameBS}}Rows"))
 		json{{cTableName}}Rows();
-	else if(!strcmp(gcFunction,"{{cTableName}}Cols"))
+	else if(!strcmp(gcFunction,"{{cTableNameBS}}Cols"))
 		json{{cTableName}}Cols();
-	else if(!strcmp(gcFunction,"Add{{cTableName}}") || !strcmp(gcFunction,"Mod{{cTableName}}"))
+	else if(!strcmp(gcFunction,"Add{{cTableNameBS}}") || !strcmp(gcFunction,"Mod{{cTableNameBS}}"))
 	{
 		Process{{cTableName}}Vars(entries,x);
 		printf("Content-type: text/plain\n\n");
@@ -85,9 +85,9 @@ void {{cTableName}}Commands(pentry entries[], int x)
 		}
 
 		//Check data
-		if(1)
+		if(cLabel[0])
 		{
-			printf("Insufficient permission to modify project %u\n",{{cTableKey}});
+			printf("No cLabel %u\n",{{cTableKey}});
 			exit(0);
 		}
 		else
@@ -96,8 +96,8 @@ void {{cTableName}}Commands(pentry entries[], int x)
 			if(!{{cTableKey}})
 			{
 				sprintf(gcQuery,"INSERT INTO {{cTableName}}"
-					" SET uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-						,guOrg,guLoginClient);
+					" SET cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
+						,cLabel,guOrg,guLoginClient);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -108,9 +108,9 @@ void {{cTableName}}Commands(pentry entries[], int x)
 			}
 			else
 			{
-				sprintf(gcQuery,"UPDATE {{cTableName}} SET uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+				sprintf(gcQuery,"UPDATE {{cTableName}} SET cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 					" WHERE {{cTableKey}}=%u"
-						,guLoginClient,{{cTableKey}});
+						,cLabel,guLoginClient,{{cTableKey}});
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -123,7 +123,7 @@ void {{cTableName}}Commands(pentry entries[], int x)
 		printf("Unexpected condition\n");
 		exit(0);
 	}
-	else if(!strcmp(gcFunction,"Del{{cTableName}}"))
+	else if(!strcmp(gcFunction,"Del{{cTableNameBS}}"))
 	{
 		Process{{cTableName}}Vars(entries,x);
 
@@ -162,16 +162,16 @@ void {{cTableName}}Commands(pentry entries[], int x)
 				if(mysql_affected_rows(&gMysql)>0)
 					printf("%u\n",{{cTableKey}});
 				else
-					printf("{{cTableName}} not deleted. Unexpected mysql_affected_rows() error\n");
+					printf("{{cTableNameBS}} not deleted. Unexpected mysql_affected_rows() error\n");
 			}
 			else
 			{
-				printf("{{cTableName}} not deleted. Insuficient permissions. guOrg=%u guPermLevel=%u\n",guOrg,guPermLevel);
+				printf("{{cTableNameBS}} not deleted. Insuficient permissions. guOrg=%u guPermLevel=%u\n",guOrg,guPermLevel);
 			}
 		}
 		else
 		{
-			printf("{{cTableName}} not found %u\n",{{cTableKey}});
+			printf("{{cTableNameBS}} not found %u\n",{{cTableKey}});
 		}
 		exit(0);
 	}
@@ -182,7 +182,7 @@ void {{cTableName}}Commands(pentry entries[], int x)
 void html{{cTableName}}(void)
 {
 	htmlHeader("{{cTableName}}","Default.Header");
-	html{{cTableName}}Page("{{cTableName}}","{{cTableName}}.Body");
+	html{{cTableName}}Page("{{cTableName}}","{{cTableNameBS}}.Body");
 	htmlFooter("Default.Footer");
 
 }//void html{{cTableName}}(void)
@@ -195,7 +195,7 @@ void html{{cTableName}}Page(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelectInterface(cTemplateName,uPLAINSET,uOneLogin);
+		TemplateSelectInterface(cTemplateName,uDEFAULT,uBOOTSTRAP);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
@@ -300,8 +300,8 @@ void json{{cTableName}}Cols(void)
 {
 	printf("Content-type: text/json\n\n");
 	printf("[\n");
-	//printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"Unique {{cTableName}} ID\", \"filterable\": false },\n");
-	printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"{{cTableName}} ID\" },\n");
+	//printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"Unique {{cTableNameBS}} ID\", \"filterable\": false },\n");
+	printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"{{cTableNameBS}} ID\" },\n");
 	printf("\t{\"name\": \"cLabel\", \"title\": \"Label\"},\n");
 	printf("\t{\"name\": \"cOwner\", \"title\": \"Owner\", \"breakpoints\": \"xs sm\"}\n");
 	printf("]\n");

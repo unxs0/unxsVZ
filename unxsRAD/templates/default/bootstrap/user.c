@@ -206,7 +206,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
         	MYSQL_RES *res;
 	        MYSQL_ROW field;
 
-		TemplateSelectInterface(cTemplateName,uPLAINSET,uOneLogin);
+		TemplateSelectInterface(cTemplateName,uDEFAULT,uBOOTSTRAP);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
