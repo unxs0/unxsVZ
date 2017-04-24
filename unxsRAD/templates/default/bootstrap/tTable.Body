@@ -79,7 +79,7 @@
 					<label for="cOwner" class="col-sm-3 control-label">cOwner</label>
 					<div class="col-sm-9">
 						<input type="text" class="form-control" id="cOwner" name="cOwner"
-							 placeholder="Start" required>
+							 placeholder="Root" required>
 					</div>
 				</div>
 			</div>
@@ -102,10 +102,10 @@
 			<div class="modal-body">
 				<input type="number" id="u[[cTable]]" name="u[[cTable]]" class="hidden"/>
 				<div class="form-group required">
-					<label for="cName" class="col-sm-3 control-label">cName</label>
+					<label for="cLabel" class="col-sm-3 control-label">cLabel</label>
 					<div class="col-sm-9">
-						<input type="text" class="form-control" id="cName" name="cName"
-							placeholder="unxsSomething" disabled>
+						<input type="text" class="form-control" id="cLabel" name="cLabel"
+							placeholder="" disabled>
 					</div>
 				</div>
 			</div>
@@ -156,7 +156,7 @@ jQuery(function($){
 			deleteRow: function(row){
 				var values = row.val();
 				$delform.find('#u[[cTable]]').val(values.u[[cTable]]);
-				$delform.find('#cName').val(values.cName);
+				$delform.find('#cLabel').val(values.cLabel);
 				$deleteModal.data('row', row);
 				$deleteModal.modal('show');
 			},
@@ -186,11 +186,11 @@ jQuery(function($){
 		var row = $deleteModal.data('row'),
 			values = {
 				u[[cTable]]: $delform.find('#u[[cTable]]').val(),
-				cName: $delform.find('#cName').val()
+				cLabel: $delform.find('#cLabel').val()
 			};
-		console.log( 'Del[[cTable]] values.u[[cTable]]:' + values.u[[cTable]] + ' ' + values.cName );
+		console.log( 'Del[[cTable]] values.u[[cTable]]:' + values.u[[cTable]] + ' ' + values.cLabel);
 
-        $.post('{{cCGI}}?gcFunction=Del[[cTable]]','u[[cTable]]=' + values.u[[cTable]] + '&' + 'cName=' + values.cName,
+        $.post('{{cCGI}}?gcFunction=Del[[cTable]]','u[[cTable]]=' + values.u[[cTable]] + '&' + 'cLabel=' + values.cLabel,
 					function(retval){
 						var r = retval;
 						values.u[[cTable]] = +r;
