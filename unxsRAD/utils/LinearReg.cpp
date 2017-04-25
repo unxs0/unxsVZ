@@ -20,6 +20,7 @@ double slope(const std::vector<double>& x, const std::vector<double>& y)
     const auto s_xx = std::inner_product(x.begin(), x.end(), x.begin(), 0.0);
     const auto s_xy = std::inner_product(x.begin(), x.end(), y.begin(), 0.0);
     const auto m    = (n * s_xy - s_x * s_y) / (n * s_xx - s_x * s_x);
+    std::cout << "s_x=" << s_x << " s_y=" << s_y << " s_xx=" << s_xx << " s_xy=" << s_xy << "\n";
     return m;
 }
 

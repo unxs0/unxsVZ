@@ -85,9 +85,9 @@ void {{cTableName}}Commands(pentry entries[], int x)
 		}
 
 		//Check data
-		if(cLabel[0])
+		if(!cLabel[0])
 		{
-			printf("No cLabel %u\n",{{cTableKey}});
+			printf("No cLabel for %u\n",{{cTableKey}});
 			exit(0);
 		}
 		else
