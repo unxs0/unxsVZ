@@ -120,7 +120,6 @@ void {{cTableName}}Commands(pentry entries[], int x)
 				printf("%u\n",{{cTableKey}});
 			}
 		}
-		printf("Unexpected condition\n");
 		exit(0);
 	}
 	else if(!strcmp(gcFunction,"Del{{cTableNameBS}}"))
