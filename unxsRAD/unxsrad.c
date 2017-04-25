@@ -79,6 +79,7 @@ void GetRADConfiguration(const char *cName,char *cValue,unsigned uValueSize, uns
 void funcConfiguration(FILE *fp,char *cFunction);
 void Template2(char *cTemplate, struct t_template *template, FILE *fp);
 void funcBootstrapNavItems(FILE *fp);
+void funcBootstrapEditorFields(FILE *fp);
 
 
 //external prototypes
@@ -560,8 +561,14 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 			
 			template.cpName[5]="cTableNameLC";
 			template.cpValue[5]=gcTableNameLC;
+		
+			if(gcTableName[0]=='t')	
+				sprintf(gcTableKey,"u%.31s",gcTableName+1);//New table name includes table type t prefix
+			else
+				sprintf(gcTableKey,"u%.31s",gcTableName);//New table name includes table type t prefix
 			
-			sprintf(gcTableKey,"u%.31s",gcTableName+1);//New table name includes table type t prefix
+			if((cp=strchr(gcTableKey,'.')))
+				*cp=0;
 			template.cpName[6]="cTableKey";
 			template.cpValue[6]=gcTableKey;
 	
@@ -1817,6 +1824,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcBashEnvProject(fp);
 	else if(!strcmp(cFunction,"funcBootstrapNavItems"))
 		funcBootstrapNavItems(fp);
+	else if(!strcmp(cFunction,"funcBootstrapEditorFields"))
+		funcBootstrapEditorFields(fp);
 	//special func that has variants
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
@@ -2506,3 +2515,47 @@ void funcBootstrapNavItems(FILE *fp)
 	mysql_free_result(res);
 
 }//void funcBootstrapNavItems(FILE *fp)
+
+/*
+
+                                <div class="form-group required">
+                                        <label for="cOwner" class="col-sm-3 control-label">cOwner</label>
+                                        <div class="col-sm-9">
+                                                <input type="text" class="form-control" id="cOwner" name="cOwner"
+                                                         placeholder="Root" required>
+                                        </div>
+                                </div>
+
+
+ 
+ */
+void funcBootstrapEditorFields(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+	char cFieldName[100];
+
+	fprintf(fp,"<!-- funcBootstrapEditorFields() -->\n");
+
+	fprintf(fp,"\t\t\t\t<input type=\"number\" id=\"%1$s\" name=\"%1$s\" class=\"hidden\"/>\n",gcTableKey);
+
+	sprintf(cFieldName,"%.99s","cLabel");
+	fprintf(fp,"\t\t\t\t<div class=\"form-group required\">\n");
+	fprintf(fp,"\t\t\t\t\t<label for=\"%1$s\" class=\"col-sm-3 control-label\">%1$s</label>\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t<div class=\"col-sm-9\">\n");
+	fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\"\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t</div>\n");
+	fprintf(fp,"\t\t\t\t</div>\n");
+
+
+	sprintf(cFieldName,"%.99s","cOwner");
+	fprintf(fp,"\t\t\t\t<div class=\"form-group required\">\n");
+	fprintf(fp,"\t\t\t\t\t<label for=\"%1$s\" class=\"col-sm-3 control-label\">%1$s</label>\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t<div class=\"col-sm-9\">\n");
+	fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\"\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t</div>\n");
+	fprintf(fp,"\t\t\t\t</div>\n");
+
+}//void funcBootstrapEditorFields(FILE *fp)
