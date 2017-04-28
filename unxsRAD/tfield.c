@@ -50,6 +50,10 @@ static char cSQLDefault[101]={""};
 static unsigned uReadLevel=0;
 //uModLevel: Row Mod Level
 static unsigned uModLevel=0;
+//uClass: Field class like default fields
+static unsigned uClass=0;
+//cOtherOptions: Other field options like Bootstrap breakpoints=xs sm;
+static char cOtherOptions[101]={""};
 //uOwner: Record owner
 static unsigned uOwner=0;
 //uCreatedBy: uClient for last insert
@@ -63,7 +67,7 @@ static time_t uModDate=0;
 
 
 
-#define VAR_LIST_tField "tField.uField,tField.cLabel,tField.uProject,tField.uTable,tField.uOrder,tField.uFieldType,tField.uIndexType,tField.cFKSpec,tField.cExtIndex,tField.cTitle,tField.uSQLSize,tField.uHtmlXSize,tField.uHtmlYSize,tField.uHtmlMax,tField.cFormDefault,tField.cSQLDefault,tField.uReadLevel,tField.uModLevel,tField.uOwner,tField.uCreatedBy,tField.uCreatedDate,tField.uModBy,tField.uModDate"
+#define VAR_LIST_tField "tField.uField,tField.cLabel,tField.uProject,tField.uTable,tField.uOrder,tField.uFieldType,tField.uIndexType,tField.cFKSpec,tField.cExtIndex,tField.cTitle,tField.uSQLSize,tField.uHtmlXSize,tField.uHtmlYSize,tField.uHtmlMax,tField.cFormDefault,tField.cSQLDefault,tField.uReadLevel,tField.uModLevel,tField.uOwner,tField.uCreatedBy,tField.uCreatedDate,tField.uModBy,tField.uModDate,tField.uClass,tField.cOtherOptions"
 
  //Local only
 void Insert_tField(void);
@@ -144,6 +148,8 @@ void ProcesstFieldVars(pentry entries[], int x)
 			sprintf(cFormDefault,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cSQLDefault"))
 			sprintf(cSQLDefault,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cOtherOptions"))
+			sprintf(cOtherOptions,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uReadLevel"))
 			sscanf(entries[i].val,"%u",&uReadLevel);
 		else if(!strcmp(entries[i].name,"uModLevel"))
@@ -158,6 +164,8 @@ void ProcesstFieldVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uModBy);
 		else if(!strcmp(entries[i].name,"uModDate"))
 			sscanf(entries[i].val,"%lu",&uModDate);
+		else if(!strcmp(entries[i].name,"uClass"))
+			sscanf(entries[i].val,"%u",&uClass);
 
 	}
 
@@ -267,6 +275,8 @@ void tField(const char *cResult)
 			sscanf(field[20],"%lu",&uCreatedDate);
 			sscanf(field[21],"%u",&uModBy);
 			sscanf(field[22],"%lu",&uModDate);
+			sscanf(field[23],"%u",&uClass);
+			sprintf(cOtherOptions,"%.100s",field[24]);
 		}
 
 	}//Internal Skip
@@ -501,6 +511,19 @@ void tFieldInput(unsigned uMode)
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cSQLDefault value=\"%s\">\n",EncodeDoubleQuotes(cSQLDefault));
 	}
+//cOtherOptions
+	OpenRow(LANG_FL_tField_cOtherOptions,"black");
+	printf("<input title='%s' type=text name=cOtherOptions value=\"%s\" size=40 maxlength=100 ",
+				LANG_FT_tField_cOtherOptions,EncodeDoubleQuotes(cOtherOptions));
+	if(guPermLevel>=7 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cOtherOptions value=\"%s\">\n",EncodeDoubleQuotes(cOtherOptions));
+	}
 //uReadLevel
 	OpenRow(LANG_FL_tField_uReadLevel,"black");
 	printf("<input title='%s' type=text name=uReadLevel value=%u size=16 maxlength=10 ",LANG_FT_tField_uReadLevel,uReadLevel);
@@ -606,7 +629,29 @@ void Insert_tField(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tField SET uField=%u,cLabel='%s',uProject=%u,uTable=%u,uOrder=%u,uFieldType=%u,uIndexType=%u,cFKSpec='%s',cExtIndex='%s',cTitle='%s',uSQLSize=%u,uHtmlXSize=%u,uHtmlYSize=%u,uHtmlMax=%u,cFormDefault='%s',cSQLDefault='%s',uReadLevel=%u,uModLevel=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tField SET"
+			" uField=%u,"
+			"cLabel='%s',"
+			"uProject=%u,"
+			"uTable=%u,"
+			"uOrder=%u,"
+			"uFieldType=%u,"
+			"uIndexType=%u,"
+			"cFKSpec='%s',"
+			"cExtIndex='%s',"
+			"cTitle='%s',"
+			"uSQLSize=%u,"
+			"uHtmlXSize=%u,"
+			"uHtmlYSize=%u,"
+			"uHtmlMax=%u,"
+			"cFormDefault='%s',"
+			"cSQLDefault='%s',"
+			"cOtherOptions='%s',"
+			"uReadLevel=%u,"
+			"uModLevel=%u,"
+			"uOwner=%u,"
+			"uCreatedBy=%u,"
+			"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uField
 			,TextAreaSave(cLabel)
 			,uProject
@@ -623,6 +668,7 @@ void Insert_tField(void)
 			,uHtmlMax
 			,TextAreaSave(cFormDefault)
 			,TextAreaSave(cSQLDefault)
+			,TextAreaSave(cOtherOptions)
 			,uReadLevel
 			,uModLevel
 			,uOwner
@@ -638,7 +684,28 @@ void Update_tField(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tField SET uField=%u,cLabel='%s',uProject=%u,uTable=%u,uOrder=%u,uFieldType=%u,uIndexType=%u,cFKSpec='%s',cExtIndex='%s',cTitle='%s',uSQLSize=%u,uHtmlXSize=%u,uHtmlYSize=%u,uHtmlMax=%u,cFormDefault='%s',cSQLDefault='%s',uReadLevel=%u,uModLevel=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tField SET"
+			" uField=%u,"
+			"cLabel='%s',"
+			"uProject=%u,"
+			"uTable=%u,"
+			"uOrder=%u,"
+			"uFieldType=%u,"
+			"uIndexType=%u,"
+			"cFKSpec='%s',"
+			"cExtIndex='%s',"
+			"cTitle='%s',"
+			"uSQLSize=%u,"
+			"uHtmlXSize=%u,"
+			"uHtmlYSize=%u,"
+			"uHtmlMax=%u,"
+			"cFormDefault='%s',"
+			"cSQLDefault='%s',"
+			"cOtherOptions='%s',"
+			"uReadLevel=%u,"
+			"uModLevel=%u,"
+			"uModBy=%u,"
+			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uField
 			,TextAreaSave(cLabel)
 			,uProject
@@ -655,6 +722,7 @@ void Update_tField(char *cRowid)
 			,uHtmlMax
 			,TextAreaSave(cFormDefault)
 			,TextAreaSave(cSQLDefault)
+			,TextAreaSave(cOtherOptions)
 			,uReadLevel
 			,uModLevel
 			,uModBy
@@ -744,6 +812,8 @@ void tFieldList(void)
 		"<td><font color=white>uHtmlMax"
 		"<td><font color=white>cFormDefault"
 		"<td><font color=white>cSQLDefault"
+		"<td><font color=white>uClass"
+		"<td><font color=white>cOtherOptions"
 		"<td><font color=white>uReadLevel"
 		"<td><font color=white>uModLevel"
 		"<td><font color=white>uOwner"
@@ -809,7 +879,7 @@ void tFieldList(void)
 		printf("<td><a class=darkLink href=?gcFunction=tField&uField=%s>%s</a>"
 			"<td>%s"
 			"<td>%s"
-			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s"
+			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s"
 			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
 			,field[0],field[0]
 			,field[1]
@@ -827,6 +897,8 @@ void tFieldList(void)
 			,field[13]
 			,field[14]
 			,field[15]
+			,field[23]
+			,field[24]
 			,field[16]
 			,field[17]
 			,cBuf18
@@ -870,7 +942,8 @@ void CreatetField(void)
 				" cSQLDefault VARCHAR(100) NOT NULL DEFAULT '',"
 				" uModLevel INT UNSIGNED NOT NULL DEFAULT 0,"
 				" uReadLevel INT UNSIGNED NOT NULL DEFAULT 0,"
-				" uClass INT UNSIGNED NOT NULL DEFAULT 0 )");
+				" uClass INT UNSIGNED NOT NULL DEFAULT 0,"
+				" cOtherOptions VARCHAR(100) NOT NULL DEFAULT ''");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));

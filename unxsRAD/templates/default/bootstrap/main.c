@@ -65,6 +65,7 @@ void htmlLogin(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
 
+static char *sgcBuildInfo=dsGitVersion;
 
 
 int main(int argc, char *argv[])
@@ -79,7 +80,14 @@ int main(int argc, char *argv[])
 	InterfaceConnectDb();
 
 	if(getenv("REMOTE_ADDR")!=NULL)
+	{
 		sprintf(gcHost,"%.99s",getenv("REMOTE_ADDR"));
+	}
+	else
+	{
+		printf("%s version: %s\n",argv[0],sgcBuildInfo);
+		exit(0);
+	}
 
 	gethostname(gcHostname,98);
 

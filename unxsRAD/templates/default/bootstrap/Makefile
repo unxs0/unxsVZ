@@ -9,9 +9,10 @@
 #	Must customize CGINAME 
 #
 
+GIT_VERSION := $(shell git describe --dirty --always --tags)
 CGINAME=mobile.cgi
 
-CFLAGS=-Wall
+CFLAGS= -Wall -DdsGitVersion=\"$(GIT_VERSION)\"
 LIBS=-L/usr/lib64/mysql -L/usr/lib/openisp -L/usr/lib/oath -L/usr/lib64 -lmysqlclient -ltemplate -lucidr -lz -lcrypt -lm -lssl -loath -lcurl
 
 help:

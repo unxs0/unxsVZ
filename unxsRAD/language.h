@@ -451,6 +451,8 @@
 #define LANG_FT_tField_cFormDefault "HTML Form Default Value if Applies"
 #define LANG_FL_tField_cSQLDefault "cSQLDefault"
 #define LANG_FT_tField_cSQLDefault "SQL Default Value if Applies"
+#define LANG_FL_tField_cOtherOptions "cOtherOptions"
+#define LANG_FT_tField_cOtherOptions "Like bootstrap breakpoints=xm sm;"
 #define LANG_FL_tField_uReadLevel "uReadLevel"
 #define LANG_FT_tField_uReadLevel "Row Read/Display Level"
 #define LANG_FL_tField_uModLevel "uModLevel"

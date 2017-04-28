@@ -865,6 +865,7 @@ void UpdateSchema(void)
 	//tField
 	//
 	unsigned uFieldClass=0;
+	unsigned uFieldOtherOptions=0;
 	sprintf(gcQuery,"SHOW COLUMNS IN tField");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -875,8 +876,19 @@ void UpdateSchema(void)
 	{
 		if(!strcmp(field[0],"uClass"))
 			uFieldClass=1;
+		if(!strcmp(field[0],"cOtherOptions"))
+			uFieldOtherOptions=1;
 	}
        	mysql_free_result(res);
+	if(!uFieldOtherOptions)
+	{
+		sprintf(gcQuery,"ALTER TABLE tField ADD cOtherOptions VARCHAR(100) NOT NULL DEFAULT ''");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			printf("%s\n",mysql_error(&gMysql));
+		else
+			printf("Added cOtherOptions to tField\n");
+	}
 	if(!uFieldClass)
 	{
 		sprintf(gcQuery,"ALTER TABLE tField ADD uClass INT UNSIGNED NOT NULL DEFAULT 0");

@@ -67,7 +67,6 @@
 				<h4 class="modal-title" id="editor-title">Add New [[cTable]]</h4>
 			</div>
 			<div class="modal-body">
-<<<<<<< HEAD
 				<input type="number" id="u[[cTable]]" name="u[[cTable]]" class="hidden"/>
 				<div class="form-group required">
 					<label for="cLabel" class="col-sm-3 control-label">cLabel</label>
