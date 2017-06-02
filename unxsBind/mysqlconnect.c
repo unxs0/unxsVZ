@@ -28,6 +28,33 @@ unsigned TextConnectDb(void);
 unsigned TextConnectExtDb(MYSQL *Mysql, unsigned uMode);
 
 
+//allow fqdn in local.h
+int hostname_to_ip(char * hostname , char* ip)
+{
+    struct hostent *he;
+    struct in_addr **addr_list;
+    int i;
+         
+    if ( (he = gethostbyname( hostname ) ) == NULL) 
+    {
+        // get the host info
+        //herror("gethostbyname");
+        return 1;
+    }
+ 
+    addr_list = (struct in_addr **) he->h_addr_list;
+     
+    for(i = 0; addr_list[i] != NULL; i++) 
+    {
+        //Return the first one;
+        sprintf(ip,"%.31s",inet_ntoa(*addr_list[i]));
+        return 0;
+    }
+     
+    return 1;
+}
+
+
 void ConnectDb(void)
 {
 	//Handle quick cases first
@@ -68,7 +95,11 @@ void ConnectDb(void)
 		//move forward immediately.
 		memset(&sockaddr_inMySQLServer,0,sizeof(sockaddr_inMySQLServer));
 		sockaddr_inMySQLServer.sin_family=AF_INET;
-		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(DBIP0);
+		char cDBIP0[32];
+		sprintf (cDBIP0,"%.31s",DBIP0);
+		if(isalpha(cDBIP0[0]))
+			hostname_to_ip(DBIP0,cDBIP0);
+		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(cDBIP0);
 		sockaddr_inMySQLServer.sin_port=htons(atoi(cPort));
 		iConRes=connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer));
 		if(iConRes<0)
@@ -87,7 +118,7 @@ void ConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						if(mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,
+						if(mysql_real_connect(&gMysql,cDBIP0,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
 							return;
 					}
@@ -116,7 +147,11 @@ void ConnectDb(void)
 		//Fallback to DBIP1
 		memset(&sockaddr_inMySQLServer,0,sizeof(sockaddr_inMySQLServer));
 		sockaddr_inMySQLServer.sin_family=AF_INET;
-		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(DBIP1);
+		char cDBIP1[32];
+		sprintf (cDBIP1,"%.31s",DBIP1);
+		if(isalpha(cDBIP1[0]))
+			hostname_to_ip(DBIP1,cDBIP1);
+		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(cDBIP1);
 		sockaddr_inMySQLServer.sin_port=htons(atoi(cPort));
 		iConRes=connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer));
 		if(iConRes<0)
@@ -135,7 +170,7 @@ void ConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						if(mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,
+						if(mysql_real_connect(&gMysql,cDBIP1,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
 							return;
 					}
@@ -206,7 +241,11 @@ unsigned TextConnectDb(void)
 		//move forward immediately.
 		memset(&sockaddr_inMySQLServer,0,sizeof(sockaddr_inMySQLServer));
 		sockaddr_inMySQLServer.sin_family=AF_INET;
-		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(DBIP0);
+		char cDBIP0[32];
+		sprintf (cDBIP0,"%.31s",DBIP0);
+		if(isalpha(cDBIP0[0]))
+			hostname_to_ip(DBIP0,cDBIP0);
+		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(cDBIP0);
 		sockaddr_inMySQLServer.sin_port=htons(atoi(cPort));
 		iConRes=connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer));
 		if(iConRes<0)
@@ -225,7 +264,7 @@ unsigned TextConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						if(mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,
+						if(mysql_real_connect(&gMysql,cDBIP0,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
 							return(0);
 					}
@@ -257,7 +296,11 @@ unsigned TextConnectDb(void)
 		//Fallback to DBIP1
 		memset(&sockaddr_inMySQLServer,0,sizeof(sockaddr_inMySQLServer));
 		sockaddr_inMySQLServer.sin_family=AF_INET;
-		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(DBIP1);
+		char cDBIP1[32];
+		sprintf (cDBIP1,"%.31s",DBIP1);
+		if(isalpha(cDBIP1[0]))
+			hostname_to_ip(DBIP1,cDBIP1);
+		sockaddr_inMySQLServer.sin_addr.s_addr=inet_addr(cDBIP1);
 		sockaddr_inMySQLServer.sin_port=htons(atoi(cPort));
 		iConRes=connect(iSock,(struct sockaddr *)&sockaddr_inMySQLServer,sizeof(sockaddr_inMySQLServer));
 		if(iConRes<0)
@@ -276,7 +319,7 @@ unsigned TextConnectDb(void)
 					{
 						//Valid fast connection
 						close(iSock);//Don't need anymore.
-						if(mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,
+						if(mysql_real_connect(&gMysql,cDBIP1,DBLOGIN,DBPASSWD,
 											DBNAME,DBPORT,DBSOCKET,0))
 							return(0);
 					}
