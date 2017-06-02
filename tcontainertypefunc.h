@@ -121,7 +121,7 @@ void ExttContainerTypeButtons(void)
                 break;
 
 		default:
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("These are usually fixed uContainerType value entries used internally.");
 			printf("<p><u>Record Context Info</u><br>");
 			tContainerTypeNavList();

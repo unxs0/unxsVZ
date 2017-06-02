@@ -504,7 +504,7 @@ void ExttPropertyButtons(void)
 			printf("<p>");
 			htmlReturnLink();
 			htmlGlossaryLink(cName);
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("In general the only properties that make sense to edit"
 				" are those that are not VZ UBC properties. The exception being"
 				" editing barrier:limit pairs for container modification"

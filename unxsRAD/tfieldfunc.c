@@ -342,14 +342,34 @@ void ExttFieldListSelect(void)
 				,guCompany,guCompany);
 
 	//Changes here must be reflected below in ExttFieldListFilter()
-        if(!strcmp(gcFilter,"uField"))
+        if(!strcmp(gcFilter,"uProject"))
+        {
+                sscanf(gcCommand,"%u",&uProject);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tField.uProject=%u ORDER BY tField.uProject,tField.uTable,tField.uField",uProject);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uTable"))
+        {
+                sscanf(gcCommand,"%u",&uTable);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tField.uTable=%u ORDER BY tField.uTable,tField.uField",uTable);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uField"))
         {
                 sscanf(gcCommand,"%u",&uField);
 		if(guPermLevel<10)
 			strcat(gcQuery," AND ");
 		else
 			strcat(gcQuery," WHERE ");
-		sprintf(cCat,"tField.uField=%u ORDER BY uField",uField);
+		sprintf(cCat,"tField.uField=%u ORDER BY tField.uField",uField);
 		strcat(gcQuery,cCat);
         }
         else if(1)
@@ -359,6 +379,11 @@ void ExttFieldListSelect(void)
 		strcat(gcQuery," ORDER BY uField");
         }
 
+	//debug
+	//char cBuf[2048];
+	//sprintf(cBuf,"%.2047s",gcQuery);
+	//tField(cBuf);
+
 }//void ExttFieldListSelect(void)
 
 
@@ -367,6 +392,14 @@ void ExttFieldListFilter(void)
         //Filter
         printf("&nbsp;&nbsp;&nbsp;Filter on ");
         printf("<select name=gcFilter>");
+        if(strcmp(gcFilter,"uProject"))
+                printf("<option>uProject</option>");
+        else
+                printf("<option selected>uProject</option>");
+        if(strcmp(gcFilter,"uTable"))
+                printf("<option>uTable</option>");
+        else
+                printf("<option selected>uTable</option>");
         if(strcmp(gcFilter,"uField"))
                 printf("<option>uField</option>");
         else
@@ -389,10 +422,10 @@ void ExttFieldNavBar(void)
 	if(guPermLevel>=7 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if(uAllowMod(uOwner,uCreatedBy))
+	if(uAllowMod(uOwner,uCreatedBy) && !guListMode)
 		printf(LANG_NBB_MODIFY);
 
-	if(uAllowDel(uOwner,uCreatedBy)) 
+	if(uAllowDel(uOwner,uCreatedBy) && !guListMode) 
 		printf(LANG_NBB_DELETE);
 
 	if(uOwner)

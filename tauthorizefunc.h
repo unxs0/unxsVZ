@@ -1,12 +1,13 @@
 /*
 FILE
-	svn ID removed
+	tauthorizationfunc.h
 PURPOSE
-	Non-schema dependent tauthorize.c expansion.
+	tAuthorization aux functions
 AUTHOR
 	GPL License applies, see www.fsf.org for details
 	See LICENSE file in this distribution
-	(C) 2001-2009 Gary Wallis and Hugo Urquiza.
+	(C) 2001-2009 Gary Wallis and Hugo Urquiza for Unixservice, LLC.
+	(C) 2010-2017 Gary Wallis for Unixservice, LLC.
  
 */
 
@@ -241,7 +242,7 @@ void ExttAuthorizeButtons(void)
                 break;
 
 		default:
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("Here you can change a passwd for a login of a contact or a non company affiliated login user. Other more complex changes can be done on other fields, but you should seek guidance from experienced users first. Clicking on the modify (new or delete) button will provide more details. All changes are two step operations so there is no danger on clicking on the 'New', 'Modify' or 'Delete' buttons.<p>\n");
 
 			printf("<u>Record Context Info</u><br>");

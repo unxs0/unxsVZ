@@ -223,7 +223,7 @@ void tJob(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tJob",1);
+	HeaderRAD4(":: tJob",1);
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
 
@@ -271,7 +271,7 @@ void tJob(const char *cResult)
 	printf("<tr><td colspan=2>");
         ExttJobAuxTable();
 
-	Footer_ism3();
+	FooterRAD4();
 
 }//end of tJob();
 
@@ -589,7 +589,7 @@ void tJobList(void)
 		if(!field)
 		{
 			printf("<tr><td><font face=arial,helvetica>End of data</table>");
-			Footer_ism3();
+			FooterRAD4();
 		}
 			if(guN % 2)
 				printf("<tr bgcolor=#BBE1D3>");
@@ -633,7 +633,7 @@ void tJobList(void)
 	}
 
 	printf("</table></form>\n");
-	Footer_ism3();
+	FooterRAD4();
 
 }//tJobList()
 

@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
 #ifdef PERNODEFIREWALL
 if(gcOTPSecret[0])
 {
-	LogoutFirewallJobs(guLoginClient);
+	InterfaceLogoutFirewallJobs(guLoginClient);
 }
 else
 {
@@ -306,7 +306,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 		else
 		{
 			printf("<hr>");
-			printf("<center><font size=1>%s</font>\n",cTemplateName);
+			printf("<center><font size=1>d1 %s</font>\n",cTemplateName);
 		}
 		mysql_free_result(res);
 	}
@@ -882,7 +882,7 @@ void SetLogin(void)
 #ifdef PERNODEFIREWALL
 if(gcOTPSecret[0])
 {
-	LoginFirewallJobs(guLoginClient);
+	InterfaceLoginFirewallJobs(guLoginClient);
 }
 else
 {

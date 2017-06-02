@@ -125,6 +125,7 @@ void ExttGlossaryButtons(void)
                 break;
 
 		default:
+			printf("<p><u>Table Tips (%s)</u><br>",cGitVersion);
 
 			tGlossaryNavList();
 	}

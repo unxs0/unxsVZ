@@ -1037,7 +1037,7 @@ void ExtMainContent(void)
 	OpenFieldSet("System Information",100);
 
 	OpenRow("Hostname","black");
-	printf("<td>%s (dbservers: %s, %s)</td></tr>\n",gcHostname,(DBIP0==NULL)?"localhost":DBIP0,(DBIP1==NULL)?"localhost":DBIP1);
+	printf("<td>%s (dbservers: %s, %s)</td></tr>\n",gcHostname,(!DBIP0[0])?"localhost":DBIP0,(!DBIP1[0])?"localhost":DBIP1);
 
 	OpenRow("Build Information","black");
 	printf("<td>%s</td></tr>\n",gcBuildInfo);

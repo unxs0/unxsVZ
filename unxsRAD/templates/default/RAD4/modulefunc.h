@@ -11,6 +11,7 @@ TEMPLATE VARS AND FUNCTIONS
 	cProject
 	cTableKey
 	cTableName
+	cToolTip
 */
 
 {{funcModulePrototypes}}
@@ -141,6 +142,7 @@ void Ext{{cTableName}}Buttons(void)
 
 		default:
 			printf("<u>Table Tips</u><br>");
+			printf("{{cToolTip}}<br>(RADBuildInfo %.32s)\n",sgcBuildInfo);
 			printf("<p><u>Record Context Info</u><br>");
 			printf("<p><u>Operations</u><br>");
 			printf("<br><input type=submit class=largeButton title='Sample button help'"

@@ -1,18 +1,18 @@
 /*
 FILE
-	svn ID removed
+	interfaces/OneLogin/mysqlconnect.c
 PURPOSE
 	Wrapper for mysql_real_connect() that supports very fast
 	connect to main or alternative local.h set MySQL servers.
 	Interface version.
 AUTHOR
-	(C) 2010 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2017 Gary Wallis for Unixservice, LLC.
 NOTES
 	Based on unxsBind/mysqlping.c test code.
 */
 
 #include "interface.h"
-#include "../../local.h"
+#include "local.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -33,12 +33,12 @@ void InterfaceConnectDb(void)
 	//Handle quick cases first
 	//Port is irrelevant here. Make it clear.
 	mysql_init(&gMysql);
-	if(DBIP0==NULL)
+	if(!DBIP0[0])
 	{
 		if (mysql_real_connect(&gMysql,DBIP0,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
 			return;
 	}
-	if(DBIP1==NULL)
+	if(!DBIP1[0])
 	{
 		if (mysql_real_connect(&gMysql,DBIP1,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
 			return;
@@ -59,7 +59,7 @@ void InterfaceConnectDb(void)
 	if(DBPORT!=0)
 		sprintf(cPort,"%u",DBPORT);
 
-	if(DBIP0!=NULL)
+	if(DBIP0[0])
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
@@ -107,7 +107,7 @@ void InterfaceConnectDb(void)
 		close(iSock);//Don't need anymore.
 	}
 
-	if(DBIP1!=NULL)
+	if(DBIP1[0])
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
@@ -156,14 +156,14 @@ void InterfaceConnectDb(void)
 
 	//Failure exit 4 cases
 	char cMessage[256];
-	if(DBIP1!=NULL && DBIP0!=NULL)
-		sprintf(cMessage,"Could not connect to DBIP0:%1$s or DBIP1:%1$s\n",cPort);
-	else if(DBIP1==NULL && DBIP0==NULL)
+	if(DBIP1[0] && DBIP0[0])
+		sprintf(cMessage,"Could not connect to %2$s:%1$s or %3$s:%1$s\n",cPort,DBIP0,DBIP1);
+	else if(!DBIP1[0] && !DBIP0[0])
 		sprintf(cMessage,"Could not connect to local socket\n");
-	else if(DBIP0!=NULL && DBIP1==NULL)
-		sprintf(cMessage,"Could not connect to DBIP0:%s or local socket (DBIP1)\n",cPort);
-	else if(DBIP0==NULL && DBIP1!=NULL)
-		sprintf(cMessage,"Could not connect to DBIP1:%s or local socket (DBIP0)\n",cPort);
+	else if(DBIP0[0] && !DBIP1[0])
+		sprintf(cMessage,"Could not connect to %s:%s or local socket (DBIP1)\n",DBIP0,cPort);
+	else if(!DBIP0[0] && DBIP1[0])
+		sprintf(cMessage,"Could not connect to %s:%s or local socket (DBIP0)\n",DBIP0,cPort);
 	else if(1)
 		sprintf(cMessage,"Could not connect unexpected case\n");
 

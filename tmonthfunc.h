@@ -137,6 +137,7 @@ void ExttMonthButtons(void)
                 break;
 
 		default:
+			printf("<p><u>Table Tips (%s)</u><br>",cGitVersion);
 
 			tMonthNavList();
 	}

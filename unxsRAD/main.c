@@ -747,11 +747,11 @@ void ProcessControlVars(pentry entries[], int x)
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(entries[i].name,"gcFilter"))
-			strcpy(gcFilter,entries[i].val);
+			sprintf(gcFilter,"%.99s",TextAreaSave(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcCommand"))
-			strcpy(gcCommand,entries[i].val);
+			sprintf(gcCommand,"%.99s",TextAreaSave(entries[i].val));
 		else if(!strcmp(entries[i].name,"gcFind"))
-			strcpy(gcFind,entries[i].val);
+			sprintf(gcFind,"%.99s",TextAreaSave(entries[i].val));
 		else if(!strcmp(entries[i].name,"gluRowid"))
 			sscanf(entries[i].val,"%lu",&gluRowid);
 	}
@@ -1906,20 +1906,23 @@ void htmlPlainTextError(const char *cError)
 	printf("Content-type: text/plain\n\n");
 	printf("Please report this unxsRAD fatal error ASAP:\n%s\n",cError);
 
+	char cErrorSafe[256];
+	sprintf(cErrorSafe,"%.255s",cError);
+
 	//Attempt to report error in tLog
         sprintf(gcQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=4,uPermLevel=%u,uLoginClient=%u,cLogin='%s',cHost='%s',cMessage=\"%s (%.24s)\",cServer='%s',cHash=MD5(CONCAT('%u','%u','%s','%s',\"%s (%.24s)\",'%s',UNIX_TIMESTAMP(NOW()),'%s')),uOwner=1,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uTablePK=%u,cTableName='errno'",
 			guPermLevel,
 			guLoginClient,
 			gcLogin,
 			gcHost,
-			EncodeDoubleQuotes(cError),
+			EncodeDoubleQuotes(cErrorSafe),
 			gcQuery,
 			gcHostname,
 			guPermLevel,
 			guLoginClient,
 			gcLogin,
 			gcHost,
-			cError,
+			EncodeDoubleQuotes(cErrorSafe),
 			gcQuery,
 			gcHostname,
 			cLogKey,

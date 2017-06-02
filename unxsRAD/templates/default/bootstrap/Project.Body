@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{gcBrand}} Project tab">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2017">
+    <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico>
+
+    <title>{{gcBrand}}</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/bs/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/bs/css/footable.bootstrap.min.css" />
+
+    <!-- Custom styles for this template -->
+    <link href="/bs/css/offcanvas.css" rel="stylesheet">
+    <link href="/bs/css/collapse.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+    <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{{cCGI}}?gcPage=Project">{{gcBrand}}</a>
+        </div><!--/navbar-header-->
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="{{cCGI}}?gcPage=User">User</a></li>
+            <li class="active"><a href="{{cCGI}}?gcPage=Project">Project</a></li>
+            <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
+          </ul>
+        </div><!-- /.nav-collapse -->
+      </div><!-- /.container -->
+    </nav><!-- /.navbar -->
+
+    <div class="container">
+
+      <div class="row row-offcanvas row-offcanvas-right">
+
+        <div class="col-xs-12 col-sm-9">
+
+<h3>Project</h3>
+<table class="table" data-paging="true" data-editing="true" data-sorting="true" data-filtering="true"></table>
+
+<!-- Editing Modal Markup -->
+<div class="modal fade" id="editor-modal" tabindex="-1" role="dialog" aria-labelledby="editor-title">
+	<style scoped>
+		/* provides a red astrix to denote required fields - this should be included in common stylesheet */
+		.form-group.required .control-label:after {
+			content:"*";
+			color:red;
+			margin-left: 4px;
+		}
+	</style>
+	<div class="modal-dialog" role="document">
+		<form class="modal-content form-horizontal" id="editor">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">x</span></button>
+				<h4 class="modal-title" id="editor-title">Add New Project</h4>
+			</div>
+			<div class="modal-body">
+				<input type="number" id="uProject" name="uProject" class="hidden"/>
+				<div class="form-group required">
+					<label for="cName" class="col-sm-3 control-label">cName</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="cName" name="cName"
+							placeholder="unxsSomething" required>
+					</div>
+				</div>
+				<div class="form-group required">
+					<label for="cStatus" class="col-sm-3 control-label">cStatus</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="cStatus" name="cStatus"
+							 placeholder="Start" required>
+					</div>
+				</div>
+				<div class="form-group required">
+					<label for="cTemplate" class="col-sm-3 control-label">cTemplate</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="cTemplate" name="cTemplate"
+							 placeholder="default" required>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="submit" class="btn btn-primary" id="editor-button" >Create Project</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<!-- Delete Modal Markup -->
+<div class="modal fade" id="delete-modal" tabindex="-1" role="dialog" aria-labelledby="delete-title">
+	<div class="modal-dialog" role="document">
+		<form class="modal-content form-horizontal" id="delform">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">x</span></button>
+				<h4 class="modal-title" id="delete-title">Delete This Project</h4>
+			</div>
+			<div class="modal-body">
+				<input type="number" id="uProject" name="uProject" class="hidden"/>
+				<div class="form-group required">
+					<label for="cName" class="col-sm-3 control-label">cName</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="cName" name="cName"
+							placeholder="unxsSomething" disabled>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="submit" class="btn btn-primary">Delete Project</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+        </div><!--/.col-xs-12.col-sm-9-->
+
+        </div><!--/row-->
+      </div><!--/container-->
+
+
+      <hr>
+
+      <footer>
+        <p>{{gcCopyright}}</p>
+      </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="/bs/js/bootstrap.min.js"></script>
+    <script src="/bs/js/offcanvas.js"></script>
+    <script src="/bs/js/footable.min.js"></script>
+
+<script>
+jQuery(function($){
+	var $editorModal = $('#editor-modal'),
+	$editor = $('#editor'),
+	$editorTitle = $('#editor-title'),
+	$editorButton = $('#editor-button'),
+
+	$deleteModal = $('#delete-modal'),
+	$delform= $('#delform'),
+	$deleteTitle = $('#delete-title'),
+
+	ft=FooTable.init($('.table'),{
+        "rows": $.post('{{cCGI}}','gcFunction=ProjectRows'),
+        "columns": $.post('{{cCGI}}','gcFunction=ProjectCols'),
+	editing: {
+			enabled: true,
+			deleteRow: function(row){
+				var values = row.val();
+				$delform.find('#uProject').val(values.uProject);
+				$delform.find('#cName').val(values.cName);
+				$deleteModal.data('row', row);
+				$deleteModal.modal('show');
+			},
+			editRow: function(row){
+				var values = row.val();
+				$editor.find('#uProject').val(values.uProject);
+				$editor.find('#cName').val(values.cName);
+				$editor.find('#cStatus').val(values.cStatus);
+				$editor.find('#cTemplate').val(values.cTemplate);
+				$editorModal.data('row', row);
+				$editorTitle.text('Update Project ' + values.uProject);
+				$editorButton.text('Update Project');
+				$editorModal.modal('show');
+			},
+			addRow: function(){
+				$editorModal.removeData('row');
+				$editor[0].reset();
+				$editorTitle.text('Add New Project');
+				$editorButton.text('Add Project');
+				$editorModal.modal('show');
+			}
+		}
+	});
+
+	$delform.on('submit', function(d){
+		if (this.checkValidity && !this.checkValidity()) return;
+		d.preventDefault();
+		var row = $deleteModal.data('row'),
+			values = {
+				uProject: $delform.find('#uProject').val(),
+				cName: $delform.find('#cName').val()
+			};
+		console.log( 'DelProject values.uProject:' + values.uProject + ' ' + values.cName );
+
+        $.post('{{cCGI}}?gcFunction=DelProject','uProject=' + values.uProject + '&' + 'cName=' + values.cName,
+					function(retval){
+						var r = retval;
+						values.uProject = +r;
+						console.log( 'DelProject result: ' + r );
+						if ( values.uProject > 0 )
+							row.delete();
+						else
+							alert('Delete error: ' + r);
+					});
+		$deleteModal.modal('hide');
+	});
+
+	$editor.on('submit', function(e){
+		if (this.checkValidity && !this.checkValidity()) return;
+		e.preventDefault();
+		var row = $editorModal.data('row'),
+			values = {
+				uProject: $editor.find('#uProject').val(),
+				cName: $editor.find('#cName').val(),
+				cStatus: $editor.find('#cStatus').val(),
+				cTemplate: $editor.find('#cTemplate').val()
+			};
+
+		if (row instanceof FooTable.Row){
+        		$.post('{{cCGI}}?gcFunction=ModProject',$( "#editor" ).serialize(),
+					function(retval){
+						var r = retval;
+						values.uProject = +r;
+						console.log( 'ModProject result: ' + r);
+						if ( values.uProject > 0 )
+							row.val(values);
+						else
+							alert('Modify error: ' + r);
+					});
+		} else {
+        		$.post('{{cCGI}}?gcFunction=AddProject',$( "#editor" ).serialize(),
+					function(retval){
+						var r = retval;
+						values.uProject = +r;
+						console.log( 'AddProject result: ' + r);
+						if ( values.uProject > 0 )
+							ft.rows.add(values);
+						else
+							alert('Add error: ' + r);
+					});
+		}
+		$editorModal.modal('hide');
+	});
+});
+
+</script>
+
+  </body>
+</html>

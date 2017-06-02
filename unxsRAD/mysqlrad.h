@@ -3,6 +3,7 @@ FILE
 	svn ID removed
 AUTHOR
 	(C) 2001-2008 Gary Wallis and Hugo Urquiza. 
+	(C) 2017-2017 Gary Wallis for Unixservice, LLC.
 */
 
 #include <stdio.h>
@@ -13,14 +14,7 @@ AUTHOR
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-//This is an example tune for your system
-#ifndef Linux
-        #include <sys/systeminfo.h>
-#else
-        #ifndef FreeBSD
-                #include <crypt.h>
-        #endif
-#endif
+#include <crypt.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -29,13 +23,7 @@ AUTHOR
 
 #include "cgi.h"
 
-//This is an example tune for your system
-#ifdef FreeBSD
-	#include "/usr/local/include/mysql/mysql.h"
-#else
-	#include <mysql/mysql.h>
-#endif
-
+#include <mysql/mysql.h>
 
 #include <unistd.h>
 #include <locale.h>
@@ -70,6 +58,36 @@ AUTHOR
 #define COLTYPE_UINTUKEY 1008
 #define COLTYPE_VARCHARUKEY 1009
 #define COLTYPE_UNIXTIME 2000
+#define COLTYPE_DATEEUR 1300
+
+//tTable and tField uClass defines
+#define uSTDCLASS 0
+#define uDEFAULTCLASS 100
+//Be careful provided table tTemplateType must match
+//mysql> select * from tTemplateType;
+//+---------------+-------------+--------+------------+--------------+--------+------------+
+//| uTemplateType | cLabel      | uOwner | uCreatedBy | uCreatedDate | uModBy | uModDate   |
+//+---------------+-------------+--------+------------+--------------+--------+------------+
+//|             1 | RAD4        |      1 |          1 |   1346895225 |      0 |          0 |
+//|             2 | Makefile    |      1 |          1 |   1489764523 |      0 |          0 |
+//|             3 | interface   |      1 |          1 |   1489764567 |      0 |          0 |
+//|             4 | agent       |      1 |          1 |   1489764580 |      0 |          0 |
+//|             5 | css         |      1 |          1 |   1489764593 |      0 |          0 |
+//|             6 | js          |      1 |          1 |   1489764605 |      0 |          0 |
+//|             7 | html        |      1 |          1 |   1489764616 |      0 |          0 |
+//|             8 | data        |      1 |          1 |   1489764707 |      0 |          0 |
+//|             9 | docs        |      1 |          1 |   1489764716 |      0 |          0 |
+//|            10 | images      |      1 |          1 |   1489764730 |      0 |          0 |
+//|            11 | utils       |      1 |          1 |   1489764770 |      0 |          0 |
+//|            12 | Other       |      1 |          1 |   1489764895 |      1 | 1489765216 |
+//|            13 | interfaceFT |      1 |          1 |   1490042482 |      0 |          0 |
+//|            14 | bootstrap   |      1 |          1 |   1491521550 |      0 |          0 |
+//+---------------+-------------+--------+------------+--------------+--------+------------+
+//
+#define uTEMPLATETYPE_RAD4 1
+#define uTEMPLATETYPE_BOOTSTRAP 14
+#define uTEMPLATETYPE_DATA 8
+
 
 extern char gcHost[];
 extern char gcHostname[];
@@ -160,8 +178,8 @@ const char *IsZero(const unsigned uInput);
 void PageMachine(char *cFuncName, int iLmode, char *cMsg);
 
  //Place ModuleCommands() and Module() prototypes here
-#define ISPNAME "OpenISP"
-#define ISPURL "www.openisp.net"
+#define ISPNAME "unxs.io"
+#define ISPURL "unxs.io"
 #define ADMIN 9
 
 //tProject

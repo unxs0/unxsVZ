@@ -87,7 +87,6 @@ extern char gcFunction[];
 extern unsigned guListMode; 
 extern char gcQuery[];
 extern char *gcQstr;
-extern char *gcBuildInfo;
 extern char *gcRADStatus;
 extern MYSQL gMysql; 
 extern MYSQL gMysql2; 
@@ -106,8 +105,8 @@ extern char gcErrormsg[];
 
 void {{cProject}}(const char *cResult);
 void ConnectDb(void);
-void Footer_ism3(void);
-void Header_ism3(char *cMsg, int iJs);
+void FooterRAD4(void);
+void HeaderRAD4(char *cMsg, int iJs);
 void ProcessControlVars(pentry entries[], int x);
 void OpenRow(const char *cFieldLabel, const char *cColor);
 void OpenFieldSet(char *cLabel, unsigned uWidth);
@@ -121,6 +120,8 @@ void tTablePullDownOwner(const char *cTableName, const char *cFieldName,
 void tTablePullDownReadOnly(const char *cTableName, const char *cFieldName,
                         const char *cOrderby, unsigned uSelector);
 int ReadPullDown(const char *cTableName,const char *cFieldName,const char *cLabel);
+int ReadPullDownOwner(const char *cTableName,const char *cFieldName,
+				const char *cLabel,const unsigned uOwner);
 char *TextAreaSave(char *cField);
 char *TransformAngleBrackets(char *cField);
 char *EncodeDoubleQuotes(char *cField);

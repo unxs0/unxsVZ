@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<!-- unxsRAD.Template2 -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{gcBrand}} [[cTable]] tab">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2017">
+    <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico>
+
+    <title>{{gcBrand}}</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/bs/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/bs/css/footable.bootstrap.min.css" />
+
+    <!-- Custom styles for this template -->
+    <link href="/bs/css/offcanvas.css" rel="stylesheet">
+    <link href="/bs/css/collapse.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+    <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{{cCGI}}?gcPage=User">{{gcBrand}}</a>
+        </div><!--/navbar-header-->
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="{{cCGI}}?gcPage=User">User</a></li>
+            [[funcBootstrapNavItems]]
+            <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
+          </ul>
+        </div><!-- /.nav-collapse -->
+      </div><!-- /.container -->
+    </nav><!-- /.navbar -->
+
+    <div class="container">
+
+      <div class="row row-offcanvas row-offcanvas-right">
+
+        <div class="col-xs-12 col-sm-9">
+
+<h3>[[cTable]]</h3>
+<table class="table" data-paging="true" data-editing="true" data-sorting="true" data-filtering="true"></table>
+
+<!-- Editing Modal Markup -->
+<div class="modal fade" id="editor-modal" tabindex="-1" role="dialog" aria-labelledby="editor-title">
+	<style scoped>
+		/* provides a red astrix to denote required fields - this should be included in common stylesheet */
+		.form-group.required .control-label:after {
+			content:"*";
+			color:red;
+			margin-left: 4px;
+		}
+	</style>
+	<div class="modal-dialog" role="document">
+		<form class="modal-content form-horizontal" id="editor">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">x</span></button>
+				<h4 class="modal-title" id="editor-title">Add New [[cTable]]</h4>
+			</div>
+			<div class="modal-body">
+				<input type="number" id="u[[cTable]]" name="u[[cTable]]" class="hidden"/>
+				<div class="form-group required">
+					<label for="cLabel" class="col-sm-3 control-label">cLabel</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="cLabel" name="cLabel"
+							placeholder="cLabel" required>
+					</div>
+				</div>
+				<div class="form-group required">
+					<label for="cOwner" class="col-sm-3 control-label">cOwner</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="cOwner" name="cOwner"
+							 placeholder="Root" required>
+					</div>
+				</div>
+				[[funcBootstrapEditorFields]]
+			</div>
+			<div class="modal-footer">
+				<button type="submit" class="btn btn-primary" id="editor-button" >Create [[cTable]]</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<!-- Delete Modal Markup -->
+<div class="modal fade" id="delete-modal" tabindex="-1" role="dialog" aria-labelledby="delete-title">
+	<div class="modal-dialog" role="document">
+		<form class="modal-content form-horizontal" id="delform">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">x</span></button>
+				<h4 class="modal-title" id="delete-title">Delete This [[cTable]]</h4>
+			</div>
+			<div class="modal-body">
+				<input type="number" id="u[[cTable]]" name="u[[cTable]]" class="hidden"/>
+				<div class="form-group required">
+					<label for="cLabel" class="col-sm-3 control-label">cLabel</label>
+					<div class="col-sm-9">
+						<input type="text" class="form-control" id="cLabel" name="cLabel"
+							placeholder="" disabled>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="submit" class="btn btn-primary">Delete [[cTable]]</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+        </div><!--/.col-xs-12.col-sm-9-->
+
+        </div><!--/row-->
+      </div><!--/container-->
+
+
+      <hr>
+
+      <footer>
+        <p>{{gcCopyright}}</p>
+      </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="/bs/js/bootstrap.min.js"></script>
+    <script src="/bs/js/offcanvas.js"></script>
+    <script src="/bs/js/footable.min.js"></script>
+
+<script>
+jQuery(function($){
+	var $editorModal = $('#editor-modal'),
+	$editor = $('#editor'),
+	$editorTitle = $('#editor-title'),
+	$editorButton = $('#editor-button'),
+
+	$deleteModal = $('#delete-modal'),
+	$delform= $('#delform'),
+	$deleteTitle = $('#delete-title'),
+
+	ft=FooTable.init($('.table'),{
+        "rows": $.post('{{cCGI}}','gcFunction=[[cTable]]Rows'),
+        "columns": $.post('{{cCGI}}','gcFunction=[[cTable]]Cols'),
+	editing: {
+			enabled: true,
+			deleteRow: function(row){
+				var values = row.val();
+				$delform.find('#u[[cTable]]').val(values.u[[cTable]]);
+				$delform.find('#cLabel').val(values.cLabel);
+				$deleteModal.data('row', row);
+				$deleteModal.modal('show');
+			},
+			editRow: function(row){
+				var values = row.val();
+				$editor.find('#u[[cTable]]').val(values.u[[cTable]]);
+				$editor.find('#cLabel').val(values.cLabel);
+				$editor.find('#cOwner').val(values.cOwner);
+				$editorModal.data('row', row);
+				$editorTitle.text('Update [[cTable]] ' + values.u[[cTable]]);
+				$editorButton.text('Update [[cTable]]');
+				$editorModal.modal('show');
+			},
+			addRow: function(){
+				$editorModal.removeData('row');
+				$editor[0].reset();
+				$editorTitle.text('Add New [[cTable]]');
+				$editorButton.text('Add [[cTable]]');
+				$editorModal.modal('show');
+			}
+		}
+	});
+
+	$delform.on('submit', function(d){
+		if (this.checkValidity && !this.checkValidity()) return;
+		d.preventDefault();
+		var row = $deleteModal.data('row'),
+			values = {
+				u[[cTable]]: $delform.find('#u[[cTable]]').val(),
+				cLabel: $delform.find('#cLabel').val()
+			};
+		console.log( 'Del[[cTable]] values.u[[cTable]]:' + values.u[[cTable]] + ' ' + values.cLabel);
+
+        $.post('{{cCGI}}?gcFunction=Del[[cTable]]','u[[cTable]]=' + values.u[[cTable]] + '&' + 'cLabel=' + values.cLabel,
+					function(retval){
+						var r = retval;
+						values.u[[cTable]] = +r;
+						console.log( 'Del[[cTable]] result: ' + r );
+						if ( values.u[[cTable]] > 0 )
+							row.delete();
+						else
+							alert('Delete error: ' + r);
+					});
+		$deleteModal.modal('hide');
+	});
+
+	$editor.on('submit', function(e){
+		if (this.checkValidity && !this.checkValidity()) return;
+		e.preventDefault();
+		var row = $editorModal.data('row'),
+			values = {
+				u[[cTable]]: $editor.find('#u[[cTable]]').val(),
+				cLabel: $editor.find('#cLabel').val(),
+				cOwner: $editor.find('#cOwner').val()
+			};
+
+		if (row instanceof FooTable.Row){
+        		$.post('{{cCGI}}?gcFunction=Mod[[cTable]]',$( "#editor" ).serialize(),
+					function(retval){
+						var r = retval;
+						values.u[[cTable]] = +r;
+						console.log( 'Mod[[cTable]] result: ' + r);
+						if ( values.u[[cTable]] > 0 )
+							row.val(values);
+						else
+							alert('Modify error: ' + r);
+					});
+		} else {
+        		$.post('{{cCGI}}?gcFunction=Add[[cTable]]',$( "#editor" ).serialize(),
+					function(retval){
+						var r = retval;
+						values.u[[cTable]] = +r;
+						console.log( 'Add[[cTable]] result: ' + r);
+						if ( values.u[[cTable]] > 0 )
+							ft.rows.add(values);
+						else
+							alert('Add error: ' + r);
+					});
+		}
+		$editorModal.modal('hide');
+	});
+});
+
+</script>
+
+  </body>
+</html>

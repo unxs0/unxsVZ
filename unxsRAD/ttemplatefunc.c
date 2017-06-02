@@ -240,7 +240,42 @@ void ExttTemplateListSelect(void)
 				,uContactParentCompany);
 
 	//Changes here must be reflected below in ExttTemplateListFilter()
-        if(!strcmp(gcFilter,"uTemplate"))
+        if(!strcmp(gcFilter,"uTemplateType"))
+        {
+                sscanf(gcCommand,"%u",&uTemplateType);
+		if(!uTemplateType)
+		{
+			char gcQuery[256];
+			//sprintf(gcQuery,"SELECT uTemplateType FROM tTemplateType WHERE cLabel LIKE '%s' LIMIT 1",TextAreaSave(gcCommand));
+			sprintf(gcQuery,"SELECT uTemplateType FROM tTemplateType WHERE cLabel LIKE '%s' LIMIT 1",gcCommand);
+        		mysql_query(&gMysql,gcQuery);
+			if(!mysql_errno(&gMysql))
+			{
+        			MYSQL_RES *res;
+        			MYSQL_ROW field;
+        			res=mysql_store_result(&gMysql);
+	        		if((field=mysql_fetch_row(res)))
+                			sscanf(field[0],"%u",&uTemplateType);
+			}
+		}
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tTemplate.uTemplateType=%u ORDER BY uTemplate",uTemplateType);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uTemplateSet"))
+        {
+                sscanf(gcCommand,"%u",&uTemplateSet);
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tTemplate.uTemplateSet=%u ORDER BY uTemplate",uTemplateSet);
+		strcat(gcQuery,cCat);
+        }
+        else if(!strcmp(gcFilter,"uTemplate"))
         {
                 sscanf(gcCommand,"%u",&uTemplate);
 		if(guPermLevel<10)
@@ -250,7 +285,7 @@ void ExttTemplateListSelect(void)
 		sprintf(cCat,"tTemplate.uTemplate=%u ORDER BY uTemplate", uTemplate);
 		strcat(gcQuery,cCat);
         }
-        if(!strcmp(gcFilter,"cLabel"))
+        else if(!strcmp(gcFilter,"cLabel"))
         {
 		if(guPermLevel<10)
 			strcat(gcQuery," AND ");
@@ -274,6 +309,14 @@ void ExttTemplateListFilter(void)
         //Filter
         printf("&nbsp;&nbsp;&nbsp;Filter on ");
         printf("<select name=gcFilter>");
+        if(strcmp(gcFilter,"uTemplateType"))
+                printf("<option>uTemplateType</option>");
+        else
+                printf("<option selected>uTemplateType</option>");
+        if(strcmp(gcFilter,"uTemplateSet"))
+                printf("<option>uTemplateSet</option>");
+        else
+                printf("<option selected>uTemplateSet</option>");
         if(strcmp(gcFilter,"uTemplate"))
                 printf("<option>uTemplate</option>");
         else

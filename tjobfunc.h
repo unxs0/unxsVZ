@@ -571,7 +571,7 @@ void ExttJobButtons(void)
                 break;
 
 		default:
-			printf("<u>Table Tips</u><br>");
+			printf("<u>Table Tips (%s)</u><br>",cGitVersion);
 			printf("This is the job queue table. A good way to scale these infrastructure management"
 				" systems is to use asynchronous job queues. Everything that needs to get done is queued"
 				" here and then executed by the jobqueue.c on local or remote servers."

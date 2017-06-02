@@ -28,8 +28,8 @@ unsigned uGetOrAddLoginSessionHostIP(const char *cHostIP);
 void CreateLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 void RemoveLoginSession(const char *gcHost,const char *gcUser,const char *gcCompany);
 void NewNoDupsIPProp(char const *cName,char const *cValue,unsigned uIP);
-void LogoutFirewallJobs(unsigned uLoginClient);
-void LoginFirewallJobs(unsigned uLoginClient);
+void InterfaceLogoutFirewallJobs(unsigned uLoginClient);
+void InterfaceLoginFirewallJobs(unsigned uLoginClient);
 
 FILE *gLfp=NULL;
 
@@ -250,7 +250,7 @@ void NewNoDupsIPProp(char const *cName,char const *cValue,unsigned uIP)
 }//void NewNoDupsIPProp();
 
 
-void LoginFirewallJobs(unsigned uLoginClient)
+void InterfaceLoginFirewallJobs(unsigned uLoginClient)
 {
 	//Only users with two factor authentication via OTP
 	//can access hardware nodes at this time.
@@ -356,10 +356,10 @@ void LoginFirewallJobs(unsigned uLoginClient)
 			}
 		}
 	}
-}//void LoginFirewallJobs(unsigned uLoginClient)
+}//void InterfaceLoginFirewallJobs(unsigned uLoginClient)
 
 
-void LogoutFirewallJobs(unsigned uLoginClient)
+void InterfaceLogoutFirewallJobs(unsigned uLoginClient)
 {
         MYSQL_RES *res;
         MYSQL_RES *res2;
@@ -448,4 +448,4 @@ void LogoutFirewallJobs(unsigned uLoginClient)
 			}
 		}
 	}
-}//void LogoutFirewallJobs(unsigned uLoginClient)
+}//void InterfaceLogoutFirewallJobs(unsigned uLoginClient)

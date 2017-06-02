@@ -34,12 +34,12 @@ void ConnectDb(char *cMessage)
 	//Handle quick cases first
 	//Port is irrelevant here. Make it clear.
 	mysql_init(&gMysql);
-	if(DBIP0==NULL || !DBIP0[0])
+	if(!DBIP0[0])
 	{
 		if (mysql_real_connect(&gMysql,NULL,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
 			return;
 	}
-	if(DBIP1==NULL || !DBIP1[0])
+	if(!DBIP1[0])
 	{
 		if (mysql_real_connect(&gMysql,NULL,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
 			return;
@@ -60,7 +60,7 @@ void ConnectDb(char *cMessage)
 	if(DBPORT!=0)
 		sprintf(cPort,"%u",DBPORT);
 
-	if(DBIP0!=NULL)
+	if(DBIP0[0])
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
@@ -106,7 +106,7 @@ void ConnectDb(char *cMessage)
 		close(iSock);//Don't need anymore.
 	}
 
-	if(DBIP1!=NULL)
+	if(DBIP1[0])
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
@@ -152,14 +152,14 @@ void ConnectDb(char *cMessage)
 	}
 
 	//Failure exit 4 cases
-	if(DBIP1!=NULL && DBIP0!=NULL)
-		sprintf(cMessage,"Could not connect to DBIP0:%1$s or DBIP1:%1$s\n",cPort);
-	else if(DBIP1==NULL && DBIP0==NULL)
+	if(DBIP1[0] && DBIP0[0])
+		sprintf(cMessage,"Could not connect to %1$s:%3$s or %2$s:%3$s\n",DBIP0,DBIP1,cPort);
+	else if(!DBIP1[0] && !DBIP0[0])
 		sprintf(cMessage,"Could not connect to local socket\n");
-	else if(DBIP0!=NULL && DBIP1==NULL)
-		sprintf(cMessage,"Could not connect to DBIP0:%s or local socket (DBIP1)\n",cPort);
-	else if(DBIP0==NULL && DBIP1!=NULL)
-		sprintf(cMessage,"Could not connect to DBIP1:%s or local socket (DBIP0)\n",cPort);
+	else if(DBIP0[0] && !DBIP1[0])
+		sprintf(cMessage,"Could not connect to %s:%s or local socket (DBIP1)\n",DBIP0,cPort);
+	else if(!DBIP0[0] && DBIP1[0])
+		sprintf(cMessage,"Could not connect to %s:%s or local socket (DBIP0)\n",DBIP1,cPort);
 	else if(1)
 		sprintf(cMessage,"Could not connect unexpected case\n");
 
@@ -171,12 +171,12 @@ unsigned TextConnectDb(void)
 	//Handle quick cases first
 	//Port is irrelevant here. Make it clear.
 	mysql_init(&gMysql);
-	if(DBIP0==NULL || !DBIP0[0])
+	if(!DBIP0[0])
 	{
 		if (mysql_real_connect(&gMysql,NULL,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
 			return(0);
 	}
-	if(DBIP1==NULL || !DBIP1[0])
+	if(!DBIP1[0])
 	{
 		if (mysql_real_connect(&gMysql,NULL,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
 			return(0);
@@ -197,7 +197,7 @@ unsigned TextConnectDb(void)
 	if(DBPORT!=0)
 		sprintf(cPort,"%u",DBPORT);
 
-	if(DBIP0!=NULL)
+	if(DBIP0[0])
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
@@ -243,7 +243,7 @@ unsigned TextConnectDb(void)
 		close(iSock);//Don't need anymore.
 	}
 
-	if(DBIP1!=NULL)
+	if(DBIP1[0])
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
@@ -290,14 +290,14 @@ unsigned TextConnectDb(void)
 
 	//Failure exit 4 cases
 	char cMessage[256];
-	if(DBIP1!=NULL && DBIP0!=NULL)
-		sprintf(cMessage,"Could not connect to DBIP0:%1$s or DBIP1:%1$s\n",cPort);
-	else if(DBIP1==NULL && DBIP0==NULL)
+	if(DBIP1[0] && DBIP0[0])
+		sprintf(cMessage,"Could not connect to %1$s:%3$s or %2$s:%3$s\n",DBIP0,DBIP1,cPort);
+	else if(!DBIP1[0] && !DBIP0[0])
 		sprintf(cMessage,"Could not connect to local socket\n");
-	else if(DBIP0!=NULL && DBIP1==NULL)
-		sprintf(cMessage,"Could not connect to DBIP0:%s or local socket (DBIP1)\n",cPort);
-	else if(DBIP0==NULL && DBIP1!=NULL)
-		sprintf(cMessage,"Could not connect to DBIP1:%s or local socket (DBIP0)\n",cPort);
+	else if(DBIP0[0] && !DBIP1[0])
+		sprintf(cMessage,"Could not connect to %s:%s or local socket (DBIP1)\n",DBIP0,cPort);
+	else if(!DBIP0[0] && DBIP1[0])
+		sprintf(cMessage,"Could not connect to %s:%s or local socket (DBIP0)\n",DBIP1,cPort);
 	else if(1)
 		sprintf(cMessage,"Could not connect unexpected case\n");
 
@@ -313,14 +313,14 @@ unsigned ConnectDbUBC(void)
 	//Port is irrelevant here. Make it clear.
 	//local.h order is important for best performance local should be first
 	mysql_init(&gMysqlUBC);
-	if(gcUBCDBIP0==NULL || !gcUBCDBIP0[0])
+	if(!gcUBCDBIP0[0])
 	{
 		if (mysql_real_connect(&gMysqlUBC,NULL,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
 			return(0);
 		else
 			logfileLine("unxsVZ:ConnectDbUBC","null or empty fail 0");
 	}
-	if(gcUBCDBIP1==NULL || !gcUBCDBIP1[0])
+	if(!gcUBCDBIP1[0])
 	{
 		if (mysql_real_connect(&gMysqlUBC,NULL,DBLOGIN,DBPASSWD,DBNAME,0,DBSOCKET,0))
 			return(0);
@@ -343,7 +343,7 @@ unsigned ConnectDbUBC(void)
 	if(DBPORT!=0)
 		sprintf(cPort,"%u",DBPORT);
 
-	if(gcUBCDBIP0!=NULL && gcUBCDBIP0[0])
+	if(gcUBCDBIP0[0])
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
@@ -396,7 +396,7 @@ unsigned ConnectDbUBC(void)
 		close(iSock);//Don't need anymore.
 	}
 
-	if(gcUBCDBIP1!=NULL && gcUBCDBIP1[0])
+	if(gcUBCDBIP1[0])
 	{
 		if((iSock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP))<0)
 		{
@@ -450,13 +450,13 @@ unsigned ConnectDbUBC(void)
 
 	//Failure exit 4 cases
 	char cMessage[256];
-	if(gcUBCDBIP1!=NULL && gcUBCDBIP0!=NULL)
+	if(gcUBCDBIP1[0] && gcUBCDBIP0[0])
 		sprintf(cMessage,"Could not connect to gcUBCDBIP0:%1$s:%2$s or gcUBCDBIP1:%3$s:%2$s\n",gcUBCDBIP0,cPort,gcUBCDBIP1);
-	else if(gcUBCDBIP1==NULL && gcUBCDBIP0==NULL)
+	else if(!gcUBCDBIP1[0] && !gcUBCDBIP0[0])
 		sprintf(cMessage,"Could not connect to local socket\n");
-	else if(gcUBCDBIP0!=NULL && gcUBCDBIP1==NULL)
+	else if(gcUBCDBIP0[0] && !gcUBCDBIP1[0])
 		sprintf(cMessage,"Could not connect to gcUBCDBIP0:%s:%s or local socket (gcUBCDBIP1)\n",gcUBCDBIP0,cPort);
-	else if(gcUBCDBIP0==NULL && gcUBCDBIP1!=NULL)
+	else if(!gcUBCDBIP0[0] && gcUBCDBIP1[0])
 		sprintf(cMessage,"Could not connect to gcUBCDBIP1:%s:%s or local socket (gcUBCDBIP0)\n",gcUBCDBIP1,cPort);
 	else if(1)
 		sprintf(cMessage,"Could not connect unexpected case\n");

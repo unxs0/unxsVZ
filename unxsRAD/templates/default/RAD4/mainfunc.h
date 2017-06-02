@@ -156,7 +156,7 @@ void ExtMainContent(void)
 	printf("<td>%s</td></tr>\n",gcBuildInfo);
 
 	OpenRow("RAD Status","black");
-	printf("<td>%s %s</td></tr>\n",gcRADStatus,REV);
+	printf("<td>{{gcProjectStatus}} (RADBuildInfo %s)</td></tr>\n",sgcBuildInfo);
 
 	OpenRow("Application Summary","black");
 	printf("<td>{{gcAppSummary}}</td></tr>\n");

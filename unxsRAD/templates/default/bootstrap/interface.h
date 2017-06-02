@@ -1,23 +1,21 @@
 /*
 FILE
-	interface.h
-	svn ID removed
+	{{cProject}}/interfaces/bootstrap/interface.h
+	Template unxsRAD/templates/default/bootstrap/interface.h
 AUTHOR
 	(C) 2006-2009 Gary Wallis and Hugo Urquiza for Unixservice
-	(C) 2015-2016 Gary Wallis for Unixservice, LLC.
+	(C) 2015-2017 Gary Wallis for Unixservice, LLC.
 
 */
 
-#define INTERFACE_HEADER_TITLE ""
-#define INTERFACE_COPYRIGHT "<font color=gray>Telco quality VOIP provisioning software &copy; 2015,2016 Unixservice, LLC. All Rights Reserved.</font>"
+#define INTERFACE_HEADER_TITLE "{{cProject}}"
+#define INTERFACE_COPYRIGHT "<font color=gray>Mobile Centric Software by Unixservice, LLC.</font>"
 
 
-#include "../../mysqlrad.h"
-#include "../../local.h"
+#include "mysqlrad.h"
+#include "local.h"
 #include <ctype.h>
 #include <openisp/template.h>
-//#include <lber.h>
-//#include <ldap.h>
 
 //libtemplate required
 #define MAXPOSTVARS 64
@@ -40,9 +38,11 @@ AUTHOR
 #define IP_BLOCK_CIDR 1
 #define IP_BLOCK_DASH 2
 
-//Depend on correctly preconfigured tTemplateSet and tTemplateType:
-#define uPLAINSET	11
-#define uOneLogin	41
+//Depend on correctly preconfigured tTemplateSet
+#define uDEFAULT	1
+//and tTemplateType:
+#define uRAD4		1	
+#define uBOOTSTRAP	2
 
 void InterfaceConnectDb(void);
 
@@ -60,10 +60,10 @@ const char *cUserLevel(unsigned uPermLevel);
 char *TextAreaSave(char *cField);
 char *FQDomainName(char *cInput);
 void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
+const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
 void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template);
-void LogoutFirewallJobs(unsigned uLoginClient);
-void LoginFirewallJobs(unsigned uLoginClient);
+void InterfaceLogoutFirewallJobs(unsigned uLoginClient);
+void InterfaceLoginFirewallJobs(unsigned uLoginClient);
 
 //Global vars all declared in main.c
 //libtemplate.a required
@@ -93,43 +93,14 @@ extern char gcModStep[];
 extern char gcNewStep[];
 extern char gcDelStep[];
 extern char gcInputStatus[];
-extern unsigned guZone;
-extern unsigned guView;
 extern unsigned guRequireOTPLogin;
 extern char gcOTPSecret[];
 extern char gcOTPInfo[];
 
-extern char gcDIDState[];
-extern char gcDIDRatecenter[];
-extern char gcDIDNew[];
 //Menu
 //
 
-//firewallcontrol.c
-void GetClientProp(const unsigned uClient,const char *cName,char *cValue);
-
-//vitelity.c public functions
-void htmlAvailRatecentersPerState(char *cState);
-void htmlAvailStates(void);
-void htmlAvailLocalDIDs(char *cState,char *cRatecenter);
-
-//container.c
-void ProcessContainerVars(pentry entries[], int x);
-void ContainerGetHook(entry gentries[],int x);
-void ContainerCommands(pentry entries[], int x);
-void htmlContainer(void);
-void htmlContainerPage(char *cTitle, char *cTemplateName);
-void funcSelectContainer(FILE *fp);
-void funcContainerImageTag(FILE *fp);
-void funcContainerInfo(FILE *fp);
-void funcNewContainer(FILE *fp);
-void funcContainer(FILE *fp);
-void funcContainerList(FILE *fp);
-void funcContainerQOS(FILE *fp);
-void funcContainerBulk(FILE *fp);
-void funcRepurposeForm(FILE *fp);
-void funcResellerForm(FILE *fp);
-void funcDIDForm(FILE *fp);
+{{funcBootstrapModulePrototypes}}
 
 //user.c
 void ProcessUserVars(pentry entries[], int x);
@@ -142,13 +113,4 @@ void funcOperationHistory(FILE *fp);
 void funcLoginHistory(FILE *fp);
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
 
-
-//glossary.c
-void GlossaryGetHook(entry gentries[],int x);
-void htmlGlossary(void);
-void htmlGlossaryPage(char *cTitle, char *cTemplateName);
-
-//ldap.c
-//int iValidLDAPLogin(const char *cLogin, const char *cPasswd, char *cOrganization);
-//void ldapErrorLog(char *cMessage,LDAP *ld);
 void logfileLine(const char *cFunction,const char *cLogline);

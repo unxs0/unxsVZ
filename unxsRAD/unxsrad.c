@@ -7,6 +7,9 @@ LEGAL
 	(C) 2012-2017 Gary Wallis for Unixservice, LLC. All Rights Reserved.
 	LICENSE file should be included in distribution.
 OTHER
+	TODO every single embeded mini templates (the printf's with code in them) 
+	in this file can and should be eventually moved in to the 
+	general tTemplate system.
 HELP
 
 */
@@ -22,27 +25,30 @@ static char *sgcBuildInfo=dsGitVersion;
 static FILE *gLfp=NULL;//log file
 char gcHostname[100]={""};
 unsigned guTable=0;
+static char gcTableNameBS[32]={""};
 static char gcTableName[32]={""};
 static char gcTableNameLC[64]={""};
 static char gcTableKey[33]={""};
+static char gcProjectStatus[33]={""};
 unsigned guProject=0;
+unsigned guTemplateType=0;
 char gcProject[32]={"Project"};
 char gcProjectLC[32]={"project"};
 char gcRADStatus[32]={"Unknown"};
 char gcDirectory[256]={""};
 char gcRADDataDir[100]={"/home/unxs/unxsVZ/unxsRAD/appdata/"};
 char gcAppSummary[256]={"No application summary"};
+char gcuJs[3]={"0"};
 
 //prototype TOC
 void ProcessJobQueue(void);
 void MakeSourceCodeJob(unsigned uJob,char const *cJobData);
 void logfileLine(const char *cFunction,const char *cLogline);
-unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned uSourceLock);
+unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned uSourceLock,unsigned uTemplateType);
+unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLock,char const *cFileName);
 unsigned CreateFileFromTemplate(unsigned uTemplate,unsigned uTable);
-unsigned CreateModuleFile(unsigned uTemplate, unsigned uTable,unsigned uSourceLock);
-unsigned CreateGenericFile(unsigned uTemplate, unsigned uTable,unsigned uSourceLock);
-unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable,unsigned uSourceLock);
 void funcModuleListPrint(FILE *fp);
+void funcBashEnvProject(FILE *fp);
 void funcModuleListTable(FILE *fp);
 void funcModuleLoadVars(FILE *fp);
 void funcModuleProcVars(FILE *fp);
@@ -59,15 +65,21 @@ char *WordToLower(char *cInput);
 void funcMakefileObjects(FILE *fp);
 void funcMakefileRules(FILE *fp);
 void funcModulePrototypes(FILE *fp);
+void funcBootstrapModulePrototypes(FILE *fp);
 void funcMainGetMenu(FILE *fp);
+void funcBootstrapMainGetMenu(FILE *fp);
 void funcMainNavBars(FILE *fp);
 void funcMainPostFunctions(FILE *fp);
+void funcBootstrapMainPostFunctions(FILE *fp);
 void funcMainTabMenu(FILE *fp);
 void funcMainInitTableList(FILE *fp);
 void funcMainCreateTables(FILE *fp);
 void funcModuleLanguage(FILE *fp);
 void GetRADConfiguration(const char *cName,char *cValue,unsigned uValueSize, unsigned uServer);
 void funcConfiguration(FILE *fp,char *cFunction);
+void Template2(char *cTemplate, struct t_template *template, FILE *fp);
+void funcBootstrapNavItems(FILE *fp);
+void funcBootstrapEditorFields(FILE *fp);
 
 
 //external prototypes
@@ -173,6 +185,7 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 	unsigned uTable=0;
 	unsigned uSourceLock=0;
 	unsigned uTemplateSet=0;
+	unsigned uTemplateType=0;
 	unsigned uOnce=1;
 
 	logfileLine("MakeSourceCodeJob","start");
@@ -202,8 +215,13 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 
 	//All tTables that do not have uSourceLock=yes
 	//If uSourceLock==1 then if file does not exist we create if not we do not replace
-	sprintf(gcQuery,"SELECT tProject.cLabel,tTable.cLabel,tTable.uTable,tProject.uTemplateSet,tTable.uSourceLock FROM tProject,tTable"
-			" WHERE tTable.uProject=tProject.uProject AND tProject.uProject=%u",
+	sprintf(gcQuery,"SELECT tProject.cLabel,tTable.cLabel,tTable.uTable,"
+			"tProject.uTemplateSet,tTable.uSourceLock,"
+			"tProjectStatus.cLabel,tTable.uTemplateType"
+			" FROM tProject,tTable,tProjectStatus"
+			" WHERE tTable.uProject=tProject.uProject AND"
+			" tProject.uProjectStatus=tProjectStatus.uStatus AND"
+			" tProject.uProject=%u",
 					uProject);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -226,13 +244,17 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 		}
 		sscanf(field[2],"%u",&uTable);
 		sscanf(field[4],"%u",&uSourceLock);
+		sscanf(field[6],"%u",&uTemplateType);
 		if(guDebug)
 		{
 			sprintf(gcQuery,"%s uTable:%u:%u",field[1],uTable,uSourceLock);
 			logfileLine("MakeSourceCodeJob",gcQuery);
 		}
-		if(CreateFile(uTemplateSet,uTable,field[1],uSourceLock))
+		sprintf(gcProjectStatus,"%.32s",field[5]);
+		if(CreateFile(uTemplateSet,uTable,field[1],uSourceLock,uTemplateType))
 			break;
+		else
+			logfileLine("CreateFile","end");
 	}
 	mysql_free_result(res);
 
@@ -264,22 +286,32 @@ void logfileLine(const char *cFunction,const char *cLogline)
 }//void logfileLine(char *cLogline)
 
 
-unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned uSourceLock)
+unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned uSourceLock,unsigned uTemplateType)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uRetVal=0;
 	unsigned uTemplate=0;
+	char cFileName[100]={""};
+	char cTableName[100]={""};
 
 	logfileLine("CreateFile","start");
 	if(guDebug) logfileLine("CreateFile",cTable);
 
+	sprintf(cTableName,"%.99s",cTable);
 	WordToLower(cTable);
 
-	//Here we decide which template to use
+	//for funcXXXXX
+	guTemplateType=uTemplateType;
 
-	//e.g. makefile
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s' AND uTemplateSet=%u",cTable,uTemplateSet);
+	//Here we decide which template to use exact match 
+	//else if using uTemplate != 0;
+	//e.g. makefile, e.g. footable.bootstrap.min.css
+	sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate"
+				" WHERE cLabel='%s'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,cTable,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -289,18 +321,22 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		if(guDebug) logfileLine("CreateFile","CreateGenericFile {{cTable}}");
+		if(guDebug) logfileLine("CreateFile1",field[1]);
 		sscanf(field[0],"%u",&uTemplate);
 		if(uTemplate && uTable)
-			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock);
+			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,field[1]);
 	}
 	mysql_free_result(res);
 
-	if(uRetVal)
+	if(uTemplate || uRetVal)
 		return(uRetVal);
 
-	//e.g. template based tconfiguration.c
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%s.c' AND uTemplateSet=%u",cTable,uTemplateSet);
+	//e.g. template based tConfiguration where template tconfiguration.c exists
+	sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate"
+				" WHERE cLabel='%s.c'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,cTable,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -310,18 +346,23 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		if(guDebug) logfileLine("CreateFile","CreateGenericFile {{cTable}}.c case");
+		if(guDebug) logfileLine("CreateFile2",field[1]);
 		sscanf(field[0],"%u",&uTemplate);
 		if(uTemplate && uTable)
-			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock);
+			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,field[1]);
 	}
 	mysql_free_result(res);
 
+	//Do the func.h and the .c 
 	if(uRetVal)
 		return(uRetVal);
 
-	//e.g. template based tclientfunc.h
-	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='%sfunc.h' AND uTemplateSet=%u",cTable,uTemplateSet);
+	//e.g. template based tClient where tclientfunc.h template exists
+	sprintf(gcQuery,"SELECT uTemplate,cLabel FROM tTemplate"
+				" WHERE cLabel='%sfunc.h'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,cTable,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -331,89 +372,122 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
         res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
-		logfileLine("CreateFile","CreateGenericFile {{cTable}}func.h case");
+		logfileLine("CreateFile5",field[1]);
 		sscanf(field[0],"%u",&uTemplate);
 		if(uTemplate && uTable)
-			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock);
+			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,field[1]);
 	}
 	mysql_free_result(res);
 
-	if(uRetVal)
+	if(uTemplate || uRetVal)
 		return(uRetVal);
 
 	//No specific template found for table use module.c and modulefunc.h
-	if(!uTemplate)
+	sprintf(gcQuery,"SELECT uTemplate FROM tTemplate"
+				" WHERE cLabel='modulefunc.h'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,uTemplateSet,uTemplateType);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
 	{
-		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='modulefunc.h' AND uTemplateSet=%u",uTemplateSet);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
-			return(-1);
-		}
-	        res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			if(guDebug) logfileLine("CreateFile","CreateModuleFuncFile using modulefunc.h template");
-			sscanf(field[0],"%u",&uTemplate);
-			if(uTemplate && uTable)
-				uRetVal=CreateModuleFuncFile(uTemplate,uTable,uSourceLock);
-		}
-		mysql_free_result(res);
-
-		if(uRetVal)
-			return(uRetVal);
-
-		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate WHERE cLabel='module.c' AND uTemplateSet=%u",uTemplateSet);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
-			return(-1);
-		}
-	        res=mysql_store_result(&gMysql);
-		if((field=mysql_fetch_row(res)))
-		{
-			if(guDebug) logfileLine("CreateFile","CreateModuleFuncFile using module.c template");
-			sscanf(field[0],"%u",&uTemplate);
-			if(uTemplate && uTable)
-				uRetVal=CreateModuleFile(uTemplate,uTable,uSourceLock);
-		}
-		mysql_free_result(res);
-
-		if(uRetVal)
-			return(uRetVal);
-
-	}
-
-	//Here we decide which template to use
-	logfileLine("CreateFile","end");
-	return(uRetVal);
-}//unsigned CreateFile()
-
-
-unsigned CreateModuleFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLock)
-{
-	unsigned uRetVal= -1;
-	
-	logfileLine("CreateModuleFile","start");
-
-	if(!uTable || !uTemplate) return(uRetVal);
-
-
-       	MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	sprintf(gcQuery,"SELECT cTemplate FROM tTemplate WHERE uTemplate=%u",uTemplate);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-	{
-		logfileLine("CreateModuleFile",mysql_error(&gMysql));
-		return(uRetVal);
+		logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+		return(-1);
 	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
+		sprintf(cFileName,"%.93sfunc.h",cTable);
+		if(guDebug) logfileLine("CreateFile3",cFileName);
+		sscanf(field[0],"%u",&uTemplate);
+		if(uTemplate && uTable)
+			uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,cFileName);
+	}
+	mysql_free_result(res);
+
+	//Do the func.h and the .c 
+	if(uRetVal)
+		return(uRetVal);
+
+	if(!strstr(cTableName,".Body"))
+	{
+		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate"
+				" WHERE (cLabel='module.c' OR cLabel='table.c')"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,uTemplateSet,uTemplateType);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+			return(-1);
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cFileName,"%.97s.c",cTable);
+			if(guDebug) logfileLine("CreateFile4",cFileName);
+			sscanf(field[0],"%u",&uTemplate);
+			if(uTemplate && uTable)
+				uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,cFileName);
+		}
+	}
+	else
+	{
+		//interface templates Template2 tTable.Body
+		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate"
+				" WHERE cLabel='tTable.Body'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,uTemplateSet,uTemplateType);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+			return(-1);
+		}
+        	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sprintf(cFileName,"%.99s",cTableName);
+			if(guDebug) logfileLine("CreateFile5",cFileName);
+			sscanf(field[0],"%u",&uTemplate);
+			if(uTemplate && uTable)
+				uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,cFileName);
+		}
+	}
+	mysql_free_result(res);
+	if(uTemplate || uRetVal)
+		return(uRetVal);
+
+	logfileLine("CreateFile","no template found for given table!");
+	return(uRetVal);
+
+}//unsigned CreateFile()
+
+
+unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLock,char const *cFileName)
+{
+	unsigned uRetVal= -1;
+	logfileLine("CreateGenericFile",cFileName);
+
+	if(!uTable || !uTemplate) return(uRetVal);
+
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cTemplate,uTemplateType FROM tTemplate WHERE uTemplate=%u",uTemplate);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		logfileLine("CreateGenericFile",mysql_error(&gMysql));
+		return(uRetVal);
+	}
+	res=mysql_store_result(&gMysql);
+	unsigned uTemplateType=0;
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uTemplateType);
 		struct t_template template;
 
 		char cSubDir[101]={""};
@@ -424,114 +498,6 @@ unsigned CreateModuleFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLoc
 		WordToLower(gcTableNameLC);
 		guTable=uTable;
 
-		FILE *fp;
-		char cFile[512]={""};
-		if(cSubDir[0])
-		{
-			sprintf(gcQuery,"mkdir -p %s/%s",gcDirectory,cSubDir);
-			if(system(gcQuery))
-				logfileLine("CreateModuleFile",gcQuery);
-			sprintf(cFile,"%.200s/%.100s/%.200s.c",gcDirectory,cSubDir,gcTableNameLC);
-		}
-		else
-		{
-			sprintf(cFile,"%.200s/%.200s.c",gcDirectory,gcTableNameLC);
-		}
-		if(uSourceLock)
-		{
-			if((fp=fopen(cFile,"r"))!=NULL)
-			{
-				logfileLine("CreateModuleFile","uSourceLock==1 not replacing");
-				mysql_free_result(res);
-				return(0);
-			}
-		}
-		if((fp=fopen(cFile,"w"))==NULL)
-		{
-			logfileLine("CreateModuleFile",cFile);
-			mysql_free_result(res);
-			return(1);
-		}
-
-/*
-	funcModuleCreateQuery
-	funcModuleInsertQuery
-	funcModuleListPrint
-	funcModuleListTable
-	funcModuleLoadVars
-	funcModuleProcVars
-	funcModuleInput
-	funcModuleUpdateQuery
-	funcModuleVars
-	funcModuleVarList
-	cProject
-	cTableKey
-	cTableName
-	cTableNameLC
-	cTableTitle
-*/
-			
-		template.cpName[0]="cTableName";
-		template.cpValue[0]=gcTableName;
-			
-		template.cpName[1]="cTableNameLC";
-		template.cpValue[1]=gcTableNameLC;
-			
-		template.cpName[2]="cTableKey";
-		sprintf(gcTableKey,"u%.31s",gcTableName+1);//New table name includes table type t prefix
-		template.cpValue[2]=gcTableKey;
-
-		template.cpName[3]="cProject";
-		template.cpValue[3]=gcProject;
-			
-		char cTableTitle[32]={"Title"};
-		sprintf(cTableTitle,"%.31s",ForeignKey("tTable","cLegend",uTable));
-		template.cpName[4]="cTableTitle";
-		template.cpValue[4]=cTableTitle;
-			
-		template.cpName[5]="";
-
-		Template(field[0],&template,fp);
-		fclose(fp);
-		uRetVal=0;
-	}
-	else
-	{
-		logfileLine("CreateModuleFile","No such uTemplate");
-		uRetVal=2;
-	}
-	mysql_free_result(res);
-
-	logfileLine("CreateModuleFile","end");
-	return(uRetVal);
-
-}//unsigned CreateModuleFile()
-
-
-unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLock)
-{
-	unsigned uRetVal= -1;
-	logfileLine("CreateGenericFile","start");
-
-	if(!uTable || !uTemplate) return(uRetVal);
-
-       	MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	sprintf(gcQuery,"SELECT cTemplate,cLabel FROM tTemplate WHERE uTemplate=%u",uTemplate);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-	{
-		logfileLine("CreateGenericFile",mysql_error(&gMysql));
-		return(uRetVal);
-	}
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		struct t_template template;
-
-		char cSubDir[101]={""};
-		sprintf(cSubDir,"%.100s",ForeignKey("tTable","cSubDir",uTable));
 
 		FILE *fp=NULL;
 		char cFile[512]={""};
@@ -540,11 +506,11 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 			sprintf(gcQuery,"mkdir -p %s/%s",gcDirectory,cSubDir);
 			if(system(gcQuery))
 				logfileLine("CreateGenericFile",gcQuery);
-			sprintf(cFile,"%.200s/%.100s/%.200s",gcDirectory,cSubDir,field[1]);
+			sprintf(cFile,"%.200s/%.100s/%.200s",gcDirectory,cSubDir,cFileName);
 		}
 		else
 		{
-			sprintf(cFile,"%.200s/%.200s",gcDirectory,field[1]);
+			sprintf(cFile,"%.200s/%.200s",gcDirectory,cFileName);
 		}
 
 		if(uSourceLock)
@@ -562,22 +528,97 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 			mysql_free_result(res);
 			return(1);
 		}
-			
-		template.cpName[0]="cProject";
-		template.cpValue[0]=gcProject;
-			
-		template.cpName[1]="cProjectLC";
-		template.cpValue[1]=gcProjectLC;
-			
-		template.cpName[2]="gcRADStatus";
-		template.cpValue[2]=gcRADStatus;
-			
-		template.cpName[3]="cAppSummary";
-		template.cpValue[3]=gcAppSummary;
-			
-		template.cpName[4]="";
+		
 
-		Template(field[0],&template,fp);
+		//Do not parse data templates. We need to pass on {{cVars/funcXXX}}.
+		if(uTemplateType==uTEMPLATETYPE_DATA)
+		{
+			if(guDebug)
+				logfileLine("CreateGenericFile","uTEMPLATETYPE_DATA not parsing");
+			fprintf(fp,field[0]);
+		}
+		else
+		{	
+			template.cpName[0]="cProject";
+			template.cpValue[0]=gcProject;
+			
+			template.cpName[1]="cProjectLC";
+			template.cpValue[1]=gcProjectLC;
+			
+			template.cpName[2]="gcRADStatus";
+			template.cpValue[2]=gcRADStatus;
+			
+			template.cpName[3]="gcAppSummary";
+			char *cp;
+			if((cp=strchr(gcAppSummary,'\n')))
+				*cp=0;
+			if((cp=strchr(gcAppSummary,'\r')))
+				*cp=0;
+			template.cpValue[3]=gcAppSummary;
+
+			template.cpName[4]="cTableName";
+			template.cpValue[4]=gcTableName;
+			
+			template.cpName[5]="cTableNameLC";
+			template.cpValue[5]=gcTableNameLC;
+		
+			if(gcTableName[0]=='t')	
+				sprintf(gcTableKey,"u%.31s",gcTableName+1);//New table name includes table type t prefix
+			else
+				sprintf(gcTableKey,"u%.31s",gcTableName);//New table name includes table type t prefix
+			
+			if((cp=strchr(gcTableKey,'.')))
+				*cp=0;
+			template.cpName[6]="cTableKey";
+			template.cpValue[6]=gcTableKey;
+	
+			char cTableTitle[32]={"Title"};
+			sprintf(cTableTitle,"%.31s",ForeignKey("tTable","cLegend",uTable));
+			template.cpName[7]="cTableTitle";
+			template.cpValue[7]=cTableTitle;
+				
+			char cToolTip[256]={"cToolTip"};
+			sprintf(cToolTip,"%.255s",ForeignKey("tTable","cToolTip",uTable));
+			template.cpName[8]="cToolTip";
+			template.cpValue[8]=cToolTip;
+	
+			template.cpName[9]="sgcBuildInfo";
+			template.cpValue[9]=sgcBuildInfo;
+	
+			template.cpName[10]="gcProjectStatus";
+			template.cpValue[10]=gcProjectStatus;
+	
+			template.cpName[11]="uJs";
+			template.cpValue[11]=gcuJs;
+	
+			template.cpName[12]="cTable";
+			char cTable[100]={""};
+			sprintf(cTable,"%.99s",gcTableName);
+			if((cp=strchr(cTable,'.')))
+				*cp=0;
+			template.cpValue[12]=cTable;
+			
+			sprintf(gcTableNameBS,"%.31s",gcTableName+1);//New table name includes table type t prefix
+			template.cpName[13]="cTableNameBS";
+			template.cpValue[13]=gcTableNameBS;
+	
+			template.cpName[14]="";
+
+			//Place special keyword in template file at top
+			//to use [[Vars]] instead of {{Vars}}
+			//this is useful for parsing templates that are templates
+			//themselves
+			if(strstr(field[0],"unxsRAD.Template2"))
+			{
+				logfileLine("CreateGenericFile","Template2");
+				Template2(field[0],&template,fp);
+			}
+			else
+			{
+				Template(field[0],&template,fp);
+			}
+		}
+
 		fclose(fp);
 		uRetVal=0;
 	}
@@ -592,106 +633,6 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 	return(uRetVal);
 
 }//unsigned CreateGenericFile()
-
-
-unsigned CreateModuleFuncFile(unsigned uTemplate, unsigned uTable,unsigned uSourceLock)
-{
-	unsigned uRetVal= -1;
-	logfileLine("CreateModuleFuncFile","start");
-
-	if(!uTable || !uTemplate) return(uRetVal);
-
-       	MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	sprintf(gcQuery,"SELECT cTemplate FROM tTemplate WHERE uTemplate=%u",uTemplate);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-	{
-		logfileLine("CreateModuleFuncFile",mysql_error(&gMysql));
-		return(uRetVal);
-	}
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		struct t_template template;
-
-		char cSubDir[101]={""};
-		sprintf(cSubDir,"%.100s",ForeignKey("tTable","cSubDir",uTable));
-
-		sprintf(gcTableName,"%.31s",ForeignKey("tTable","cLabel",uTable));
-		sprintf(gcTableNameLC,"%.63s",gcTableName);
-		WordToLower(gcTableNameLC);
-		guTable=uTable;
-
-		FILE *fp=NULL;
-		char cFile[512]={""};
-		if(cSubDir[0])
-		{
-			sprintf(gcQuery,"mkdir -p %s/%s",gcDirectory,cSubDir);
-			if(system(gcQuery))
-				logfileLine("CreateModuleFuncFile",gcQuery);
-			sprintf(cFile,"%.200s/%.100s/%.200sfunc.h",gcDirectory,cSubDir,gcTableNameLC);
-		}
-		else
-		{
-			sprintf(cFile,"%.200s/%.200sfunc.h",gcDirectory,gcTableNameLC);
-		}
-		if(uSourceLock)
-		{
-			if((fp=fopen(cFile,"r"))!=NULL)
-			{
-				logfileLine("CreateModuleFuncFile","uSourceLock==1 not replacing");
-				mysql_free_result(res);
-				return(0);
-			}
-		}
-		if((fp=fopen(cFile,"w"))==NULL)
-		{
-			sprintf(gcQuery,"could not open %s",cFile);
-			logfileLine("CreateModuleFuncFile",gcQuery);
-			mysql_free_result(res);
-			return(1);
-		}
-			
-/*
-	cTableKey
-	cTableName
-	cTableNameLC
-*/
-			
-		template.cpName[0]="cTableName";
-		template.cpValue[0]=gcTableName;
-			
-		template.cpName[1]="cTableNameLC";
-		template.cpValue[1]=gcTableNameLC;
-			
-		template.cpName[2]="cTableKey";
-		sprintf(gcTableKey,"u%.31s",gcTableName+1);//New table name includes table type t prefix
-		template.cpValue[2]=gcTableKey;
-
-		template.cpName[3]="cProject";
-		template.cpValue[3]=gcProject;
-			
-		template.cpName[4]="";
-
-		Template(field[0],&template,fp);
-		fclose(fp);
-		uRetVal=0;
-	}
-	else
-	{
-		logfileLine("CreateModuleFuncFile","No such uTemplate");
-		uRetVal=2;
-	}
-	mysql_free_result(res);
-
-	logfileLine("CreateModuleFuncFile","end");
-	return(uRetVal);
-
-
-}//unsigned CreateModuleFuncFile()
-
 
 
 void funcModuleListPrint(FILE *fp)
@@ -736,6 +677,31 @@ void funcModuleListPrint(FILE *fp)
 			fprintf(fp,"\t\tif(luYesNo%d)\n\t\t\tsprintf(cBuf%d,\"Yes\");\n",i,i);
 			fprintf(fp,"\t\telse\n\t\t\tsprintf(cBuf%d,\"No\");\n",i);
 		}
+		else if(uFieldType==COLTYPE_FOREIGNKEY ||
+				uFieldType==COLTYPE_SELECTTABLE ||
+				uFieldType==COLTYPE_SELECTTABLE_OWNER )//Index into another table
+		{
+			char cTableName[32]={""};
+			char cTableNameKey[32]={""};
+			char cFieldName[32]={""};
+			char *cp;
+			//cFKSpec
+			if((cp=strchr(field[2],',')))
+			{
+				*cp=0;
+				sprintf(cTableName,"%.31s",field[2]);
+				StripQuotes(cTableName);
+				sprintf(cTableNameKey,"u%.30s",cTableName+1);//RAD4 primary key standard naming convention
+				sprintf(cFieldName,"%.31s",cp+1);
+				if((cp=strchr(cFieldName,',')))
+					*cp=0;
+				StripQuotes(cFieldName);
+			}
+			fprintf(fp,"\t\tchar cBuf%d[128];\n",i);
+			fprintf(fp,"\t\tsprintf(cBuf%d,\"<a class=darkLink href=?gcFunction=%s&%s=%%.32s>%%.32s</a>\",\n",i,cTableName,cTableNameKey);
+			fprintf(fp,"\t\t\tfield[%d],\n",i);
+			fprintf(fp,"\t\t\tForeignKey(\"%s\",\"%s\",strtoul(field[%d],NULL,10)));\n",cTableName,cFieldName,i);
+		}
 		i++;
 	}
 
@@ -779,25 +745,10 @@ void funcModuleListPrint(FILE *fp)
 			first=0;
 		}
 
-		if(uFieldType==COLTYPE_FOREIGNKEY ||
+		if(uFieldType == COLTYPE_UNIXTIME ||
+				uFieldType==COLTYPE_FOREIGNKEY ||
 				uFieldType==COLTYPE_SELECTTABLE ||
-				uFieldType==COLTYPE_SELECTTABLE_OWNER )//Index into another table
-		{
-			char cTableName[32]={""};
-			char cFieldName[32]={""};
-			char *cp;
-			if((cp=strchr(field[2],',')))
-			{
-				*cp=0;
-				sprintf(cTableName,"%.31s",field[2]);
-				sprintf(cFieldName,"%.31s",cp+1);
-				if((cp=strchr(cFieldName,',')))
-					*cp=0;
-			}
-			fprintf(fp,"\t\t\t,ForeignKey(%s,%s,strtoul(field[%d],NULL,10))\n",
-							cTableName,cFieldName,i++);
-		}
-		else if(uFieldType == COLTYPE_UNIXTIME ||
+				uFieldType==COLTYPE_SELECTTABLE_OWNER ||
 				uFieldType == COLTYPE_UNIXTIMECREATE ||
 				uFieldType == COLTYPE_UNIXTIMEUPDATE ||
 				uFieldType ==COLTYPE_YESNO )
@@ -819,7 +770,7 @@ void funcModuleListPrint(FILE *fp)
 	fprintf(fp,"\t\t\t\t);\n");
 	mysql_free_result(res);
 
-}//void ModuleListPrint(FILE *fp)
+}//void funcModuleListPrint(FILE *fp)
 
 
 void funcModuleListTable(FILE *fp)
@@ -1007,14 +958,15 @@ void funcModuleProcVars(FILE *fp)
 
 			case COLTYPE_CHAR:
 			case COLTYPE_DATETIME:
+			case COLTYPE_DATEEUR:
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
 				//cExtIndex can be used for input validation functions. Fix this TODO
 				if(field[8][0])
-					fprintf(fp,"\t\t\tsprintf(%s,\"%%.%us\",%s(entries[i].val));\n",cField,uHtmlXSize,field[8]);
+					fprintf(fp,"\t\t\tsprintf(%s,\"%%.%us\",%s(entries[i].val));\n",cField,uSQLSize,field[8]);
 				else
-					fprintf(fp,"\t\t\tsprintf(%s,\"%%.%us\",entries[i].val);\n",cField,uHtmlXSize);
+					fprintf(fp,"\t\t\tsprintf(%s,\"%%.%us\",entries[i].val);\n",cField,uSQLSize);
 			break;
 
 			case COLTYPE_DECIMAL:
@@ -1181,7 +1133,16 @@ void funcModuleInput(FILE *fp)
 			break;
 
 			case COLTYPE_DATETIME:
-				fprintf(fp,"\t//%s COLTYPE_UNIXTIME\n",cField);
+				fprintf(fp,"\t//%s COLTYPE_DATETIME\n",cField);
+				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
+				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
+				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),1);\n",cField,cField);
+				fprintf(fp,"\telse\n");
+				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),0);\n",cField,cField);
+			break;
+
+			case COLTYPE_DATEEUR:
+				fprintf(fp,"\t//%s COLTYPE_DATEEUR\n",cField);
 				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
 				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
 				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),1);\n",cField,cField);
@@ -1410,6 +1371,14 @@ void funcModuleVars(FILE *fp)
 				fprintf(fp,"static char %s[20]={\"2000-01-01 00:00:00\"};\n",field[0]);
 			break;
 
+			case COLTYPE_DATEEUR:
+			if(field[3][0])
+				fprintf(fp,"static char %s[20]={\"%s\"};\n",
+					field[0],field[3]);
+			else
+				fprintf(fp,"static char %s[20]={\"01/01/1900\"};\n",field[0]);
+			break;
+
 			case COLTYPE_TIMESTAMP:
 				fprintf(fp,"static char %s[20]={\"Never modified\"};\n",
 					field[0]);
@@ -1476,9 +1445,10 @@ void funcModuleVarList(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT tField.cLabel"
-			" FROM tField,tTable"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+			" FROM tField,tTable,tFieldType"
 			" WHERE tField.uTable=tTable.uTable"
+			" AND tField.uFieldType=tFieldType.uFieldType"
 			" AND tTable.uTable=%u"
 			" ORDER BY tField.uOrder",guTable);
 	if(guDebug)
@@ -1491,10 +1461,28 @@ void funcModuleVarList(FILE *fp)
         }
         res=mysql_store_result(&gMysql);
 	unsigned uFirst=0;
+	unsigned uRADType=0;
+	sprintf(gcuJs,"0");
 	while((field=mysql_fetch_row(res)))
 	{
+		sscanf(field[1],"%u",&uRADType);
+
 		if(uFirst) fprintf(fp,",");
-		fprintf(fp,"%s.%s",gcTableName,field[0]);
+
+		//testing a simple hack
+		if(uRADType==COLTYPE_DATETIME)
+			sprintf(gcuJs,"1");
+		if(uRADType==COLTYPE_DATEEUR)
+		{
+			sprintf(gcuJs,"1");
+			fprintf(fp,"DATE_FORMAT(%s.%s,'%%d/%%m/%%Y')",gcTableName,field[0]);
+		}	
+		else
+		{
+			fprintf(fp,"%s.%s",gcTableName,field[0]);
+		}
+
+
 		uFirst=1;
 	}
 	mysql_free_result(res);
@@ -1547,12 +1535,17 @@ void funcModuleUpdateQuery(FILE *fp)
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
-			case(COLTYPE_TEXT):
+			case COLTYPE_TEXT:
 				fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 			break;
 
-			case(COLTYPE_UNIXTIMEUPDATE):
+			case COLTYPE_UNIXTIMEUPDATE:
 				fprintf(fp,"\t\t\"%s=UNIX_TIMESTAMP(NOW())",field[0]);
+			break;
+
+			case COLTYPE_DATEEUR:
+				//STR_TO_DATE('20/2/2011','%d/%m/%Y')
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y')",field[0]);
 			break;
 		}
 		uFirst=1;
@@ -1580,10 +1573,11 @@ void funcModuleUpdateQuery(FILE *fp)
 
 			case COLTYPE_CHAR:
 			case COLTYPE_DATETIME:
+			case COLTYPE_DATEEUR:
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
-			case(COLTYPE_TEXT):
+			case COLTYPE_TEXT:
 				fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",field[0]);
 			break;
 
@@ -1646,12 +1640,17 @@ void funcModuleInsertQuery(FILE *fp)
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
-			case(COLTYPE_TEXT):
+			case COLTYPE_TEXT:
 				fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 			break;
 
 			case(COLTYPE_UNIXTIMECREATE):
 				fprintf(fp,"\t\t\"%s=UNIX_TIMESTAMP(NOW())",field[0]);
+			break;
+
+			case COLTYPE_DATEEUR:
+				//STR_TO_DATE('20/2/2011','%d/%m/%Y')
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y')",field[0]);
 			break;
 		}
 		uFirst=1;
@@ -1673,14 +1672,15 @@ void funcModuleInsertQuery(FILE *fp)
 			default:
 				fprintf(fp,"\t\t\t,%s\n",field[0]);
 			break;
-			case(COLTYPE_RADPRI):
+			case COLTYPE_RADPRI:
 			break;
 			case COLTYPE_CHAR:
 			case COLTYPE_DATETIME:
+			case COLTYPE_DATEEUR:
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
-			case(COLTYPE_TEXT):
+			case COLTYPE_TEXT:
 				fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",field[0]);
 			break;
 			case(COLTYPE_UNIXTIMECREATE):
@@ -1734,6 +1734,13 @@ void funcModuleCreateQuery(FILE *fp)
 			break;
 			case(COLTYPE_VARCHAR):
 				fprintf(fp,"\t\t\"%s VARCHAR(%s) %s",field[0],field[3],field[1]);
+			break;
+			case(COLTYPE_TEXT):
+				fprintf(fp,"\t\t\"%s TEXT %s",field[0],field[1]);
+			break;
+			case COLTYPE_DATETIME:
+			case COLTYPE_DATEEUR:
+				fprintf(fp,"\t\t\"%s DATETIME %s",field[0],field[1]);
 			break;
 		}
 		switch(uIndexType)
@@ -1793,12 +1800,18 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcMakefileRules(fp);
 	else if(!strcmp(cFunction,"funcModulePrototypes"))
 		funcModulePrototypes(fp);
+	else if(!strcmp(cFunction,"funcBootstrapModulePrototypes"))
+		funcBootstrapModulePrototypes(fp);
 	else if(!strcmp(cFunction,"funcMainGetMenu"))
 		funcMainGetMenu(fp);
+	else if(!strcmp(cFunction,"funcBootstrapMainGetMenu"))
+		funcBootstrapMainGetMenu(fp);
 	else if(!strcmp(cFunction,"funcMainNavBars"))
 		funcMainNavBars(fp);
 	else if(!strcmp(cFunction,"funcMainPostFunctions"))
 		funcMainPostFunctions(fp);
+	else if(!strcmp(cFunction,"funcBootstrapMainPostFunctions"))
+		funcBootstrapMainPostFunctions(fp);
 	else if(!strcmp(cFunction,"funcMainTabMenu"))
 		funcMainTabMenu(fp);
 	else if(!strcmp(cFunction,"funcMainInitTableList"))
@@ -1807,6 +1820,13 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcMainCreateTables(fp);
 	else if(!strcmp(cFunction,"funcModuleLanguage"))
 		funcModuleLanguage(fp);
+	else if(!strcmp(cFunction,"funcBashEnvProject"))
+		funcBashEnvProject(fp);
+	else if(!strcmp(cFunction,"funcBootstrapNavItems"))
+		funcBootstrapNavItems(fp);
+	else if(!strcmp(cFunction,"funcBootstrapEditorFields"))
+		funcBootstrapEditorFields(fp);
+	//special func that has variants
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
 	else if(1)
@@ -1889,6 +1909,15 @@ char *WordToLower(char *cInput)
 }//char *WordToLower(char *cInput)
 
 
+void funcBashEnvProject(FILE *fp)
+{
+	//Need to improve Template lib to handle triple {${{cProject}}}
+	//substitution
+	fprintf(fp,"${%s}",gcProject);
+
+}//void funcBashEnvProject(FILE *fp)
+
+
 void funcMakefileObjects(FILE *fp)
 {
        	MYSQL_RES *res;
@@ -1897,9 +1926,10 @@ void funcMakefileObjects(FILE *fp)
 	sprintf(gcQuery,"SELECT cLabel"
 			" FROM tTable"
 			" WHERE uProject=%u"
+			" AND uTemplateType=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY tTable.uTableOrder",guProject);
+			" ORDER BY uTableOrder",guProject,guTemplateType);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -1922,9 +1952,10 @@ void funcMakefileRules(FILE *fp)
 	sprintf(gcQuery,"SELECT cLabel"
 			" FROM tTable"
 			" WHERE uProject=%u"
+			" AND uTemplateType=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" ORDER BY uTableOrder",guProject,guTemplateType);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -1935,12 +1966,59 @@ void funcMakefileRules(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		WordToLower(field[0]);
-		fprintf(fp,"%1$s.o: %1$s.c mysqlrad.h language.h %1$sfunc.h local.h\n",field[0]);
+		if(guTemplateType==14)//bootstrap fix asap
+			fprintf(fp,"%1$s.o: %1$s.c interface.h local.h ../../mysqlrad.h\n",field[0]);
+		else
+			fprintf(fp,"%1$s.o: %1$s.c mysqlrad.h language.h %1$sfunc.h local.h\n",field[0]);
 		fprintf(fp,"\tcc -c %1$s.c -o %1$s.o $(CFLAGS)\n\n",field[0]);
 	}
 	mysql_free_result(res);
 
 }//void funcMakefileRules(FILE *fp)
+
+
+void funcBootstrapModulePrototypes(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	fprintf(fp,"//funcBootstrapModulePrototypes()\n");
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND cLabel NOT LIKE '%%.txt'"
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_BOOTSTRAP);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"//%s\n",field[0]);
+		fprintf(fp,"void %sCommands(pentry entries[], int x);\n",field[0]);
+		fprintf(fp,"void %s(const char *results);\n",field[0]);
+		fprintf(fp,"void Process%sVars(pentry entries[], int x);\n",field[0]);
+		fprintf(fp,"void %sContent(void);\n",field[0]);
+		fprintf(fp,"void %sInputContent(void);\n",field[0]);
+		fprintf(fp,"void %sInput(unsigned uMode);\n",field[0]);
+		fprintf(fp,"void %sList(void);\n",field[0]);
+		fprintf(fp,"void New%s(unsigned uMode);\n",field[0]);
+		fprintf(fp,"void Mod%s(void);\n",field[0]);
+		fprintf(fp,"void Create%s(void);\n",field[0]);
+		fprintf(fp,"void Delete%s(void);\n",field[0]);
+		fprintf(fp,"void %sGetHook(entry gentries[], int x);\n",field[0]);
+		fprintf(fp,"void Ext%sNavBar(void);\n",field[0]);
+		fprintf(fp,"\n");
+	}
+	mysql_free_result(res);
+
+}//void funcBootstrapModulePrototypes(FILE *fp)
 
 
 void funcModulePrototypes(FILE *fp)
@@ -1953,7 +2031,8 @@ void funcModulePrototypes(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -1984,6 +2063,40 @@ void funcModulePrototypes(FILE *fp)
 }//void funcModulePrototypes(FILE *fp)
 
 
+void funcBootstrapMainGetMenu(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel,SUBSTR(cLabel,2)"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_BOOTSTRAP);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	fprintf(fp,"//funcBootstrapMainGetMenu()\n");
+	unsigned uFirst=1;
+	while((field=mysql_fetch_row(res)))
+	{
+		if(uFirst)
+			fprintf(fp,"\t\t\tif(!strcmp(gcPage,\"%s\"))\n",field[1]);
+		else
+			fprintf(fp,"\t\t\telse if(!strcmp(gcPage,\"%s\"))\n",field[1]);
+		fprintf(fp,"\t\t\t\t%sGetHook(gentries,x);\n",field[0]);
+		uFirst=0;
+	}
+        mysql_free_result(res);
+
+}//void funcBootstrapMainGetMenu(FILE *fp)
+
+
 void funcMainGetMenu(FILE *fp)
 {
        	MYSQL_RES *res;
@@ -1994,7 +2107,8 @@ void funcMainGetMenu(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2028,7 +2142,8 @@ void funcMainNavBars(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2054,6 +2169,32 @@ void funcMainNavBars(FILE *fp)
 }//void funcMainNavBars(FILE *ofp)
 
 
+void funcBootstrapMainPostFunctions(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_BOOTSTRAP);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	fprintf(fp,"//funcBootstrapMainPostFunctions()\n");
+	while((field=mysql_fetch_row(res)))
+		fprintf(fp,"\t%sCommands(entries,x);\n",field[0]);
+        mysql_free_result(res);
+
+}//void funcBootstrapMainPostFunctions(FILE *fp)
+
+
 void funcMainPostFunctions(FILE *fp)
 {
        	MYSQL_RES *res;
@@ -2064,7 +2205,8 @@ void funcMainPostFunctions(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2090,7 +2232,8 @@ void funcMainTabMenu(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2128,7 +2271,8 @@ void funcMainInitTableList(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2160,7 +2304,8 @@ void funcMainCreateTables(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND cLabel NOT LIKE '%%.txt'"
-			" ORDER BY uTableOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2185,7 +2330,8 @@ void funcModuleLanguage(FILE *fp)
 			" FROM tField,tTable"
 			" WHERE tField.uTable=tTable.uTable"
 			" AND tTable.uProject=%u"
-			" ORDER BY tField.uOrder",guProject);
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_RAD4);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2261,3 +2407,155 @@ void funcConfiguration(FILE *fp,char *cFunction)
 
 }//void funcConfiguration(FILE *fp,char *cFunction)
 
+
+//Pass the template contents in one buffer: cTemplate
+//Variables [[cLikeThis]] in the cTemplate are replaced if t_template
+//setup correctly.
+void Template2(char *cTemplate, struct t_template *template, FILE *fp)
+{
+	register int i,uState=0,j=0,k=0;
+	char cVarName[256]={""};
+	char cVarNameS1[1024]={""};
+
+	for(i=0;cTemplate[i];i++)
+	{
+		if(cTemplate[i]=='[' && uState==0 && cTemplate[i+1]=='[')
+		{
+			uState=1;
+			continue;
+		}
+		else if(cTemplate[i]=='[' && uState==1 )
+		{
+			uState=2;
+			continue;
+		}
+		else if(cTemplate[i]==']' && uState==2 )
+		{
+			uState=3;
+			continue;
+		}
+		else if(cTemplate[i]==']' && uState==1 )
+		{
+			uState=0;
+			cVarNameS1[k]=0;
+			fprintf(fp,"[%s]",cVarNameS1);
+			k=0;
+			continue;
+		}
+		else if(cTemplate[i]==']' && uState==3 )
+		{
+			register int n=0,uMatch=0;
+
+			uState=0;
+			cVarName[j]=0;
+			while(template->cpName[n][0])
+			{
+				if(!strcmp(template->cpName[n],cVarName))
+				{
+					fprintf(fp,"%s",template->cpValue[n]);
+					uMatch=1;
+				}
+				n++;
+				if(n>99) break;
+			}
+			if(!uMatch)
+			{
+				if(cVarName[0]=='f')
+				{
+					//Every application that links to this lib
+					//needs to supply this function
+					AppFunctions(fp,cVarName);
+				}
+			}
+			j=0;
+			continue;
+		}
+		if(uState==1)
+		{
+			if(k>1023) return;
+			cVarNameS1[k++]=cTemplate[i];
+			continue;
+		}
+		else if(uState==2)
+		{
+			if(j>254) return;
+			cVarName[j++]=cTemplate[i];
+			continue;
+		}
+		fputc((int)cTemplate[i],fp);
+	}
+
+}//int Template2()
+
+
+void funcBootstrapNavItems(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	fprintf(fp,"<!-- funcBootstrapNavItems() -->\n");
+
+	sprintf(gcQuery,"SELECT SUBSTR(cLabel,2)"
+			" FROM tTable"
+			" WHERE uProject=%u"
+			" AND SUBSTR(cLabel,1,1)='t'"
+			" AND uTemplateType=%u"
+			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_BOOTSTRAP);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+            	fprintf(fp,"            <li><a href=\"{{cCGI}}?gcPage=%1$s\">%1$s</a></li>\n",field[0]);
+	}
+	mysql_free_result(res);
+
+}//void funcBootstrapNavItems(FILE *fp)
+
+/*
+
+                                <div class="form-group required">
+                                        <label for="cOwner" class="col-sm-3 control-label">cOwner</label>
+                                        <div class="col-sm-9">
+                                                <input type="text" class="form-control" id="cOwner" name="cOwner"
+                                                         placeholder="Root" required>
+                                        </div>
+                                </div>
+
+
+ 
+ */
+void funcBootstrapEditorFields(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+	char cFieldName[100];
+
+	fprintf(fp,"<!-- funcBootstrapEditorFields() -->\n");
+
+	fprintf(fp,"\t\t\t\t<input type=\"number\" id=\"%1$s\" name=\"%1$s\" class=\"hidden\"/>\n",gcTableKey);
+
+	sprintf(cFieldName,"%.99s","cLabel");
+	fprintf(fp,"\t\t\t\t<div class=\"form-group required\">\n");
+	fprintf(fp,"\t\t\t\t\t<label for=\"%1$s\" class=\"col-sm-3 control-label\">%1$s</label>\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t<div class=\"col-sm-9\">\n");
+	fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\"\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t</div>\n");
+	fprintf(fp,"\t\t\t\t</div>\n");
+
+
+	sprintf(cFieldName,"%.99s","cOwner");
+	fprintf(fp,"\t\t\t\t<div class=\"form-group required\">\n");
+	fprintf(fp,"\t\t\t\t\t<label for=\"%1$s\" class=\"col-sm-3 control-label\">%1$s</label>\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t<div class=\"col-sm-9\">\n");
+	fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\"\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
+	fprintf(fp,"\t\t\t\t\t</div>\n");
+	fprintf(fp,"\t\t\t\t</div>\n");
+
+}//void funcBootstrapEditorFields(FILE *fp)

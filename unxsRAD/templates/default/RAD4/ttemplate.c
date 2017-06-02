@@ -215,7 +215,7 @@ void tTemplate(const char *cResult)
 
 	}//Internal Skip
 
-	Header_ism3(":: tTemplate",1);
+	HeaderRAD4(":: tTemplate",1);
 
 	printf("<table width=100%% cellspacing=0 cellpadding=0>\n");
 	printf("<tr><td colspan=2 align=right valign=center>");
@@ -264,7 +264,7 @@ void tTemplate(const char *cResult)
 	printf("<tr><td colspan=2>");
         ExttTemplateAuxTable();
 
-	Footer_ism3();
+	FooterRAD4();
 
 }//end of tTemplate();
 
@@ -561,7 +561,7 @@ void tTemplateList(void)
 		if(!field)
 		{
 			printf("<tr><td>End of data</table>");
-			Footer_ism3();
+			FooterRAD4();
 		}
 		if(guN % 2)
 			printf("<tr bgcolor=#BBE1D3>");
@@ -607,7 +607,7 @@ void tTemplateList(void)
 	}
 
 	printf("</table></form>\n");
-	Footer_ism3();
+	FooterRAD4();
 
 }//tTemplateList()
 

@@ -1,19 +1,12 @@
 /*
 FILE 
-	main.c
-	svn ID removed
+	unxsRAD/interfaces/bootstrap/main.c
 AUTHOR/LEGAL
-	(C) 2010-2015 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2017 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.
 PURPOSE
-	OneLogin Interface program file
-REQUIRES
-	OpenISP libtemplates.a and templates.h
-	See makefile for more information.
+	Bootstrap interface program file
 CURRENT WORK
-	Changing template system to require set and type.
-	Set is for skin changes.
-	Type identifies templates by interface or other function.
 */
 
 #include "interface.h"
@@ -67,9 +60,6 @@ int iValidLogin(int mode);
 void SSLCookieLogin(void);
 void SetLogin(void);
 void GetPLAndClient(char *cUser);
-#ifdef cLDAPURI
-void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization);
-#endif
 void htmlLogin(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
@@ -89,15 +79,12 @@ int main(int argc, char *argv[])
 
 	if(getenv("REMOTE_ADDR")!=NULL)
 		sprintf(gcHost,"%.99s",getenv("REMOTE_ADDR"));
-
-	if(getenv("HTTP_USER_AGENT")!=NULL)
-	{
-		if(strstr(getenv("HTTP_USER_AGENT"),"Firefox"))
-			guBrowserFirefox=1;
-	}
+	else
+		jsonTableRows("tLog");
 
 	gethostname(gcHostname,98);
 
+	char cTable[100]={""};
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{
 		//Get	
@@ -115,31 +102,33 @@ int main(int argc, char *argv[])
 				sprintf(gcFunction,"%.99s",gentries[i].val);
 			else if(!strcmp(gentries[i].name,"gcPage"))
 				sprintf(gcPage,"%.99s",gentries[i].val);
+                	else if(!strcmp(gentries[i].name,"cTable"))
+				sprintf(cTable,"%.99s",gentries[i].val);
 		}
 		if(gcPage[0])
 		{
-			if(!strcmp(gcPage,"Glossary"))
-				GlossaryGetHook(gentries,i);
-			else if(!strcmp(gcPage,"User"))
+			if(!strcmp(gcPage,"User"))
 				UserGetHook(gentries,i);
-			else if(!strcmp(gcPage,"PBX"))
-				ContainerGetHook(gentries,i);
-			else if(!strcmp(gcPage,"About"))
-				ContainerGetHook(gentries,i);
-			else if(!strcmp(gcPage,"Contact"))
-				ContainerGetHook(gentries,i);
-			else if(!strcmp(gcPage,"Repurpose"))
-				ContainerGetHook(gentries,i);
-			else if(!strcmp(gcPage,"Reseller"))
-				ContainerGetHook(gentries,i);
-			else if(!strcmp(gcPage,"DID"))
-				ContainerGetHook(gentries,i);
+			else if(!strcmp(gcPage,"Project"))
+				ProjectGetHook(gentries,i);
 		}
 	}
 	else
 	{
+		//Post with get
+		gcl = getenv("QUERY_STRING");
+		for(i=0;gcl[0] != '\0' && i<MAXGETVARS;i++)
+		{
+			getword(gentries[i].val,gcl,'&');
+			plustospace(gentries[i].val);
+			unescape_url(gentries[i].val);
+			getword(gentries[i].name,gentries[i].val,'=');
+
+			if(!strcmp(gentries[i].name,"gcFunction"))
+				sprintf(gcFunction,"%.99s",gentries[i].val);
+		}
+
 		//Post
-		
 		cl = atoi(getenv("CONTENT_LENGTH"));
 		for(i=0;cl && (!feof(stdin)) && i<MAXPOSTVARS ;i++)
 		{
@@ -158,6 +147,8 @@ int main(int argc, char *argv[])
 				sprintf(gcPasswd,"%.99s",entries[i].val);
                 	else if(!strcmp(entries[i].name,"gcOTP"))
 				sprintf(gcOTP,"%.15s",entries[i].val);
+                	else if(!strcmp(entries[i].name,"cTable"))
+				sprintf(cTable,"%.99s",entries[i].val);
 		}
 	}
 
@@ -179,56 +170,6 @@ int main(int argc, char *argv[])
 				UpdateOTPExpire(0,guLoginClient);
 				guRequireOTPLogin=1;
 			}
-#define PERNODEFIREWALL 
-#ifdef PERNODEFIREWALL
-if(gcOTPSecret[0])
-{
-	LogoutFirewallJobs(guLoginClient);
-}
-else
-{
-       	MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	//Note any status in case status changes ater an AllowAccess.
-	sprintf(gcQuery,"SELECT DISTINCT tContainer.uNode,tContainer.uDatacenter"
-				" FROM tContainer,tNode,tDatacenter"
-				" WHERE tContainer.uNode=tNode.uNode"
-				" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
-				" AND tDatacenter.uStatus=1"
-				" AND tNode.uStatus=1"
-				//Reseller control model
-				" AND (tContainer.uOwner IN (SELECT uClient FROM tClient WHERE"
-				" 	((uOwner IN (SELECT uClient FROM tClient WHERE"
-				" 	uOwner=%1$u) OR uOwner=%1$u) AND cCode='Organization')) OR tContainer.uOwner=%1$u)"
-				//
-				" AND tNode.cLabel!='appliance'",guOrg);
-
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		unsigned uNode=0;
-		unsigned uDatacenter=0;
-
-		sscanf(field[0],"%u",&uNode);
-		sscanf(field[1],"%u",&uDatacenter);
-
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='DenyAccess %u',cJobName='DenyAccess'"
-					",uDatacenter=%u,uNode=%u,uContainer=0"//All datacenters
-					",uJobDate=UNIX_TIMESTAMP(NOW())"
-					",uJobStatus=1"
-					",cJobData='cIPv4=%.15s;'"
-					",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-						guLoginClient,
-						uDatacenter,
-						uNode,
-						gcHost,
-						guOrg,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
-	}
-}
-#endif
         		guPermLevel=0;
 			gcUser[0]=0;
 			guLoginClient=0;
@@ -245,10 +186,13 @@ else
 	//First page after valid login
 	if(!strcmp(gcFunction,"Login"))
 		htmlUser();
+	//Special JSON data commands
+	else if(!strcmp(gcFunction,"TableRows") && cTable[0])
+		jsonTableRows(cTable);
 
 	//Per page command tree
 	UserCommands(entries,i);
-	ContainerCommands(entries,i);
+	ProjectCommands(entries,i);
 	
 	//default logged in page
 	htmlUser();
@@ -256,14 +200,15 @@ else
 
 }//end of main()
 
+
 void htmlLogin(void)
 {
-	htmlHeader("OneLogin","LoginHeader");
+	htmlHeader("unxsRAD","Default.Header");
 	if(guRequireOTPLogin)
-		htmlLoginPage("OneLogin","ZLoginOTP.Body");
+		htmlLoginPage("unxsRAD","LoginOTP.Body");
 	else
-		htmlLoginPage("OneLogin","ZLogin.Body");
-	htmlFooter("LoginFooter");
+		htmlLoginPage("unxsRAD","Login.Body");
+	htmlFooter("Default.Footer");
 
 }//void htmlLogin(void)
 
@@ -285,7 +230,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="OneLogin.cgi";
+			template.cpValue[1]="mobile.cgi";
 			
 			template.cpName[2]="cMessage";
 			template.cpValue[2]=gcMessage;
@@ -306,7 +251,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 		else
 		{
 			printf("<hr>");
-			printf("<center><font size=1>%s</font>\n",cTemplateName);
+			printf("<center><font size=1>d1 %s</font>\n",cTemplateName);
 		}
 		mysql_free_result(res);
 	}
@@ -319,7 +264,7 @@ void htmlPlainTextError(const char *cError)
 	char cQuery[1024];
 
 	printf("Content-type: text/plain\n\n");
-	printf("Please report this OneLogin fatal error ASAP:\n%s\n",cError);
+	printf("Please report this fatal error ASAP:\n%s\n",cError);
 
 	//Attempt to report error in tLog
         sprintf(cQuery,"INSERT INTO tLog SET cLabel='htmlPlainTextError',uLogType=2,uPermLevel=%u,uLoginClient=%u,"
@@ -419,34 +364,12 @@ void htmlFooter(char *cTemplateName)
 //libtemplate.a required
 void AppFunctions(FILE *fp,char *cFunction)
 {
-	if(!strcmp(cFunction,"funcSelectContainer"))
-		funcSelectContainer(fp);
-	else if(!strcmp(cFunction,"funcContainerImageTag"))
-		funcContainerImageTag(fp);
-	else if(!strcmp(cFunction,"funcContainerInfo"))
-		funcContainerInfo(fp);
-	else if(!strcmp(cFunction,"funcMOTD"))
+	if(!strcmp(cFunction,"funcMOTD"))
 		funcMOTD(fp);
-	else if(!strcmp(cFunction,"funcNewContainer"))
-		funcNewContainer(fp);
-	else if(!strcmp(cFunction,"funcContainer"))
-		funcContainer(fp);
-	else if(!strcmp(cFunction,"funcContainerList"))
-		funcContainerList(fp);
-	else if(!strcmp(cFunction,"funcContainerQOS"))
-		funcContainerQOS(fp);
-	else if(!strcmp(cFunction,"funcContainerBulk"))
-		funcContainerBulk(fp);
 	else if(!strcmp(cFunction,"funcOperationHistory"))
 		funcOperationHistory(fp);
 	else if(!strcmp(cFunction,"funcLoginHistory"))
 		funcLoginHistory(fp);
-	else if(!strcmp(cFunction,"funcRepurposeForm"))
-		funcRepurposeForm(fp);
-	else if(!strcmp(cFunction,"funcResellerForm"))
-		funcResellerForm(fp);
-	else if(!strcmp(cFunction,"funcDIDForm"))
-		funcDIDForm(fp);
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
@@ -463,8 +386,10 @@ char *cGetPasswd(char *gcLogin,char *cOTPSecret,unsigned long *luOTPExpire,unsig
 	//SQL injection code
 	if((cp=strchr(gcLogin,'\''))) *cp=0;
 
-	sprintf(gcQuery,"SELECT cPasswd,uPerm,cOTPSecret,uOTPExpire,UNIX_TIMESTAMP(NOW()),uAuthorize FROM tAuthorize WHERE cLabel='%s'",
-			gcLogin);
+	//sprintf(gcQuery,"SELECT cPasswd,uPerm,cOTPSecret,uOTPExpire,UNIX_TIMESTAMP(NOW()),uAuthorize"
+	sprintf(gcQuery,"SELECT cPasswd,uPerm,'',0,UNIX_TIMESTAMP(NOW()),uAuthorize"
+			" FROM tAuthorize WHERE cLabel='%s'",
+				gcLogin);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -541,20 +466,7 @@ void SSLCookieLogin(void)
 	//First try tClient/tAuthorize system
 	if(!iValidLogin(1))
 	{
-#ifdef cLDAPURI
-		//Then LDAP system
-		if(!iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
-		{
-			htmlLogin();
-		}
-		else
-		{
-			sprintf(gcUser,"%.41s",gcLogin);
-			GetPLAndClientLDAP(gcUser,gcOrgName);
-		}
-#else
 		htmlLogin();
-#endif
 	}
 	else
 	{
@@ -616,55 +528,6 @@ void GetPLAndClient(char *cUser)
 
 }//void GetPLAndClient()
 
-
-#ifdef cLDAPURI
-void GetPLAndClientLDAP(const char *cLogin,const char *cOrganization)
-{
-        MYSQL_RES *mysqlRes;
-        MYSQL_RES *mysqlRes2;
-        MYSQL_ROW mysqlField;
-        MYSQL_ROW mysqlField2;
-
-	sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cOrganization);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	mysqlRes=mysql_store_result(&gMysql);
-	if((mysqlField=mysql_fetch_row(mysqlRes)))
-	{
-		sscanf(mysqlField[0],"%u",&guOrg);
-		guLoginClient=guOrg;
-		sprintf(gcName,"%.100s",cLogin);
-		//Fixed LDAP perm level. Could be extended via optional LDAP attr
-		guPermLevel=8;
-
-		//Also add this LDAP cLogin to cOriganization if does already exist
-		sprintf(gcQuery,"SELECT uClient FROM tClient WHERE cLabel='%s'",cLogin);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-		mysqlRes2=mysql_store_result(&gMysql);
-		if((mysqlField2=mysql_fetch_row(mysqlRes2)))
-		{
-			sscanf(mysqlField2[0],"%u",&guLoginClient);
-		}
-		else
-		{
-			//Could extend this to add cInfo from optional LDAP attr. Same for cEmail
-			sprintf(gcQuery,"INSERT INTO tClient SET cLabel='%s',cInfo='LDAP',cCode='Contact',"
-				"uOwner=%u,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					cLogin,guOrg);
-			mysql_query(&gMysql,gcQuery);
-			if(mysql_errno(&gMysql))
-				htmlPlainTextError(mysql_error(&gMysql));
-			guLoginClient=mysql_insert_id(&gMysql);
-		}
-		mysql_free_result(mysqlRes2);
-	}
-	mysql_free_result(mysqlRes);
-
-}//void GetPLAndClientLDAP()
-#endif
 
 void EncryptPasswdWithSalt(char *pw, char *salt)
 {
@@ -878,80 +741,7 @@ void SetLogin(void)
 				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
 		mysql_query(&gMysql,gcQuery);
-
-#ifdef PERNODEFIREWALL
-if(gcOTPSecret[0])
-{
-	LoginFirewallJobs(guLoginClient);
-}
-else
-{
-        MYSQL_RES *res;
-	MYSQL_ROW field;
-
-	//Allow access job for all active nodes that host active controlling company owned containers.
-	sprintf(gcQuery,"SELECT DISTINCT tContainer.uNode,tContainer.uDatacenter"
-				" FROM tContainer,tNode,tDatacenter"
-				" WHERE tContainer.uNode=tNode.uNode"
-				" AND tContainer.uDatacenter=tDatacenter.uDatacenter"
-				" AND tDatacenter.uStatus=1"
-				" AND tNode.uStatus=1"
-				" AND tContainer.uStatus=1"
-				//Reseller control model
-				" AND (tContainer.uOwner IN (SELECT uClient FROM tClient WHERE"
-				" 	((uOwner IN (SELECT uClient FROM tClient WHERE"
-				" 	uOwner=%1$u) OR uOwner=%1$u) AND cCode='Organization')) OR tContainer.uOwner=%1$u)"
-				//
-				" AND tNode.cLabel!='appliance'",guOrg);
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	while((field=mysql_fetch_row(res)))
-	{
-		unsigned uNode=0;
-		unsigned uDatacenter=0;
-
-		sscanf(field[0],"%u",&uNode);
-		sscanf(field[1],"%u",&uDatacenter);
-
-		//Allow access job for all nodes that host controlling company containers.
-		//The allow acces job should open FreePBX user and admin ports
-		//	it should also allow ssh port access and node ssh access based on perm level and tClient
-		//	hierarchy
-		sprintf(gcQuery,"INSERT INTO tJob SET cLabel='AllowAccess %u',cJobName='AllowAccess'"
-				",uDatacenter=%u,uNode=%u,uContainer=0"
-				",uJobDate=UNIX_TIMESTAMP(NOW())"
-				",uJobStatus=1"
-				",cJobData='cIPv4=%.15s;'"
-				",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
-					guLoginClient,
-					uDatacenter,
-					uNode,
-					gcHost,
-					guOrg,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
 	}
-}
-#endif
-//PERNODEFIREWALL
-
-	}
-#ifdef cLDAPURI
-	else if(iValidLDAPLogin(gcLogin,gcPasswd,gcOrgName))
-	{
-		//printf("Set-Cookie: OneLoginLogin=%s; secure; max-age=300;\n",gcLogin);
-		printf("Set-Cookie: OneLoginLogin=%s; secure;\n",gcLogin);
-		printf("Set-Cookie: OneLoginPasswd=%s; secure;\n",gcPasswd);
-		sprintf(gcUser,"%.41s",gcLogin);
-		GetPLAndClientLDAP(gcUser,gcOrgName);
-		guSSLCookieLogin=1;
-		//tLogType.cLabel='org login'->uLogType=8
-		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login2 ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"
-				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
-				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
-				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
-		mysql_query(&gMysql,gcQuery);
-	}
-#endif
 	else
 	{
 		guSSLCookieLogin=0;
@@ -1145,7 +935,7 @@ void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
 }//void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template)
 
 
-const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
 {
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
@@ -1176,4 +966,4 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
         	return(cKey);
 	}
 
-}//const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+}//const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
