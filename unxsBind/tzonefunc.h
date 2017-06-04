@@ -91,6 +91,7 @@ void htmlMasterNamedCheckZone(void);
 void tNSSetMembers(unsigned uNSSet);//tnssetfunc.h
 void CloneZone(char *cSourceZone,char *cTargetZone,unsigned uView);
 unsigned uGetZoneSearchGroup(const char *gcUser);
+char *cNSFromWhois(char const *cZone);
 
 //bind.c
 void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,const unsigned uCustId,
@@ -613,7 +614,7 @@ void ExttZoneCommands(pentry entries[], int x)
 			}
 		}
                 else if(!strcmp(gcCommand,"Fold A Records") || !strcmp(gcCommand,"Delete Checked")
-                	|| (!strcmp(gcCommand,"Backup")) || (!strcmp(gcCommand,"Restore")))
+                	|| (!strcmp(gcCommand,"Backup")) || (!strcmp(gcCommand,"Restore")) || (!strcmp(gcCommand,"Whois")))
                 {
 			ProcesstZoneVars(entries,x);
                         guMode=12002;
@@ -1504,6 +1505,8 @@ void ExttZoneAuxTable(void)
 			printf("&nbsp;<input title='Restore zone from tZoneBackup and tResourceBackup tables."
 				" Any existing tZone and tResource records will be deleted or replaced!'"
 				" type=submit class=lwarnButton name=gcCommand value='Restore'>\n");
+			printf("&nbsp;<input title='Whois report of name servers'"
+				" type=submit class=largeButton name=gcCommand value='Whois'>\n");
 			CloseFieldSet();
 
 			sprintf(gcQuery,"Search Set Contents");
@@ -1572,6 +1575,12 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Deleted from set");
 					else
 						sprintf(cResult,"Unexpected non deletion");
+					break;
+				}//Delete Checked
+
+				else if(!strcmp(gcCommand,"Whois"))
+				{
+					sprintf(cResult,cNSFromWhois(field[0]));
 					break;
 				}//Delete Checked
 
@@ -4969,3 +4978,25 @@ unsigned uGetZoneSearchGroup(const char *gcUser)
 	return(uGroup);
 
 }//unsigned uGetZoneSearchGroup(const char *gcUser)
+
+
+char *cNSFromWhois(char const *cZone)
+{
+	FILE *fp;
+	char cCommand[256];
+
+	char static cNSList[256]={""};
+	sprintf(cNSList,"whois error");
+	sprintf(cCommand,"/usr/bin/whois %.99s 2> /dev/null | grep -i name | grep -i server"
+			"| cut -f 2 -d ':' | sed -e 's/^[[:space:]]*//' | sort -u | tr '[:space:]' ','",cZone);
+	if((fp=popen(cCommand,"r")))
+	{
+		fgets(cNSList,255,fp);
+		pclose(fp);
+		if(!cNSList[0])
+			sprintf(cNSList,"no info");
+	}
+	return(cNSList);
+}//char *cNSFromWhois(char const *cZone)
+
+

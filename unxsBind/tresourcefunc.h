@@ -568,8 +568,16 @@ void RRCheck(int uMode)
 		}
 		if(cParam1[0]!='"' && cParam1[strlen(cParam1)-1]!='"')
 		{
+			if(strlen(cParam1)>250)
+			{
+				sprintf(gcQuery,"\"%.250s\" \"%.260s\"",cParam1,cParam1+250);
+				strcpy(cParam1,gcQuery);
+			}	
+			else
+			{
 			sprintf(gcQuery,"\"%s\"",cParam1);
 			strcpy(cParam1,gcQuery);
+		}
 		}
 
 	}
