@@ -342,6 +342,7 @@ int main(int iArgc, char *cArgv[])
 
 }//end of main()
 
+static char *cGitVersion="GitVersion:"GitVersion;
 #include "mainfunc.h"
 
 void iDNS(const char *cResult)
@@ -2612,8 +2613,8 @@ void SSLCookieLogin(void)
 	char *ptr,*ptr2;
 
 	//Parse out login and passwd from cookies
-	if(getenv("HTTPS")==NULL) 
-		iDNS("Non SSL access denied");
+	 
+		
 
 	if(getenv("HTTP_COOKIE")!=NULL)
 		strncpy(gcCookie,getenv("HTTP_COOKIE"),1022);

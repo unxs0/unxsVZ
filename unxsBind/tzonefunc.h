@@ -91,7 +91,7 @@ void htmlMasterNamedCheckZone(void);
 void tNSSetMembers(unsigned uNSSet);//tnssetfunc.h
 void CloneZone(char *cSourceZone,char *cTargetZone,unsigned uView);
 unsigned uGetZoneSearchGroup(const char *gcUser);
-char *cNSFromWhois(char const *cZone);
+char *cNSFromWhois(char const *cZone,char const *cuNSSet);
 
 //bind.c
 void ProcessRRLine(const char *cLine,char *cZoneName,const unsigned uZone,const unsigned uCustId,
@@ -1580,7 +1580,7 @@ while((field=mysql_fetch_row(res)))
 
 				else if(!strcmp(gcCommand,"Whois"))
 				{
-					sprintf(cResult,cNSFromWhois(field[0]));
+					sprintf(cResult,cNSFromWhois(field[1],field[5]));
 					break;
 				}//Delete Checked
 
@@ -4980,23 +4980,48 @@ unsigned uGetZoneSearchGroup(const char *gcUser)
 }//unsigned uGetZoneSearchGroup(const char *gcUser)
 
 
-char *cNSFromWhois(char const *cZone)
+char *cNSFromWhois(char const *cZone,char const *cuNSSet)
 {
 	FILE *fp;
 	char cCommand[256];
+	unsigned uIn=1;
 
 	char static cNSList[256]={""};
-	sprintf(cNSList,"whois error");
-	sprintf(cCommand,"/usr/bin/whois %.99s 2> /dev/null | grep -i name | grep -i server"
-			"| cut -f 2 -d ':' | sed -e 's/^[[:space:]]*//' | sort -u | tr '[:space:]' ','",cZone);
+	sprintf(cNSList,"whois error1");
+	sprintf(cCommand,"/usr/bin/dig @8.8.8.8 %.64s ns 2>/dev/null|"
+			"grep IN | grep NS |grep -v '^;'|"
+			"awk '{print $5}'|"
+			"sed -e 's/.$//g' | sort -u | tr '[:space:]' ',' | sed -e 's/,$//g'",cZone);
 	if((fp=popen(cCommand,"r")))
 	{
+		cNSList[0]=0;
 		fgets(cNSList,255,fp);
 		pclose(fp);
 		if(!cNSList[0])
-			sprintf(cNSList,"no info");
+		{
+			sprintf(cNSList,"no info for %.64s",cZone);
+		}
+		else
+		{
+			MYSQL_RES *res;
+			MYSQL_ROW field;
+			sprintf(gcQuery,"SELECT cFQDN FROM tNS WHERE uNSSet=%s AND uNSType=4",cuNSSet);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				sprintf(cNSList,"%.254s",mysql_error(&gMysql));
+			res=mysql_store_result(&gMysql);
+			while((field=mysql_fetch_row(res)))
+			{
+				uIn=uIn && strstr(cNSList,field[0]);
+				if(!uIn) break;
+			}
+			mysql_free_result(res);
+			if(uIn)
+				sprintf(cNSList,"NS records match NSSet");
+		}
+
 	}
 	return(cNSList);
-}//char *cNSFromWhois(char const *cZone)
+}//char *cNSFromWhois()
 
 

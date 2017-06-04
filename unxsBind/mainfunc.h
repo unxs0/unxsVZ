@@ -36,7 +36,7 @@ void Tutorial(void);
 void NamedConf(void);
 void MasterZones(void);
 void Admin(void);
-void ListZones(unsigned uNSSet);
+void ListZones(unsigned uNSSet,unsigned uNSReport);
 void PerfQueryList(void);
 void UpdateSchema(void);
 void UpdateTables(void);
@@ -859,7 +859,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 
 void PrintUsage(char *arg0)
 {
-	printf("iDNS %s CLI Menu (C) 2001-2010 Unixservice, LLC.\n",RELEASE);
+	printf("iDNS (%s) CLI Menu (C) 2001-2017 Unixservice, LLC.\n",cGitVersion);
 	printf("Database Ops:\n");
 	printf("\tInitialize <mysql root passwd>\n");
 	printf("\tBackup|RestoreAll [<mysql root passwd>]\n");
@@ -880,7 +880,7 @@ void PrintUsage(char *arg0)
 	printf("\tallfiles master|slave <fqdn ns> <master ip>\n");
 	printf("\tinstallbind <listen ipnum>\n");
 	printf("\texport <table> <filename>\n");
-	printf("\tListZones [<uNSSet>]\n");
+	printf("\tListZones [<uNSSet>] [--reportNS]\n");
 	printf("\tPerfQueryList\n");
 	printf("\tPrintNSList <cuNSSet>\n");
 	printf("\tPrintMXList <cuMailServer>\n");
@@ -954,7 +954,7 @@ void ExtMainShell(int argc, char *argv[])
 		}
 		else if(!strcmp(argv[1],"ListZones"))
 		{
-                	ListZones(0);
+                	ListZones(0,0);
 			exit(0);
 		}
         	else if(!strcmp(argv[1],"RestoreAll"))
@@ -1194,7 +1194,7 @@ void ExtMainShell(int argc, char *argv[])
 		{
 			unsigned uNSSet=0;
 			sscanf(argv[2],"%u",&uNSSet);
-                	ListZones(uNSSet);
+                	ListZones(uNSSet,0);
 			exit(0);
 		}
 		PrintUsage(argv[0]);
@@ -1243,6 +1243,13 @@ void ExtMainShell(int argc, char *argv[])
 		{
 			mySQLRootConnect(argv[3]);
 			ExportRRCSV(argv[2],"");
+		}
+		else if(!strcmp(argv[1],"ListZones") && !strcmp(argv[3],"--reportNS"))
+		{
+			unsigned uNSSet=0;
+			sscanf(argv[2],"%u",&uNSSet);
+                	ListZones(uNSSet,1);
+			exit(0);
 		}
 		PrintUsage(argv[0]);
 	}
@@ -1516,17 +1523,26 @@ void voidhtmlListBackupLinks(void)
 
 
 //List zones for a given uNSSet
-void ListZones(unsigned uNSSet)
+char *cNSFromWhois(char const *cZone,char const *cuNSSet);//tzonefunc.h
+void ListZones(unsigned uNSSet,unsigned uNSReport)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 
 	if(TextConnectDb()) exit(0);
 
-	if(uNSSet)
+	if(uNSSet && !uNSReport)
 		sprintf(gcQuery,"SELECT cZone,cLabel FROM tZone,tNSSet"
 					" WHERE tZone.uNSSet=tNSSet.uNSSet"
-					" AND tNSSet.uNSSet=%u ORDER BY tZone.cZone",uNSSet);
+					" AND tNSSet.uNSSet=%u"
+					" ORDER BY tZone.cZone",uNSSet);
+	else if(uNSSet && uNSReport)
+		sprintf(gcQuery,"SELECT cZone,cLabel,tZone.uNSSet FROM tZone,tNSSet"
+					" WHERE tZone.uNSSet=tNSSet.uNSSet"
+					" AND tZone.cZone NOT LIKE '%%.arpa'"
+					" AND tZone.uSecondaryOnly=0"
+					" AND tNSSet.uNSSet=%u"
+					" ORDER BY tZone.cZone",uNSSet);
 	else
 		sprintf(gcQuery,"SELECT cZone FROM tZone ORDER BY cZone");
 		
@@ -1537,12 +1553,31 @@ void ListZones(unsigned uNSSet)
 		exit(1);
 	}
 	res=mysql_store_result(&gMysql);
+	unsigned uOnlyOnce=1;
 	while((field=mysql_fetch_row(res))) 
 	{
+		if(uNSSet && uOnlyOnce)
+		{
+			if(uNSSet)
+			{
+				if(uNSReport)
+					printf("NSSet:%s reporting NS info\n",field[1]);
+				else
+					printf("NSSet:%s\n",field[1]);
+			}
+			uOnlyOnce=0;
+		}
 		if(uNSSet)
-			printf("%s %s\n",field[0],field[1]);
+		{
+			if(uNSReport)
+				printf("%s, %s\n",field[0],cNSFromWhois(field[0],field[2]));
+			else
+				printf("%s\n",field[0]);
+		}
 		else
+		{
 			printf("%s\n",field[0]);
+		}
 	}
 	mysql_free_result(res);
 	exit(0);
@@ -1618,7 +1653,7 @@ void UpdateSchema(void)
 	MYSQL_ROW field;
 	unsigned ucMessage=1;
 	unsigned ucServer=1;
-	unsigned uNameServer=0;
+	//unsigned uNameServer=0;
 	unsigned uNSSet=1;
 	unsigned uZoneImportNSSet=1;
 	unsigned uViewNSSet=1;
@@ -1794,7 +1829,7 @@ void UpdateSchema(void)
 	{
 		if(!strcmp(field[0],"uNSSet")) uNSSet=0;
 		else if(!strcmp(field[0],"uClient")) uClient=0;
-		else if(!strcmp(field[0],"uNameServer")) uNameServer=1;//Note rev logic
+		//else if(!strcmp(field[0],"uNameServer")) uNameServer=1;//Note rev logic
 	}
        	mysql_free_result(res);
 	if(uNSSet)
@@ -1881,6 +1916,7 @@ void UpdateSchema(void)
 	//
 	//Upgrading from very old pre tNSSet versions
 	//Check for tNameServer
+	/*
 	unsigned utNameServer=0;
 	sprintf(gcQuery,"SHOW TABLES");
 	mysql_query(&gMysql,gcQuery);
@@ -1895,6 +1931,7 @@ void UpdateSchema(void)
 		if(!strcmp(field[0],"tNameServer")) utNameServer=1;
 	}
        	mysql_free_result(res);
+	*/
 	//if(utNameServer && uNameServer)//uNameServer set in tZone check above
 	if(0)//Off!
 	{
