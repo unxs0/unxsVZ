@@ -1133,7 +1133,7 @@ void ExtMainShell(int argc, char *argv[])
 	}
         else
 	{
-		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],RELEASE);
+		printf("\n%s %s Menu\n\nDatabase Ops:\n",argv[0],gcBuildInfo);
 		printf("\nSpecial Admin Ops:\n");
 		printf("\tUpdateSchema\n");
 		printf("\tUpdateCloneHostnames\n");
