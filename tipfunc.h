@@ -2203,13 +2203,13 @@ void ExttIPNavBar(void)
 	if(guPermLevel>=10 && !guListMode)
 		printf(LANG_NBB_NEW);
 
-	if((uAllowMod(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
+	if(((uAllowMod(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11 ) && !guListMode)
 		printf(LANG_NBB_MODIFY);
 
-	if((uAllowMod(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11)
+	if(((uAllowMod(uOwner,uCreatedBy) && uAvailable) || guPermLevel>=11 ) && !guListMode)
 		printf(LANG_NBB_DELETE);
 
-	if(uOwner)
+	if(!guListMode)
 		printf(LANG_NBB_LIST);
 
 	printf(LANG_NBB_SKIPNEXT);

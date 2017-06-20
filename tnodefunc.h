@@ -155,9 +155,9 @@ void ExttNodeCommands(pentry entries[], int x)
                         	guMode=2000;
 				//Check entries here
 				if(strlen(cLabel)<3)
-					tNode("<blink>Error</blink>: Must supply valid cLabel. Min 3 chars!");
+					tNode("<strong>Error</strong>: Must supply valid cLabel. Min 3 chars!");
 				if(!uDatacenter)
-					tNode("<blink>Error</blink>: Must supply valid uDatacenter!");
+					tNode("<strong>Error</strong>: Must supply valid uDatacenter!");
 				sprintf(gcQuery,"SELECT uNode FROM tNode WHERE cLabel='%s'",
 						cLabel);
         			mysql_query(&gMysql,gcQuery);
@@ -167,7 +167,7 @@ void ExttNodeCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tNode("<blink>Error</blink>: Node cLabel is used!");
+					tNode("<strong>Error</strong>: Node cLabel is used!");
 				}
                         	guMode=0;
 
@@ -182,7 +182,7 @@ void ExttNodeCommands(pentry entries[], int x)
 				uModDate=0;//Never modified
 				NewtNode(1);//Come back here uNode should be set
 				if(!uNode)
-					tNode("<blink>Error</blink>: New node was not created!");
+					tNode("<strong>Error</strong>: New node was not created!");
 
 				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType=2"
 						",cName='Name',cValue='%s',uOwner=%u,uCreatedBy=%u"
@@ -215,14 +215,14 @@ void ExttNodeCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tNode("<blink>Error</blink>: Can't delete a node"
+					tNode("<strong>Error</strong>: Can't delete a node"
 							" used by a container!");
 				}
 	                        guMode=2001;
 				tNode(LANG_NB_CONFIRMDEL);
 			}
 			else
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
@@ -232,7 +232,7 @@ void ExttNodeCommands(pentry entries[], int x)
 				guMode=5;
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+					tNode("<strong>Error</strong>: This record was modified. Reload it.");
 
 				sprintf(gcQuery,"SELECT uNode FROM tContainer WHERE uNode=%u",
 									uNode);
@@ -243,7 +243,7 @@ void ExttNodeCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tNode("<blink>Error</blink>: Can't delete a node"
+					tNode("<strong>Error</strong>: Can't delete a node"
 							" used by a container!");
 				}
 	                        guMode=0;
@@ -251,7 +251,7 @@ void ExttNodeCommands(pentry entries[], int x)
 				DeletetNode();
 			}
 			else
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
@@ -262,7 +262,7 @@ void ExttNodeCommands(pentry entries[], int x)
 				tNode(LANG_NB_CONFIRMMOD);
 			}
 			else
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
@@ -272,11 +272,11 @@ void ExttNodeCommands(pentry entries[], int x)
                         	guMode=2002;
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+					tNode("<strong>Error</strong>: This record was modified. Reload it.");
 				if(strlen(cLabel)<3)
-					tNode("<blink>Error</blink>: Must supply valid cLabel. Min 3 chars!");
+					tNode("<strong>Error</strong>: Must supply valid cLabel. Min 3 chars!");
 				if(!uDatacenter)
-					tNode("<blink>Error</blink>: Must supply valid uDatacenter!");
+					tNode("<strong>Error</strong>: Must supply valid uDatacenter!");
                         	guMode=0;
 
 				if(uForClient)
@@ -292,7 +292,7 @@ void ExttNodeCommands(pentry entries[], int x)
 				ModtNode();
 			}
 			else
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,"Node Offline"))
                 {
@@ -303,7 +303,7 @@ void ExttNodeCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+					tNode("<strong>Error</strong>: This record was modified. Reload it.");
 				
 				sprintf(gcQuery,"UPDATE tNode SET uStatus=%u WHERE uNode=%u",
 						uOFFLINE,uNode);
@@ -315,11 +315,11 @@ void ExttNodeCommands(pentry entries[], int x)
 			}
 			else if(uAllowMod(uOwner,uCreatedBy))
 			{
-				tNode("<blink>Error</blink>: Denied by node status");
+				tNode("<strong>Error</strong>: Denied by node status");
 			}
 			else
 			{
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Node Online"))
@@ -331,7 +331,7 @@ void ExttNodeCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+					tNode("<strong>Error</strong>: This record was modified. Reload it.");
 				
 				sprintf(gcQuery,"UPDATE tNode SET uStatus=%u WHERE uNode=%u",
 						uACTIVE,uNode);
@@ -343,11 +343,11 @@ void ExttNodeCommands(pentry entries[], int x)
 			}
 			else if(uAllowMod(uOwner,uCreatedBy))
 			{
-				tNode("<blink>Error</blink>: Denied by node status");
+				tNode("<strong>Error</strong>: Denied by node status");
 			}
 			else
 			{
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Node Container Report"))
@@ -359,18 +359,18 @@ void ExttNodeCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+					tNode("<strong>Error</strong>: This record was modified. Reload it.");
 				
 				guMode=9001;
 				tNode("");
 			}
 			else if(uAllowMod(uOwner,uCreatedBy))
 			{
-				tNode("<blink>Error</blink>: Denied by node status");
+				tNode("<strong>Error</strong>: Denied by node status");
 			}
 			else
 			{
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Hardware Information"))
@@ -383,7 +383,7 @@ void ExttNodeCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Save Hardware Information"))
@@ -436,7 +436,7 @@ void ExttNodeCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Clone Node Wizard"))
@@ -448,18 +448,18 @@ void ExttNodeCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+					tNode("<strong>Error</strong>: This record was modified. Reload it.");
 				
 				guMode=7001;
 				tNode("Select datacenter");
 			}
 			else if(uAllowMod(uOwner,uCreatedBy))
 			{
-				tNode("<blink>Error</blink>: Denied by node status");
+				tNode("<strong>Error</strong>: Denied by node status");
 			}
 			else
 			{
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Select Clone Datacenter"))
@@ -471,22 +471,22 @@ void ExttNodeCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+					tNode("<strong>Error</strong>: This record was modified. Reload it.");
 
 				guMode=7001;
 				if(!uTargetDatacenter)
-					tNode("<blink>Error:</blink> You must select a datacenter");
+					tNode("<strong>Error:</strong> You must select a datacenter");
 				
 				guMode=7002;
 				tNode("Select node, uIPv4 and more");
 			}
 			else if(uAllowMod(uOwner,uCreatedBy))
 			{
-				tNode("<blink>Error</blink>: Denied by node status");
+				tNode("<strong>Error</strong>: Denied by node status");
 			}
 			else
 			{
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Confirm Node Clone"))
@@ -502,32 +502,32 @@ void ExttNodeCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+					tNode("<strong>Error</strong>: This record was modified. Reload it.");
 
                         	guMode=7002;
 				//tNode("Function not available. Try again later");
 
 				if(!uWizIPv4)
-					tNode("<blink>Error</blink>: You must select a start IP!");
+					tNode("<strong>Error</strong>: You must select a start IP!");
 				if(uTargetNode==0)
-					tNode("<blink>Error</blink>: Please select a valid target node!");
+					tNode("<strong>Error</strong>: Please select a valid target node!");
 				if(uTargetNode==uNode)
-					tNode("<blink>Error</blink>: Can't clone to same node!");
+					tNode("<strong>Error</strong>: Can't clone to same node!");
 				GetNodeProp(uTargetNode,"cIPv4",cTargetNodeIPv4);
 				if(!cTargetNodeIPv4[0])
-					tNode("<blink>Error</blink>: Your target node is"
+					tNode("<strong>Error</strong>: Your target node is"
 							" missing it's cIPv4 property!");
 				if(uCloneStop>COLD_CLONE || uCloneStop<HOT_CLONE)
-					tNode("<blink>Error:</blink> Unexpected initial state");
+					tNode("<strong>Error:</strong> Unexpected initial state");
 				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
 				if(uTargetDatacenter!=uIPv4Datacenter)
-					tNode("<blink>Error:</blink> The specified target uIPv4 does not "
+					tNode("<strong>Error:</strong> The specified target uIPv4 does not "
 							"belong to the specified uDatacenter.");
 				if(!uDatacenter || !uTargetDatacenter )
-					tNode("<blink>Error:</blink> Unexpected problem with missing source node"
+					tNode("<strong>Error:</strong> Unexpected problem with missing source node"
 							" settings!");
 				if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
-						tNode("<blink>Error:</blink> Clone uSyncPeriod seconds out of range:"
+						tNode("<strong>Error:</strong> Clone uSyncPeriod seconds out of range:"
 								" Max 30 days, min 5 minutes or 0 off.");
                         	guMode=0;
 
@@ -535,11 +535,11 @@ void ExttNodeCommands(pentry entries[], int x)
 				uRetVal=CloneNode(uNode,uTargetNode,uWizIPv4,cuWizIPv4PullDown,uSyncPeriod,uCloneStop,
 							uTargetDatacenter);
 				if(uRetVal==5)
-					tNode("<blink>Operation not completed</blink>: Not enough IPs are available");
+					tNode("<strong>Operation not completed</strong>: Not enough IPs are available");
 				else if(uRetVal==2)
-					tNode("<blink>Error</blink>: Unexpected CommonCloneContainer() error! Check tJob");
+					tNode("<strong>Error</strong>: Unexpected CommonCloneContainer() error! Check tJob");
 				else if(uRetVal)
-					tNode("<blink>Error</blink>: Unexpected CloneNode() error! Check tJob");
+					tNode("<strong>Error</strong>: Unexpected CloneNode() error! Check tJob");
 				else if(!uRetVal)
 					tNode("Clone node container jobs created");
 					
@@ -555,14 +555,14 @@ void ExttNodeCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+					tNode("<strong>Error</strong>: This record was modified. Reload it.");
 				
 				guMode=8001;
 				tNode("Candiate failover jobs listed below, double check.");
 			}
 			else
 			{
-				tNode("<blink>Error</blink>: Denied by permissions settings");
+				tNode("<strong>Error</strong>: Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Confirm Node Failover"))
@@ -574,7 +574,7 @@ void ExttNodeCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tNode","uModDate",uNode),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tNode("<blink>Error</blink>: This record was modified. Reload it.");
+					tNode("<strong>Error</strong>: This record was modified. Reload it.");
 
                         	guMode=8002;
 
@@ -1710,7 +1710,7 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 	if(uIPsAvailable<uContainers)
 	{
 		char cMsg[100];
-		sprintf(cMsg,"<blink>Not enough IPs</blink>: uIPsAvailable(%u)&lt;uContainers(%u) for cIPv4ClassC=%s, uOwner=%u",
+		sprintf(cMsg,"<strong>Not enough IPs</strong>: uIPsAvailable(%u)&lt;uContainers(%u) for cIPv4ClassC=%s, uOwner=%u",
 			uIPsAvailable,uContainers,cIPv4ClassC,guCompany);
 		tNode(cMsg);
 	}
@@ -1770,6 +1770,24 @@ unsigned CloneNode(unsigned uSourceNode,unsigned uTargetNode,unsigned uWizIPv4,c
 		SetContainerStatus(uContainer,uStatus);//undo CommonCloneContainer() set
 		uGroup=uGetGroup(0,uContainer);
 		if(uGroup) UpdatePrimaryContainerGroup(uNewVeid,uGroup);
+
+		//Get another uWizIPv4
+        	MYSQL_RES *res2;
+        	MYSQL_ROW field2;
+		if(guCompany==1)
+			sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE cLabel LIKE '%s.%%' AND uAvailable=1"
+					" AND uDatacenter=%u",cIPv4ClassC,uTargetDatacenter);
+		else
+			sprintf(gcQuery,"SELECT uIP FROM tIP WHERE cLabel LIKE '%s.%%' AND uAvailable=1"
+					" AND uOwner=%u AND uDatacenter=%u",cIPv4ClassC,guCompany,uTargetDatacenter);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+			sscanf(field2[0],"%u",&uWizIPv4);
+		else
+			break;
 
 		//debug only
 		//tNode(cWizHostname);

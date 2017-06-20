@@ -535,7 +535,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
 		else if(!strcmp(gcCommand,"Clear Filter"))
@@ -818,7 +818,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
                 }
 		else if(!strcmp(gcCommand,"Add to Search Set") || !strcmp(gcCommand,"Create Search Set"))
@@ -1125,7 +1125,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
                 }
 		else if(!strcmp(gcCommand,"Search Set Operations"))
@@ -1138,7 +1138,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
                 }
 		else if(!strcmp(gcCommand,"Cancel"))
@@ -1157,17 +1157,17 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it!");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it!");
 
                         	guMode=200;
 				if(uStatus!=uINITSETUP)
-					tContainer("<blink>Unexpected Error</blink>: uStatus not 'Initial Setup'");
+					tContainer("<strong>Unexpected Error</strong>: uStatus not 'Initial Setup'");
 
                         	guMode=201;
 				if(!uVeth)
 				{
 					if(uCheckMountSettings(uMountTemplate))
-						tContainer("<blink>Error:</blink> Incorrect mount settings!");
+						tContainer("<strong>Error:</strong> Incorrect mount settings!");
 					AddMountProps(uContainer);
 				}
 			
@@ -1176,7 +1176,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
@@ -1186,14 +1186,14 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 
 	                        guMode=2001;
 				tContainer(LANG_NB_CONFIRMDEL);
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Delete denied by permissions settings");
+				tContainer("<strong>Error:</strong> Delete denied by permissions settings");
 			}
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
@@ -1203,7 +1203,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 
 	                        guMode=2001;
 				//Special safety for root level cleanup dels
@@ -1215,7 +1215,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						htmlPlainTextError(mysql_error(&gMysql));
         				res=mysql_store_result(&gMysql);
 					if(mysql_num_rows(res)!=0)
-						tContainer("<blink>Error:</blink> This container has a source. Delete it first.");
+						tContainer("<strong>Error:</strong> This container has a source. Delete it first.");
 				}
 				else if(uStatus==uAWAITCLONE && uSource)
 				{
@@ -1281,7 +1281,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Delete denied by permissions settings");
+				tContainer("<strong>Error:</strong> Delete denied by permissions settings");
 			}
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
@@ -1291,14 +1291,14 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 
 				guMode=2002;
 				tContainer(LANG_NB_CONFIRMMOD);
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
@@ -1308,44 +1308,44 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 
                         	guMode=2002;
 				//Check entries here
 				if(uContainer==0)
-					tContainer("<blink>Error:</blink> uContainer==0!");
+					tContainer("<strong>Error:</strong> uContainer==0!");
 				if(uDatacenter==0)
-					tContainer("<blink>Error:</blink> uDatacenter==0!");
+					tContainer("<strong>Error:</strong> uDatacenter==0!");
 				if(uNode==0)
-					tContainer("<blink>Error:</blink> uNode==0!");
+					tContainer("<strong>Error:</strong> uNode==0!");
 				sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uNodeDatacenter);
 				if(uDatacenter!=uNodeDatacenter)
-					tContainer("<blink>Error:</blink> The specified uNode does not "
+					tContainer("<strong>Error:</strong> The specified uNode does not "
 							"belong to the specified uDatacenter.");
 				if(uIPv4==0 && uWizIPv4)
 					uIPv4=uWizIPv4;
 				if(uIPv4==0)
-					tContainer("<blink>Error:</blink> uIPv4==0!");
+					tContainer("<strong>Error:</strong> uIPv4==0!");
 				if(uOSTemplate==0)
-					tContainer("<blink>Error:</blink> uOSTemplate==0!");
+					tContainer("<strong>Error:</strong> uOSTemplate==0!");
 				if(uConfig==0)
-					tContainer("<blink>Error:</blink> uConfig==0!");
+					tContainer("<strong>Error:</strong> uConfig==0!");
 				if(uNameserver==0)
-					tContainer("<blink>Error:</blink> uNameserver==0!");
+					tContainer("<strong>Error:</strong> uNameserver==0!");
 				if(uSearchdomain==0)
-					tContainer("<blink>Error:</blink> uSearchdomain==0!");
+					tContainer("<strong>Error:</strong> uSearchdomain==0!");
 				if(strlen(cHostname)<5)
-					tContainer("<blink>Error:</blink> cHostname too short!");
+					tContainer("<strong>Error:</strong> cHostname too short!");
 				if(strlen(cLabel)<2)
-					tContainer("<blink>Error:</blink> cLabel too short!");
+					tContainer("<strong>Error:</strong> cLabel too short!");
 				if(strstr(cLabel,"-clone"))
-					tContainer("<blink>Error:</blink> cLabel can't have '-clone'!");
+					tContainer("<strong>Error:</strong> cLabel can't have '-clone'!");
 				if(strstr(cHostname,"-clone"))
-					tContainer("<blink>Error:</blink> cHostname can't have '-clone'!");
+					tContainer("<strong>Error:</strong> cHostname can't have '-clone'!");
 				if(strstr(cLabel,"-backup"))
-					tContainer("<blink>Error:</blink> cLabel can't have '-backup'!");
+					tContainer("<strong>Error:</strong> cLabel can't have '-backup'!");
 				if(strstr(cHostname,"-backup"))
-					tContainer("<blink>Error:</blink> cHostname can't have '-backup'!");
+					tContainer("<strong>Error:</strong> cHostname can't have '-backup'!");
 				//No same names or hostnames for same datacenter allowed.
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
 						" AND uContainer!=%u",
@@ -1357,7 +1357,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(mysql_num_rows(res)>0)
 				{
 					mysql_free_result(res);
-					tContainer("<blink>Error:</blink> cHostname or cLabel already used at this"
+					tContainer("<strong>Error:</strong> cHostname or cLabel already used at this"
 							" datacenter!");
 				}
 				mysql_free_result(res);
@@ -1380,7 +1380,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
                 }
                 else if(!strncmp(gcCommand,"Start ",6))
@@ -1392,7 +1392,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 
 				if(CreateStartContainerJob(uDatacenter,uNode,uContainer,uOwner))
 				{
@@ -1405,12 +1405,12 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 				else
 				{
-					tContainer("<blink>Error:</blink> No jobs created!");
+					tContainer("<strong>Error:</strong> No jobs created!");
 				}
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strncmp(gcCommand,"Deploy ",7))
@@ -1422,7 +1422,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 
 				if(CreateNewContainerJob(uDatacenter,uNode,uContainer,uOwner))
 				{
@@ -1436,12 +1436,12 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 				else
 				{
-					tContainer("<blink>Error:</blink> No jobs created!");
+					tContainer("<strong>Error:</strong> No jobs created!");
 				}
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strncmp(gcCommand,"Destroy ",8))
@@ -1453,7 +1453,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 				unsigned uRemoveDNS=1;
 				if(strstr(gcCommand," KeepDNS"))
 					uRemoveDNS=0;
@@ -1467,12 +1467,12 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 				else
 				{
-					tContainer("<blink>Error:</blink> No jobs created!");
+					tContainer("<strong>Error:</strong> No jobs created!");
 				}
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strncmp(gcCommand,"Stop ",5))
@@ -1484,7 +1484,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 
 				if(StopContainerJob(uDatacenter,uNode,uContainer,guCompany))
 				{
@@ -1495,12 +1495,12 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 				else
 				{
-					tContainer("<blink>Error:</blink> No jobs created!");
+					tContainer("<strong>Error:</strong> No jobs created!");
 				}
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Cancel Job"))
@@ -1510,16 +1510,16 @@ void ExttContainerCommands(pentry entries[], int x)
 			{
                         	guMode=0;
 				if(uStatus!=uAWAITDEL && uStatus!=uAWAITACT && uStatus!=uAWAITSTOP)
-					tContainer("<blink>Error:</blink> Unexpected uStatus!");
+					tContainer("<strong>Error:</strong> Unexpected uStatus!");
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Job may have run!");
+					tContainer("<strong>Error:</strong> This record was modified. Job may have run!");
 
 				//Cancel any outstanding jobs.
 				if(CancelContainerJob(uDatacenter,uNode,uContainer,1))
 				{
-					tContainer("<blink>Error:</blink> Unexpected no jobs canceled! Late?");
+					tContainer("<strong>Error:</strong> Unexpected no jobs canceled! Late?");
 				}
 				else
 				{
@@ -1539,7 +1539,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Create Action Scripts"))
@@ -1551,7 +1551,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 
 				if(ActionScriptsJob(uDatacenter,uNode,uContainer))
 				{
@@ -1560,13 +1560,13 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 				else
 				{
-					tContainer("<blink>Error:</blink> No jobs created!"
+					tContainer("<strong>Error:</strong> No jobs created!"
 							" Make sure correct properties exist.");
 				}
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Remote Clone Wizard"))
@@ -1578,17 +1578,17 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 				
 				if(uSource)
-					tContainer("<blink>Error:</blink> No clones of clones allowed");
+					tContainer("<strong>Error:</strong> No clones of clones allowed");
 
 				guMode=11001;
 				tContainer("Select datacenter");
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Select Clone Datacenter"))
@@ -1600,20 +1600,20 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 				
 				guMode=11001;
 				if(uSource)
-					tContainer("<blink>Error:</blink> No clones of clones allowed");
+					tContainer("<strong>Error:</strong> No clones of clones allowed");
 				if(uTargetDatacenter==uDatacenter)
-					tContainer("<blink>Error:</blink> Can't remote clone to same datacenter");
+					tContainer("<strong>Error:</strong> Can't remote clone to same datacenter");
 
 				guMode=11002;
 				tContainer("Select node, uIPv4 and more");
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Confirm Remote Clone"))
@@ -1627,36 +1627,36 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it");
 
                         	guMode=11002;
 				if(uCloneStop>COLD_CLONE || uCloneStop<HOT_CLONE)
-					tContainer("<blink>Error:</blink> Unexpected initial state");
+					tContainer("<strong>Error:</strong> Unexpected initial state");
 				if(uTargetNode==0)
-					tContainer("<blink>Error:</blink> Please select a valid target node");
+					tContainer("<strong>Error:</strong> Please select a valid target node");
 				if(uTargetNode==uNode)
-					tContainer("<blink>Error:</blink> Can't clone to same node");
+					tContainer("<strong>Error:</strong> Can't clone to same node");
 				if(uTargetDatacenter==uDatacenter)
-					tContainer("<blink>Error:</blink> Can't remote clone to same datacenter");
+					tContainer("<strong>Error:</strong> Can't remote clone to same datacenter");
 				if(uSource)
-					tContainer("<blink>Error:</blink> No clones of clones allowed");
+					tContainer("<strong>Error:</strong> No clones of clones allowed");
 				if(!uWizIPv4)
-					tContainer("<blink>Error:</blink> You must select an IP");
+					tContainer("<strong>Error:</strong> You must select an IP");
 				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
 				if(uTargetDatacenter!=uIPv4Datacenter)
-					tContainer("<blink>Error:</blink> The specified target uIPv4 does not "
+					tContainer("<strong>Error:</strong> The specified target uIPv4 does not "
 							"belong to the specified uDatacenter.");
 				if(!uOSTemplate || !uConfig || !uNameserver || !uSearchdomain || !uDatacenter || !uTargetDatacenter )
-					tContainer("<blink>Error:</blink> Unexpected problem with missing source container"
+					tContainer("<strong>Error:</strong> Unexpected problem with missing source container"
 							" settings!");
 				if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
-						tContainer("<blink>Error:</blink> Clone uSyncPeriod seconds out of range:"
+						tContainer("<strong>Error:</strong> Clone uSyncPeriod seconds out of range:"
 								" Max 30 days, min 5 minutes or 0 off.");
 				if(uVeth)
 				{
 					GetNodeProp(uNode,"Container-Type",cContainerType);
 					if(!strstr(cContainerType,"VETH"))
-						tContainer("<blink>Error:</blink> uNode selected does not support VETH");
+						tContainer("<strong>Error:</strong> uNode selected does not support VETH");
 						
 				}
 
@@ -1670,7 +1670,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					htmlPlainTextError(mysql_error(&gMysql));
         			res=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res))
-					tContainer("<blink>Error:</blink> A clone of this container already exists on selected node");
+					tContainer("<strong>Error:</strong> A clone of this container already exists on selected node");
 				mysql_free_result(res);
 
 				//tContainer("debug break point");
@@ -1725,7 +1725,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Clone Wizard"))
@@ -1737,14 +1737,14 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 				
 				guMode=7001;
 				tContainer("Select target node, uIPv4 and set other settings");
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Confirm Clone"))
@@ -1758,34 +1758,34 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it");
 
                         	guMode=7001;
 				if(uCloneStop>WARM_CLONE || uCloneStop<HOT_CLONE)
-					tContainer("<blink>Error:</blink> Unexpected initial state");
+					tContainer("<strong>Error:</strong> Unexpected initial state");
 				if(uTargetNode==0)
-					tContainer("<blink>Error:</blink> Please select a valid target node");
+					tContainer("<strong>Error:</strong> Please select a valid target node");
 				if(uTargetNode==uNode)
-					tContainer("<blink>Error:</blink> Can't clone to same node");
+					tContainer("<strong>Error:</strong> Can't clone to same node");
 				if(uSource)
-					tContainer("<blink>Error:</blink> No clones of clones allowed");
+					tContainer("<strong>Error:</strong> No clones of clones allowed");
 				if(!uWizIPv4)
-					tContainer("<blink>Error:</blink> You must select an IP");
+					tContainer("<strong>Error:</strong> You must select an IP");
 				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
 				if(uDatacenter!=uIPv4Datacenter)
-					tContainer("<blink>Error:</blink> The specified target uIPv4 does not "
+					tContainer("<strong>Error:</strong> The specified target uIPv4 does not "
 							"belong to the specified uDatacenter.");
 				if(!uOSTemplate || !uConfig || !uNameserver || !uSearchdomain || !uDatacenter )
-					tContainer("<blink>Error:</blink> Unexpected problem with missing source container"
+					tContainer("<strong>Error:</strong> Unexpected problem with missing source container"
 							" settings!");
 				if(uSyncPeriod>86400*30 || (uSyncPeriod && uSyncPeriod<300))
-						tContainer("<blink>Error:</blink> Clone uSyncPeriod seconds out of range:"
+						tContainer("<strong>Error:</strong> Clone uSyncPeriod seconds out of range:"
 								" Max 30 days, min 5 minutes or 0 off.");
 				if(uVeth)
 				{
 					GetNodeProp(uNode,"Container-Type",cContainerType);
 					if(!strstr(cContainerType,"VETH"))
-						tContainer("<blink>Error:</blink> uNode selected does not support VETH");
+						tContainer("<strong>Error:</strong> uNode selected does not support VETH");
 						
 				}
                         	guMode=0;
@@ -1826,7 +1826,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Migration Wizard"))
@@ -1838,13 +1838,13 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 				guMode=3001;
 				tContainer("Select Migration Target");
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Confirm Migration"))
@@ -1857,21 +1857,21 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 
                         	guMode=3001;
 				if(uTargetNode==uNode)
-					tContainer("<blink>Error:</blink> Can't migrate to same node. Try 'Template Wizard'");
+					tContainer("<strong>Error:</strong> Can't migrate to same node. Try 'Template Wizard'");
 				if(uTargetNode==0)
-					tContainer("<blink>Error:</blink> Please select a valid target node");
+					tContainer("<strong>Error:</strong> Please select a valid target node");
 				sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
 				if(uTargetDatacenter!=uDatacenter)
-					tContainer("<blink>Error:</blink> Can't migrate to different datacenter. Try 'Remote Migration'");
+					tContainer("<strong>Error:</strong> Can't migrate to different datacenter. Try 'Remote Migration'");
 				if(uVeth)
 				{
 					GetNodeProp(uNode,"Container-Type",cContainerType);
 					if(!strstr(cContainerType,"VETH"))
-						tContainer("<blink>Error:</blink> uNode selected does not support VETH!");
+						tContainer("<strong>Error:</strong> uNode selected does not support VETH!");
 						
 				}
                         	guMode=0;
@@ -1880,7 +1880,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				if(uGroup)
 					UpdatePrimaryContainerGroup(uContainer,uGroup);
 
-				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient,0,uStatus))
+				if(MigrateContainerJob(uDatacenter,uNode,uContainer,uTargetNode,uOwner,guLoginClient,uIPv4,uStatus))
 				{
 					uStatus=uAWAITMIG;
 					SetContainerStatus(uContainer,uAWAITMIG);//Awaiting Migration
@@ -1889,12 +1889,12 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 				else
 				{
-					tContainer("<blink>Error:</blink> No jobs created!");
+					tContainer("<strong>Error:</strong> No jobs created!");
 				}
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Remote Migration"))
@@ -1906,16 +1906,16 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 				GetContainerProp(uContainer,"cOrg_PublicIP",gcUseThisIP);
 				if(gcUseThisIP[0])
-					tContainer("<blink>Error:</blink> NAT container remote migration not supported yet.");
+					tContainer("<strong>Error:</strong> NAT container remote migration not supported yet.");
 				guMode=10001;
 				tContainer("Select Migration Node");
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Select Migration Node"))
@@ -1927,23 +1927,23 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 
                         	guMode=10001;
 				if(uTargetNode==uNode)
-					tContainer("<blink>Error:</blink> Can't migrate to same node. Try 'Template Wizard'");
+					tContainer("<strong>Error:</strong> Can't migrate to same node. Try 'Template Wizard'");
 				if(uTargetNode==0)
-					tContainer("<blink>Error:</blink> Please select a valid target node");
+					tContainer("<strong>Error:</strong> Please select a valid target node");
 				sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
 				if(uTargetDatacenter==uDatacenter)
-					tContainer("<blink>Error:</blink> Can't migrate to same datacenter. Try 'Migration Wizard'");
+					tContainer("<strong>Error:</strong> Can't migrate to same datacenter. Try 'Migration Wizard'");
 
 				guMode=10002;
 				tContainer("Confirm Remote Migration");
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Confirm Remote Migration"))
@@ -1956,34 +1956,34 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 
                         	guMode=10002;
 				if(uTargetNode==uNode)
-					tContainer("<blink>Error:</blink> Can't migrate to same node. Try 'Template Wizard'");
+					tContainer("<strong>Error:</strong> Can't migrate to same node. Try 'Template Wizard'");
 				if(uTargetNode==0)
-					tContainer("<blink>Error:</blink> Please select a valid target node");
+					tContainer("<strong>Error:</strong> Please select a valid target node");
 				sscanf(ForeignKey("tNode","uDatacenter",uTargetNode),"%u",&uTargetDatacenter);
 				if(uTargetDatacenter==uDatacenter)
-					tContainer("<blink>Error:</blink> Can't migrate to same datacenter. Try 'Migration Wizard'");
+					tContainer("<strong>Error:</strong> Can't migrate to same datacenter. Try 'Migration Wizard'");
 				if(uVeth)
 				{
 					GetNodeProp(uNode,"Container-Type",cContainerType);
 					if(!strstr(cContainerType,"VETH"))
-						tContainer("<blink>Error:</blink> uNode selected does not support VETH!");
+						tContainer("<strong>Error:</strong> uNode selected does not support VETH!");
 						
 				}
 				if(uIPv4==0)
-					tContainer("<blink>Error:</blink> Unexpected current uIPv4");
+					tContainer("<strong>Error:</strong> Unexpected current uIPv4");
 				if(uWizIPv4==0)
-					tContainer("<blink>Error:</blink> Please select a valid uIPv4");
+					tContainer("<strong>Error:</strong> Please select a valid uIPv4");
 				sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
 				if(uTargetDatacenter!=uIPv4Datacenter)
-					tContainer("<blink>Error:</blink> The specified uIPv4 does not "
+					tContainer("<strong>Error:</strong> The specified uIPv4 does not "
 							"belong to the remote datacenter.");
 				sscanf(ForeignKey("tIP","uAvailable",uWizIPv4),"%u",&uIPv4Available);
 				if(!uIPv4Available)
-					tContainer("<blink>Error:</blink> The specified uIPv4 is no longer"
+					tContainer("<strong>Error:</strong> The specified uIPv4 is no longer"
 							"available, select another.");
 
 				//External DNS job check
@@ -1991,7 +1991,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				cunxsBindARecordJobZone[0]=0;
 				GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 				if(!cunxsBindARecordJobZone[0])
-					tContainer("<blink>Error:</blink> Create job for unxsBind,"
+					tContainer("<strong>Error:</strong> Create job for unxsBind,"
 								" but no cunxsBindARecordJobZone");
 
 				//This code should be compatible with new -clone hostname scheme
@@ -2012,7 +2012,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					while(uWizLabelLoop)
 					{
 						uWizLabelSuffix++;
-						if(uWizLabelSuffix>9) tContainer("<blink>Error:</blink> Clone limit reached");
+						if(uWizLabelSuffix>9) tContainer("<strong>Error:</strong> Clone limit reached");
 						sprintf(cWizLabel,"%.25s-clone%u",cLabel,uWizLabelSuffix);
 						sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE cLabel='%s'",cWizLabel);
 						mysql_query(&gMysql,gcQuery);
@@ -2034,7 +2034,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				uHostnameLen=strlen(cHostname);
 				//if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
-				//		tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+				//		tContainer("<strong>Error:</strong> cHostname must end with cunxsBindARecordJobZone");
 				//debug only
 				//tContainer("s3");
 
@@ -2146,12 +2146,12 @@ void ExttContainerCommands(pentry entries[], int x)
 				else
 				{
 					//TODO check need for any roll back
-					tContainer("<blink>Error:</blink> No jobs created!");
+					tContainer("<strong>Error:</strong> No jobs created!");
 				}
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}//Confirm Remote Migration
                 else if(!strcmp(gcCommand,"Template Wizard"))
@@ -2163,15 +2163,15 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 				if(!uOSTemplate)
-					tContainer("<blink>Error:</blink> No tOSTemplate.cLabel!");
+					tContainer("<strong>Error:</strong> No tOSTemplate.cLabel!");
 				guMode=4001;
 				tContainer("Select Template Name");
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Confirm Template"))
@@ -2182,19 +2182,19 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
                         	guMode=4001;
 				if(strlen(cConfigLabel)<2)
-					tContainer("<blink>Error:</blink> Must provide valid tConfig.cLabel!");
+					tContainer("<strong>Error:</strong> Must provide valid tConfig.cLabel!");
 				if(strchr(cConfigLabel,'-'))
-					tContainer("<blink>Error:</blink> tConfig.cLabel can't contain '-' chars!");
+					tContainer("<strong>Error:</strong> tConfig.cLabel can't contain '-' chars!");
 				sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",cConfigLabel);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					htmlPlainTextError(mysql_error(&gMysql));
         			res=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res)>0)
-					tContainer("<blink>Error:</blink> tConfig.cLabel already exists create another!");
+					tContainer("<strong>Error:</strong> tConfig.cLabel already exists create another!");
 				mysql_free_result(res);
 				sprintf(gcQuery,"SELECT uOSTemplate FROM tOSTemplate WHERE cLabel='%s'",cConfigLabel);
 				mysql_query(&gMysql,gcQuery);
@@ -2202,7 +2202,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					htmlPlainTextError(mysql_error(&gMysql));
         			res=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res)>0)
-					tContainer("<blink>Error:</blink> tOSTemplate.cLabel collision."
+					tContainer("<strong>Error:</strong> tOSTemplate.cLabel collision."
 							" Select another tConfig.cLabel!");
 				mysql_free_result(res);
                         	guMode=0;
@@ -2215,12 +2215,12 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 				else
 				{
-					tContainer("<blink>Error:</blink> No jobs created!");
+					tContainer("<strong>Error:</strong> No jobs created!");
 				}
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Hostname Change Wizard"))
@@ -2232,7 +2232,7 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 				guMode=5001;
 				if(uDatacenter==41 && uNode==81)
 				{
@@ -2245,7 +2245,7 @@ void ExttContainerCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Confirm Hostname Change"))
@@ -2259,41 +2259,41 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
                         	guMode=5001;
 				//debug only
 				//if(uUsePublicIP && gcUseThisIP[0])
 				//	tContainer(gcUseThisIP);
 				if(!strcmp(cWizHostname,cHostname) && !strcmp(cWizLabel,cLabel))
-					tContainer("<blink>Error:</blink> cHostname and cLabel are the same as original!");
+					tContainer("<strong>Error:</strong> cHostname and cLabel are the same as original!");
 				if((uHostnameLen=strlen(cWizHostname))<5)
-					tContainer("<blink>Error:</blink> cHostname too short!");
+					tContainer("<strong>Error:</strong> cHostname too short!");
 				if((uLabelLen=strlen(cWizLabel))<2)
-					tContainer("<blink>Error:</blink> cLabel too short!");
+					tContainer("<strong>Error:</strong> cLabel too short!");
 				if(strchr(cWizLabel,'.'))
-					tContainer("<blink>Error:</blink> cLabel has at least one '.'!");
+					tContainer("<strong>Error:</strong> cLabel has at least one '.'!");
 				if(strstr(cWizLabel,"-clone"))
-					tContainer("<blink>Error:</blink> cLabel can't have '-clone'");
+					tContainer("<strong>Error:</strong> cLabel can't have '-clone'");
 				if(strstr(cWizHostname,"-clone"))
-					tContainer("<blink>Error:</blink> cHostname can't have '-clone'");
+					tContainer("<strong>Error:</strong> cHostname can't have '-clone'");
 				if(strstr(cWizLabel,"-backup") && !strstr(cLabel,"-backup"))
-					tContainer("<blink>Error:</blink> cLabel can't have '-backup' unless it is already a '-backup'");
+					tContainer("<strong>Error:</strong> cLabel can't have '-backup' unless it is already a '-backup'");
 				if(strstr(cWizHostname,"-backup") && !strstr(cHostname,"-backup"))
-					tContainer("<blink>Error:</blink> cHostname can't have '-backup' unless already a '-backup'");
+					tContainer("<strong>Error:</strong> cHostname can't have '-backup' unless already a '-backup'");
 				//New rule: cLabel must be first part (first stop) of cHostname.
 				if(strncmp(cWizLabel,cWizHostname,uLabelLen))
-					tContainer("<blink>Error:</blink> cLabel must be first part of cHostname.");
+					tContainer("<strong>Error:</strong> cLabel must be first part of cHostname.");
 				//DNS sanity check
 				if(uCreateDNSJob)
 				{
 					cunxsBindARecordJobZone[0]=0;
 					GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 					if(!cunxsBindARecordJobZone[0])
-						tContainer("<blink>Error:</blink> Create job for unxsBind,"
+						tContainer("<strong>Error:</strong> Create job for unxsBind,"
 								" but no cunxsBindARecordJobZone");
 					
 					//if(!strstr(cWizHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),cunxsBindARecordJobZone))
-					//	tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+					//	tContainer("<strong>Error:</strong> cHostname must end with cunxsBindARecordJobZone");
 				}
 				//No same names or hostnames for same XXXdatacenterXXX -now global restriction- allowed.
 				sprintf(gcQuery,"SELECT uContainer,uStatus,uIPv4 FROM tContainer WHERE (cHostname='%s' OR cLabel='%s')"
@@ -2341,7 +2341,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					else
 					{
 						mysql_free_result(res);
-						tContainer("<blink>Error:</blink> cHostname or cLabel already used"
+						tContainer("<strong>Error:</strong> cHostname or cLabel already used"
 							" in this unxsVZ system!");
 					}
 				}
@@ -2380,12 +2380,12 @@ void ExttContainerCommands(pentry entries[], int x)
 				}
 				else
 				{
-					tContainer("<blink>Error:</blink> No jobs created!");
+					tContainer("<strong>Error:</strong> No jobs created!");
 				}
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}//Confirm Hostname Change 
                 else if(!strcmp(gcCommand,"IP Change Wizard"))
@@ -2397,13 +2397,13 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 				guMode=6001;
 				tContainer("Select new IPv4");
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Confirm IP Change"))
@@ -2415,37 +2415,37 @@ void ExttContainerCommands(pentry entries[], int x)
 				unsigned uIPv4WizDatacenter=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
                         	guMode=6001;
 
 				if(uWizIPv4 && uWizContainer)
-					tContainer("<blink>Error:</blink> You must select either a swap or a new IP not both!");
+					tContainer("<strong>Error:</strong> You must select either a swap or a new IP not both!");
 				if(!uWizIPv4 && !uWizContainer)
-					tContainer("<blink>Error:</blink> You must select an IP or a container to swap with!");
+					tContainer("<strong>Error:</strong> You must select an IP or a container to swap with!");
 				if(uContainer==uWizContainer)
-					tContainer("<blink>Error:</blink> You can't swap with the same container!");
+					tContainer("<strong>Error:</strong> You can't swap with the same container!");
 				if(uWizIPv4)
 				{
 					sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
 					if(uDatacenter!=uIPv4Datacenter)
-						tContainer("<blink>Error:</blink> The specified target uIPv4 does not "
+						tContainer("<strong>Error:</strong> The specified target uIPv4 does not "
 							"belong to the specified uDatacenter.");
 				}
 				else if(uWizContainer)
 				{
 					if(uVeth)
-						tContainer("<blink>Error:</blink> VETH device network containers"
+						tContainer("<strong>Error:</strong> VETH device network containers"
 									" not supported at this time!");
 					sscanf(ForeignKey("tContainer","uDatacenter",uWizContainer),"%u",&uIPv4WizDatacenter);
 					//if(uDatacenter!=uIPv4WizDatacenter)
-					//	tContainer("<blink>Error:</blink> The specified swap container does not "
+					//	tContainer("<strong>Error:</strong> The specified swap container does not "
 					//		"belong to the same datacenter.");
 					//we reuse uWizIPv4 for swap method
 					uIPv4Datacenter=0;
 					sscanf(ForeignKey("tContainer","uIPv4",uWizContainer),"%u",&uWizIPv4);
 					sscanf(ForeignKey("tIP","uDatacenter",uWizIPv4),"%u",&uIPv4Datacenter);
 					if(uDatacenter!=uIPv4Datacenter)
-						tContainer("<blink>Error:</blink> The specified target uIPv4 does not "
+						tContainer("<strong>Error:</strong> The specified target uIPv4 does not "
 							"belong to the specified uDatacenter.");
 				}
 
@@ -2462,20 +2462,20 @@ void ExttContainerCommands(pentry entries[], int x)
 					//Basic direct IP change
 					sscanf(ForeignKey("tIP","uAvailable",uWizIPv4),"%u",&uAvailable);
 					if(!uAvailable)
-						tContainer("<blink>Error:</blink> The uIPv4 selected is not available anymore!");
+						tContainer("<strong>Error:</strong> The uIPv4 selected is not available anymore!");
 					//DNS sanity check
 					if(uCreateDNSJob)
 					{
 						cunxsBindARecordJobZone[0]=0;
 						GetConfiguration("cunxsBindARecordJobZone",cunxsBindARecordJobZone,uDatacenter,0,0,0);
 						if(!cunxsBindARecordJobZone[0])
-							tContainer("<blink>Error:</blink> Create job for unxsBind,"
+							tContainer("<strong>Error:</strong> Create job for unxsBind,"
 									" but no cunxsBindARecordJobZone");
 					
 						uHostnameLen=strlen(cHostname);
 						//if(!strstr(cHostname+(uHostnameLen-strlen(cunxsBindARecordJobZone)-1),
 						//	cunxsBindARecordJobZone))
-						//	tContainer("<blink>Error:</blink> cHostname must end with cunxsBindARecordJobZone");
+						//	tContainer("<strong>Error:</strong> cHostname must end with cunxsBindARecordJobZone");
 					}
 					guMode=0;
 					//Fatal error section
@@ -2513,7 +2513,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					}
 					else
 					{
-						tContainer("<blink>Error:</blink> No jobs created!");
+						tContainer("<strong>Error:</strong> No jobs created!");
 					}
 				}
 				else
@@ -2567,7 +2567,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						}
 						else
 						{
-							tContainer("<blink>Error:</blink> No jobs created!");
+							tContainer("<strong>Error:</strong> No jobs created!");
 						}
 	
 						//Fatal error section swap container
@@ -2608,7 +2608,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						}
 						else
 						{
-							tContainer("<blink>Error:</blink> No swap container jobs created! Check tJob.");
+							tContainer("<strong>Error:</strong> No swap container jobs created! Check tJob.");
 						}
 	
 					}
@@ -2681,14 +2681,14 @@ void ExttContainerCommands(pentry entries[], int x)
 						}
 						else
 						{
-							tContainer("<blink>Error:</blink> No jobs created!");
+							tContainer("<strong>Error:</strong> No jobs created!");
 						}
 					}
 				}
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strncmp(gcCommand,"Switchover",10))
@@ -2700,15 +2700,15 @@ void ExttContainerCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
 				if(!uDatacenter)
-					tContainer("<blink>Error:</blink> Unexpected lack of uDatacenter.");
+					tContainer("<strong>Error:</strong> Unexpected lack of uDatacenter.");
 				if(!uNode)
-					tContainer("<blink>Error:</blink> Unexpected lack of uNode.");
+					tContainer("<strong>Error:</strong> Unexpected lack of uNode.");
 				if(!uSource)
-					tContainer("<blink>Error:</blink> Unexpected lack of uSource.");
+					tContainer("<strong>Error:</strong> Unexpected lack of uSource.");
 				if(strstr(cLabel,"-backup"))
-					tContainer("<blink>Error:</blink> Not for remote -backup containers.");
+					tContainer("<strong>Error:</strong> Not for remote -backup containers.");
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND"
 						" (uStatus=1 OR uStatus=31 OR uStatus=41)",uSource);
 				mysql_query(&gMysql,gcQuery);
@@ -2716,13 +2716,13 @@ void ExttContainerCommands(pentry entries[], int x)
 						htmlPlainTextError(mysql_error(&gMysql));
         			res=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res)==0)
-					tContainer("<blink>Error:</blink> Unexpected source container status!");
+					tContainer("<strong>Error:</strong> Unexpected source container status!");
 				guMode=8001;
 				tContainer("Review and confirm");
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
 		else if(!strcmp(gcCommand,"Add Monitor Host"))
@@ -2733,22 +2733,22 @@ void ExttContainerCommands(pentry entries[], int x)
 				
                         	guMode=0;
 				if(!uContainer)
-					tContainer("<blink>Error</blink>: uContainer must be selected");
+					tContainer("<strong>Error</strong>: uContainer must be selected");
 				if(!uStatus==1)
-					tContainer("<blink>Error</blink>: uStatus must be active");
+					tContainer("<strong>Error</strong>: uStatus must be active");
 				char cMonitorAddHostScript[256]={""};
 				GetConfiguration("cMonitorAddHostScript",cMonitorAddHostScript,0,0,0,0);
 				if(!cMonitorAddHostScript[0])
-					tContainer("<blink>Error</blink>: tConfiguration cMonitorAddHostScript does not exist");
+					tContainer("<strong>Error</strong>: tConfiguration cMonitorAddHostScript does not exist");
 				unsigned uGroup=uGetPrimaryContainerGroup(uContainer);
 				if(!uGroup)
-					tContainer("<blink>Error</blink>: Container must belong to a configured group");
+					tContainer("<strong>Error</strong>: Container must belong to a configured group");
 				unsigned uMonitorGroupID=0;
 				char cuMonitorGroupID[256]={""};
 				GetGroupProperty(uGroup,"uMonitorGroupID",cuMonitorGroupID);
 				sscanf(cuMonitorGroupID,"%u",&uMonitorGroupID);
 				if(!uMonitorGroupID)
-					tContainer("<blink>Error</blink>: Container must belong to a group with a uMonitorGroupID");
+					tContainer("<strong>Error</strong>: Container must belong to a group with a uMonitorGroupID");
 				char cSystemCall[512]={""};
 				sprintf(cSystemCall,"%.255s %.63s %u %.16s",
 						cMonitorAddHostScript,cHostname,uMonitorGroupID,ForeignKey("tIP","cLabel",uIPv4));
@@ -2757,7 +2757,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				FILE *pp;
 				if((pp=popen(cSystemCall,"r"))==NULL)
 				{
-					sprintf(cMsg,"<blink>Error 1</blink>: %s",cSystemCall);
+					sprintf(cMsg,"<strong>Error 1</strong>: %s",cSystemCall);
 					tContainer(cMsg);
 				}
 				char cResponse[256]={""};
@@ -2765,7 +2765,7 @@ void ExttContainerCommands(pentry entries[], int x)
 					sscanf(cResponse,"%u",&uMonitorHostID);
 				if(!uMonitorHostID)	
 				{
-					sprintf(cMsg,"<blink>Error 2</blink>: %s",cSystemCall);
+					sprintf(cMsg,"<strong>Error 2</strong>: %s",cSystemCall);
 					tContainer(cMsg);
 				}
 				pclose(pp);
@@ -2786,20 +2786,20 @@ void ExttContainerCommands(pentry entries[], int x)
                         	guMode=0;
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tContainer("<blink>Error:</blink> This record was modified. Reload it.");
+					tContainer("<strong>Error:</strong> This record was modified. Reload it.");
                         	guMode=8001;
 				if(!uSource)
-					tContainer("<blink>Error:</blink> Unexpected lack of uSource!");
+					tContainer("<strong>Error:</strong> Unexpected lack of uSource!");
 				if(strstr(cLabel,"-backup"))
-					tContainer("<blink>Error:</blink> Not for remote -backup containers.");
+					tContainer("<strong>Error:</strong> Not for remote -backup containers.");
 				if(!uDatacenter)
-					tContainer("<blink>Error:</blink> Unexpected lack of uDatacenter.");
+					tContainer("<strong>Error:</strong> Unexpected lack of uDatacenter.");
 				if(!uNode)
-					tContainer("<blink>Error:</blink> Unexpected lack of uNode.");
+					tContainer("<strong>Error:</strong> Unexpected lack of uNode.");
 				if(!cLabel[0])
-					tContainer("<blink>Error:</blink> Unexpected lack of cLabel.");
+					tContainer("<strong>Error:</strong> Unexpected lack of cLabel.");
 				if(!cHostname[0])
-					tContainer("<blink>Error:</blink> Unexpected lack of cHostname.");
+					tContainer("<strong>Error:</strong> Unexpected lack of cHostname.");
 				sprintf(gcQuery,"SELECT uContainer FROM tContainer WHERE uContainer=%u AND"
 						" (uStatus=1 OR uStatus=31 OR uStatus=41)",uSource);
 				mysql_query(&gMysql,gcQuery);
@@ -2807,7 +2807,7 @@ void ExttContainerCommands(pentry entries[], int x)
 						htmlPlainTextError(mysql_error(&gMysql));
         			res=mysql_store_result(&gMysql);
 				if(mysql_num_rows(res)==0)
-					tContainer("<blink>Error:</blink> Unexpected source container status!");
+					tContainer("<strong>Error:</strong> Unexpected source container status!");
                         	guMode=0;
 
 				unsigned uFailToJob=0;
@@ -2843,17 +2843,17 @@ void ExttContainerCommands(pentry entries[], int x)
 					}
 					else
 					{
-						tContainer("<blink>Error:</blink> No FailoverFromJob() created!");
+						tContainer("<strong>Error:</strong> No FailoverFromJob() created!");
 					}
 				}
 				else
 				{
-					tContainer("<blink>Error:</blink> No FailoverToJob created!");
+					tContainer("<strong>Error:</strong> No FailoverToJob created!");
 				}
 			}
 			else
 			{
-				tContainer("<blink>Error:</blink> Denied by permissions settings");
+				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
                 else if(!strncmp(gcCommand,"Set ",4) || !strncmp(gcCommand,"Group ",6) || !strncmp(gcCommand,"Delete Checked",14))
@@ -8422,19 +8422,21 @@ unsigned CommonCloneContainer(
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 
-			sprintf(gcQuery,"DELETE FROM tJob WHERE cLabel='NewContainer(%u)'"
-					,uContainer);
+			sprintf(gcQuery,"DELETE FROM tJob WHERE cLabel='CreateNewContainerJob(%u)'"
+					,uNewVeid);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 
+			static char cMsg[100]={""};
+			sprintf(cMsg,"<strong>Error:</strong> No jobs created. Clone IP gone! %u",uWizIPv4);
 			if(uMode==0)
-				tContainer("<blink>Error:</blink> No jobs created. Clone IP gone!");
+				tContainer(cMsg);
 			else if(uMode==1)
-				tNode("<blink>Error:</blink> No jobs created. Clone IP gone!");
+				tNode(cMsg);
 			else if(uMode==7)
 			{
-				sprintf(gcReturnMsg,"%.32s","No jobs. Clone IP gone!\n");
+				sprintf(gcReturnMsg,"%.24s %u","No jobs. Clone IP gone!\n",uWizIPv4);
 				return(0);
 			}
 		}
@@ -8481,9 +8483,9 @@ unsigned CommonCloneContainer(
 		if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 		if(uMode==0)
-			tContainer("<blink>Error:</blink> No jobs created!");
+			tContainer("<strong>Error:</strong> No jobs created!");
 		else if(uMode==1)
-			tNode("<blink>Error:</blink> No jobs created!");
+			tNode("<strong>Error:</strong> No jobs created!");
 		else if(uMode==7)
 		{
 			sprintf(gcReturnMsg,"%.32s","No jobs created!\n");
@@ -8861,7 +8863,7 @@ void CheckMaxContainers(unsigned uNumContainer)
 			sscanf(cBuffer,"%u",&uActiveContainers);
 
 		if(uActiveContainers && uMaxContainers && (uActiveContainers+uNumContainer)>uMaxContainers)
-			tContainer("<blink>Error:</blink> Max number of active containers would (or has been) exceeded. Select another node");
+			tContainer("<strong>Error:</strong> Max number of active containers would (or has been) exceeded. Select another node");
 	}
 
 }//void CheckMaxContainers(unsigned uNumContainer)
@@ -9427,9 +9429,9 @@ unsigned CommonNewCloneContainer(
 				htmlPlainTextError(mysql_error(&gMysql));
 
 			if(uMode==0)
-				tContainer("<blink>Error:</blink> No jobs created. Clone IP gone!");
+				tContainer("<strong>Error:</strong> No jobs created. Clone IP gone!");
 			else if(uMode==1)
-				tNode("<blink>Error:</blink> No jobs created. Clone IP gone!");
+				tNode("<strong>Error:</strong> No jobs created. Clone IP gone!");
 			else if(uMode==7)
 			{
 				sprintf(gcReturnMsg,"%.32s","No jobs. Clone IP gone!\n");
@@ -9476,9 +9478,9 @@ unsigned CommonNewCloneContainer(
 		if(mysql_errno(&gMysql))
 				htmlPlainTextError(mysql_error(&gMysql));
 		if(uMode==0)
-			tContainer("<blink>Error:</blink> No jobs created!");
+			tContainer("<strong>Error:</strong> No jobs created!");
 		else if(uMode==1)
-			tNode("<blink>Error:</blink> No jobs created!");
+			tNode("<strong>Error:</strong> No jobs created!");
 		else if(uMode==7)
 		{
 			sprintf(gcReturnMsg,"%.32s","No jobs created!\n");

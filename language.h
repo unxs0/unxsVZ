@@ -20,13 +20,13 @@
 #define LANG_NBR_NORECS " No records found"
 #define LANG_NBRF_SHOWING " (Showing %lu of %d)"
 
-#define LANG_NBR_RECEXISTS "<blink>Record already exists"
+#define LANG_NBR_RECEXISTS "<strong>Record already exists</strong>"
 #define LANG_NBR_NEWRECADDED "New record %u added"
 #define LANG_NBR_RECDELETED "Record Deleted"
 #define LANG_NBR_RECNOTDELETED "Record Not Deleted"
-#define LANG_NBR_RECNOTEXIST "<blink>Record does not exist"
-#define LANG_NBR_MULTRECS "<blink>Multiple rows!"
-#define LANG_NBR_EXTMOD "<blink>This record was just modified by another user!"
+#define LANG_NBR_RECNOTEXIST "<strong>Record does not exist</strong>"
+#define LANG_NBR_MULTRECS "<strong>Multiple rows!</strong>"
+#define LANG_NBR_EXTMOD "<strong>This record was just modified by another user!</strong>"
 #define LANG_NBRF_REC_MODIFIED "record %s modified"
 
 #define LANG_NBB_SKIPFIRST "<input class=first title='Skip to first record' type=submit name=gcFind value='<<' >"

@@ -415,7 +415,7 @@ void NewtConfiguration(unsigned uMode)
 	i=mysql_num_rows(res);
 
 	if(i) 
-		//tConfiguration("<blink>Record already exists");
+		//tConfiguration("<strong>Record already exists");
 		tConfiguration(LANG_NBR_RECEXISTS);
 
 	//insert query
@@ -519,9 +519,9 @@ void ModtConfiguration(void)
 	MYSQL_RUN_STORE(res);
 	i=mysql_num_rows(res);
 
-	//if(i<1) tConfiguration("<blink>Record does not exist");
+	//if(i<1) tConfiguration("<strong>Record does not exist");
 	if(i<1) tConfiguration(LANG_NBR_RECNOTEXIST);
-	//if(i>1) tConfiguration("<blink>Multiple rows!");
+	//if(i>1) tConfiguration("<strong>Multiple rows!");
 	if(i>1) tConfiguration(LANG_NBR_MULTRECS);
 
 	field=mysql_fetch_row(res);

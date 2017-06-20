@@ -60,7 +60,7 @@ void ExttConfigCommands(pentry entries[], int x)
                         	guMode=2000;
 				//Check entries here
 				if(strlen(cLabel)<3)
-					tConfig("<blink>Error</blink>: cLabel too short!");
+					tConfig("<strong>Error</strong>: cLabel too short!");
 				sprintf(gcQuery,"SELECT uConfig FROM tConfig WHERE cLabel='%s'",
 						cLabel);
         			mysql_query(&gMysql,gcQuery);
@@ -70,7 +70,7 @@ void ExttConfigCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tConfig("<blink>Error</blink>: tConfig.cLabel is already used!");
+					tConfig("<strong>Error</strong>: tConfig.cLabel is already used!");
 				}
                         	guMode=0;
 
@@ -81,7 +81,7 @@ void ExttConfigCommands(pentry entries[], int x)
 				uModDate=0;//Never modified
 				NewtConfig(1);
 				if(!uConfig)
-					tConfig("<blink>Error</blink>: New tConfig entry was not created!");
+					tConfig("<strong>Error</strong>: New tConfig entry was not created!");
 
 				sprintf(gcQuery,"INSERT INTO tProperty SET uKey=%u,uType="PROP_CONFIG
 						",cName='cDatacenter',cValue='All Datacenters',uOwner=%u,uCreatedBy=%u"
@@ -107,7 +107,7 @@ void ExttConfigCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tConfig("<blink>Error</blink>: Can't delete a config used by a container!");
+					tConfig("<strong>Error</strong>: Can't delete a config used by a container!");
 				}
 	                        guMode=2001;
 				tConfig(LANG_NB_CONFIRMDEL);
@@ -121,7 +121,7 @@ void ExttConfigCommands(pentry entries[], int x)
 	                        guMode=2001;
 				sscanf(ForeignKey("tConfig","uModDate",uConfig),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tConfig("<blink>Error</blink>: This record was modified. Reload it.");
+					tConfig("<strong>Error</strong>: This record was modified. Reload it.");
 				sprintf(gcQuery,"SELECT uConfig FROM tContainer WHERE uConfig=%u",uConfig);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
@@ -130,7 +130,7 @@ void ExttConfigCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tConfig("<blink>Error</blink>: Can't delete a config used by a container!");
+					tConfig("<strong>Error</strong>: Can't delete a config used by a container!");
 				}
 				guMode=5;
 				DeletetConfig();
@@ -154,9 +154,9 @@ void ExttConfigCommands(pentry entries[], int x)
 				//Check entries here
 				sscanf(ForeignKey("tConfig","uModDate",uConfig),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tConfig("<blink>Error</blink>: This record was modified. Reload it.");
+					tConfig("<strong>Error</strong>: This record was modified. Reload it.");
 				if(strlen(cLabel)<3)
-					tConfig("<blink>Error</blink>: cLabel too short!");
+					tConfig("<strong>Error</strong>: cLabel too short!");
 				sprintf(gcQuery,"SELECT uConfig FROM tContainer WHERE uConfig=%u",uConfig);
         			mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
@@ -165,7 +165,7 @@ void ExttConfigCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tConfig("<blink>Error</blink>: Can't modify a config used by a container!");
+					tConfig("<strong>Error</strong>: Can't modify a config used by a container!");
 				}
                         	guMode=0;
 
@@ -180,10 +180,10 @@ void ExttConfigCommands(pentry entries[], int x)
                         	ProcesstConfigVars(entries,x);
 				guMode=6;
 				if(uConfig<1)
-					tConfig("<blink>Error</blink>: Unexpected uConfig&lt;1 error!");
+					tConfig("<strong>Error</strong>: Unexpected uConfig&lt;1 error!");
 				sscanf(ForeignKey("tConfig","uModDate",uConfig),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tConfig("<blink>Error</blink>: This record was modified. Reload it.");
+					tConfig("<strong>Error</strong>: This record was modified. Reload it.");
 				sprintf(gcQuery,"SELECT uConfig FROM tContainer WHERE uConfig=%u",
 						uConfig);
         			mysql_query(&gMysql,gcQuery);
@@ -193,15 +193,15 @@ void ExttConfigCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tConfig("<blink>Error</blink>: Can't import a config already in use!");
+					tConfig("<strong>Error</strong>: Can't import a config already in use!");
 				}
 				if(strlen(cLabel)<3)
-					tConfig("<blink>Error</blink>: cLabel too short!");
+					tConfig("<strong>Error</strong>: cLabel too short!");
 				
 				if(LocalImportConfigJob(uConfig))
 					tConfig("Local Import job created");
 				else
-					tConfig("<blink>Error</blink>: LocalImportTemplateJob() failed!");
+					tConfig("<strong>Error</strong>: LocalImportTemplateJob() failed!");
 			}
 		}
                 else if(!strcmp(gcCommand,"Enable"))
@@ -212,7 +212,7 @@ void ExttConfigCommands(pentry entries[], int x)
                         	guMode=6;
 				sscanf(ForeignKey("tConfig","uModDate",uConfig),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tConfig("<blink>Error</blink>: This record was modified. Reload it.");
+					tConfig("<strong>Error</strong>: This record was modified. Reload it.");
 				if(!uDatacenter)
 					sprintf(gcQuery,"INSERT tProperty SET cName='cDatacenter',cValue='All Datacenters',"
 						"uType=%u,uKey=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -228,7 +228,7 @@ void ExttConfigCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tConfig("<blink>Error</blink>: Enable not allowed!");
+				tConfig("<strong>Error</strong>: Enable not allowed!");
 			}
 		}
                 else if(!strcmp(gcCommand,"Disable"))
@@ -239,7 +239,7 @@ void ExttConfigCommands(pentry entries[], int x)
                         	guMode=6;
 				sscanf(ForeignKey("tConfig","uModDate",uConfig),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tConfig("<blink>Error</blink>: This record was modified. Reload it.");
+					tConfig("<strong>Error</strong>: This record was modified. Reload it.");
 				if(!uDatacenter)
 					sprintf(gcQuery,"DELETE FROM tProperty WHERE cName='cDatacenter' AND cValue='All Datacenters'"
 						" AND uType=%u AND uKey=%u AND (uOwner=%u OR uCreatedBy=%u)",
@@ -255,7 +255,7 @@ void ExttConfigCommands(pentry entries[], int x)
 			}
 			else
 			{
-				tConfig("<blink>Error</blink>: Disable not allowed!");
+				tConfig("<strong>Error</strong>: Disable not allowed!");
 			}
 		}
 	}

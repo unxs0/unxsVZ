@@ -128,7 +128,7 @@ void ExttClientCommands(pentry entries[], int x)
 				tClient(LANG_NB_CONFIRMNEW);
 			}
 			else
-				tClient("<blink>Error</blink>: Denied by permissions settings");
+				tClient("<strong>Error</strong>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
@@ -144,7 +144,7 @@ void ExttClientCommands(pentry entries[], int x)
 					tClient("Your maximum of customers has been reached");
 				}
 				if(strlen(cLabel)<3)
-					tClient("<blink>Error</blink>: Invalid cLabel!");
+					tClient("<strong>Error</strong>: Invalid cLabel!");
 				guMode=0;
 
 				if(uCreateCompany)
@@ -164,7 +164,7 @@ void ExttClientCommands(pentry entries[], int x)
 				NewtClient(0);
 			}
 			else
-				tClient("<blink>Error</blink>: Denied by permissions settings");
+				tClient("<strong>Error</strong>: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
@@ -175,7 +175,7 @@ void ExttClientCommands(pentry entries[], int x)
                         	tClient(LANG_NB_CONFIRMDEL);
 			}
 			else
-				tClient("<blink>Error</blink>: Denied by permissions settings");
+				tClient("<strong>Error</strong>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
@@ -248,7 +248,7 @@ void ExttClientCommands(pentry entries[], int x)
                         	DeletetClient();
 			}
 			else
-				tClient("<blink>Error</blink>: Denied by permissions settings");
+				tClient("<strong>Error</strong>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
@@ -259,7 +259,7 @@ void ExttClientCommands(pentry entries[], int x)
 				tClient(LANG_NB_CONFIRMMOD);
 			}
 			else
-				tClient("<blink>Error</blink>: Denied by permissions settings");
+				tClient("<strong>Error</strong>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
@@ -269,7 +269,7 @@ void ExttClientCommands(pentry entries[], int x)
 				//Validate
 				guMode=2002;
 				if(strlen(cLabel)<3)
-					tClient("<blink>Error</blink>: Invalid cLabel!");
+					tClient("<strong>Error</strong>: Invalid cLabel!");
 				guMode=0;
 
 				uModBy=guLoginClient;
@@ -285,7 +285,7 @@ void ExttClientCommands(pentry entries[], int x)
 				ModtClient();
 			}
 			else
-				tClient("<blink>Error</blink>: Denied by permissions settings");
+				tClient("<strong>Error</strong>: Denied by permissions settings");
                 }
 
                 else if(!strcmp(gcCommand,"Authorize"))
@@ -298,7 +298,7 @@ void ExttClientCommands(pentry entries[], int x)
 					" To authorize a new user to use an interface or this back-office.");
 			}
 			else
-				tClient("<blink>Error</blink>: Denied by permissions settings");
+				tClient("<strong>Error</strong>: Denied by permissions settings");
 		}
                 else if(!strcmp(gcCommand,"Confirm Authorize"))
                 {
@@ -355,7 +355,7 @@ void ExttClientCommands(pentry entries[], int x)
 				tClient("Contact Authorized");
 			}
 			else
-				tClient("<blink>Error</blink>: Denied by permissions settings");
+				tClient("<strong>Error</strong>: Denied by permissions settings");
 
 		}//Confirm auth
 
@@ -385,7 +385,7 @@ void ExttClientCommands(pentry entries[], int x)
 				tClient("cEnableSSHOnLogin tProperty entry created.");
 			}
 			else
-				tClient("<blink>Error</blink>: Denied by permissions settings");
+				tClient("<strong>Error</strong>: Denied by permissions settings");
 		}
 
 	}

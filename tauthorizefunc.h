@@ -116,7 +116,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 				tAuthorize(LANG_NB_CONFIRMMOD);
 			}
 			else
-				tAuthorize("<blink>Error</blink>: Denied by permissions settings");
+				tAuthorize("<strong>Error</strong>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
@@ -187,7 +187,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
 							cOTPSecret,guLoginClient,uCopyToPermLevel);
         					mysql_query(&gMysql,gcQuery);
         					if(mysql_errno(&gMysql))
-							tAuthorize("<blink>Error</blink>: UPDATE error");
+							tAuthorize("<strong>Error</strong>: UPDATE error");
 					}
 				}
 				else
@@ -197,7 +197,7 @@ void ExttAuthorizeCommands(pentry entries[], int x)
                         	ModtAuthorize();
 			}
 			else
-				tAuthorize("<blink>Error</blink>: Denied by permissions settings");
+				tAuthorize("<strong>Error</strong>: Denied by permissions settings");
                 }
 	}
 

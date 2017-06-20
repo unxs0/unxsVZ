@@ -80,7 +80,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
                         	guMode=2000;
 				//Check entries here
 				if(strlen(cLabel)<3)
-					tDatacenter("<blink>Error</blink>: Must supply valid cLabel. Min 3 chars.");
+					tDatacenter("<strong>Error</strong>: Must supply valid cLabel. Min 3 chars.");
 				sprintf(gcQuery,"SELECT uDatacenter FROM tDatacenter WHERE cLabel='%s'",
 						cLabel);
         			mysql_query(&gMysql,gcQuery);
@@ -90,7 +90,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tDatacenter("<blink>Error</blink>: Datacenter cLabel is used!");
+					tDatacenter("<strong>Error</strong>: Datacenter cLabel is used!");
 				}
                         	guMode=0;
 
@@ -118,7 +118,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				if(uDatacenter)
 					tDatacenter("New datacenter created");
 				else
-					tDatacenter("<blink>Error</blink>: Datacenter not created!");
+					tDatacenter("<strong>Error</strong>: Datacenter not created!");
 			}
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
@@ -129,7 +129,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 	                        guMode=0;
 				sscanf(ForeignKey("tDatacenter","uModDate",uDatacenter),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
+					tDatacenter("<strong>Error</strong>: This record was modified. Reload it.");
 				sprintf(gcQuery,"SELECT uDatacenter FROM tContainer WHERE uDatacenter=%u",
 									uDatacenter);
         			mysql_query(&gMysql,gcQuery);
@@ -139,14 +139,14 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tDatacenter("<blink>Error</blink>: Can't delete a datacenter"
+					tDatacenter("<strong>Error</strong>: Can't delete a datacenter"
 							" used by a container!");
 				}
 	                        guMode=2001;
 				tDatacenter(LANG_NB_CONFIRMDEL);
 			}
 			else
-				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
+				tDatacenter("<strong>Error</strong>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
@@ -156,7 +156,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				guMode=5;
 				sscanf(ForeignKey("tDatacenter","uModDate",uDatacenter),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
+					tDatacenter("<strong>Error</strong>: This record was modified. Reload it.");
 				sprintf(gcQuery,"SELECT uDatacenter FROM tContainer WHERE uDatacenter=%u",
 									uDatacenter);
         			mysql_query(&gMysql,gcQuery);
@@ -166,7 +166,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				if(mysql_num_rows(res))
 				{
 					mysql_free_result(res);
-					tDatacenter("<blink>Error</blink>: Can't delete a datacenter"
+					tDatacenter("<strong>Error</strong>: Can't delete a datacenter"
 							" used by a container!");
 				}
 	                        guMode=0;
@@ -174,7 +174,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				DeletetDatacenter();
 			}
 			else
-				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
+				tDatacenter("<strong>Error</strong>: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
@@ -186,7 +186,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				tDatacenter(LANG_NB_CONFIRMMOD);
 			}
 			else
-				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
+				tDatacenter("<strong>Error</strong>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
@@ -196,7 +196,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
                         	guMode=2002;
 				//Check entries here
 				if(strlen(cLabel)<3)
-					tDatacenter("<blink>Error</blink>: Must supply valid cLabel. Min 3 chars.");
+					tDatacenter("<strong>Error</strong>: Must supply valid cLabel. Min 3 chars.");
                         	guMode=0;
 
 				uModBy=guLoginClient;
@@ -212,7 +212,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 				ModtDatacenter();
 			}
 			else
-				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
+				tDatacenter("<strong>Error</strong>: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,"!Datacenter Shutdown!"))
                 {
@@ -223,7 +223,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tDatacenter","uModDate",uDatacenter),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
+					tDatacenter("<strong>Error</strong>: This record was modified. Reload it.");
 				
 				sprintf(gcQuery,"UPDATE tDatacenter SET uStatus=%u WHERE uDatacenter=%u",
 						uOFFLINE,uDatacenter);
@@ -262,11 +262,11 @@ void ExttDatacenterCommands(pentry entries[], int x)
 			}
 			else if(uAllowMod(uOwner,uCreatedBy))
 			{
-				tDatacenter("<blink>Error</blink>: Denied by node status");
+				tDatacenter("<strong>Error</strong>: Denied by node status");
 			}
 			else
 			{
-				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
+				tDatacenter("<strong>Error</strong>: Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Datacenter Offline"))
@@ -278,7 +278,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tDatacenter","uModDate",uDatacenter),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
+					tDatacenter("<strong>Error</strong>: This record was modified. Reload it.");
 				
 				sprintf(gcQuery,"UPDATE tDatacenter SET uStatus=%u WHERE uDatacenter=%u",
 						uOFFLINE,uDatacenter);
@@ -290,11 +290,11 @@ void ExttDatacenterCommands(pentry entries[], int x)
 			}
 			else if(uAllowMod(uOwner,uCreatedBy))
 			{
-				tDatacenter("<blink>Error</blink>: Denied by node status");
+				tDatacenter("<strong>Error</strong>: Denied by node status");
 			}
 			else
 			{
-				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
+				tDatacenter("<strong>Error</strong>: Denied by permissions settings");
 			}
 		}
                 else if(!strcmp(gcCommand,"Activate Firewalls"))
@@ -306,7 +306,7 @@ void ExttDatacenterCommands(pentry entries[], int x)
 
 				sscanf(ForeignKey("tDatacenter","uModDate",uDatacenter),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
-					tDatacenter("<blink>Error</blink>: This record was modified. Reload it.");
+					tDatacenter("<strong>Error</strong>: This record was modified. Reload it.");
 
         			MYSQL_RES *res;
         			MYSQL_RES *res2;
@@ -370,11 +370,11 @@ void ExttDatacenterCommands(pentry entries[], int x)
 			}
 			else if(uAllowMod(uOwner,uCreatedBy))
 			{
-				tDatacenter("<blink>Error</blink>: Denied by node status");
+				tDatacenter("<strong>Error</strong>: Denied by node status");
 			}
 			else
 			{
-				tDatacenter("<blink>Error</blink>: Denied by permissions settings");
+				tDatacenter("<strong>Error</strong>: Denied by permissions settings");
 			}
 		}
 	}

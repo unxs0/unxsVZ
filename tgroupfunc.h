@@ -55,21 +55,21 @@ void ExttGroupCommands(pentry entries[], int x)
 				
                         	guMode=0;
 				if(!uGroup)
-					tGroup("<blink>Error</blink>: uGroup must be selected");
+					tGroup("<strong>Error</strong>: uGroup must be selected");
 				if(!uGroupType==1)
-					tGroup("<blink>Error</blink>: uGroupType must be container");
+					tGroup("<strong>Error</strong>: uGroupType must be container");
 				char cMonitorAddGroupScript[256]={""};
 				char cSystemCall[512]={""};
 				GetConfiguration("cMonitorAddGroupScript",cMonitorAddGroupScript,0,0,0,0);
 				if(!cMonitorAddGroupScript[0])
-					tGroup("<blink>Error</blink>: tConfiguration cMonitorAddGroupScript does not exist");
+					tGroup("<strong>Error</strong>: tConfiguration cMonitorAddGroupScript does not exist");
 				sprintf(cSystemCall,"%.255s \"%.31s\"",cMonitorAddGroupScript,cLabel);
 				char cMsg[256];
 				unsigned uRetVal=0;
 				FILE *pp;
 				if((pp=popen(cSystemCall,"r"))==NULL)
 				{
-					sprintf(cMsg,"<blink>Error 1</blink>: %s",cSystemCall);
+					sprintf(cMsg,"<strong>Error 1</strong>: %s",cSystemCall);
 					tGroup(cMsg);
 				}
 				char cResponse[256]={""};
@@ -77,7 +77,7 @@ void ExttGroupCommands(pentry entries[], int x)
 					sscanf(cResponse,"%u",&uRetVal);
 				if(!uRetVal)	
 				{
-					sprintf(cMsg,"<blink>Error 2</blink>: %s",cSystemCall);
+					sprintf(cMsg,"<strong>Error 2</strong>: %s",cSystemCall);
 					tGroup(cMsg);
 				}
 				pclose(pp);
@@ -130,9 +130,9 @@ void ExttGroupCommands(pentry entries[], int x)
                         	ProcesstGroupVars(entries,x);
 				
 				if(!uGroup)
-					tGroup("<blink>Error</blink>: uGroup must be selected");
+					tGroup("<strong>Error</strong>: uGroup must be selected");
 				if(!uGroupType)
-					tGroup("<blink>Error</blink>: uGroupType must be selected");
+					tGroup("<strong>Error</strong>: uGroupType must be selected");
                         	guMode=0;
 				sprintf(gcQuery,"INSERT INTO tProperty SET"
 						" cName='Dummy',cValue='Dummy',uType="
@@ -156,11 +156,11 @@ void ExttGroupCommands(pentry entries[], int x)
                         	guMode=2000;
 				//Check entries here
 				if(strlen(cLabel)<4)
-					tGroup("<blink>Error</blink>: cLabel too short");
+					tGroup("<strong>Error</strong>: cLabel too short");
 				if(!strcmp(cLabel,ForeignKey("tGroup","cLabel",uGroup)))
-					tGroup("<blink>Error</blink>: cLabel same as source group");
+					tGroup("<strong>Error</strong>: cLabel same as source group");
 				if(!uGroupType)
-					tGroup("<blink>Error</blink>: uGroupType must be selected");
+					tGroup("<strong>Error</strong>: uGroupType must be selected");
                         	guMode=0;
 
 
@@ -241,9 +241,9 @@ void ExttGroupCommands(pentry entries[], int x)
 			{
                         	guMode=2002;
 				if(!uGroupType)
-					tGroup("<blink>Error</blink>: uGroupType must be selected");
+					tGroup("<strong>Error</strong>: uGroupType must be selected");
 				if(strlen(cLabel)<4)
-					tGroup("<blink>Error</blink>: cLabel too short");
+					tGroup("<strong>Error</strong>: cLabel too short");
 				//debug only
 				//char cData[256];
 				//sprintf(cData,"uGroup=%u uGroupType=%u",uGroup,uGroupType);

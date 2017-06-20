@@ -111,10 +111,10 @@ void ExttConfigurationCommands(pentry entries[], int x)
 				unsigned uCount=0;
 
 				if(uConfiguration==0)
-					tConfiguration("<blink>Error</blink>: uConfiguration==0!");
+					tConfiguration("<strong>Error</strong>: uConfiguration==0!");
 					
 				if(uDatacenter==0 && uNode!=0)
-					tConfiguration("<blink>Error</blink>: uDatacenter==0!");
+					tConfiguration("<strong>Error</strong>: uDatacenter==0!");
 					
 
 				sscanf(ForeignKey("tConfiguration","uModDate",uConfiguration),"%lu",&uActualModDate);
@@ -126,7 +126,7 @@ void ExttConfigurationCommands(pentry entries[], int x)
 					if(uCount)
 						tConfiguration("CreateConfigurationFileJob() Done");
 					else
-						tConfiguration("<blink>Error</blink>: No jobs created! Too specific?");
+						tConfiguration("<strong>Error</strong>: No jobs created! Too specific?");
 				}
 				else
 				{
