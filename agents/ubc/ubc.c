@@ -49,6 +49,7 @@ unsigned guRunStatus=1;
 unsigned guRunMemCheck=1;
 unsigned guRunCPUCheck=1;
 unsigned guRunTraffic=1;
+char *gcBuildInfo="GitVersion:"GitVersion;
 
 char *gcUBCDBIP0=DBIP0;
 char *gcUBCDBIP1=DBIP1;
@@ -135,7 +136,7 @@ int main(int iArgc, char *cArgv[])
 			}
 			if(!strcmp(cArgv[i],"--version"))
 			{
-				printf("version: %s svn ID removed
+				printf("%s\n",gcBuildInfo);
 				//SendEmail("ubc.c test","ubc.c test");
 				exit(0);
 			}

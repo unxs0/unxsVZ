@@ -10,7 +10,8 @@
 #	Support for non CentOS 5+ linux systems is not tested or supported yet.
 #
 
-CFLAGS= -Wall
+GIT_VERSION := $(shell git describe --dirty --always --tags)
+CFLAGS=-Wall -DGitVersion=\"$(GIT_VERSION)\"
 LIBS= -L/usr/lib64/mysql -L/usr/lib/mysql -lmysqlclient -lssl -lm
 
 all: unxsUBC

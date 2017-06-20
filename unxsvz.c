@@ -76,7 +76,7 @@ void GatherHardwareInfo(unsigned uNode);
 void AddContainers(void);
 void CreateDNSJobAPI(const char *cIPv4,const char *cHostname,const char *cuContainer);
 
-static char *cRELEASE=GitVersion;
+static char *cRELEASE="GitVersion:"GitVersion;
 
 void ExtMainShell(int argc, char *argv[])
 {
@@ -100,7 +100,7 @@ void ExtMainShell(int argc, char *argv[])
                 CreateDNSJobAPI(argv[2],argv[3],argv[4]);
         else
 	{
-		printf("\n%s Release:%s\nMenu\n",argv[0],cRELEASE);
+		printf("\n%s %s\nMenu\n",argv[0],cRELEASE);
 		printf("\tAddHardwareNode <Datacenter cLabel>\n");
 		printf("\tAddContainers\n");
 		printf("\tProcessJobQueue\n");
@@ -224,7 +224,7 @@ void GatherHardwareInfo(unsigned uNode)
 
 	if(!uNode) return;
 
-	FILE *pfp;
+	FILE *pfp=NULL;
 	char cResponse[256]={""};
 
 	sprintf(gcQuery,"grep 'model name' /proc/cpuinfo | head -n 1 | cut -f 2 -d : | tr -d ' ';");
@@ -310,6 +310,19 @@ void GatherHardwareInfo(unsigned uNode)
 		pclose(pfp);
 	}
 
+	sprintf(gcQuery,"ifconfig eth2 | grep HWaddr | awk -F' ' '{print $5}'");
+	if((pfp=popen(gcQuery,"r"))!=NULL)
+	{
+		if(fscanf(pfp,"%255s",cResponse)>0)
+		{
+			SetNodeProp("cMACeth2",cResponse,uNode);
+			printf("cMACeth2=%s added\n",cResponse);
+		}
+		else
+			printf("Error cMACeth2 NOT added!\n");
+		pclose(pfp);
+	}
+
 	sprintf(gcQuery,"uname -r");
 	if((pfp=popen(gcQuery,"r"))!=NULL)
 	{
@@ -332,7 +345,7 @@ void GatherHardwareInfo(unsigned uNode)
 			printf("cdmiSystemManufacturer=%s added\n",cResponse);
 		}
 		else
-			printf("Error cdmiSystemManufacturer NOT added!\n");
+			printf("Error cdmiSystemManufacturer NOT added! VM?\n");
 		pclose(pfp);
 	}
 
@@ -345,7 +358,7 @@ void GatherHardwareInfo(unsigned uNode)
 			printf("cdmiSystemProductName=%s added\n",cResponse);
 		}
 		else
-			printf("Error cdmiSystemProductName NOT added!\n");
+			printf("Error cdmiSystemProductName NOT added! VM?\n");
 		pclose(pfp);
 	}
 
