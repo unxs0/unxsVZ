@@ -131,7 +131,10 @@ void voidLogout(void)
 		gcLogin,guPermLevel,
 		guLoginClient,gcLogin,gcHost,gcIPMask,gcHostname,guCompany);
 	MYSQL_RUN;
-	LogoutFirewallJobs(guLoginClient,gcIPMask);
+	if(gcIPMask[0])
+		LogoutFirewallJobs(guLoginClient,gcIPMask);
+	else
+		LogoutFirewallJobs(guLoginClient,gcHost);
 	if(guAuthorize)
 	{
 		gcIPMask[0]=0;
@@ -2066,7 +2069,10 @@ int iValidLogin(int mode)
 						guRequireOTPLogin=1;
 						sprintf(gcOTPInfo,"{%s}/[%s/%s] %u login invalid gcOTP",
 								gcOTPSecret,gcOTP,cOATHOneTimePasswd(gcOTPSecret),guOTPExpired);
-						LogoutFirewallJobs(guLoginClient,gcIPMask);
+						if(gcIPMask[0])
+							LogoutFirewallJobs(guLoginClient,gcIPMask);
+						else
+							LogoutFirewallJobs(guLoginClient,gcHost);
 						return(0);
 					}
 					else
@@ -2083,7 +2089,10 @@ int iValidLogin(int mode)
 				{
 					guRequireOTPLogin=1;
 					sprintf(gcOTPInfo,"{%s}/[%s] %u login valid but expired",gcOTPSecret,gcOTP,guOTPExpired);
-					LogoutFirewallJobs(guLoginClient,gcIPMask);
+					if(gcIPMask[0])
+						LogoutFirewallJobs(guLoginClient,gcIPMask);
+					else
+						LogoutFirewallJobs(guLoginClient,gcHost);
 					return(0);
 				}
 				sprintf(gcOTPInfo,"{%s}/[%s] %u login valid %u",gcOTPSecret,gcOTP,guOTPExpired,guAuthorize);
@@ -2103,7 +2112,10 @@ int iValidLogin(int mode)
 						guRequireOTPLogin=1;
 						sprintf(gcOTPInfo,"{%s}/[%s/%s] %u cookie login expired invalid gcOTP",
 								gcOTPSecret,gcOTP,cOATHOneTimePasswd(gcOTPSecret),guOTPExpired);
-						LogoutFirewallJobs(guLoginClient,gcIPMask);
+						if(gcIPMask[0])
+							LogoutFirewallJobs(guLoginClient,gcIPMask);
+						else
+							LogoutFirewallJobs(guLoginClient,gcHost);
 						return(0);
 					}
 					else
@@ -2119,7 +2131,10 @@ int iValidLogin(int mode)
 				{
 					guRequireOTPLogin=1;
 					sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login expired no gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
-					LogoutFirewallJobs(guLoginClient,gcIPMask);
+					if(gcIPMask[0])
+						LogoutFirewallJobs(guLoginClient,gcIPMask);
+					else
+						LogoutFirewallJobs(guLoginClient,gcHost);
 					return(0);
 				}
 				sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login valid",gcOTPSecret,gcOTP,guOTPExpired);
@@ -2144,7 +2159,10 @@ int iValidLogin(int mode)
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany,
 					gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guCompany);
 		MYSQL_RUN;
-		LogoutFirewallJobs(guLoginClient,gcIPMask);
+		if(gcIPMask[0])
+			LogoutFirewallJobs(guLoginClient,gcIPMask);
+		else
+			LogoutFirewallJobs(guLoginClient,gcHost);
 	}
 
 	if(guOTPExpired)
