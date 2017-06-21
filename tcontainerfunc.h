@@ -5558,7 +5558,7 @@ while((field=mysql_fetch_row(res)))
 
 						if(MigrateContainerJob(sContainer.uDatacenter,
 									sContainer.uNode,uCtContainer,uTargetNode,
-									sContainer.uOwner,guLoginClient,0,sContainer.uStatus))
+									sContainer.uOwner,guLoginClient,sContainer.uIPv4,sContainer.uStatus))
 						{
 							SetContainerStatus(uCtContainer,uAWAITMIG);
 							sprintf(cResult,"Migration job created");
