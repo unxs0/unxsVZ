@@ -759,6 +759,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		{
 			logfileLine("NewContainer",gcQuery);
 			tJobErrorUpdate(uJob,"vzctl create failed");
+			goto CommonExit;
 		}
 
 		//2-.
