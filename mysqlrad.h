@@ -161,6 +161,7 @@ extern unsigned guEnd;
 extern unsigned guI;
 extern unsigned guN;
 extern char gcCommand[];
+extern char gcPage[];
 extern char gcFilter[];
 extern char gcAuxFilter[];
 extern char gcFind[];

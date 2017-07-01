@@ -2856,7 +2856,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				tContainer("<strong>Error:</strong> Denied by permissions settings");
 			}
 		}
-                else if(!strncmp(gcCommand,"Set ",4) || !strncmp(gcCommand,"Group ",6) || !strncmp(gcCommand,"Delete Checked",14))
+                else if(!strcmp(gcPage,"SearchSetOps"))
                 {
 			ProcesstContainerVars(entries,x);
                         guMode=12002;
@@ -3570,72 +3570,74 @@ void ExttContainerAuxTable(void)
 			jsCalendarInput("cStartDate",cTime,1);
 
 			//Set operation buttons
+			printf("<input type=hidden name=gcPage value=SearchSetOps >");
 			printf("<p><input title='Delete checked containers from your search set. They will still be visible but will"
 				" marked deleted and will not be used in any subsequent set operation'"
 				" type=submit class=largeButton name=gcCommand value='Delete Checked'>\n");
 			printf("&nbsp; <input title='Cancels job(s) (if possible) for container(s) waiting for activation, deletion or stop."
 				" Changes status when possible.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Cancel'>\n");
+				" name=gcCommand value='Cancel Jobs'>\n");
 			printf("&nbsp; <input title='Creates job(s) for starting stopped or initial setup container(s).'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Start'>\n");
+				" name=gcCommand value='Start'>\n");
 			printf("&nbsp; <input title='Creates job(s) for templating stopped or active container(s)."
 				" Uses the container label for new tOSTemplate and tConfig entries."
 				" If active, containers may be stopped for several minutes if not setup for vzdump snapshot.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Template'>\n");
+				" name=gcCommand value='Template'>\n");
 			printf("&nbsp; <input title='Deletes initial setup or awaiting intial setup clone containers."
 				" And optionally their clones by setting guOpOnClones checkbox.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Delete'>\n");
+				" name=gcCommand value='Delete'>\n");
 			printf("&nbsp; <input title='Deletes any existing container group association then adds selected group to selected containers."
 					" Requires that you select the new group with the group select in top left panel.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Replace All'>\n");
+				" name=gcCommand value='Replace All'>\n");
 			printf("&nbsp; <input title='Adds the selected containers to a group."
 					" Requires that you select the new group with the group select in top left panel.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Add Group'>\n");
+				" name=gcCommand value='Add Group'>\n");
 			printf("&nbsp; <input title='Deletes the selected containers from a group."
 					" Requires that you select the group with the group select in top left panel.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Del Group'>\n");
+				" name=gcCommand value='Del Group'>\n");
 			printf("&nbsp; <input title='Replaces the primary group (first group as per uGroupGlue) for the selected containers with a new group."
 					" If you need the replaced primary group as a secondary group you must add it."
 					" If the selected containers are not associated with any group the selected group is added and is the primary."
 					" Requires that you select the group with the group select in top left panel.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Replace Primary'>\n");
+				" name=gcCommand value='Replace Primary'>\n");
 
 			printf("<p><input title='Change owner using filter section \"uOwner\" select'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Change Owner'>\n");
+				" name=gcCommand value='Change Owner'>\n");
 			printf("&nbsp; <input title='Creates job(s) for cloning active and/or stopped container(s)."
 				" tConfiguration entries: AutoCloneNode, cAutoCloneSyncTime, cAutoCloneNodeRemote,"
 				" cAutoCloneIPClassBackup and cAutoCloneIPClass must be configured correctly. Check before use!"
 				" If you use the clone target node select above then"
 				" cAutoCloneNodeRemote will be used if configured and a remote datacenter clone will be performed."
-				" In this case cAutoCloneIPClassBackup must also be configured.'"
+				" In this case cAutoCloneIPClassBackup must also be configured. [Reload Search Set] with"
+				" Target node and/or Clone target node will provide more information.'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Clone'>\n");
+				" name=gcCommand value='Auto Clone'>\n");
 			printf("&nbsp; <input title='Creates job(s) for restarting active container(s).'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Restart'>\n");
+				" name=gcCommand value='Restart'>\n");
 			printf("&nbsp; <input title='Creates job(s) for stopping active container(s).'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Stop'>\n");
+				" name=gcCommand value='Stop'>\n");
 			printf("&nbsp; <input title='Creates job(s) for switching over cloned container(s) of same datacenter. Not for -backup containers!'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Switchover'>\n");
+				" name=gcCommand value='Switchover'>\n");
 			printf("&nbsp; <input title='Creates external unxsBind DNS job(s) for switching service over to backup"
 				" container(s) on remote datacenter.'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group DNS Switchover'>\n");
+				" name=gcCommand value='DNS Switchover'>\n");
 			printf("&nbsp; <input title='Creates job(s) for migrating container(s) and optionally their clones."
 				" Uses target and clone node selects above'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Migration'>\n");
+				" name=gcCommand value='Migration'>\n");
 			printf("&nbsp; <input title='Creates jobs for moving containers to other datacenters with DNS change and with"
 				" optional source node script execution -tConfiguration cPostDNSNodeScript."
 				" Uses target node select and optionally guOpOnClones."
@@ -3644,28 +3646,28 @@ void ExttContainerAuxTable(void)
 				" available IP numbers from tIP. The node is checked to make sure it has enough disk space and vz"
 				" power -via vzcpucheck- as each job is created.'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group DNS Move'>\n");
+				" name=gcCommand value='DNS Move'>\n");
 			printf("&nbsp; <input title='Creates job(s) for destroying active or stopped container(s) and optionally their clones.'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Destroy'>\n");
+				" name=gcCommand value='Destroy'>\n");
 
 			printf("<p><input title='Creates job(s) with given commands to run via vzctl exec2'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Execute'>\n");
+				" name=gcCommand value='Execute'>\n");
 			printf("&nbsp; <input title='Change status to stopped for awaiting failover containers and other transient states."
 				" If done for awaiting failover containers then any existing waiting FailoverFrom jobs will be canceled also.'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Status Stopped'>\n");
+				" name=gcCommand value='Status Stopped'>\n");
 			printf("&nbsp; <input title='Change IP for selected containers and DNS records if system is so configured'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Change IP'>\n");
+				" name=gcCommand value='Change IP'>\n");
 			printf("&nbsp; <input title='Change status to initial setup. Be wary!'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Initial Setup'>\n");
+				" name=gcCommand value='Initial Setup'>\n");
 			printf("&nbsp; <input title='Creates unxsBind job(s) for selected container(s). If so configured may"
 				" create or update special DNS SRV zones based on container primary group.'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group DNS Update'>\n");
+				" name=gcCommand value='DNS Update'>\n");
 			printf("&nbsp; <input title='Creates job(s) for starting remote clone -backup container of selected"
 				" active containers. It also will activate -backup PBXs directly. In this last case, if the"
 				" current backup container IP is not in tConfiguration::cAutoCloneIPClassBackup (of backup datacenter/node) then an"
@@ -3673,11 +3675,11 @@ void ExttContainerAuxTable(void)
 				" this operation will cancel NAT activation."
 				" Updates DNS records if so configured.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Activate Backup'>\n");
+				" name=gcCommand value='Activate Backup'>\n");
 			printf("&nbsp; <input title='Creates job(s) for stopping remote clone -backup container of selected active container."
 				" Updates DNS records if so configured.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Deactivate Backup'>\n");
+				" name=gcCommand value='Deactivate Backup'>\n");
 			printf("&nbsp; <input title='Changes public IP to rfc1918 IP via tConfiguration:cAutoNATIPClass."
 				" Creates a single per node job(s), and other per each container job(s)."
 				" These jobs configure running container(s) to use NAT on a given hardware node."
@@ -3687,35 +3689,40 @@ void ExttContainerAuxTable(void)
 				" which scripts to run, if none will try default /usr/sbin/ActivateNATContainer.sh and"
 				" /usr/sbin/ActivateNATNode.sh hardware node scripts.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Activate NAT'>\n");
+				" name=gcCommand value='Activate NAT'>\n");
 			printf("&nbsp; <input title='If clone or backup container changes cLabel,cHostname to standard format. May create unxsBind"
 				" and change hostname job(s). If unxsVZ so configured may"
 				" create or update special DNS SRV zones based on container primary group.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Hostname Update'>\n");
+				" name=gcCommand value='Hostname Update'>\n");
 
 			printf("<p><input title='Changes uBackupDate to 24 hours back from now.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group BackupDate Adjust'>\n");
+				" name=gcCommand value='BackupDate Adjust'>\n");
 			printf("&nbsp; <input title='Fix missing global properties'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Fix Properties'>\n");
+				" name=gcCommand value='Fix Properties'>\n");
 			printf("&nbsp; <input title='Enable disk autonomics for selected containers'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group AllowDiskAutonomics'>\n");
+				" name=gcCommand value='AllowDiskAutonomics'>\n");
 			printf("&nbsp; <input title='Seperate backup container from source, e.g. for independent/internal sync'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group BackupDisconnect'>\n");
+				" name=gcCommand value='BackupDisconnect'>\n");
 			printf("&nbsp; <input title='Change status to active for awaiting failover containers and other transient states."
 				" If done for awaiting failover containers then any existing waiting FailoverFrom jobs will be canceled also.'"
 				" type=submit class=lwarnButton"
-				" name=gcCommand value='Group Status Active'>\n");
+				" name=gcCommand value='Status Active'>\n");
 			printf("&nbsp; <input title='Add container host to the configured monitoring system.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Group Add Monitoring'>\n");
+				" name=gcCommand value='Add Monitoring'>\n");
+			printf("&nbsp; <input"
+				" title='Creates jobs for cloning active and/or stopped container(s)."
+				" Requires that you set Clone target node above. cuSyncPeriod is set from tConfiguration or 14400s default.'"
+				" type=submit class=lwarnButton"
+				" name=gcCommand value='Direct Clone'>\n");
 			CloseFieldSet();
 
-			//Delete all of these
+			//Delete all of these ?WTF?
 			sprintf(gcQuery,"DELETE FROM tProperty WHERE cName LIKE 'cBackupCount_-Node:%%' AND uType=2");
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
@@ -3810,7 +3817,7 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Delete Checked
 
-				else if(!strcmp(gcCommand,"Group Cancel"))
+				else if(!strcmp(gcCommand,"Cancel"))
 				{
 					struct structContainer sContainer;
 
@@ -3847,9 +3854,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"group cancel request ignored");
 					}
 					break;
-				}//Group Cancel
+				}//Cancel
 
-				else if(!strcmp(gcCommand,"Group Stop"))
+				else if(!strcmp(gcCommand,"Stop"))
 				{
 					struct structContainer sContainer;
 
@@ -3874,9 +3881,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"group stop request ignored");
 					}
 					break;
-				}//Group Stop
+				}//Stop
 
-				else if(!strcmp(gcCommand,"Group Restart"))
+				else if(!strcmp(gcCommand,"Restart"))
 				{
 					struct structContainer sContainer;
 
@@ -3901,9 +3908,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"group restart request ignored");
 					}
 					break;
-				}//Group Restart
+				}//Restart
 
-				else if(!strcmp(gcCommand,"Group DNS Move"))
+				else if(!strcmp(gcCommand,"DNS Move"))
 				{
 					struct structContainer sContainer;
 
@@ -4161,10 +4168,10 @@ while((field=mysql_fetch_row(res)))
 							strcat(cResult," no target node");
 					}
 					break;
-				}//Group DNS Move
+				}//DNS Move
 
-				//Group Destroy Uses guOpOnClones
-				else if(!strcmp(gcCommand,"Group Destroy"))
+				//Destroy Uses guOpOnClones
+				else if(!strcmp(gcCommand,"Destroy"))
 				{
 					struct structContainer sContainer;
 
@@ -4237,10 +4244,10 @@ while((field=mysql_fetch_row(res)))
 						mysql_free_result(res);
 					}//op on clones
 					break;
-				}//Group Destroy
+				}//Destroy
 
 				//Requires uGroup
-				else if(!strcmp(gcCommand,"Group Replace All"))
+				else if(!strcmp(gcCommand,"Replace All"))
 				{
 					struct structContainer sContainer;
 
@@ -4267,10 +4274,10 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"group change ignored");
 					}
 					break;
-				}//Group Replace All
+				}//Replace All
 
 				//Requires uGroup
-				else if(!strcmp(gcCommand,"Group Replace Primary"))
+				else if(!strcmp(gcCommand,"Replace Primary"))
 				{
 					struct structContainer sContainer;
 
@@ -4286,10 +4293,10 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"group change ignored");
 					}
 					break;
-				}//Group Replace Primary
+				}//Replace Primary
 
 				//Requires uGroup
-				else if(!strcmp(gcCommand,"Group Add Group"))
+				else if(!strcmp(gcCommand,"Add Group"))
 				{
 					struct structContainer sContainer;
 
@@ -4309,10 +4316,10 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"group change ignored");
 					}
 					break;
-				}//Group Add Group
+				}//Add Group
 
 				//Requires uGroup
-				else if(!strcmp(gcCommand,"Group Del Group"))
+				else if(!strcmp(gcCommand,"Del Group"))
 				{
 					struct structContainer sContainer;
 
@@ -4332,10 +4339,10 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"group change ignored");
 					}
 					break;
-				}//Group Del Group
+				}//Del Group
 
-				//Group Change Owner
-				else if(!strcmp(gcCommand,"Group Change Owner"))
+				//Change Owner
+				else if(!strcmp(gcCommand,"Change Owner"))
 				{
 					if(uForClient)
 					{
@@ -4358,10 +4365,10 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"No new uOwner selected");
 					}
 					break;
-				}//Group Change Owner
+				}//Change Owner
 
-				//Group Delete Uses guOpOnClones
-				else if(!strcmp(gcCommand,"Group Delete"))
+				//Delete Uses guOpOnClones
+				else if(!strcmp(gcCommand,"Delete"))
 				{
 					struct structContainer sContainer;
 
@@ -4505,10 +4512,10 @@ while((field=mysql_fetch_row(res)))
 						mysql_free_result(res);
 					}//if op on clones
 					break;
-				}//Group Delete
+				}//Delete
 
-				//Clone selected containers
-				if(!strcmp(gcCommand,"Group Clone"))
+				//Clone selected containers based on tConfiguration settings
+				if(!strcmp(gcCommand,"Auto Clone") || !strcmp(gcCommand,"Direct Clone"))
 				{
 					struct structContainer sContainer;
 					char cConfBuffer[256]={""};
@@ -4520,13 +4527,16 @@ while((field=mysql_fetch_row(res)))
 					if( (sContainer.uStatus==uACTIVE || sContainer.uStatus==uSTOPPED)
 						&& (guPermLevel>=12 || sContainer.uOwner==guCompany || sContainer.uCreatedBy==guLoginClient))
 					{
-						//We can only fo this if tConfiguration has been setup
-						//with datacenter wide cAutoCloneNode=node1,cAutoCloneSyncTime=600
-						//for example.
 						uSyncPeriod=14400;//default 4 hour rsync
 						cAutoCloneIPClass[0]=0;
 						unsigned uTargetDatacenter=sContainer.uDatacenter;
 						unsigned uRemote=0;
+						if(!strcmp(gcCommand,"Auto Clone"))
+						{
+
+						//We can only do this if tConfiguration has been setup
+						//with datacenter wide cAutoCloneNode=node1,cAutoCloneSyncTime=600
+						//for example.
 						if(guCloneTargetNode==0)
 						{
 							GetConfiguration("cAutoCloneNode",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
@@ -4615,6 +4625,50 @@ while((field=mysql_fetch_row(res)))
 							uRemote=1;
 						}
 
+						}//Auto Clone
+						else
+						{
+							//Direct Clone
+							if(guCloneTargetNode==0)
+							{
+								sprintf(cResult,"No clone target!");
+								break;
+							}
+							uTargetNode=guCloneTargetNode;
+							sscanf(ForeignKey("tNode","uDatacenter",guCloneTargetNode),"%u",&uTargetDatacenter);
+							if(uTargetDatacenter!=sContainer.uDatacenter)
+							{
+								sprintf(cResult,"Direct clone only for local datacenter");
+								break;
+							}
+							if(guCloneTargetNode==sContainer.uNode)
+							{
+								sprintf(cResult,"No clone on same node!");
+								break;
+							}
+							sprintf(cTargetNode,"%.31s",ForeignKey("tNode","cLabel",uTargetNode));
+							//We need the cuSyncPeriod
+							cConfBuffer[0]=0;
+							GetConfiguration("cAutoCloneSyncTime",cConfBuffer,sContainer.uDatacenter,sContainer.uNode,0,0);
+							if(cConfBuffer[0])
+							{
+								sscanf(cConfBuffer,"%u",&uSyncPeriod);
+							}
+							else
+							{
+								GetConfiguration("cAutoCloneSyncTime",cConfBuffer,sContainer.uDatacenter,0,0,0);
+								if(cConfBuffer[0])
+									sscanf(cConfBuffer,"%u",&uSyncPeriod);
+							}
+
+							//And the IP Class
+							GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,sContainer.uDatacenter,sContainer.uNode,0,0);
+							//If none try less specific tConfiguration entry
+							if(!cAutoCloneIPClass[0])
+								GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,sContainer.uDatacenter,0,0,0);
+							
+						}
+
 						//Some validation
 						if(!cAutoCloneIPClass[0])
 						{
@@ -4626,6 +4680,12 @@ while((field=mysql_fetch_row(res)))
 							sprintf(cResult,"No uTargetNode!");
 							break;
 						}
+						if(!uTargetDatacenter)
+						{
+							sprintf(cResult,"No uTargetDatacenter!");
+							break;
+						}
+
 
 						//Basic conditions
 						//We do not allow clones of clones yet.
@@ -4640,11 +4700,11 @@ while((field=mysql_fetch_row(res)))
 							//TODO we cant let root just grab anybodys IPs
 							if(guCompany==1)
 								sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-								" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u LIMIT 1",
+								" uAvailable=1 AND cLabel LIKE '%s%%' AND uDatacenter=%u LIMIT 1",
 									cAutoCloneIPClass,uTargetDatacenter);
 							else
 								sprintf(gcQuery,"SELECT uIP FROM tIP WHERE"
-									" uAvailable=1 AND cLabel LIKE '%s.%%' AND uDatacenter=%u AND"
+									" uAvailable=1 AND cLabel LIKE '%s%%' AND uDatacenter=%u AND"
 								" uOwner=%u LIMIT 1",cAutoCloneIPClass,uTargetDatacenter,guCompany);
 							mysql_query(&gMysql,gcQuery);
 							if(mysql_errno(&gMysql))
@@ -4781,10 +4841,10 @@ while((field=mysql_fetch_row(res)))
 							sprintf(cResult,"Clone job not created");
 					}
 					break;
-				}//Group Clone
+				}//Auto Clone
 
 				//Start or Create
-				else if(!strcmp(gcCommand,"Group Start"))
+				else if(!strcmp(gcCommand,"Start"))
 				{
 					struct structContainer sContainer;
 
@@ -4823,10 +4883,10 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Start job not created");
 					}
 					break;
-				}//Group Start
+				}//Start
 
 				//Start the remote clone of the selected source container
-				else if(!strcmp(gcCommand,"Group Activate Backup"))
+				else if(!strcmp(gcCommand,"Activate Backup"))
 				{
 					struct structContainer sContainer;
 
@@ -5036,12 +5096,12 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"ignored for wrong status");
 					}
 					break;
-				}//Group Activate Backup
+				}//Activate Backup
 
 				//Configure container to use NAT
 				//Node must have at least one NAT IP configured.
 				//Container properties will be set and/or used for DNAT rules.
-				else if(!strcmp(gcCommand,"Group Activate NAT"))
+				else if(!strcmp(gcCommand,"Activate NAT"))
 				{
 					struct structContainer sContainer;
 
@@ -5197,11 +5257,11 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Activate NAT job not created");
 					}
 					break;
-				}//Group Activate NAT
+				}//Activate NAT
 
 				//Stop the remote clone of the selected source container
 				//	and change name back to -clone
-				else if(!strcmp(gcCommand,"Group Deactivate Backup"))
+				else if(!strcmp(gcCommand,"Deactivate Backup"))
 				{
 					struct structContainer sContainer;
 
@@ -5274,10 +5334,10 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Deactivate job not created");
 					}
 					break;
-				}//Group Deactivate Backup
+				}//Deactivate Backup
 
 				//execute any commands in container(s)
-				else if(!strcmp(gcCommand,"Group Execute"))
+				else if(!strcmp(gcCommand,"Execute"))
 				{
 					struct structContainer sContainer;
 
@@ -5302,9 +5362,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Execute job not created");
 					}
 					break;
-				}//Group Execute
+				}//Execute
 
-				else if(!strcmp(gcCommand,"Group Template"))
+				else if(!strcmp(gcCommand,"Template"))
 				{
 					struct structContainer sContainer;
 
@@ -5371,9 +5431,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Template job ignored");
 					}
 					break;
-				}//Group Template
+				}//Template
 
-				else if(!strcmp(gcCommand,"Group Switchover"))
+				else if(!strcmp(gcCommand,"Switchover"))
 				{
 				//These two jobs are always done in pairs. Even though the second may run much later
 				//for example after hardware failure has been fixed.
@@ -5423,11 +5483,11 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Switchover job ignored");
 					}
 					break;
-				}//Group Switchover
+				}//Switchover
 
 				//Create a DNS job but with switched IPs. The remote -backup clone
 				//	is the primary now
-				else if(!strcmp(gcCommand,"Group DNS Switchover"))
+				else if(!strcmp(gcCommand,"DNS Switchover"))
 				{
 					struct structContainer sContainer;
 
@@ -5482,8 +5542,8 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}
 			
-				//Group Migration Uses guOpOnClones, uTargetNode and guCloneTargetNode
-				else if(!strcmp(gcCommand,"Group Migration"))
+				//Migration Uses guOpOnClones, uTargetNode and guCloneTargetNode
+				else if(!strcmp(gcCommand,"Migration"))
 				{
 				//This is a new type of group job that requires a uTargetNode and
 				//optionally a guCloneTargetNode that must be set in the left panel
@@ -5631,9 +5691,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"Migration job ignored");
 					}
 					break;
-				}//Group Migration
+				}//Migration
 
-				else if(!strcmp(gcCommand,"Group Status Stopped"))
+				else if(!strcmp(gcCommand,"Status Stopped"))
 				{
 					struct structContainer sContainer;
 
@@ -5685,9 +5745,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"group status change request ignored");
 					}
 					break;
-				}//Group Status Stopped
+				}//Status Stopped
 
-				else if(!strcmp(gcCommand,"Group Status Active"))
+				else if(!strcmp(gcCommand,"Status Active"))
 				{
 					struct structContainer sContainer;
 
@@ -5740,9 +5800,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"group status change request ignored");
 					}
 					break;
-				}//Group Status Stopped
+				}//Status Stopped
 
-				else if(!strcmp(gcCommand,"Group Change IP"))
+				else if(!strcmp(gcCommand,"Change IP"))
 				{
 					struct structContainer sContainer;
 
@@ -5853,9 +5913,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"change IP request ignored");
 					}
 					break;
-				}//Group Change IP
+				}//Change IP
 
-				else if(!strcmp(gcCommand,"Group Initial Setup"))
+				else if(!strcmp(gcCommand,"Initial Setup"))
 				{
 					struct structContainer sContainer;
 
@@ -5872,9 +5932,9 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"change status ignored");
 					}
-				}//Group Initial Setup
+				}//Initial Setup
 
-				else if(!strcmp(gcCommand,"Group DNS Update"))
+				else if(!strcmp(gcCommand,"DNS Update"))
 				{
 					struct structContainer sContainer;
 
@@ -5897,9 +5957,9 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"DNS update ignored");
 					}
-				}//Group DNS Update
+				}//DNS Update
 
-				else if(!strcmp(gcCommand,"Group Hostname Update"))
+				else if(!strcmp(gcCommand,"Hostname Update"))
 				{
 					struct structContainer sContainer;
 
@@ -5959,9 +6019,9 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"hostname update ignored");
 					}
-				}//Group Hostname Update
+				}//Hostname Update
 
-				else if(!strcmp(gcCommand,"Group BackupDate Adjust"))
+				else if(!strcmp(gcCommand,"BackupDate Adjust"))
 				{
 					struct structContainer sContainer;
 
@@ -5989,9 +6049,9 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"backupdate adjust ignored");
 					}
-				}//Group BackupDate Adjust
+				}//BackupDate Adjust
 
-				else if(!strcmp(gcCommand,"Group Fix Properties"))
+				else if(!strcmp(gcCommand,"Fix Properties"))
 				{
 					struct structContainer sContainer;
 
@@ -6059,9 +6119,9 @@ while((field=mysql_fetch_row(res)))
 					{
 						sprintf(cResult,"fix properties ignored");
 					}
-				}//Group Fix Properties
+				}//Fix Properties
 
-				else if(!strcmp(gcCommand,"Group AllowDiskAutonomics"))
+				else if(!strcmp(gcCommand,"AllowDiskAutonomics"))
 				{
 					struct structContainer sContainer;
 
@@ -6092,9 +6152,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"group op ignored");
 					}
 					break;
-				}//Group AllowDiskAutonomics
+				}//AllowDiskAutonomics
 
-				else if(!strcmp(gcCommand,"Group BackupDisconnect"))
+				else if(!strcmp(gcCommand,"BackupDisconnect"))
 				{
 					struct structContainer sContainer;
 
@@ -6119,9 +6179,9 @@ while((field=mysql_fetch_row(res)))
 						sprintf(cResult,"group op ignored");
 					}
 					break;
-				}//Group BackupDisconnect
+				}//BackupDisconnect
 
-				else if(!strcmp(gcCommand,"Group Add Monitoring"))
+				else if(!strcmp(gcCommand,"Add Monitoring"))
 				{
 					struct structContainer sContainer;
 
@@ -6179,9 +6239,9 @@ while((field=mysql_fetch_row(res)))
 					}
 					else
 					{
-						sprintf(cResult,"Group Add Monitoring ignored");
+						sprintf(cResult,"Add Monitoring ignored");
 					}
-				}//Group Add Monitoring
+				}//Add Monitoring
 
 				else if(strcmp(gcCommand,"Reload Search Set"))
 				{
@@ -8825,12 +8885,14 @@ void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 	//cAutoCloneIPClassBackup
 	//cAutoCloneNode
 	//cAutoCloneNodeRemote
+	//cAutoCloneSyncTime
+	//cAutoCloneSyncTimeRemote
 	char *cSource="Node";
 	unsigned uDatacenter=0;
+	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
 	printf("<br>\n");
 	//
 	char cAutoCloneIPClass[256]={""};
-	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
 	GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,uNode,0,0);
 	if(!cAutoCloneIPClass[0])
 	{
@@ -8854,9 +8916,13 @@ void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 		}
 		mysql_free_result(res);
 	}
+	else
+	{
+		if(uHtmlMode)
+			printf("cAutoCloneIPClass Not configured<br>");
+	}
 	//Detail for cAutoCloneIPClassBackup
 	char cAutoCloneIPClassBackup[256]={""};
-	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
 	cSource="Node";
 	GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,uDatacenter,uNode,0,0);
 	if(!cAutoCloneIPClassBackup[0])
@@ -8881,9 +8947,13 @@ void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 		}
 		mysql_free_result(res);
 	}
+	else
+	{
+		if(uHtmlMode)
+			printf("cAutoCloneIPClassBackup Not configured<br>");
+	}
 	//Detail for cAutoCloneNode
 	char cAutoCloneNode[256]={""};
-	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
 	cSource="Node";
 	GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
 	if(!cAutoCloneNode[0])
@@ -8896,9 +8966,13 @@ void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 		if(uHtmlMode)
 			printf("cAutoCloneNode is %s. Scope: %s<br>",cAutoCloneNode,cSource);
 	}
+	else
+	{
+		if(uHtmlMode)
+			printf("cAutoCloneNode Not configured<br>");
+	}
 	//Detail for cAutoCloneNodeRemote
 	char cAutoCloneNodeRemote[256]={""};
-	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
 	cSource="Node";
 	GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,uNode,0,0);
 	if(!cAutoCloneNodeRemote[0])
@@ -8911,6 +8985,50 @@ void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 		if(uHtmlMode)
 			printf("cAutoCloneNodeRemote is %s. Scope: %s<br>",cAutoCloneNodeRemote,cSource);
 	}
+	else
+	{
+		if(uHtmlMode)
+			printf("cAutoCloneNodeRemote Not configured<br>");
+	}
+	//cAutoCloneSyncTime
+	char cAutoCloneSyncTime[256]={""};
+	cSource="Node";
+	GetConfiguration("cAutoCloneSyncTime",cAutoCloneSyncTime,uDatacenter,uNode,0,0);
+	if(!cAutoCloneSyncTime[0])
+	{
+		GetConfiguration("cAutoCloneSyncTime",cAutoCloneSyncTime,uDatacenter,0,0,0);
+		cSource="Datacenter";
+	}
+	if(cAutoCloneSyncTime[0])
+	{
+		if(uHtmlMode)
+			printf("cAutoCloneSyncTime is %s. Scope: %s<br>",cAutoCloneNodeRemote,cSource);
+	}
+	else
+	{
+		if(uHtmlMode)
+			printf("cAutoCloneSyncTime Not configured<br>");
+	}
+	//cAutoCloneSyncTimeRemote
+	char cAutoCloneSyncTimeRemote[256]={""};
+	cSource="Node";
+	GetConfiguration("cAutoCloneSyncTimeRemote",cAutoCloneSyncTimeRemote,uDatacenter,uNode,0,0);
+	if(!cAutoCloneSyncTimeRemote[0])
+	{
+		GetConfiguration("cAutoCloneSyncTimeRemote",cAutoCloneSyncTimeRemote,uDatacenter,0,0,0);
+		cSource="Datacenter";
+	}
+	if(cAutoCloneSyncTimeRemote[0])
+	{
+		if(uHtmlMode)
+			printf("cAutoCloneSyncTimeRemote is %s. Scope: %s<br>",cAutoCloneNodeRemote,cSource);
+	}
+	else
+	{
+		if(uHtmlMode)
+			printf("cAutoCloneSyncTimeRemote Not configured<br>");
+	}
+	//cAutoCloneSyncTimeRemote
 
 
 }//void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)

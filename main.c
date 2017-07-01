@@ -33,6 +33,7 @@ unsigned guEnd;
 unsigned guI;
 unsigned guN=SHOWPAGE;
 char gcCommand[100];
+char gcPage[100];
 char gcFilter[100];
 char gcAuxFilter[256];
 char gcFind[100];
@@ -993,6 +994,8 @@ void ProcessControlVars(pentry entries[], int x)
 			sprintf(gcFind,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"gluRowid"))
 			sscanf(entries[i].val,"%lu",&gluRowid);
+		else if(!strcmp(entries[i].name,"gcPage"))
+			sprintf(gcPage,"%.99s",entries[i].val);
 	}
 }
 
