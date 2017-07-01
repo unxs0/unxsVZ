@@ -8818,13 +8818,52 @@ void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 	GetNodeProp(uNode,"cRAMUsageRatio",cValue);
 	printf("<br>cRAMUsageRatio is %s",cValue);
 
+	////
+	//tConfiguration cAutoClone* report
+	//
+	//cAutoCloneIPClass
+	//cAutoCloneIPClassBackup
+	//cAutoCloneNode
+	//cAutoCloneNodeRemote
+	char *cSource="Node";
+	unsigned uDatacenter=0;
+	printf("<br>\n");
+	//
+	char cAutoCloneIPClass[256]={""};
+	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
+	GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,uNode,0,0);
+	if(!cAutoCloneIPClass[0])
+	{
+		GetConfiguration("cAutoCloneIPClass",cAutoCloneIPClass,uDatacenter,0,0,0);
+		cSource="Datacenter";
+	}
+	if(cAutoCloneIPClass[0])
+	{
+		sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uDatacenter=%u AND"
+				" uAvailable=1 AND"
+				" INSTR(cLabel,'%s')=1",uDatacenter,cAutoCloneIPClass);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			if(uHtmlMode)
+				printf("Number of available cAutoCloneIPClass(%s) IPs is %s. Scope: %s<br>",
+						cAutoCloneIPClass,field[0],cSource);
+		}
+		mysql_free_result(res);
+	}
 	//Detail for cAutoCloneIPClassBackup
 	char cAutoCloneIPClassBackup[256]={""};
-	unsigned uDatacenter=0;
 	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
+	cSource="Node";
 	GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,uDatacenter,uNode,0,0);
 	if(!cAutoCloneIPClassBackup[0])
+	{
 		GetConfiguration("cAutoCloneIPClassBackup",cAutoCloneIPClassBackup,uDatacenter,0,0,0);
+		cSource="Datacenter";
+	}
 	if(cAutoCloneIPClassBackup[0])
 	{
 		sprintf(gcQuery,"SELECT COUNT(uIP) FROM tIP WHERE uDatacenter=%u AND"
@@ -8837,10 +8876,42 @@ void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 		while((field=mysql_fetch_row(res)))
 		{
 			if(uHtmlMode)
-				printf("Number of available cAutoCloneIPClassBackup(%s) IPs is %s<br>",cAutoCloneIPClassBackup,field[0]);
+				printf("Number of available cAutoCloneIPClassBackup(%s) IPs is %s. Scope: %s<br>",
+						cAutoCloneIPClassBackup,field[0],cSource);
 		}
 		mysql_free_result(res);
 	}
+	//Detail for cAutoCloneNode
+	char cAutoCloneNode[256]={""};
+	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
+	cSource="Node";
+	GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,uNode,0,0);
+	if(!cAutoCloneNode[0])
+	{
+		GetConfiguration("cAutoCloneNode",cAutoCloneNode,uDatacenter,0,0,0);
+		cSource="Datacenter";
+	}
+	if(cAutoCloneNode[0])
+	{
+		if(uHtmlMode)
+			printf("cAutoCloneNode is %s. Scope: %s<br>",cAutoCloneNode,cSource);
+	}
+	//Detail for cAutoCloneNodeRemote
+	char cAutoCloneNodeRemote[256]={""};
+	sscanf(ForeignKey("tNode","uDatacenter",uNode),"%u",&uDatacenter);
+	cSource="Node";
+	GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,uNode,0,0);
+	if(!cAutoCloneNodeRemote[0])
+	{
+		GetConfiguration("cAutoCloneNodeRemote",cAutoCloneNodeRemote,uDatacenter,0,0,0);
+		cSource="Datacenter";
+	}
+	if(cAutoCloneNodeRemote[0])
+	{
+		if(uHtmlMode)
+			printf("cAutoCloneNodeRemote is %s. Scope: %s<br>",cAutoCloneNodeRemote,cSource);
+	}
+
 
 }//void SelectedNodeInformation(unsigned uNode,unsigned uHtmlMode)
 
