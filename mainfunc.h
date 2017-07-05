@@ -148,15 +148,16 @@ void CloneReport(const char *cOptionalMsg)
 	OpenFieldSet("CloneReport",100);
 
 	OpenRow("<u>Containers with no clone or with cuSyncPeriod=0</u>","black");
-	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tContainer.uContainer,tNode.cLabel,tDatacenter.cLabel"
+	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,"
+			" tContainer.uContainer,tNode.cLabel,tDatacenter.cLabel,tContainer.uStatus"
 			" FROM tContainer,tNode,tDatacenter"
 			" WHERE tContainer.uNode=tNode.uNode AND tContainer.uDatacenter=tDatacenter.uDatacenter"
 			" AND tContainer.uSource=0 AND (tContainer.uStatus=1 OR tContainer.uStatus=31)"
 			" AND tDatacenter.uStatus=1"
-			" ORDER BY tContainer.cLabel,tContainer.uDatacenter,tContainer.uNode");
+			" ORDER BY tContainer.uDatacenter,tContainer.uNode,tContainer.cLabel");
 	macro_mySQLQueryErrorText
 	printf("</td></tr><tr><td></td><td><u>cLabel</u></td><td><u>cHostname</u></td>"
-			"<td><u>Node</td><td><u>Datacenter</u></td>\n");
+			"<td><u>Node</td><td><u>Datacenter</u></td><td><u>uStatus</u></td>\n");
         while((mysqlField=mysql_fetch_row(mysqlRes)))
 	{
 		cuContainer[0]=0;
@@ -171,8 +172,8 @@ void CloneReport(const char *cOptionalMsg)
 		{
 			uCount++;
 			printf("<tr><td></td><td><a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%s>%s</a></td>"
-				"<td>%s</td><td>%s</td><td>%s</td>\n",mysqlField[2],
-					mysqlField[0],mysqlField[1],mysqlField[3],mysqlField[4]);
+				"<td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",mysqlField[2],
+					mysqlField[0],mysqlField[1],mysqlField[3],mysqlField[4],mysqlField[5]);
 		}
 		else
 		{
@@ -184,16 +185,16 @@ void CloneReport(const char *cOptionalMsg)
 				uCount++;
 				printf("<tr><td>Clone w/cuSyncPeriod=0</td><td>"
 					"<a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>%s<a></td>"
-					"<td>%s</td><td>%s</td><td>%s</td>\n",uContainer,
-						mysqlField[0],mysqlField[1],mysqlField[3],mysqlField[4]);
+					"<td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",uContainer,
+						mysqlField[0],mysqlField[1],mysqlField[3],mysqlField[4],mysqlField[5]);
 			}
 			else if(cuSyncPeriod[0]==0)
 			{
 				uCount++;
 				printf("<tr><td>Clone w/no cuSyncPeriod</td><td>"
 					"<a href=unxsVZ.cgi?gcFunction=tContainer&uContainer=%u>%s<a></td>"
-					"<td>%s</td><td>%s</td><td>%s</td>\n",uContainer,
-						mysqlField[0],mysqlField[1],mysqlField[3],mysqlField[4]);
+					"<td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",uContainer,
+						mysqlField[0],mysqlField[1],mysqlField[3],mysqlField[4],mysqlField[5]);
 			}
 		}
 	}
@@ -242,12 +243,14 @@ void CloneReport(const char *cOptionalMsg)
 	//1=Active
 	uCount=0;
 	OpenRow("<p>","black");
-	OpenRow("<u>Active containers with clones not updated in last 24 hours</u>","black");
+	OpenRow("<u>Containers with clones not updated in last 8 hours</u>","black");
 	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tContainer.uContainer,tContainer.uNode,"
-				"tContainer.uDatacenter,tDatacenter.cLabel FROM tContainer,tDatacenter WHERE"
-				" tContainer.uSource=0 AND tContainer.uStatus=1 AND"
+				"tContainer.uDatacenter,tDatacenter.cLabel FROM tContainer,tDatacenter,tNode WHERE"
+				" tContainer.uSource=0 AND"
 				" tDatacenter.uStatus=1 AND"
-				" tContainer.uDatacenter=tDatacenter.uDatacenter ORDER BY tContainer.cLabel");
+				" tNode.uStatus=1 AND"
+				" tContainer.uDatacenter=tDatacenter.uDatacenter AND"
+				" tContainer.uNode=tNode.uNode ORDER BY tDatacenter.uDatacenter,tContainer.cLabel");
 	macro_mySQLQueryErrorText
 	printf("</td></tr><tr><td></td><td><u>Source cLabel</u></td>"
 			"<td><u>Clone cLabel</u><td><u>Source cHostname</u></td>"
@@ -257,7 +260,7 @@ void CloneReport(const char *cOptionalMsg)
 		sprintf(gcQuery,"SELECT tContainer.uContainer,tStatus.cLabel,tContainer.cLabel,tContainer.cLabel,"
 					"tNode.cLabel"
 					" FROM tContainer,tStatus,tNode WHERE"
-					" tContainer.uSource=%s AND tContainer.uBackupDate<(UNIX_TIMESTAMP(NOW())-86400)"
+					" tContainer.uSource=%s AND tContainer.uBackupDate<(UNIX_TIMESTAMP(NOW())-28800)"
 					" AND tContainer.uStatus=tStatus.uStatus"
 					" AND tContainer.uNode=tNode.uNode",
 						mysqlField[2]);

@@ -3534,7 +3534,7 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp;&nbsp;Group ");
 			tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
 
-			printf("&nbsp;&nbsp;<input title='For supported set operations (like Group Delete, Destroy or Migration)"
+			printf("&nbsp;&nbsp;<input title='For supported set operations (like Delete Set, Destroy or Migration)"
 				" apply same to their clone containers.'"
 				" type=checkbox name=guOpOnClonesNoCA");
 			if(guOpOnClones)
@@ -3589,7 +3589,7 @@ void ExttContainerAuxTable(void)
 			printf("&nbsp; <input title='Deletes initial setup or awaiting intial setup clone containers."
 				" And optionally their clones by setting guOpOnClones checkbox.'"
 				" type=submit class=largeButton"
-				" name=gcCommand value='Delete'>\n");
+				" name=gcCommand value='Delete Set'>\n");
 			printf("&nbsp; <input title='Deletes any existing container group association then adds selected group to selected containers."
 					" Requires that you select the new group with the group select in top left panel.'"
 				" type=submit class=largeButton"
@@ -4368,7 +4368,7 @@ while((field=mysql_fetch_row(res)))
 				}//Change Owner
 
 				//Delete Uses guOpOnClones
-				else if(!strcmp(gcCommand,"Delete"))
+				else if(!strcmp(gcCommand,"Delete Set"))
 				{
 					struct structContainer sContainer;
 
