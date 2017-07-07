@@ -7005,14 +7005,24 @@ unsigned CreateNewContainerJob(unsigned uDatacenter,unsigned uNode,unsigned uCon
 		luJobDate+=luJobTime;
 	}
 
+	unsigned uSource=0;
+	unsigned uSourceStatus=0;
+	sscanf(ForeignKey("tContainer","uSource",uContainer),"%u",&uSource);
+	if(uSource)
+	{
+		sscanf(ForeignKey("tContainer","uStatus",uSource),"%u",&uSourceStatus);
+	}
+
 	sprintf(gcQuery,"INSERT INTO tJob SET cLabel='CreateNewContainerJob(%u)',cJobName='NewContainer'"
 			",uDatacenter=%u,uNode=%u,uContainer=%u"
 			",uJobDate=if(%lu,%lu,UNIX_TIMESTAMP(NOW())+60)"
 			",uJobStatus=1"
+			",cJobData='uPrevSourceStatus=%u;'"
 			",uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 				uContainer,
 				uDatacenter,uNode,uContainer,
 				luJobDate,luJobDate,
+				uSourceStatus,
 				uOwner,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
