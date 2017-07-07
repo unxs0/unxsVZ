@@ -43,7 +43,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 void tJobErrorUpdate(unsigned uJob, const char *cErrorMsg);
 void tJobDoneUpdate(unsigned uJob);
 void tJobWaitingUpdate(unsigned uJob);
-void NewContainer(unsigned uJob,unsigned uContainer);
+void NewContainer(unsigned uJob,unsigned uContainer,char const *cJobData);
 void DestroyContainer(unsigned uJob,unsigned uContainer);
 void ChangeIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
 void SwapIPContainer(unsigned uJob,unsigned uContainer,char *cJobData);
@@ -464,7 +464,7 @@ void ProcessJob(unsigned uJob,unsigned uDatacenter,unsigned uNode,
 		}
 		else if(!strcmp(cJobName,"NewContainer"))
 		{
-			NewContainer(uJob,uContainer);
+			NewContainer(uJob,uContainer,cJobData);
 		}
 		else if(!strcmp(cJobName,"ActionScripts"))
 		{
@@ -679,11 +679,12 @@ void tJobWaitingUpdate(unsigned uJob)
 //Specific job handlers
 
 
-void NewContainer(unsigned uJob,unsigned uContainer)
+void NewContainer(unsigned uJob,unsigned uContainer,char const *cJobData)
 {
         MYSQL_RES *res;
         MYSQL_ROW field;
 	unsigned uVeth=0;
+	unsigned uSource=0;
 	unsigned uDeployStopped=0;
 	char cDeployOptions[256]={""};
 
@@ -695,8 +696,10 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT tContainer.cLabel,tContainer.cHostname,tIP.cLabel"
-			",tOSTemplate.cLabel,tNameserver.cLabel,tSearchdomain.cLabel,tConfig.cLabel,tContainer.uVeth"
+	sprintf(gcQuery,"SELECT"
+			" tContainer.cLabel,tContainer.cHostname,tIP.cLabel"
+			",tOSTemplate.cLabel,tNameserver.cLabel,tSearchdomain.cLabel"
+			",tConfig.cLabel,tContainer.uVeth,tContainer.uSource"
 			" FROM tContainer,tOSTemplate,tNameserver,tSearchdomain,tConfig,tIP WHERE uContainer=%u"
 			" AND tContainer.uOSTemplate=tOSTemplate.uOSTemplate"
 			" AND tContainer.uNameserver=tNameserver.uNameserver"
@@ -715,6 +718,7 @@ void NewContainer(unsigned uJob,unsigned uContainer)
 
 
 		sscanf(field[7],"%u",&uVeth);
+		sscanf(field[8],"%u",&uSource);
 
 		//0-. Create vz conf action script files if applicable. 1 is for overwriting existing files
 		//OpenVZ action scripts
@@ -1002,16 +1006,32 @@ CommonExit2:
 
 	//Everything went ok;
 	if(uDeployStopped)
-		SetContainerStatus(uContainer,31);//Stopped
+		SetContainerStatus(uContainer,uSTOPPED);//Stopped
 	else
-		SetContainerStatus(uContainer,1);//Active
+		SetContainerStatus(uContainer,uACTIVE);//Active
+	//If this is a new clone container then
+	//we need to update the status of the source container
+	if(uSource)
+	{
+		unsigned uSourceContainerStatus=0;
+		GetContainerStatus(uSource,&uSourceContainerStatus);
+		if(uSourceContainerStatus==uAWAITCLONE)
+		{
+			unsigned uPrevSourceStatus=0;
+			char *cp;
+			if((cp=strstr(cJobData,"uPrevSourceStatus=")))
+				sscanf(cp+(strlen("uPrevSourceStatus=")),"%u;",&uPrevSourceStatus);
+			if(uPrevSourceStatus)
+				SetContainerStatus(uContainer,uPrevSourceStatus);
+		}
+	}
 	tJobDoneUpdate(uJob);
 
 //In this case the goto MIGHT be justified
 CommonExit:
 	mysql_free_result(res);
 
-}//void NewContainer(...)
+}//void NewContainer()
 
 
 void DestroyContainer(unsigned uJob,unsigned uContainer)
