@@ -1022,7 +1022,7 @@ CommonExit2:
 			if((cp=strstr(cJobData,"uPrevSourceStatus=")))
 				sscanf(cp+(strlen("uPrevSourceStatus=")),"%u;",&uPrevSourceStatus);
 			if(uPrevSourceStatus)
-				SetContainerStatus(uContainer,uPrevSourceStatus);
+				SetContainerStatus(uSource,uPrevSourceStatus);
 		}
 	}
 	tJobDoneUpdate(uJob);
