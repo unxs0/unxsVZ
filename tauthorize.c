@@ -452,8 +452,8 @@ void tAuthorizeInput(unsigned uMode)
 				char *cp;
 				if((cp=strchr(cLabel,' ')))
 					*cp=0;
-				printf(" <a href=\"https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl="
-						"otpauth://totp/%.31s%%3Fsecret%%3D%.20s\">QRCode link</a>",
+				printf(" <img src=\"https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl="
+						"otpauth://totp/%.31s%%3Fsecret%%3D%.20s\"/>",
 								cLabel,cOTPSecret);
 				printf(" Validation code: %s",cOATHOneTimePasswd(cOTPSecret));
 			}

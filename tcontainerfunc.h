@@ -1822,6 +1822,7 @@ void ExttContainerCommands(pentry entries[], int x)
 				uGroup=uGetPrimaryContainerGroup(uContainer);
 				if(uGroup)
 					UpdatePrimaryContainerGroup(uNewVeid,uGroup);
+				SetContainerStatus(uContainer,uAWAITCLONE);
 				tContainer("CloneContainerJob() Done");
 			}
 			else
@@ -3817,7 +3818,7 @@ while((field=mysql_fetch_row(res)))
 					break;
 				}//Delete Checked
 
-				else if(!strcmp(gcCommand,"Cancel"))
+				else if(!strcmp(gcCommand,"Cancel Jobs"))
 				{
 					struct structContainer sContainer;
 
