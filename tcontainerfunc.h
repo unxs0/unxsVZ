@@ -1287,7 +1287,8 @@ void ExttContainerCommands(pentry entries[], int x)
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
                         ProcesstContainerVars(entries,x);
-			if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy))
+			//if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy))
+			if( uAllowMod(uOwner,uCreatedBy))
 			{
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -1304,7 +1305,20 @@ void ExttContainerCommands(pentry entries[], int x)
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
                         ProcesstContainerVars(entries,x);
-			if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy))
+			if( (uStatus==uACTIVE) && cComment[0] && uAllowMod(uOwner,uCreatedBy))
+			{
+				sprintf(gcQuery,"UPDATE tContainer SET cComment='%s' WHERE uContainer=%u",
+								TextAreaSave(cComment),uContainer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					tContainer("Update error");
+				if(mysql_affected_rows(&gMysql)>0)
+					tContainer("cComment updated");
+				else
+					tContainer("cComment not updated");
+
+			}
+			else if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy))
 			{
 				sscanf(ForeignKey("tContainer","uModDate",uContainer),"%lu",&uActualModDate);
 				if(uModDate!=uActualModDate)
@@ -3147,14 +3161,22 @@ void ExttContainerButtons(void)
                 break;
 
                 case 2002:
-			printf("<p><u>Review changes</u><br>");
-			printf("If you change uIPv4 you will need to modify tIP."
-				" To keep current uIPv4 %s(%u) do not select any IP, e.g. use '---'.<br>",cuIPv4PullDown,uIPv4);
-			printf("<input type=hidden name=cuWizIPv4PullDown value='%s'>",cuIPv4PullDown);
-                        printf(LANG_NBB_CONFIRMMOD);
-			printf("<p>Optional primary group change<br>");
-			uGroup=uGetPrimaryContainerGroup(uContainer);//0=not for node
-			tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
+			if(uStatus==uINITSETUP)
+			{
+				printf("<p><u>Review changes</u><br>");
+				printf("If you change uIPv4 you will need to modify tIP."
+					" To keep current uIPv4 %s(%u) do not select any IP, e.g. use '---'.<br>",cuIPv4PullDown,uIPv4);
+				printf("<input type=hidden name=cuWizIPv4PullDown value='%s'>",cuIPv4PullDown);
+				printf(LANG_NBB_CONFIRMMOD);
+				printf("<p>Optional primary group change<br>");
+				uGroup=uGetPrimaryContainerGroup(uContainer);//0=not for node
+				tContainerGroupPullDown(uChangeGroup,1,"ctContainerGroupPullDown");
+			}
+			else if(uStatus==uACTIVE)
+			{
+				printf("<p><u>Add or Update cComment</u><p>");
+				printf(LANG_NBB_CONFIRMMOD);
+			}
                 break;
 
                 case 12001:
@@ -6706,8 +6728,8 @@ void ExttContainerNavBar(void)
 	if(guPermLevel>7 && !guListMode && guMode<9000)
 		printf(LANG_NBB_NEW);
 
-	//11 Initial setup 31 Stopped
-	if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy) && guMode<9000)
+	//if( (uStatus==uINITSETUP) && uAllowMod(uOwner,uCreatedBy) && guMode<9000)
+	if( uAllowMod(uOwner,uCreatedBy) && guMode<9000)
 		printf(LANG_NBB_MODIFY);
 
 	if( (uStatus==uINITSETUP && uAllowDel(uOwner,uCreatedBy) && guMode<9000) ||

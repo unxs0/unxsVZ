@@ -825,7 +825,7 @@ void tContainerInput(unsigned uMode)
 	OpenRow(LANG_FL_tContainer_cLabel,"black");
 	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 ",LANG_FT_tContainer_cLabel,
 		EncodeDoubleQuotes(cLabel));
-	if(guPermLevel>=0 && uMode)
+	if(guPermLevel>=0 && uMode && uStatus==uINITSETUP)
 	{
 		printf("></td></tr>\n");
 	}
@@ -838,7 +838,7 @@ void tContainerInput(unsigned uMode)
 	OpenRow(LANG_FL_tContainer_cHostname,"black");
 	printf("<input title='%s' type=text name=cHostname value=\"%s\" size=40 maxlength=64 ",LANG_FT_tContainer_cHostname,
 		EncodeDoubleQuotes(cHostname));
-	if(guPermLevel>=0 && uMode)
+	if(guPermLevel>=0 && uMode && uStatus==uINITSETUP)
 	{
 		printf("></td></tr>\n");
 	}
@@ -849,54 +849,54 @@ void tContainerInput(unsigned uMode)
 	}
 //uVeth
 	OpenRow(LANG_FL_tContainer_uVeth,"black");
-	if(guPermLevel>=7 && uMode)
+	if(guPermLevel>=7 && uMode && uStatus==uINITSETUP)
 		YesNoPullDown("uVeth",uVeth,1);
 	else
 		YesNoPullDown("uVeth",uVeth,0);
 //uIPv4
 	OpenRow(LANG_FL_tContainer_uIPv4,"black");
-	if(guPermLevel>=7 && uMode)
+	if(guPermLevel>=7 && uMode && uStatus==uINITSETUP)
 		//tTablePullDownOwnerAvail("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1);
 		tTablePullDownOwnerAvailDatacenter("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,1,uDatacenter,0);
 	else
 		tTablePullDown("tIP;cuIPv4PullDown","cLabel","cLabel",uIPv4,0);
 //uOSTemplate
 	OpenRow(LANG_FL_tContainer_uOSTemplate,"black");
-	if(guPermLevel>=7 && uMode)
+	if(guPermLevel>=7 && uMode && uStatus==uINITSETUP)
 		tTablePullDownDatacenter("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,1,
 			cuDatacenterPullDown,uPROP_OSTEMPLATE,0,uContainerType);
 	else
 		tTablePullDown("tOSTemplate;cuOSTemplatePullDown","cLabel","cLabel",uOSTemplate,0);
 //uConfig
 	OpenRow(LANG_FL_tContainer_uConfig,"black");
-	if(guPermLevel>=7 && uMode)
+	if(guPermLevel>=7 && uMode && uStatus==uINITSETUP)
 		tTablePullDownDatacenter("tConfig;cuConfigPullDown","cLabel","cLabel",uConfig,1,
 			cuDatacenterPullDown,uPROP_CONFIG,0,uContainerType);
 	else
 		tTablePullDown("tConfig;cuConfigPullDown","cLabel","cLabel",uConfig,0);
 //uNameserver
 	OpenRow(LANG_FL_tContainer_uNameserver,"black");
-	if(guPermLevel>=7 && uMode)
+	if(guPermLevel>=7 && uMode && uStatus==uINITSETUP)
 		tTablePullDownDatacenter("tNameserver;cuNameserverPullDown","cLabel","cLabel",uNameserver,1,
 			cuDatacenterPullDown,uPROP_NAMESERVER,0,0);
 	else
 		tTablePullDown("tNameserver;cuNameserverPullDown","cLabel","cLabel",uNameserver,0);
 //uSearchdomain
 	OpenRow(LANG_FL_tContainer_uSearchdomain,"black");
-	if(guPermLevel>=7 && uMode)
+	if(guPermLevel>=7 && uMode && uStatus==uINITSETUP)
 		tTablePullDownDatacenter("tSearchdomain;cuSearchdomainPullDown","cLabel","cLabel",uSearchdomain,1,
 			cuDatacenterPullDown,uPROP_SEARCHDOMAIN,0,0);
 	else
 		tTablePullDown("tSearchdomain;cuSearchdomainPullDown","cLabel","cLabel",uSearchdomain,0);
 //uDatacenter
 	OpenRow(LANG_FL_tContainer_uDatacenter,"black");
-	if(guPermLevel>=7 && uMode)
+	if(guPermLevel>=7 && uMode && uStatus==uINITSETUP)
 		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,1);
 	else
 		tTablePullDown("tDatacenter;cuDatacenterPullDown","cLabel","cLabel",uDatacenter,0);
 //uNode
 	OpenRow(LANG_FL_tContainer_uNode,"black");
-	if(guPermLevel>=7 && uMode)
+	if(guPermLevel>=7 && uMode && uStatus==uINITSETUP)
 		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,1);
 	else
 		tTablePullDown("tNode;cuNodePullDown","cLabel","cLabel",uNode,0);
@@ -949,8 +949,15 @@ void tContainerInput(unsigned uMode)
 //cComment
 	OpenRow(LANG_FL_tContainer_cComment,"black");
 	printf("<textarea title='%s' cols=100 wrap=none rows=8 name=cComment ",LANG_FT_tContainer_cComment);
-	printf("disabled>%s</textarea></td></tr>\n",cComment);
-	printf("<input type=hidden name=cComment value=\"%s\" >\n",EncodeDoubleQuotes(cComment));
+	if(guPermLevel>=7 && uMode)
+	{
+		printf(">%s</textarea></td></tr>\n",cComment);
+	}
+	else
+	{
+		printf("disabled >%s</textarea></td></tr>\n",cComment);
+		printf("<input type=hidden name=cComment value=\"%s\" >\n",EncodeDoubleQuotes(cComment));
+	}
 
 }//void tContainerInput(unsigned uMode)
 
