@@ -23,6 +23,41 @@ https server that supports .cgi executables.
 #### Basics
 
 unxsRAD creates files for this bootstrap app in this directory (*interfaces/bootstrap*) and in the *../../templates/default/bootstrap* dir.
+You will need to make install in the boostrap dir of the app as well as import into the app MySQL db the bootstrap templates.
+You can do this for example via:
+
+```
+user@hosting bootstrap]# export unxsSalud=/var/local/unxsRAD/apps/unxsSalud 
+[user@hosting bootstrap]# ../../utils/importTemplates.sh 
+/var/www/cgi-bin
+/var/local/unxsRAD/apps/unxsSalud
+
+ImportTemplateFile(): Start
+Updating tTemplate for Default.Header
+
+Done
+
+ImportTemplateFile(): Start
+Updating tTemplate for Sangre.Body
+
+Done
+
+ImportTemplateFile(): Start
+Updating tTemplate for Login.Body
+
+Done
+
+ImportTemplateFile(): Start
+Updating tTemplate for Default.Footer
+
+Done
+
+ImportTemplateFile(): Start
+Updating tTemplate for User.Body
+
+Done
+```
+
 
 #### Workflow
 
