@@ -476,7 +476,7 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cTemplate,uTemplateType FROM tTemplate WHERE uTemplate=%u",uTemplate);
+	sprintf(gcQuery,"SELECT cTemplate,uTemplateType,cLabel FROM tTemplate WHERE uTemplate=%u",uTemplate);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -602,7 +602,10 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 			template.cpName[13]="cTableNameBS";
 			template.cpValue[13]=gcTableNameBS;
 	
-			template.cpName[14]="";
+			template.cpName[14]="cTemplateLabel";
+			template.cpValue[14]=field[2];
+	
+			template.cpName[15]="";
 
 			//Place special keyword in template file at top
 			//to use [[Vars]] instead of {{Vars}}

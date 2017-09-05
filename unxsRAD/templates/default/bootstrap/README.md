@@ -17,3 +17,24 @@ provided template files.
 
 The provided template web apps are simple C cgi's that require an Apache style
 https server that supports .cgi executables.
+
+### Development Workflow Notes
+
+#### Basics
+
+unxsRAD creates files for this bootstrap app in this directory (*interfaces/bootstrap*) and in the *../../templates/default/bootstrap* dir.
+
+#### Workflow
+
+ 1. You need to create/edit *unxsRAD/templates/default/* template files.
+ 1. You then import the templates into the db via: *unxsVZ/unxsRAD/utils/importTemplates.sh*.
+ 1. You may have to create special functions in unxsVZ/unxsRAD/unxsrad.c to handle complex template sections.
+
+#### unxsRAD template function development
+
+unxsRAD/unxrad.c that is the main source for the /sbin/unxsRAD program contains special template expansion handler functions.
+These work as follows:
+
+ 1. The template has to include a text expansion function e.g. *[[funcBootstrapEditorFields]]*.
+ 1. The unxsrad.c file has to then have a function declared _void funcBootstrapEditorFields(FILE *fp)_ and that is also included in the _void AppFunctions(FILE *fp,char *cFunction)_ call back hook.
+
