@@ -23,7 +23,7 @@ https server that supports .cgi executables.
 #### Basics
 
 unxsRAD creates files for this bootstrap app in this directory (*interfaces/bootstrap*) and in the *../../templates/default/bootstrap* dir.
-You will need to make install in the boostrap dir of the app as well as import into the app MySQL db the bootstrap templates.
+You will need to _make install_ in the boostrap dir of the app as well as import into the app MySQL db the bootstrap templates.
 You can do this for example via:
 
 ```
@@ -58,6 +58,8 @@ Updating tTemplate for User.Body
 Done
 ```
 
+In some cases you may have to _MySQL ALTER_ some app db fields, or just drop tables and then use the backend to create them
+with the new fields or field specs.
 
 #### Workflow
 
