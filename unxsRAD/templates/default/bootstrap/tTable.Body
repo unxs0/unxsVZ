@@ -150,8 +150,7 @@ jQuery(function($){
 			editRow: function(row){
 				var values = row.val();
 				$editor.find('#u[[cTable]]').val(values.u[[cTable]]);
-				$editor.find('#cLabel').val(values.cLabel);
-				$editor.find('#cOwner').val(values.cOwner);
+                                [[funcBootstrapFindFields]]			
 				$editorModal.data('row', row);
 				$editorTitle.text('Update [[cTable]] ' + values.u[[cTable]]);
 				$editorButton.text('Update [[cTable]]');
@@ -196,8 +195,7 @@ jQuery(function($){
 		var row = $editorModal.data('row'),
 			values = {
 				u[[cTable]]: $editor.find('#u[[cTable]]').val(),
-				cLabel: $editor.find('#cLabel').val(),
-				cOwner: $editor.find('#cOwner').val()
+				[[funcBootstrapValueFields]]
 			};
 
 		if (row instanceof FooTable.Row){
@@ -231,3 +229,4 @@ jQuery(function($){
 
   </body>
 </html>
+
