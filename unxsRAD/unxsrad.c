@@ -79,6 +79,8 @@ void GetRADConfiguration(const char *cName,char *cValue,unsigned uValueSize, uns
 void funcConfiguration(FILE *fp,char *cFunction);
 void Template2(char *cTemplate, struct t_template *template, FILE *fp);
 void funcBootstrapNavItems(FILE *fp);
+void funcBootstrapFindFields(FILE *fp);
+void funcBootstrapValueFields(FILE *fp);
 void funcBootstrapEditorFields(FILE *fp);
 
 
@@ -1829,6 +1831,10 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcBootstrapNavItems(fp);
 	else if(!strcmp(cFunction,"funcBootstrapEditorFields"))
 		funcBootstrapEditorFields(fp);
+	else if(!strcmp(cFunction,"funcBootstrapFindFields"))
+		funcBootstrapFindFields(fp);
+	else if(!strcmp(cFunction,"funcBootstrapValueFields"))
+		funcBootstrapValueFields(fp);
 	//special func that has variants
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
@@ -2519,46 +2525,211 @@ void funcBootstrapNavItems(FILE *fp)
 
 }//void funcBootstrapNavItems(FILE *fp)
 
-/*
 
-                                <div class="form-group required">
-                                        <label for="cOwner" class="col-sm-3 control-label">cOwner</label>
-                                        <div class="col-sm-9">
-                                                <input type="text" class="form-control" id="cOwner" name="cOwner"
-                                                         placeholder="Root" required>
-                                        </div>
-                                </div>
+//
+//Group of related Bootstrap func's
+//
 
-
- 
- */
-void funcBootstrapEditorFields(FILE *fp)
+void funcBootstrapFindFields(FILE *fp)
 {
+/*
+ * 	$editor.find('#cLabel').val(values.cLabel);
+ * 	$editor.find('#cOwner').val(values.cOwner);
+ */
+	if(!guTable) return;
+
        	MYSQL_RES *res;
         MYSQL_ROW field;
 	char cFieldName[100];
 
-	fprintf(fp,"<!-- funcBootstrapEditorFields() -->\n");
+	//If named table get parent guTable
+	sprintf(gcQuery,"SELECT cDescription FROM tTable"
+			" WHERE uTable=%u"
+			" AND cDescription!=''",
+					guTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"<!-- Error: %s -->\n",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"uParentTable=%u;",&guTable);
+	else
+	{
+		fprintf(fp,"<!-- No uParentTable for %u -->\n",guTable);
+		mysql_free_result(res);
+		return;
+	}
 
+	sprintf(gcQuery,"SELECT cLabel FROM tField"
+			" WHERE uTable=%u"
+			" AND uFieldType!=1"//not equal Rad Primary
+			" AND cLabel!='uOwner'"
+			" AND cLabel!='uCreatedBy'"
+			" AND cLabel!='uCreatedDate'"
+			" AND cLabel!='uModBy'"
+			" AND cLabel!='uModDate'"
+			" ORDER BY uOrder",
+					guTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"<!-- Error: %s -->\n",mysql_error(&gMysql));
+		return;
+	}
+
+        res=mysql_store_result(&gMysql);
+	unsigned uFirst=1;
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(cFieldName,"%.99s",field[0]);
+		if(!uFirst) fprintf(fp,"\t\t\t\t");
+		fprintf(fp,"$editor.find('#%1$s').val(values.%1$s);\n",cFieldName);
+		uFirst=0;
+	}
+	mysql_free_result(res);
+
+}//void funcBootstrapFindFields(FILE *fp)
+
+
+void funcBootstrapValueFields(FILE *fp)
+{
+/*
+ *	cLabel: $editor.find('#cLabel').val(),
+ *	cOwner: $editor.find('#cOwner').val()	
+ * 	
+ */
+	if(!guTable) return;
+
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+	char cFieldName[100];
+
+	//If named table get parent guTable
+	sprintf(gcQuery,"SELECT cDescription FROM tTable"
+			" WHERE uTable=%u"
+			" AND cDescription!=''",
+					guTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"<!-- Error: %s -->\n",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"uParentTable=%u;",&guTable);
+	else
+	{
+		fprintf(fp,"<!-- No uParentTable for %u -->\n",guTable);
+		mysql_free_result(res);
+		return;
+	}
+
+	sprintf(gcQuery,"SELECT cLabel FROM tField"
+			" WHERE uTable=%u"
+			" AND uFieldType!=1"//not equal Rad Primary
+			" AND cLabel!='uOwner'"
+			" AND cLabel!='uCreatedBy'"
+			" AND cLabel!='uCreatedDate'"
+			" AND cLabel!='uModBy'"
+			" AND cLabel!='uModDate'"
+			" ORDER BY uOrder",
+					guTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"<!-- Error: %s -->\n",mysql_error(&gMysql));
+		return;
+	}
+
+        res=mysql_store_result(&gMysql);
+	unsigned uFirst=1;
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(cFieldName,"%.99s",field[0]);
+		if(!uFirst) fprintf(fp,",\n\t\t\t\t");
+		fprintf(fp,"%1$s: $editor.find('#%1$s').val()",cFieldName);
+		uFirst=0;
+	}
+	fprintf(fp,"\n");
+	mysql_free_result(res);
+
+}//void funcBootstrapValueFields(FILE *fp)
+
+
+void funcBootstrapEditorFields(FILE *fp)
+{
+	if(!guTable) return;
+
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+	char cFieldName[100];
+	char cBSLabelClass[32]={"col-sm-3"};
+	char cBSInputClass[32]={"col-sm-9"};
+
+	//If named table get parent guTable
+	sprintf(gcQuery,"SELECT cDescription FROM tTable"
+			" WHERE uTable=%u"
+			" AND cDescription!=''",
+					guTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"<!-- Error: %s -->\n",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"uParentTable=%u;",&guTable);
+	else
+	{
+		fprintf(fp,"<!-- No uParentTable for %u -->\n",guTable);
+		mysql_free_result(res);
+		return;
+	}
+
+	sprintf(gcQuery,"SELECT cLabel,cOtherOptions FROM tField"
+			" WHERE uTable=%u"
+			//" AND cOtherOptions!=''"
+			" AND uFieldType!=1"//not equal Rad Primary
+			" AND cLabel!='uOwner'"
+			" AND cLabel!='uCreatedBy'"
+			" AND cLabel!='uCreatedDate'"
+			" AND cLabel!='uModBy'"
+			" AND cLabel!='uModDate'"
+			" ORDER BY uOrder",
+					guTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"<!-- Error: %s -->\n",mysql_error(&gMysql));
+		return;
+	}
+
+	fprintf(fp,"<!-- funcBootstrapEditorFields() %u -->\n",guTable);
 	fprintf(fp,"\t\t\t\t<input type=\"number\" id=\"%1$s\" name=\"%1$s\" class=\"hidden\"/>\n",gcTableKey);
 
-	sprintf(cFieldName,"%.99s","cLabel");
-	fprintf(fp,"\t\t\t\t<div class=\"form-group required\">\n");
-	fprintf(fp,"\t\t\t\t\t<label for=\"%1$s\" class=\"col-sm-3 control-label\">%1$s</label>\n",cFieldName);
-	fprintf(fp,"\t\t\t\t\t<div class=\"col-sm-9\">\n");
-	fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\"\n",cFieldName);
-	fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
-	fprintf(fp,"\t\t\t\t\t</div>\n");
-	fprintf(fp,"\t\t\t\t</div>\n");
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
 
-
-	sprintf(cFieldName,"%.99s","cOwner");
-	fprintf(fp,"\t\t\t\t<div class=\"form-group required\">\n");
-	fprintf(fp,"\t\t\t\t\t<label for=\"%1$s\" class=\"col-sm-3 control-label\">%1$s</label>\n",cFieldName);
-	fprintf(fp,"\t\t\t\t\t<div class=\"col-sm-9\">\n");
-	fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\"\n",cFieldName);
-	fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
-	fprintf(fp,"\t\t\t\t\t</div>\n");
-	fprintf(fp,"\t\t\t\t</div>\n");
+		sprintf(cFieldName,"%.99s",field[0]);
+		fprintf(fp,"\t\t\t\t<div class=\"form-group required\">\n");
+		fprintf(fp,"\t\t\t\t\t<label for=\"%1$s\" class=\"%2$s control-label\">%1$s</label>\n",cFieldName,cBSLabelClass);
+		fprintf(fp,"\t\t\t\t\t<div class=\"%s\">\n",cBSInputClass);
+		fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\"\n",cFieldName);
+		fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
+		fprintf(fp,"\t\t\t\t\t</div>\n");
+		fprintf(fp,"\t\t\t\t</div>\n");
+	}
+	mysql_free_result(res);
 
 }//void funcBootstrapEditorFields(FILE *fp)
+
+//
+//End of Group of related Bootstrap func's
+//
+
