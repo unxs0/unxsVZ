@@ -268,9 +268,9 @@ void json{{cTableName}}Rows(void)
 	printf("Content-type: text/json\n\n");
 	printf("[\n");
 
-	sprintf(cQuery,"SELECT {{funcBootstrapRowsList}}"
+	sprintf(cQuery,"SELECT {{funcBootstrapRowVars}}"
 			" FROM {{cTableName}}"
-			" WHERE {{cTableName}}.uOwner=%u",guOrg);
+			" WHERE uOwner=%u",guOrg);
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -289,9 +289,11 @@ void json{{cTableName}}Rows(void)
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("\t{");
-			printf("\"{{cTableKey}}\": \"%s\","
-				{{funcBootstrapRows}}
-					,field[0],field[1],field[2]);
+			//funcBootstrapRowFields=field[0],field[2], ... ,field[n] where n+1 is 2x number of RowVars
+			//and the odd field is the var name and the even is the data
+			//format one for each pair of fields \"%s\": \"%s\"
+			printf("{{funcBootstrapRowFormats}}",
+					{{funcBootstrapRowFields}});
 			printf("}");
 			if((++uLast)<uNumRows)
 				printf(",\n");
