@@ -59,6 +59,32 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 }//void {{cTableName}}GetHook(entry gentries[],int x)
 
 
+void Insert_{{cTableName}}(void)
+{
+	{{funcModuleInsertQuery}}
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(0);
+	}
+
+}//void Insert_{{cTableName}}(void)
+
+
+void Update_{{cTableName}}(char *cRowid)
+{
+	{{funcModuleUpdateQuery}}
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(0);
+	}
+
+}//void Update_{{cTableName}}(void)
+
+
 void {{cTableName}}Commands(pentry entries[], int x)
 {
 	if(!strcmp(gcPage,"{{cTableNameBS}}"))
@@ -95,28 +121,14 @@ void {{cTableName}}Commands(pentry entries[], int x)
 			//Update or Insert
 			if(!{{cTableKey}})
 			{
-				sprintf(gcQuery,"INSERT INTO {{cTableName}}"
-					" SET cLabel='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-						,cLabel,guOrg,guLoginClient);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					printf("%s\n",mysql_error(&gMysql));
-					exit(0);
-				}
+				Insert_{{cTableName}}();
 				printf("%llu\n",mysql_insert_id(&gMysql));
 			}
 			else
 			{
-				sprintf(gcQuery,"UPDATE {{cTableName}} SET cLabel='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
-					" WHERE {{cTableKey}}=%u"
-						,cLabel,guLoginClient,{{cTableKey}});
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					printf("%s\n",mysql_error(&gMysql));
-					exit(0);
-				}
+				char cRowid[32]={""};
+				sprintf(cRowid,"%u",{{cTableKey}});
+				Update_{{cTableName}}(cRowid);
 				printf("%u\n",{{cTableKey}});
 			}
 		}
@@ -256,9 +268,9 @@ void json{{cTableName}}Rows(void)
 	printf("Content-type: text/json\n\n");
 	printf("[\n");
 
-	sprintf(cQuery,"SELECT {{cTableName}}.{{cTableKey}},{{cTableName}}.cLabel,tClient.cLabel"
-			" FROM {{cTableName}},tClient"
-			" WHERE {{cTableName}}.uOwner=%u AND tClient.uClient={{cTableName}}.uOwner",guOrg);
+	sprintf(cQuery,"SELECT {{funcBootstrapRowsList}}"
+			" FROM {{cTableName}}"
+			" WHERE {{cTableName}}.uOwner=%u",guOrg);
 	mysql_query(&gMysql,cQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -278,8 +290,7 @@ void json{{cTableName}}Rows(void)
 		{
 			printf("\t{");
 			printf("\"{{cTableKey}}\": \"%s\","
-				" \"cLabel\": \"%s\","
-				" \"cOwner\": \"%s\""
+				{{funcBootstrapRows}}
 					,field[0],field[1],field[2]);
 			printf("}");
 			if((++uLast)<uNumRows)
@@ -299,10 +310,7 @@ void json{{cTableName}}Cols(void)
 {
 	printf("Content-type: text/json\n\n");
 	printf("[\n");
-	//printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"Unique {{cTableNameBS}} ID\", \"filterable\": false },\n");
-	printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"{{cTableNameBS}} ID\" },\n");
-	printf("\t{\"name\": \"cLabel\", \"title\": \"Label\"},\n");
-	printf("\t{\"name\": \"cOwner\", \"title\": \"Owner\", \"breakpoints\": \"xs sm\"}\n");
+	{{funcBootstrapCols}}
 	printf("]\n");
 	exit(0);
 }//void json{{cTableName}}Cols(void)

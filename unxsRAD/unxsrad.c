@@ -82,6 +82,9 @@ void funcBootstrapNavItems(FILE *fp);
 void funcBootstrapFindFields(FILE *fp);
 void funcBootstrapValueFields(FILE *fp);
 void funcBootstrapEditorFields(FILE *fp);
+void funcBootstrapRowsList(FILE *fp);
+void funcBootstrapRows(FILE *fp);
+void funcBootstrapCols(FILE *fp);
 
 
 //external prototypes
@@ -1835,6 +1838,12 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcBootstrapFindFields(fp);
 	else if(!strcmp(cFunction,"funcBootstrapValueFields"))
 		funcBootstrapValueFields(fp);
+	else if(!strcmp(cFunction,"funcBootstrapRowsList"))
+		funcBootstrapRowsList(fp);
+	else if(!strcmp(cFunction,"funcBootstrapRows"))
+		funcBootstrapRows(fp);
+	else if(!strcmp(cFunction,"funcBootstrapCols"))
+		funcBootstrapCols(fp);
 	//special func that has variants
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
@@ -2728,6 +2737,132 @@ void funcBootstrapEditorFields(FILE *fp)
 	mysql_free_result(res);
 
 }//void funcBootstrapEditorFields(FILE *fp)
+
+/*
+{{funcBootstrapRowsList}}
+{{funcBootstrapRows}}
+{{funcBootstrapCols}}
+
+//rows
+//part1
+	sprintf(cQuery,"SELECT {{cTableName}}.{{cTableKey}},{{cTableName}}.cLabel,tClient.cLabel"
+			" FROM {{cTableName}},tClient"
+			" WHERE {{cTableName}}.uOwner=%u AND tClient.uClient={{cTableName}}.uOwner",guOrg);
+				
+//part2
+				" \"cLabel\": \"%s\","
+				" \"cOwner\": \"%s\""
+
+//cols
+	//printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"Unique {{cTableNameBS}} ID\", \"filterable\": false },\n");
+	printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"{{cTableNameBS}} ID\" },\n");
+	printf("\t{\"name\": \"cLabel\", \"title\": \"Label\"},\n");
+	printf("\t{\"name\": \"cOwner\", \"title\": \"Owner\", \"breakpoints\": \"xs sm\"}\n");
+*/
+
+void funcBootstrapRowsList(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+			" FROM tField,tTable,tFieldType"
+			" WHERE tField.uTable=tTable.uTable"
+			" AND tField.uFieldType=tFieldType.uFieldType"
+			" AND tTable.uTable=%u"
+			" AND tField.uFieldType!=1"//not equal Rad Primary
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBootstrapRowsList",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uFirst=0;
+	unsigned uRADType=0;
+	sprintf(gcuJs,"0");
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uRADType);
+
+		if(uFirst) fprintf(fp,",");
+
+		//testing a simple hack
+		if(uRADType==COLTYPE_DATETIME)
+			sprintf(gcuJs,"1");
+		if(uRADType==COLTYPE_DATEEUR)
+		{
+			sprintf(gcuJs,"1");
+			fprintf(fp,"DATE_FORMAT(%s.%s,'%%d/%%m/%%Y')",gcTableName,field[0]);
+		}	
+		else
+		{
+			fprintf(fp,"%s.%s",gcTableName,field[0]);
+		}
+
+
+		uFirst=1;
+	}
+	mysql_free_result(res);
+
+}//void funcBootstrapRowsList(FILE *fp)
+
+
+void funcBootstrapRows(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+			" FROM tField,tTable,tFieldType"
+			" WHERE tField.uTable=tTable.uTable"
+			" AND tField.uFieldType=tFieldType.uFieldType"
+			" AND tTable.uTable=%u"
+			" AND tField.uFieldType!=1"//not equal Rad Primary
+			" AND cLabel!='uOwner'"
+			" AND cLabel!='uCreatedBy'"
+			" AND cLabel!='uCreatedDate'"
+			" AND cLabel!='uModBy'"
+			" AND cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBootstrapRows",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uRADType=0;
+	unsigned uFirst=1;
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uRADType);
+		if(!uFirst) fprintf(fp,",");
+		fprintf(fp,"\t\t\t\t\"%s\": \"%%s\"",field[0]);
+		uFirst=0;
+	}
+	mysql_free_result(res);
+
+}//void funcBootstrapRows(FILE *fp)
+
+
+void funcBootstrapCols(FILE *fp)
+{
+}//void funcBootstrapCols(FILE *fp)
+
+//
+//End of Group of related Bootstrap func's
+//
 
 //
 //End of Group of related Bootstrap func's
