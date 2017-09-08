@@ -289,9 +289,6 @@ void json{{cTableName}}Rows(void)
 		while((field=mysql_fetch_row(res)))
 		{
 			printf("\t{");
-			//funcBootstrapRowFields=field[0],field[2], ... ,field[n] where n+1 is 2x number of RowVars
-			//and the odd field is the var name and the even is the data
-			//format one for each pair of fields \"%s\": \"%s\"
 			printf("{{funcBootstrapRowFormats}}",
 					{{funcBootstrapRowFields}});
 			printf("}");

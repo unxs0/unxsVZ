@@ -2741,15 +2741,6 @@ void funcBootstrapEditorFields(FILE *fp)
 
 }//void funcBootstrapEditorFields(FILE *fp)
 
-/*
-{{funcBootstrapCols}}: vert list of table data columns, MySQL name, title from tField.cTitle, breakpoints
-
-//cols
-	//printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"Unique {{cTableNameBS}} ID\", \"filterable\": false },\n");
-	printf("\t{\"name\": \"{{cTableKey}}\", \"title\": \"{{cTableNameBS}} ID\" },\n");
-	printf("\t{\"name\": \"cLabel\", \"title\": \"Label\"},\n");
-	printf("\t{\"name\": \"cOwner\", \"title\": \"Owner\", \"breakpoints\": \"xs sm\"}\n");
-*/
 
 void funcBootstrapRowVars(FILE *fp)
 {
@@ -2857,6 +2848,7 @@ void funcBootstrapRowFormats(FILE *fp)
 	if((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uCount);
+		uCount+=1;
 
 		unsigned uN=1;
 		while(uCount>uN++)
@@ -2873,6 +2865,47 @@ void funcBootstrapRowFormats(FILE *fp)
 
 void funcBootstrapCols(FILE *fp)
 {
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel,cTitle"
+			" FROM tField"
+			" WHERE uTable=%u"
+			" AND cLabel!='uOwner'"
+			" AND cLabel!='uCreatedBy'"
+			" AND cLabel!='uCreatedDate'"
+			" AND cLabel!='uModBy'"
+			" AND cLabel!='uModDate'"
+			" ORDER BY uOrder",guTable);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBootstrapRowFormats",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	char *cBreakpoints={""};
+	unsigned uCount=0;
+	unsigned uOnce=1;
+	fprintf(fp,"\n");
+	unsigned uRows=mysql_num_rows(res);
+	char *cComma=",";
+	while((field=mysql_fetch_row(res)))
+	{
+		uCount++;
+		if(uCount>=uRows) cComma="";
+		fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"%s\\\", \\\"title\\\": \\\"%s\\\", \\\"breakpoints\\\": \\\"%s\\\"}%s\\n\");\n"
+				,field[0],field[0],cBreakpoints,cComma);
+		if(uOnce && uCount>2)
+		{
+			cBreakpoints="xs sm";
+			uOnce=0;
+		}
+	}
+	mysql_free_result(res);
+
 }//void funcBootstrapCols(FILE *fp)
 
 //
