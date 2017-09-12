@@ -121,11 +121,14 @@ void {{cTableName}}Commands(pentry entries[], int x)
 			//Update or Insert
 			if(!{{cTableKey}})
 			{
+				uOwner=guOrg;
+				uCreatedBy=guLoginClient;
 				Insert_{{cTableName}}();
 				printf("%llu\n",mysql_insert_id(&gMysql));
 			}
 			else
 			{
+				uModBy=guLoginClient;
 				char cRowid[32]={""};
 				sprintf(cRowid,"%u",{{cTableKey}});
 				Update_{{cTableName}}(cRowid);

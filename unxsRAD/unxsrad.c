@@ -1524,6 +1524,8 @@ void funcModuleUpdateQuery(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		//Special internal fields
+		if(!strcmp(field[0],"uOwner"))
+			continue;
 		if(!strcmp(field[0],"uCreatedBy"))
 			continue;
 		if(!strcmp(field[0],"uCreatedDate"))
@@ -1566,6 +1568,8 @@ void funcModuleUpdateQuery(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		//Special internal fields
+		if(!strcmp(field[0],"uOwner"))
+			continue;
 		if(!strcmp(field[0],"uCreatedBy"))
 			continue;
 		if(!strcmp(field[0],"uCreatedDate"))
@@ -2679,8 +2683,8 @@ void funcBootstrapEditorFields(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 	char cFieldName[100];
-	char cBSLabelClass[32]={"col-sm-3"};
-	char cBSInputClass[32]={"col-sm-9"};
+	char cBSLabelClass[64]={"col-sm-6"};
+	char cBSInputClass[64]={"col-sm-6"};
 
 	//If named table get parent guTable
 	sprintf(gcQuery,"SELECT cDescription FROM tTable"
@@ -2703,7 +2707,7 @@ void funcBootstrapEditorFields(FILE *fp)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT cLabel,cOtherOptions FROM tField"
+	sprintf(gcQuery,"SELECT cLabel,cTitle,cOtherOptions FROM tField"
 			" WHERE uTable=%u"
 			//" AND cOtherOptions!=''"
 			" AND uFieldType!=1"//not equal Rad Primary
@@ -2725,16 +2729,24 @@ void funcBootstrapEditorFields(FILE *fp)
 	fprintf(fp,"\t\t\t\t<input type=\"number\" id=\"%1$s\" name=\"%1$s\" class=\"hidden\"/>\n",gcTableKey);
 
         res=mysql_store_result(&gMysql);
+	char *cRequired="";
 	while((field=mysql_fetch_row(res)))
 	{
 
 		sprintf(cFieldName,"%.99s",field[0]);
-		fprintf(fp,"\t\t\t\t<div class=\"form-group required\">\n");
+		if(strstr(field[2],"required"))
+			cRequired=" required";
+		else
+			cRequired="";
+		fprintf(fp,"\t\t\t\t<div class=\"col-lg-4 col-xs-6\">\n");
+		fprintf(fp,"\t\t\t\t<div class=\"form-group%s\">\n",cRequired);
 		fprintf(fp,"\t\t\t\t\t<label for=\"%1$s\" class=\"%2$s control-label\">%1$s</label>\n",cFieldName,cBSLabelClass);
 		fprintf(fp,"\t\t\t\t\t<div class=\"%s\">\n",cBSInputClass);
-		fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\"\n",cFieldName);
-		fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
+		fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\">\n",
+				cFieldName,field[1]);
+		//fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
 		fprintf(fp,"\t\t\t\t\t</div>\n");
+		fprintf(fp,"\t\t\t\t</div>\n");
 		fprintf(fp,"\t\t\t\t</div>\n");
 	}
 	mysql_free_result(res);
@@ -2900,7 +2912,7 @@ void funcBootstrapCols(FILE *fp)
 				,field[0],field[0],cBreakpoints,cComma);
 		if(uOnce && uCount>2)
 		{
-			cBreakpoints="xs sm";
+			cBreakpoints="all";
 			uOnce=0;
 		}
 	}
