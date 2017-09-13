@@ -339,9 +339,16 @@ void {{cTableName}}NavList(void)
         	printf("<p><u>{{cTableName}}NavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction={{cTableName}}"
-				"&{{cTableKey}}=%s>%s</a><br>\n",
-				field[0],field[1]);
+		{
+			if(field[1][0])
+				printf("<a class=darkLink href={{cProject}}.cgi?gcFunction={{cTableName}}"
+					"&{{cTableKey}}=%s>%s</a><br>\n",
+						field[0],field[1]);
+			else
+				printf("<a class=darkLink href={{cProject}}.cgi?gcFunction={{cTableName}}"
+					"&{{cTableKey}}=%s>%s</a><br>\n",
+						field[0],field[0]);
+		}
 	}
         mysql_free_result(res);
 

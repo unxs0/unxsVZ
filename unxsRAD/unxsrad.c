@@ -1144,19 +1144,21 @@ void funcModuleInput(FILE *fp)
 			case COLTYPE_DATETIME:
 				fprintf(fp,"\t//%s COLTYPE_DATETIME\n",cField);
 				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
-				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
-				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),1);\n",cField,cField);
-				fprintf(fp,"\telse\n");
+				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n\t{\n",uModLevel);
+				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),1);\n\t}\n",cField,cField);
+				fprintf(fp,"\telse\n\t{\n");
 				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),0);\n",cField,cField);
+				fprintf(fp,"\t\tprintf(\"<input type=hidden name=%s value='%%s'>\\n\",EncodeDoubleQuotes(%s));\n\t}\n",cField,cField);
 			break;
 
 			case COLTYPE_DATEEUR:
 				fprintf(fp,"\t//%s COLTYPE_DATEEUR\n",cField);
 				fprintf(fp,"\tOpenRow(LANG_FL_%s_%s,\"black\");\n",gcTableName,cField);
-				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n",uModLevel);
-				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),1);\n",cField,cField);
-				fprintf(fp,"\telse\n");
+				fprintf(fp,"\tif(guPermLevel>=%u && uMode)\n\t{\n",uModLevel);
+				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),1);\n\t}\n",cField,cField);
+				fprintf(fp,"\telse\n\t{\n");
 				fprintf(fp,"\t\tjsCalendarInput(\"%s\",EncodeDoubleQuotes(%s),0);\n",cField,cField);
+				fprintf(fp,"\t\tprintf(\"<input type=hidden name=%s value='%%s'>\\n\",EncodeDoubleQuotes(%s));\n\t}\n",cField,cField);
 			break;
 
 			case COLTYPE_UNIXTIME:
@@ -2583,6 +2585,7 @@ void funcBootstrapFindFields(FILE *fp)
 	sprintf(gcQuery,"SELECT cLabel FROM tField"
 			" WHERE uTable=%u"
 			" AND uFieldType!=1"//not equal Rad Primary
+			" AND cLabel!='cLabel'"
 			" AND cLabel!='uOwner'"
 			" AND cLabel!='uCreatedBy'"
 			" AND cLabel!='uCreatedDate'"
@@ -2648,6 +2651,7 @@ void funcBootstrapValueFields(FILE *fp)
 	sprintf(gcQuery,"SELECT cLabel FROM tField"
 			" WHERE uTable=%u"
 			" AND uFieldType!=1"//not equal Rad Primary
+			" AND cLabel!='cLabel'"
 			" AND cLabel!='uOwner'"
 			" AND cLabel!='uCreatedBy'"
 			" AND cLabel!='uCreatedDate'"
@@ -2712,6 +2716,7 @@ void funcBootstrapEditorFields(FILE *fp)
 			" WHERE uTable=%u"
 			//" AND cOtherOptions!=''"
 			" AND uFieldType!=1"//not equal Rad Primary
+			" AND cLabel!='cLabel'"
 			" AND cLabel!='uOwner'"
 			" AND cLabel!='uCreatedBy'"
 			" AND cLabel!='uCreatedDate'"
@@ -2741,7 +2746,7 @@ void funcBootstrapEditorFields(FILE *fp)
 			cRequired="";
 		//fprintf(fp,"\t\t\t\t<div class=\"col-lg-4 col-xs-6\">\n");
 		fprintf(fp,"\t\t\t\t<div class=\"form-group%s\">\n",cRequired);
-		fprintf(fp,"\t\t\t\t\t<label for=\"%1$s\" class=\"%2$s control-label\">%1$s</label>\n",cFieldName,cBSLabelClass);
+		fprintf(fp,"\t\t\t\t\t<label for=\"%s\" class=\"%s control-label\">%s</label>\n",cFieldName,cBSLabelClass,cFieldName+1);
 		fprintf(fp,"\t\t\t\t\t<div class=\"%s\">\n",cBSInputClass);
 		fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\">\n",
 				cFieldName,field[1]);
@@ -2760,15 +2765,17 @@ void funcBootstrapRowVars(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cLabel"
-			" FROM tField"
-			" WHERE uTable=%u"
-			" AND cLabel!='uOwner'"
-			" AND cLabel!='uCreatedBy'"
-			" AND cLabel!='uCreatedDate'"
-			" AND cLabel!='uModBy'"
-			" AND cLabel!='uModDate'"
-			" ORDER BY uOrder",guTable);
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tField.cLabel!='cLabel'"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2779,11 +2786,23 @@ void funcBootstrapRowVars(FILE *fp)
         }
         res=mysql_store_result(&gMysql);
 	unsigned uFirst=1;
+	unsigned uRADType=0;
 	while((field=mysql_fetch_row(res)))
 	{
+		sscanf(field[1],"%u",&uRADType);
+
 		if(!uFirst) fprintf(fp,",");
 
-		fprintf(fp,"'%1$s',%1$s",field[0]);
+		switch(uRADType)
+		{
+
+			case COLTYPE_DATEEUR:
+				fprintf(fp,"'%1$s',DATE_FORMAT(%1$s,'%%%%d/%%%%m/%%%%Y')",field[0]);
+			break;
+
+			default:
+				fprintf(fp,"'%1$s',%1$s",field[0]);
+		}
 
 		uFirst=0;
 	}
@@ -2800,6 +2819,7 @@ void funcBootstrapRowFields(FILE *fp)
 	sprintf(gcQuery,"SELECT COUNT(cLabel)"
 			" FROM tField"
 			" WHERE uTable=%u"
+			" AND cLabel!='cLabel'"
 			" AND cLabel!='uOwner'"
 			" AND cLabel!='uCreatedBy'"
 			" AND cLabel!='uCreatedDate'"
@@ -2825,15 +2845,8 @@ void funcBootstrapRowFields(FILE *fp)
 		while(uCount>uN)
 		{
 			if(!uFirst)
-			{
 				fprintf(fp,",");
-				fprintf(fp,"field[%u]",uN++);
-			}
-			else
-			{
-				fprintf(fp,"field[0],field[1],field[1],field[2],field[3]");
-				uN=4;
-			}
+			fprintf(fp,"field[%u]",uN++);
 			uFirst=0;
 		}
 	}
@@ -2850,6 +2863,7 @@ void funcBootstrapRowFormats(FILE *fp)
 	sprintf(gcQuery,"SELECT COUNT(cLabel)"
 			" FROM tField"
 			" WHERE uTable=%u"
+			" AND cLabel!='cLabel'"
 			" AND cLabel!='uOwner'"
 			" AND cLabel!='uCreatedBy'"
 			" AND cLabel!='uCreatedDate'"
@@ -2875,14 +2889,8 @@ void funcBootstrapRowFormats(FILE *fp)
 		while(uCount>uN++)
 		{
 			if(!uFirst)
-			{
 				fprintf(fp,",");
-				fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
-			}
-			else
-			{
-				fprintf(fp,"\\\"%%s\\\": \\\"<a href=?gcPage=%s&%s=%%s>%%s</a>\\\"",gcTableNameBS,gcTableKey);
-			}
+			fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
 			uFirst=0;
 		}
 	}
@@ -2899,6 +2907,7 @@ void funcBootstrapCols(FILE *fp)
 	sprintf(gcQuery,"SELECT cLabel,cTitle"
 			" FROM tField"
 			" WHERE uTable=%u"
+			" AND cLabel!='cLabel'"
 			" AND cLabel!='uOwner'"
 			" AND cLabel!='uCreatedBy'"
 			" AND cLabel!='uCreatedDate'"
@@ -2925,7 +2934,7 @@ void funcBootstrapCols(FILE *fp)
 		uCount++;
 		if(uCount>=uRows) cComma="";
 		fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"%s\\\", \\\"title\\\": \\\"%s\\\", \\\"breakpoints\\\": \\\"%s\\\"}%s\\n\");\n"
-				,field[0],field[0],cBreakpoints,cComma);
+				,field[0],field[0]+1,cBreakpoints,cComma);
 		if(uOnce && uCount>2)
 		{
 			cBreakpoints="all";

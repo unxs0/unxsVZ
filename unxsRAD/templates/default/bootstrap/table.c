@@ -111,29 +111,22 @@ void {{cTableName}}Commands(pentry entries[], int x)
 		}
 
 		//Check data
-		if(!cLabel[0])
+
+		//Update or Insert
+		if(!{{cTableKey}})
 		{
-			printf("No cLabel for %u\n",{{cTableKey}});
-			exit(0);
+			uOwner=guOrg;
+			uCreatedBy=guLoginClient;
+			Insert_{{cTableName}}();
+			printf("%llu\n",mysql_insert_id(&gMysql));
 		}
 		else
 		{
-			//Update or Insert
-			if(!{{cTableKey}})
-			{
-				uOwner=guOrg;
-				uCreatedBy=guLoginClient;
-				Insert_{{cTableName}}();
-				printf("%llu\n",mysql_insert_id(&gMysql));
-			}
-			else
-			{
-				uModBy=guLoginClient;
-				char cRowid[32]={""};
-				sprintf(cRowid,"%u",{{cTableKey}});
-				Update_{{cTableName}}(cRowid);
-				printf("%u\n",{{cTableKey}});
-			}
+			uModBy=guLoginClient;
+			char cRowid[32]={""};
+			sprintf(cRowid,"%u",{{cTableKey}});
+			Update_{{cTableName}}(cRowid);
+			printf("%u\n",{{cTableKey}});
 		}
 		exit(0);
 	}
