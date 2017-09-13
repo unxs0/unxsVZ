@@ -2525,6 +2525,7 @@ void funcBootstrapNavItems(FILE *fp)
 			" WHERE uProject=%u"
 			" AND SUBSTR(cLabel,1,1)='t'"
 			" AND uTemplateType=%u"
+			" AND uReadLevel>0"
 			" ORDER BY uTableOrder",guProject,uTEMPLATETYPE_BOOTSTRAP);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -2738,7 +2739,7 @@ void funcBootstrapEditorFields(FILE *fp)
 			cRequired=" required";
 		else
 			cRequired="";
-		fprintf(fp,"\t\t\t\t<div class=\"col-lg-4 col-xs-6\">\n");
+		//fprintf(fp,"\t\t\t\t<div class=\"col-lg-4 col-xs-6\">\n");
 		fprintf(fp,"\t\t\t\t<div class=\"form-group%s\">\n",cRequired);
 		fprintf(fp,"\t\t\t\t\t<label for=\"%1$s\" class=\"%2$s control-label\">%1$s</label>\n",cFieldName,cBSLabelClass);
 		fprintf(fp,"\t\t\t\t\t<div class=\"%s\">\n",cBSInputClass);
@@ -2747,7 +2748,7 @@ void funcBootstrapEditorFields(FILE *fp)
 		//fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
 		fprintf(fp,"\t\t\t\t\t</div>\n");
 		fprintf(fp,"\t\t\t\t</div>\n");
-		fprintf(fp,"\t\t\t\t</div>\n");
+		//fprintf(fp,"\t\t\t\t</div>\n");
 	}
 	mysql_free_result(res);
 
@@ -2823,8 +2824,16 @@ void funcBootstrapRowFields(FILE *fp)
 		unsigned uN=0;
 		while(uCount>uN)
 		{
-			if(!uFirst) fprintf(fp,",");
-			fprintf(fp,"field[%u]",uN++);
+			if(!uFirst)
+			{
+				fprintf(fp,",");
+				fprintf(fp,"field[%u]",uN++);
+			}
+			else
+			{
+				fprintf(fp,"field[0],field[1],field[1],field[2],field[3]");
+				uN=4;
+			}
 			uFirst=0;
 		}
 	}
@@ -2865,8 +2874,15 @@ void funcBootstrapRowFormats(FILE *fp)
 		unsigned uN=1;
 		while(uCount>uN++)
 		{
-			if(!uFirst) fprintf(fp,",");
-			fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
+			if(!uFirst)
+			{
+				fprintf(fp,",");
+				fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
+			}
+			else
+			{
+				fprintf(fp,"\\\"%%s\\\": \\\"<a href=?gcPage=%s&%s=%%s>%%s</a>\\\"",gcTableNameBS,gcTableKey);
+			}
 			uFirst=0;
 		}
 	}
