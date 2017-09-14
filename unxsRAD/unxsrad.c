@@ -2538,7 +2538,7 @@ void funcBootstrapNavItems(FILE *fp)
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-            	fprintf(fp,"            <li><a href=\"{{cCGI}}?gcPage=%1$s\">%1$s</a></li>\n",field[0]);
+            	fprintf(fp,"\t\t<li><a href=\"{{cCGI}}?gcPage=%1$s\">%1$s</a></li>\n",field[0]);
 	}
 	mysql_free_result(res);
 

@@ -3,7 +3,7 @@ FILE
 	user.c
 	svn ID removed
 AUTHOR/LEGAL
-	(C) 2010, 2011 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2017 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.
 PURPOSE
 	OneLogin program file.
@@ -293,8 +293,12 @@ void funcOperationHistory(FILE *fp)
 
 	fprintf(fp,"<!-- funcOperationHistory(fp) Start -->\n");
 
-	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer FROM tLog WHERE uLogType!=8 AND"
-			" (uCreatedBy=%u OR uLoginClient=%u OR uOwner=%u) ORDER BY uCreatedDate DESC LIMIT 10",guLoginClient,guLoginClient,guLoginClient);
+	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer"
+			" FROM tLog"
+			" WHERE uLogType!=8"
+			" AND (uCreatedBy=%u OR uLoginClient=%u OR uOwner=%u)"
+			" ORDER BY uCreatedDate DESC LIMIT 10",
+				guLoginClient,guLoginClient,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -318,8 +322,12 @@ void funcLoginHistory(FILE *fp)
 
 	fprintf(fp,"<!-- funcLoginHistory(fp) Start -->\n");
 
-	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer FROM tLog WHERE uLoginClient=%u"
-			" AND uLogType=8 ORDER BY uCreatedDate DESC LIMIT 10",guLoginClient);
+	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uCreatedDate),cHost,cServer"
+			" FROM tLog"
+			" WHERE uLoginClient=%u"
+			" AND uLogType=8"
+			" ORDER BY uCreatedDate DESC LIMIT 10",
+				guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{

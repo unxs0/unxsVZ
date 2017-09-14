@@ -365,6 +365,31 @@ void htmlFooter(char *cTemplateName)
 }//void htmlFooter()
 
 
+void funcSelect(FILE *fp,char *cTable)
+{
+
+	fprintf(fp,"<!-- funcSelect(%s) -->\n",cTable);
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT u%s,cLabel FROM %s",cTable+1,cTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"<!-- error: %s -->\n",mysql_error(&gMysql));
+		return;
+	}
+
+	fprintf(fp,"\t\t<select class=\"form-control\" id=\"u%1$s\" name=\"u%1$s\">\n",cTable+1);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"\t\t\t<option value=%s >%s</option>\n",field[0],field[1]);
+	}
+	fprintf(fp,"\t\t</select>\n");
+
+}//void funcSelect(FILE *fp,char *cTable)
+
+
 //libtemplate.a required
 void AppFunctions(FILE *fp,char *cFunction)
 {
@@ -374,6 +399,12 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcOperationHistory(fp);
 	else if(!strcmp(cFunction,"funcLoginHistory"))
 		funcLoginHistory(fp);
+	else if(!strncmp(cFunction,"funcSelect(",11))
+	{
+		char cTable[32]={""};
+		sscanf(cFunction,"funcSelect(%31[a-zA-Z])",cTable);
+		funcSelect(fp,cTable);
+	}
 	
 }//void AppFunctions(FILE *fp,char *cFunction)
 

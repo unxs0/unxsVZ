@@ -53,34 +53,6 @@
 		<h5>{{funcMOTD}}</h5>
           </div>
 
-<!-- start jquery collapse Login History-->
-<div class="panel panel-default" id="panel3">
-	<div class="panel-heading">
-		<h4 class="form-signin-heading">
-			<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree" class="collapsed">Login History</a>
-		</h4>
-	</div><!-- "panel-heading" -->
-	<div id="collapseThree" class="panel-collapse collapse">
-	<div class="panel-body">loading please wait...
-	</div><!-- "panel-body" -->
-	</div><!-- "collapseThree" -->
-</div><!-- "panel panel-default" -->
-<!-- end jquery collapse -->
-
-<!-- start jquery collapse Operation History-->
-<div class="panel panel-default" id="panel4">
-	<div class="panel-heading">
-		<h4 class="form-signin-heading">
-			<a data-toggle="collapse" data-target="#collapseFour" href="#collapseFour" class="collapsed">Operation History</a>
-		</h4>
-	</div><!-- "panel-heading" -->
-	<div id="collapseFour" class="panel-collapse collapse">
-	<div class="panel-body">loading please wait...
-	</div><!-- "panel-body" -->
-	</div><!-- "collapseFour" -->
-</div><!-- "panel panel-default" -->
-<!-- end jquery collapse -->
-
 <!-- start jquery collapse Change Passwd -->
 <div class="panel panel-default" id="panel5">
 	<div class="panel-heading">
