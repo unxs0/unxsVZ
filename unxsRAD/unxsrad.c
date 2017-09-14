@@ -2712,17 +2712,17 @@ void funcBootstrapEditorFields(FILE *fp)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT cLabel,cTitle,cOtherOptions FROM tField"
-			" WHERE uTable=%u"
-			//" AND cOtherOptions!=''"
-			" AND uFieldType!=1"//not equal Rad Primary
-			" AND cLabel!='cLabel'"
-			" AND cLabel!='uOwner'"
-			" AND cLabel!='uCreatedBy'"
-			" AND cLabel!='uCreatedDate'"
-			" AND cLabel!='uModBy'"
-			" AND cLabel!='uModDate'"
-			" ORDER BY uOrder",
+	sprintf(gcQuery,"SELECT tField.cLabel,tField.cTitle,tField.cOtherOptions,tFieldType.uRADType FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tField.uFieldType!=1"//not equal Rad Primary
+			" AND tField.cLabel!='cLabel'"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",
 					guTable);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -2748,8 +2748,24 @@ void funcBootstrapEditorFields(FILE *fp)
 		fprintf(fp,"\t\t\t\t<div class=\"form-group%s\">\n",cRequired);
 		fprintf(fp,"\t\t\t\t\t<label for=\"%s\" class=\"%s control-label\">%s</label>\n",cFieldName,cBSLabelClass,cFieldName+1);
 		fprintf(fp,"\t\t\t\t\t<div class=\"%s\">\n",cBSInputClass);
-		fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\">\n",
-				cFieldName,field[1]);
+		unsigned uRADType=0;
+		sscanf(field[3],"%u",&uRADType);
+		switch(uRADType)
+		{
+			case COLTYPE_DATEEUR:
+				fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\">\n",
+					cFieldName,field[1]);
+			break;
+
+			case COLTYPE_SELECTTABLE:
+			case COLTYPE_SELECTTABLE_OWNER:
+				fprintf(fp,"\t\t\t\t\t\t{{funcSelect(t%s)}}\n",cFieldName+1);
+			break;
+
+			default:
+				fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\">\n",
+					cFieldName,field[1]);
+		}
 		//fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
 		fprintf(fp,"\t\t\t\t\t</div>\n");
 		fprintf(fp,"\t\t\t\t</div>\n");
@@ -2795,7 +2811,6 @@ void funcBootstrapRowVars(FILE *fp)
 
 		switch(uRADType)
 		{
-
 			case COLTYPE_DATEEUR:
 				fprintf(fp,"'%1$s',DATE_FORMAT(%1$s,'%%%%d/%%%%m/%%%%Y')",field[0]);
 			break;
