@@ -61,6 +61,7 @@ char *TextAreaSave(char *cField);
 char *FQDomainName(char *cInput);
 void iDNSLog(unsigned uTablePK, char *cTableName, char *cLogEntry);
 const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey);
+const char *cForeignKeyStr(const char *cTableName, const char *cFieldName, const char *cKey);
 void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template);
 void InterfaceLogoutFirewallJobs(unsigned uLoginClient);
 void InterfaceLoginFirewallJobs(unsigned uLoginClient);

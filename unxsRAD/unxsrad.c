@@ -1010,9 +1010,24 @@ void funcModuleProcVars(FILE *fp)
 			case COLTYPE_FOREIGNKEY:
 			case COLTYPE_FKIMAGE:
 			case COLTYPE_EXTFUNC:
+				fprintf(fp,"\t\t\tsscanf(entries[i].val,\"%%u\",&%s);\n",cField);
+			break;
+
 			case COLTYPE_SELECTTABLE:
 			case COLTYPE_SELECTTABLE_OWNER:
+				if((cp=strchr(field[6],',')))
+				{
+					*cp=0;
+					sprintf(cTableName,"%.31s",field[6]);
+					sprintf(cFieldName,"%.31s",cp+1);
+					if((cp=strchr(cFieldName,',')))
+						*cp=0;
+				}
+				fprintf(fp,"\t\t\n\t\t{\n");
 				fprintf(fp,"\t\t\tsscanf(entries[i].val,\"%%u\",&%s);\n",cField);
+				fprintf(fp,"\t\t\tif(!%s)\n",cField);
+				fprintf(fp,"\t\t\t\t%s=ReadPullDown(%s,%s,entries[i].val);\n",cField,cTableName,cFieldName);
+				fprintf(fp,"\t\t}\n");
 			break;
 			
 			case COLTYPE_UNIXTIME:
@@ -2826,64 +2841,23 @@ void funcBootstrapRowVars(FILE *fp)
 }//void funcBootstrapRowVars(FILE *fp)
 
 
-void funcBootstrapRowFields(FILE *fp)
-{
-       	MYSQL_RES *res;
-        MYSQL_ROW field;
-
-	sprintf(gcQuery,"SELECT COUNT(cLabel)"
-			" FROM tField"
-			" WHERE uTable=%u"
-			" AND cLabel!='cLabel'"
-			" AND cLabel!='uOwner'"
-			" AND cLabel!='uCreatedBy'"
-			" AND cLabel!='uCreatedDate'"
-			" AND cLabel!='uModBy'"
-			" AND cLabel!='uModDate'",guTable);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-	{
-		if(guDebug)
-			logfileLine("funcBootstrapRowFields",gcQuery);
-                fprintf(fp,"%s",mysql_error(&gMysql));
-                return;
-        }
-        res=mysql_store_result(&gMysql);
-	unsigned uCount=0;
-	unsigned uFirst=1;
-	if((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u",&uCount);
-		uCount=uCount*2;
-
-		unsigned uN=0;
-		while(uCount>uN)
-		{
-			if(!uFirst)
-				fprintf(fp,",");
-			fprintf(fp,"field[%u]",uN++);
-			uFirst=0;
-		}
-	}
-	mysql_free_result(res);
-
-}//void funcBootstrapRowFields(FILE *fp)
-
 
 void funcBootstrapRowFormats(FILE *fp)
 {
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT COUNT(cLabel)"
-			" FROM tField"
-			" WHERE uTable=%u"
-			" AND cLabel!='cLabel'"
-			" AND cLabel!='uOwner'"
-			" AND cLabel!='uCreatedBy'"
-			" AND cLabel!='uCreatedDate'"
-			" AND cLabel!='uModBy'"
-			" AND cLabel!='uModDate'",guTable);
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tField.cLabel!='cLabel'"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -2893,25 +2867,76 @@ void funcBootstrapRowFormats(FILE *fp)
                 return;
         }
         res=mysql_store_result(&gMysql);
-	unsigned uCount=0;
-	unsigned uFirst=1;
-	if((field=mysql_fetch_row(res)))
+	unsigned uFirst=0;
+	unsigned uRADType=0;
+	while((field=mysql_fetch_row(res)))
 	{
-		sscanf(field[0],"%u",&uCount);
-		uCount+=1;
-
-		unsigned uN=1;
-		while(uCount>uN++)
+		sscanf(field[1],"%u",&uRADType);
+		if(uFirst++)
+			fprintf(fp,",");
+		switch(uRADType)
 		{
-			if(!uFirst)
-				fprintf(fp,",");
-			fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
-			uFirst=0;
+			case COLTYPE_SELECTTABLE:
+			case COLTYPE_SELECTTABLE_OWNER:
+				fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
+			break;
+
+			default:
+				fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
 		}
 	}
 	mysql_free_result(res);
 
 }//void funcBootstrapRowFormats(FILE *fp)
+
+
+void funcBootstrapRowFields(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tField.cLabel!='cLabel'"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBootstrapRowFields",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uFirst=0;
+	unsigned uRADType=0;
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uRADType);
+		if(uFirst)
+			fprintf(fp,",");
+		switch(uRADType)
+		{
+			case COLTYPE_SELECTTABLE:
+			case COLTYPE_SELECTTABLE_OWNER:
+				fprintf(fp,"field[%u],cForeignKeyStr(\"t%s\",\"cLabel\",field[%u])",uFirst,field[0]+1,uFirst+1);
+			break;
+
+			default:
+				fprintf(fp,"field[%u],field[%u]",uFirst,uFirst+1);
+		}
+		uFirst+=2;
+	}
+	mysql_free_result(res);
+
+}//void funcBootstrapRowFields(FILE *fp)
 
 
 void funcBootstrapCols(FILE *fp)
@@ -2933,7 +2958,7 @@ void funcBootstrapCols(FILE *fp)
         if(mysql_errno(&gMysql))
 	{
 		if(guDebug)
-			logfileLine("funcBootstrapRowFormats",gcQuery);
+			logfileLine("funcBootstrapRowCols",gcQuery);
                 fprintf(fp,"%s",mysql_error(&gMysql));
                 return;
         }

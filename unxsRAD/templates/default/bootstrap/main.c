@@ -371,7 +371,7 @@ void funcSelect(FILE *fp,char *cTable)
 	fprintf(fp,"<!-- funcSelect(%s) -->\n",cTable);
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT u%s,cLabel FROM %s",cTable+1,cTable);
+	sprintf(gcQuery,"SELECT cLabel FROM %s",cTable);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -383,7 +383,7 @@ void funcSelect(FILE *fp,char *cTable)
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		fprintf(fp,"\t\t\t<option value=%s >%s</option>\n",field[0],field[1]);
+		fprintf(fp,"\t\t\t<option>%s</option>\n",field[0]);
 	}
 	fprintf(fp,"\t\t</select>\n");
 
@@ -1002,6 +1002,34 @@ const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned
 	}
 
 }//const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
+
+
+const char *cForeignKeyStr(const char *cTableName, const char *cFieldName, const char *cKey)
+{
+        MYSQL_RES *mysqlRes;
+        MYSQL_ROW mysqlField;
+
+	static char cQuery[512];
+
+        sprintf(cQuery,"SELECT %s FROM %s WHERE _rowid=%s",
+                        cFieldName,cTableName,cKey);
+        mysql_query(&gMysql,cQuery);
+        if(mysql_errno(&gMysql))
+		return(mysql_error(&gMysql));
+
+        mysqlRes=mysql_store_result(&gMysql);
+        if(mysql_num_rows(mysqlRes)==1)
+        {
+                mysqlField=mysql_fetch_row(mysqlRes);
+                return(mysqlField[0]);
+        }
+	
+	if(!cKey[0])
+        	return("---");
+	else
+        	return(cKey);
+
+}//const char *cForeignKeyStr(const char *cTableName, const char *cFieldName, const char *cKey)
 
 
 int ReadPullDownOwner(const char *cTableName,const char *cFieldName,
