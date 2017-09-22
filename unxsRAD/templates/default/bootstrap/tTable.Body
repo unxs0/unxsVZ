@@ -73,7 +73,7 @@
 				[[funcBootstrapEditorFields]]
 			</div>
 			<div class="modal-footer">
-				<button type="submit" class="btn btn-primary" id="editor-button" >Create [[cTable]]</button>
+				<button type="submit" class="btn btn-primary" id="editor-button" >Agregar Nuevo [[cTable]]</button>
 				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
 			</div>
 		</form>
@@ -93,13 +93,12 @@
 				<div class="form-group required">
 					<label for="cLabel" class="col-sm-3 control-label">cLabel</label>
 					<div class="col-sm-9">
-						<input type="text" class="form-control" id="cLabel" name="cLabel"
-							placeholder="" disabled>
+						<input type="text" class="form-control" id="cLabel" name="cLabel" disabled>
 					</div>
 				</div>
 			</div>
 			<div class="modal-footer">
-				<button type="submit" class="btn btn-primary">Delete [[cTable]]</button>
+				<button type="submit" class="btn btn-primary" id="delete-button">Delete [[cTable]]</button>
 				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
 			</div>
 		</form>
@@ -136,6 +135,7 @@ jQuery(function($){
 	$deleteModal = $('#delete-modal'),
 	$delform= $('#delform'),
 	$deleteTitle = $('#delete-title'),
+	$deleteButton = $('#delete-button'),
 
 	ft=FooTable.init($('.table'),{
 	"showToggle": false,
@@ -148,6 +148,8 @@ jQuery(function($){
 				$delform.find('#u[[cTable]]').val(values.u[[cTable]]);
 				$delform.find('#cLabel').val(values.cLabel);
 				$deleteModal.data('row', row);
+				$deleteTitle.text('Eliminar Paciente ' + values.uPaciente);
+				$deleteButton.text('Eliminar Paciente Cuidado!');
 				$deleteModal.modal('show');
 			},
 			editRow: function(row){
@@ -155,15 +157,15 @@ jQuery(function($){
 				$editor.find('#u[[cTable]]').val(values.u[[cTable]]);
                                 [[funcBootstrapFindFields]]			
 				$editorModal.data('row', row);
-				$editorTitle.text('Update [[cTable]] ' + values.u[[cTable]]);
-				$editorButton.text('Update [[cTable]]');
+				$editorTitle.text('Modificar [[cTable]] ' + values.u[[cTable]]);
+				$editorButton.text('Modificar [[cTable]]');
 				$editorModal.modal('show');
 			},
 			addRow: function(){
 				$editorModal.removeData('row');
 				$editor[0].reset();
-				$editorTitle.text('Add New [[cTable]]');
-				$editorButton.text('Add [[cTable]]');
+				$editorTitle.text('Agregar Nuevo [[cTable]]');
+				$editorButton.text('Agregar [[cTable]]');
 				$editorModal.modal('show');
 			}
 		}
@@ -206,6 +208,7 @@ jQuery(function($){
 					function(retval){
 						var r = retval;
 						values.u[[cTable]] = +r;
+						[[funcBootstrapConcat]]
 						console.log( 'Mod[[cTable]] result: ' + r);
 						if ( values.u[[cTable]] > 0 )
 							row.val(values);
@@ -217,6 +220,7 @@ jQuery(function($){
 					function(retval){
 						var r = retval;
 						values.u[[cTable]] = +r;
+						values.Report = '<a href=?gcPage=[[cTable]]&u[[cTable]]='+values.u[[cTable]]+'><span class="glyphicon glyphicon-list"></span></a>';
 						console.log( 'Add[[cTable]] result: ' + r);
 						if ( values.u[[cTable]] > 0 )
 							ft.rows.add(values);

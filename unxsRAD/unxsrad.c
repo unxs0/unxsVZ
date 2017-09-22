@@ -80,6 +80,7 @@ void funcConfiguration(FILE *fp,char *cFunction);
 void Template2(char *cTemplate, struct t_template *template, FILE *fp);
 void funcBootstrapNavItems(FILE *fp);
 void funcBootstrapFindFields(FILE *fp);
+void funcBootstrapConcat(FILE *fp);
 void funcBootstrapValueFields(FILE *fp);
 void funcBootstrapEditorFields(FILE *fp);
 void funcBootstrapRowVars(FILE *fp);
@@ -1961,6 +1962,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcBootstrapRowFormats(fp);
 	else if(!strcmp(cFunction,"funcBootstrapCols"))
 		funcBootstrapCols(fp);
+	else if(!strcmp(cFunction,"funcBootstrapConcat"))
+		funcBootstrapConcat(fp);
 	//special func that has variants
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
@@ -2722,6 +2725,92 @@ void funcBootstrapFindFields(FILE *fp)
 }//void funcBootstrapFindFields(FILE *fp)
 
 
+void funcBootstrapConcat(FILE *fp)
+{
+/*
+ *	values.cLabel=values.cApellido+' '+values.cNombre;
+ * 	
+ */
+	if(!guTable) return;
+
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+	char cFieldName[100];
+
+	//If named table get parent guTable
+	sprintf(gcQuery,"SELECT cDescription FROM tTable"
+			" WHERE uTable=%u"
+			" AND cDescription!=''",
+					guTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"<!-- Error: %s -->\n",mysql_error(&gMysql));
+		return;
+	}
+        res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"uParentTable=%u;",&guTable);
+	else
+	{
+		fprintf(fp,"<!-- No uParentTable for %u -->\n",guTable);
+		mysql_free_result(res);
+		return;
+	}
+
+	sprintf(gcQuery,"SELECT cLabel,cOtherOptions FROM tField"
+			" WHERE uTable=%u"
+			" AND cOtherOptions LIKE '%%CONCAT:%%'"
+			" AND uFieldType!=1"//not equal Rad Primary
+			" AND cLabel!='uOwner'"
+			" AND cLabel!='uCreatedBy'"
+			" AND cLabel!='uCreatedDate'"
+			" AND cLabel!='uModBy'"
+			" AND cLabel!='uModDate'"
+			" ORDER BY uOrder",
+					guTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"<!-- Error: %s -->\n",mysql_error(&gMysql));
+		return;
+	}
+
+        res=mysql_store_result(&gMysql);
+	char *cp1;
+	fprintf(fp,"//funcBootstrapConcat()");
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(cFieldName,"%.99s",field[0]);
+		fprintf(fp,"\n\t\t\t\t\t\t");
+		if((cp1=strstr(field[1],"CONCAT:")))
+		{
+			char cConcatField1[64]={""};
+			char cConcatField2[64]={""};
+			char *cp2;
+			if((cp2=strchr(field[1],',')))
+			{
+				*cp2=0;	
+				sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
+				if((cp1=strchr(cp2+1,';')))
+				{
+					*cp1=0;
+					sprintf(cConcatField2,"%.63s",cp2+1);
+					*cp1=';';
+				}
+				*cp2=',';	
+			}
+			if(cConcatField1[0] && cConcatField2[0])
+			{
+				//values.cLabel = values.cApellido+' '+values.cNombre;
+				fprintf(fp,"values.%s = values.%s+' '+values.%s;",cFieldName,cConcatField1,cConcatField2);
+			}
+		}
+	}
+	mysql_free_result(res);
+}//void funcBootstrapConcat(FILE *fp)
+
+
 void funcBootstrapValueFields(FILE *fp)
 {
 /*
@@ -2756,10 +2845,9 @@ void funcBootstrapValueFields(FILE *fp)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT cLabel FROM tField"
+	sprintf(gcQuery,"SELECT cLabel,cOtherOptions FROM tField"
 			" WHERE uTable=%u"
 			" AND uFieldType!=1"//not equal Rad Primary
-			" AND cLabel!='cLabel'"
 			" AND cLabel!='uOwner'"
 			" AND cLabel!='uCreatedBy'"
 			" AND cLabel!='uCreatedDate'"
@@ -2776,11 +2864,37 @@ void funcBootstrapValueFields(FILE *fp)
 
         res=mysql_store_result(&gMysql);
 	unsigned uFirst=1;
+	char *cp1;
 	while((field=mysql_fetch_row(res)))
 	{
 		sprintf(cFieldName,"%.99s",field[0]);
 		if(!uFirst) fprintf(fp,",\n\t\t\t\t");
-		fprintf(fp,"%1$s: $editor.find('#%1$s').val()",cFieldName);
+		if((cp1=strstr(field[1],"CONCAT:")))
+		{
+			char cConcatField1[64]={""};
+			char cConcatField2[64]={""};
+			char *cp2;
+			if((cp2=strchr(field[1],',')))
+			{
+				*cp2=0;	
+				sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
+				if((cp1=strchr(cp2+1,';')))
+				{
+					*cp1=0;
+					sprintf(cConcatField2,"%.63s",cp2+1);
+					*cp1=';';
+				}
+				*cp2=',';	
+			}
+			if(cConcatField1[0] && cConcatField2[0])
+			{
+				fprintf(fp,"%s: $editor.find('#%s').val()",cFieldName,cConcatField1);
+			}
+		}
+		else
+		{
+			fprintf(fp,"%1$s: $editor.find('#%1$s').val()",cFieldName);
+		}
 		uFirst=0;
 	}
 	fprintf(fp,"\n");
@@ -2893,7 +3007,6 @@ void funcBootstrapRowVars(FILE *fp)
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
-			" AND tField.cLabel!='cLabel'"
 			" AND tField.cLabel!='uOwner'"
 			" AND tField.cLabel!='uCreatedBy'"
 			" AND tField.cLabel!='uCreatedDate'"
@@ -2944,7 +3057,6 @@ void funcBootstrapRowFormats(FILE *fp)
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
-			" AND tField.cLabel!='cLabel'"
 			" AND tField.cLabel!='uOwner'"
 			" AND tField.cLabel!='uCreatedBy'"
 			" AND tField.cLabel!='uCreatedDate'"
@@ -2975,7 +3087,17 @@ void funcBootstrapRowFormats(FILE *fp)
 			break;
 
 			default:
-				fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
+				if(uFirst==1)
+				{
+					fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\",");
+					fprintf(fp,"\\\"Report\\\": \\\""
+					"<a href=?gcPage=Paciente&uPaciente=%%s><span class=\\\\\\\"glyphicon glyphicon-list\\\\\\\">"
+					"</span></a>\\\"");
+				}
+				else
+				{
+					fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
+				}
 		}
 	}
 	mysql_free_result(res);
@@ -2992,7 +3114,6 @@ void funcBootstrapRowFields(FILE *fp)
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
-			" AND tField.cLabel!='cLabel'"
 			" AND tField.cLabel!='uOwner'"
 			" AND tField.cLabel!='uCreatedBy'"
 			" AND tField.cLabel!='uCreatedDate'"
@@ -3023,7 +3144,15 @@ void funcBootstrapRowFields(FILE *fp)
 			break;
 
 			default:
-				fprintf(fp,"field[%u],field[%u]",uFirst,uFirst+1);
+				if(uFirst==0)
+				{
+					fprintf(fp,"field[%u],field[%u]",uFirst,uFirst+1);
+					fprintf(fp,",field[1]");
+				}
+				else
+				{
+					fprintf(fp,"field[%u],field[%u]",uFirst,uFirst+1);
+				}
 		}
 		uFirst+=2;
 	}
@@ -3040,7 +3169,6 @@ void funcBootstrapCols(FILE *fp)
 	sprintf(gcQuery,"SELECT cLabel,cTitle"
 			" FROM tField"
 			" WHERE uTable=%u"
-			" AND cLabel!='cLabel'"
 			" AND cLabel!='uOwner'"
 			" AND cLabel!='uCreatedBy'"
 			" AND cLabel!='uCreatedDate'"
@@ -3068,7 +3196,10 @@ void funcBootstrapCols(FILE *fp)
 		if(uCount>=uRows) cComma="";
 		fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"%s\\\", \\\"title\\\": \\\"%s\\\", \\\"breakpoints\\\": \\\"%s\\\"}%s\\n\");\n"
 				,field[0],field[0]+1,cBreakpoints,cComma);
-		if(uOnce && uCount>2)
+		if(uCount==1)
+			fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"Report\\\", \\\"title\\\": \\\"Informe\\\", \\\"breakpoints\\\": \\\"\\\","
+					" \\\"filterable\\\": false},\\n\");\n");
+		if(uOnce && uCount>1)
 		{
 			cBreakpoints="all";
 			uOnce=0;
