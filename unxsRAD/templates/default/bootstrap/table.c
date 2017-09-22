@@ -17,6 +17,7 @@ void Process{{cTableName}}Vars(pentry entries[], int x);
 void {{cTableName}}GetHook(entry gentries[],int x);
 void {{cTableName}}Commands(pentry entries[], int x);
 void html{{cTableName}}(void);
+void html{{cTableName}}Report(void);
 void html{{cTableName}}Page(char *cTitle, char *cTemplateName);
 void json{{cTableName}}Rows(void);
 void json{{cTableName}}Cols(void);
@@ -44,17 +45,24 @@ void Process{{cTableName}}Vars(pentry entries[], int x)
 
 void {{cTableName}}GetHook(entry gentries[],int x)
 {
-	//register int i;
-	//for(i=0;i<x;i++)
-	//{
-	//}
+	register int i;
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"{{cTableKey}}"))
+			sscanf(gentries[i].val,"%u",&{{cTableKey}});
+	}
+
 
 	//API Get
 	if(!strcmp(gcFunction,"{{cTableNameBS}}Rows"))
 		json{{cTableName}}Rows();
 	else if(!strcmp(gcFunction,"{{cTableNameBS}}Cols"))
 		json{{cTableName}}Cols();
-	html{{cTableName}}();
+
+	if({{cTableKey}})
+		html{{cTableName}}Report();
+	else
+		html{{cTableName}}();
 
 }//void {{cTableName}}GetHook(entry gentries[],int x)
 
@@ -193,6 +201,15 @@ void html{{cTableName}}(void)
 	htmlFooter("Default.Footer");
 
 }//void html{{cTableName}}(void)
+
+
+void html{{cTableName}}Report(void)
+{
+	htmlHeader("{{cTableName}}","Default.Header");
+	html{{cTableName}}Page("{{cTableName}}","{{cTableNameBS}}Report.Body");
+	htmlFooter("Default.Footer");
+
+}//void html{{cTableName}}Report(void)
 
 
 void html{{cTableName}}Page(char *cTitle, char *cTemplateName)

@@ -1523,7 +1523,7 @@ void funcModuleUpdateQuery(FILE *fp)
 
 	fprintf(fp,"sprintf(gcQuery,\"UPDATE %s SET \"\n",gcTableName);
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions"
 			" FROM tField,tTable,tFieldType"
 			" WHERE tField.uTable=tTable.uTable"
 			" AND tField.uFieldType=tFieldType.uFieldType"
@@ -1538,6 +1538,7 @@ void funcModuleUpdateQuery(FILE *fp)
         res=mysql_store_result(&gMysql);
 	unsigned uFirst=0;
 	unsigned uRADType=0;
+	char *cp1;
 	while((field=mysql_fetch_row(res)))
 	{
 		//Special internal fields
@@ -1564,6 +1565,29 @@ void funcModuleUpdateQuery(FILE *fp)
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_TEXT:
+				if((cp1=strstr(field[2],"CONCAT:")))
+				{
+					char cConcatField1[64]={""};
+					char cConcatField2[64]={""};
+					char *cp2;
+					if((cp2=strchr(field[2],',')))
+					{
+						*cp2=0;	
+						sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
+						if((cp1=strchr(cp2+1,';')))
+						{
+							*cp1=0;
+							sprintf(cConcatField2,"%.63s",cp2+1);
+							*cp1=';';
+						}
+						*cp2=',';	
+					}
+					if(cConcatField1[0] && cConcatField2[0])
+					{
+						fprintf(fp,"\t\t\"%s=CONCAT(%s,' ',%s)",field[0],cConcatField1,cConcatField2);
+						break;
+					}
+				}
 				fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 			break;
 
@@ -1608,6 +1632,28 @@ void funcModuleUpdateQuery(FILE *fp)
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_TEXT:
+				if((cp1=strstr(field[2],"CONCAT:")))
+				{
+					char cConcatField1[64]={""};
+					char cConcatField2[64]={""};
+					char *cp2;
+					if((cp2=strchr(field[2],',')))
+					{
+						*cp2=0;	
+						sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
+						if((cp1=strchr(cp2+1,';')))
+						{
+							*cp1=0;
+							sprintf(cConcatField2,"%.63s",cp2+1);
+							*cp1=';';
+						}
+						*cp2=',';	
+					}
+					if(cConcatField1[0] && cConcatField2[0])
+					{
+						break;
+					}
+				}
 				fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",field[0]);
 			break;
 
@@ -1629,7 +1675,7 @@ void funcModuleInsertQuery(FILE *fp)
 
 	fprintf(fp,"sprintf(gcQuery,\"INSERT INTO %s SET \"\n",gcTableName);
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions"
 			" FROM tField,tTable,tFieldType"
 			" WHERE tField.uTable=tTable.uTable"
 			" AND tField.uFieldType=tFieldType.uFieldType"
@@ -1644,6 +1690,7 @@ void funcModuleInsertQuery(FILE *fp)
         res=mysql_store_result(&gMysql);
 	unsigned uFirst=0;
 	unsigned uRADType=0;
+	char *cp1;
 	while((field=mysql_fetch_row(res)))
 	{
 		//Special internal fields
@@ -1671,6 +1718,29 @@ void funcModuleInsertQuery(FILE *fp)
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_TEXT:
+				if((cp1=strstr(field[2],"CONCAT:")))
+				{
+					char cConcatField1[64]={""};
+					char cConcatField2[64]={""};
+					char *cp2;
+					if((cp2=strchr(field[2],',')))
+					{
+						*cp2=0;	
+						sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
+						if((cp1=strchr(cp2+1,';')))
+						{
+							*cp1=0;
+							sprintf(cConcatField2,"%.63s",cp2+1);
+							*cp1=';';
+						}
+						*cp2=',';	
+					}
+					if(cConcatField1[0] && cConcatField2[0])
+					{
+						fprintf(fp,"\t\t\"%s=CONCAT('%%s',' ','%%s')",field[0]);
+						break;
+					}
+				}
 				fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 			break;
 
@@ -1711,6 +1781,29 @@ void funcModuleInsertQuery(FILE *fp)
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_TEXT:
+				if((cp1=strstr(field[2],"CONCAT:")))
+				{
+					char cConcatField1[64]={""};
+					char cConcatField2[64]={""};
+					char *cp2;
+					if((cp2=strchr(field[2],',')))
+					{
+						*cp2=0;	
+						sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
+						if((cp1=strchr(cp2+1,';')))
+						{
+							*cp1=0;
+							sprintf(cConcatField2,"%.63s",cp2+1);
+							*cp1=';';
+						}
+						*cp2=',';	
+					}
+					if(cConcatField1[0] && cConcatField2[0])
+					{
+						fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",cConcatField1,cConcatField2);
+						break;
+					}
+				}
 				fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",field[0]);
 			break;
 			case(COLTYPE_UNIXTIMECREATE):

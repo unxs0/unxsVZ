@@ -138,6 +138,7 @@ jQuery(function($){
 	$deleteTitle = $('#delete-title'),
 
 	ft=FooTable.init($('.table'),{
+	"showToggle": false,
         "rows": $.post('{{cCGI}}','gcFunction=[[cTable]]Rows'),
         "columns": $.post('{{cCGI}}','gcFunction=[[cTable]]Cols'),
 	editing: {
