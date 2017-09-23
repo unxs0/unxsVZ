@@ -255,7 +255,12 @@ void html{{cTableName}}Page(char *cTitle, char *cTemplateName)
 			template.cpName[9]="gcCopyright";
 			template.cpValue[9]=INTERFACE_COPYRIGHT;
 
-			template.cpName[10]="";
+			template.cpName[10]="{{cTableKey}}";
+			char c{{cTableKey}}[16];
+			sprintf(c{{cTableKey}},"%u",{{cTableKey}});
+			template.cpValue[10]=c{{cTableKey}};
+
+			template.cpName[11]="";
 
 			printf("\n<!-- Start html{{cTableName}}Page(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
@@ -281,7 +286,12 @@ void json{{cTableName}}Rows(void)
 	printf("Content-type: text/json\n\n");
 	printf("[\n");
 
-	sprintf(cQuery,"SELECT {{funcBootstrapRowVars}}"
+	if({{cTableKey}})
+		sprintf(cQuery,"SELECT {{funcBootstrapRowVars}}"
+			" FROM {{cTableName}}"
+			" WHERE uOwner=%u AND {{cTableKey}}=%u",guOrg,{{cTableKey}});
+	else
+		sprintf(cQuery,"SELECT {{funcBootstrapRowVars}}"
 			" FROM {{cTableName}}"
 			" WHERE uOwner=%u",guOrg);
 	mysql_query(&gMysql,cQuery);

@@ -462,6 +462,37 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 			if(uTemplate && uTable)
 				uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,cFileName);
 		}
+		//interface templates Template2 tTableReport.Body
+		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate"
+				" WHERE cLabel='tTableReport.Body'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,uTemplateSet,uTemplateType);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+			return(-1);
+		}
+        	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			char *cp;
+			if((cp=strstr(cTableName,".Body")))
+			{
+				*cp=0;
+				sprintf(cFileName,"%.99sReport.Body",cTableName);
+				*cp='.';
+			}
+			else
+			{
+				sprintf(cFileName,"%.99s",cTableName);
+			}
+			if(guDebug) logfileLine("CreateFile5",cFileName);
+			sscanf(field[0],"%u",&uTemplate);
+			if(uTemplate && uTable)
+				uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,cFileName);
+		}
 	}
 	mysql_free_result(res);
 	if(uTemplate || uRetVal)

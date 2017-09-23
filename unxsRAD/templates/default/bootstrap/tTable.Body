@@ -139,8 +139,8 @@ jQuery(function($){
 
 	ft=FooTable.init($('.table'),{
 	"showToggle": false,
-        "rows": $.post('{{cCGI}}','gcFunction=[[cTable]]Rows'),
-        "columns": $.post('{{cCGI}}','gcFunction=[[cTable]]Cols'),
+        "rows": $.get('{{cCGI}}','gcFunction=[[cTable]]Rows'),
+        "columns": $.get('{{cCGI}}','gcFunction=[[cTable]]Cols'),
 	editing: {
 			enabled: true,
 			deleteRow: function(row){
