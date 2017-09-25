@@ -54,6 +54,7 @@ void funcModuleLoadVars(FILE *fp);
 void funcModuleProcVars(FILE *fp);
 void funcModuleInput(FILE *fp);
 void funcModuleVars(FILE *fp);
+void funcGetHookAdditionalGentries(FILE *fp);
 void funcModuleVarList(FILE *fp);
 void funcModuleUpdateQuery(FILE *fp);
 void funcModuleInsertQuery(FILE *fp);
@@ -2739,7 +2740,7 @@ void funcBootstrapFindFields(FILE *fp)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT cLabel FROM tField"
+	sprintf(gcQuery,"SELECT cLabel,cOtherOptions FROM tField"
 			" WHERE uTable=%u"
 			" AND uFieldType!=1"//not equal Rad Primary
 			" AND cLabel!='cLabel'"
@@ -2761,6 +2762,9 @@ void funcBootstrapFindFields(FILE *fp)
 	unsigned uFirst=1;
 	while((field=mysql_fetch_row(res)))
 	{
+		if(strstr(field[1],"FooTable:Report:"))
+			continue;
+
 		sprintf(cFieldName,"%.99s",field[0]);
 		if(!uFirst) fprintf(fp,"\t\t\t\t");
 		fprintf(fp,"$editor.find('#%1$s').val(values.%1$s);\n",cFieldName);
@@ -2913,6 +2917,9 @@ void funcBootstrapValueFields(FILE *fp)
 	char *cp1;
 	while((field=mysql_fetch_row(res)))
 	{
+		if(strstr(field[1],"FooTable:Report:"))
+			continue;
+
 		sprintf(cFieldName,"%.99s",field[0]);
 		if(!uFirst) fprintf(fp,",\n\t\t\t\t");
 		if((cp1=strstr(field[1],"CONCAT:")))
@@ -3006,6 +3013,8 @@ void funcBootstrapEditorFields(FILE *fp)
 	char *cRequired="";
 	while((field=mysql_fetch_row(res)))
 	{
+		if(strstr(field[2],"FooTable:Report:"))
+			continue;
 
 		sprintf(cFieldName,"%.99s",field[0]);
 		if(strstr(field[2],"required"))
@@ -3030,6 +3039,11 @@ void funcBootstrapEditorFields(FILE *fp)
 				fprintf(fp,"\t\t\t\t\t\t{{funcSelect(t%s)}}\n",cFieldName+1);
 			break;
 
+			case COLTYPE_TEXT:
+				fprintf(fp,"\t\t\t\t\t\t<textarea class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\"></textarea>\n",
+					cFieldName,field[1]);
+			break;
+
 			default:
 				fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\">\n",
 					cFieldName,field[1]);
@@ -3049,7 +3063,7 @@ void funcBootstrapRowVars(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions"
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
@@ -3072,6 +3086,9 @@ void funcBootstrapRowVars(FILE *fp)
 	unsigned uRADType=0;
 	while((field=mysql_fetch_row(res)))
 	{
+		if(strstr(field[2],"FooTable:Report:"))
+			continue;
+
 		sscanf(field[1],"%u",&uRADType);
 
 		if(!uFirst) fprintf(fp,",");
@@ -3082,6 +3099,9 @@ void funcBootstrapRowVars(FILE *fp)
 				fprintf(fp,"'%1$s',DATE_FORMAT(%1$s,'%%%%d/%%%%m/%%%%Y')",field[0]);
 			break;
 
+			case COLTYPE_TEXT:
+				fprintf(fp,"'%1$s',REPLACE(%1$s,'\\n','\\\\\\\\n')",field[0]);
+			break;
 			default:
 				fprintf(fp,"'%1$s',%1$s",field[0]);
 		}
@@ -3099,7 +3119,7 @@ void funcBootstrapRowFormats(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions"
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
@@ -3122,6 +3142,9 @@ void funcBootstrapRowFormats(FILE *fp)
 	unsigned uRADType=0;
 	while((field=mysql_fetch_row(res)))
 	{
+		if(strstr(field[2],"FooTable:Report:"))
+			continue;
+
 		sscanf(field[1],"%u",&uRADType);
 		if(uFirst++)
 			fprintf(fp,",");
@@ -3137,8 +3160,8 @@ void funcBootstrapRowFormats(FILE *fp)
 				{
 					fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\",");
 					fprintf(fp,"\\\"Report\\\": \\\""
-					"<a href=?gcPage=Paciente&uPaciente=%%s><span class=\\\\\\\"glyphicon glyphicon-list\\\\\\\">"
-					"</span></a>\\\"");
+					"<a href=?gcPage=%1$s&u%1$s=%%s><span class=\\\\\\\"glyphicon glyphicon-list\\\\\\\">"
+					"</span></a>\\\"",gcTableName+1);
 				}
 				else
 				{
@@ -3156,7 +3179,7 @@ void funcBootstrapRowFields(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions"
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
@@ -3179,6 +3202,9 @@ void funcBootstrapRowFields(FILE *fp)
 	unsigned uRADType=0;
 	while((field=mysql_fetch_row(res)))
 	{
+		if(strstr(field[2],"FooTable:Report:"))
+			continue;
+
 		sscanf(field[1],"%u",&uRADType);
 		if(uFirst)
 			fprintf(fp,",");
@@ -3242,6 +3268,10 @@ void funcBootstrapCols(FILE *fp)
 	char *cComma=",";
 	while((field=mysql_fetch_row(res)))
 	{
+		uCount++;
+		if(strstr(field[2],"FooTable:Report:"))
+			continue;
+
 		sscanf(field[3],"%u",&uRADType);
 
 		switch(uRADType)
@@ -3259,11 +3289,10 @@ void funcBootstrapCols(FILE *fp)
 				cDataType="text";
 		}
 
-		if(strstr(field[2],"FooTable:Filterable"))
+		if(strstr(field[2],"FooTable:Filterable") || uRADType==COLTYPE_RADPRI)
 			cFilterable="true";
 		else
 			cFilterable="false";
-		uCount++;
 		if(uCount>=uRows) cComma="";
 		fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"%s\\\", \\\"title\\\": \\\"%s\\\","
 					" \\\"filterable\\\": %s,"
@@ -3296,7 +3325,7 @@ void funcBootstrapRowReportVars(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions"
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
@@ -3329,8 +3358,15 @@ void funcBootstrapRowReportVars(FILE *fp)
 				fprintf(fp,"'%1$s',DATE_FORMAT(%1$s,'%%%%d/%%%%m/%%%%Y')",field[0]);
 			break;
 
+			case COLTYPE_TEXT:
+				fprintf(fp,"'%1$s',REPLACE(%1$s,'\\n','\\\\\\\\n')",field[0]);
+			break;
+
 			default:
-				fprintf(fp,"'%1$s',%1$s",field[0]);
+				if(strstr(field[2],"FooTable:Report:"))
+					fprintf(fp,"'%s','<a href=?gcPage=%s&u%s=%%2$u>%s</a>'",field[0],field[0]+1,gcTableName+1,field[0]+1);
+				else
+					fprintf(fp,"'%1$s',%1$s",field[0]);
 		}
 
 		uFirst=0;
@@ -3346,7 +3382,7 @@ void funcBootstrapRowReportFormats(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions"
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
@@ -3380,7 +3416,10 @@ void funcBootstrapRowReportFormats(FILE *fp)
 			break;
 
 			default:
-				fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
+				if(strstr(field[2],"FooTable:Report:"))
+					fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
+				else
+					fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
 		}
 	}
 	mysql_free_result(res);
@@ -3393,7 +3432,7 @@ void funcBootstrapRowReportFields(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions"
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
@@ -3427,7 +3466,10 @@ void funcBootstrapRowReportFields(FILE *fp)
 			break;
 
 			default:
-				fprintf(fp,"field[%u],field[%u]",uFirst,uFirst+1);
+				if(strstr(field[2],"FooTable:Report:"))
+					fprintf(fp,"field[%u],field[%u]",uFirst,uFirst+1);
+				else
+					fprintf(fp,"field[%u],field[%u]",uFirst,uFirst+1);
 		}
 		uFirst+=2;
 	}
@@ -3488,10 +3530,14 @@ void funcBootstrapColsReport(FILE *fp)
 				cDataType="text";
 		}
 
-		if(strstr(field[2],"FooTable:Filterable"))
+		if(strstr(field[2],"FooTable:Filterable") || uRADType==COLTYPE_RADPRI)
 			cFilterable="true";
 		else
 			cFilterable="false";
+		if(strstr(field[2],"FooTable:Report:"))
+		{
+				cDataType="html";
+		}
 		uCount++;
 		if(uCount>=uRows) cComma="";
 		fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"%s\\\", \\\"title\\\": \\\"%s\\\","
@@ -3499,7 +3545,7 @@ void funcBootstrapColsReport(FILE *fp)
 					" \\\"data-type\\\": \\\"%s\\\","
 					" \\\"breakpoints\\\": \\\"%s\\\"}%s\\n\");\n"
 				,field[0],field[0]+1,cFilterable,cDataType,cBreakpoints,cComma);
-		if(uOnce && uCount>1)
+		if(uOnce && uCount>2)
 		{
 			cBreakpoints="all";
 			uOnce=0;

@@ -143,8 +143,12 @@ void ExttFieldCommands(pentry entries[], int x)
 				{
 					char cTable[100]={""};
 					char cField[100]={""};
-					if(cFKSpec[strlen(cFKSpec)-1]!='"' || sscanf(cFKSpec,"\"%99[a-zA-Z0-9\\.]\",\"%99[a-zA-Z0-9\\.]\"",cTable,cField)!=2)
-						tField("cFKSpec not formatted correctly. E.g. \"tClient\",\"cLabel\"");
+					char cuKey[100]={""};
+					if(sscanf(cFKSpec,"\"%99[a-zA-Z0-9\\.]\",\"%99[a-zA-Z0-9\\.]\",%99[a-zA-Z0-9\\.]"
+						,cTable,cField,cuKey)<2)
+						tField("cFKSpec not formatted correctly."
+							" E.g. <i>\"tClient\",\"cLabel\",uClient</i>"
+							" where uClient is only required for ForeignKey like field types.");
 				}
 				
                         	guMode=0;

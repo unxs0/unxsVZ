@@ -50,6 +50,7 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"{{cTableKey}}"))
 			sscanf(gentries[i].val,"%u",&{{cTableKey}});
+		{{funcGetHookAdditionalGentries}}
 	}
 
 
@@ -289,7 +290,7 @@ void json{{cTableName}}Rows(void)
 	if({{cTableKey}})
 		sprintf(cQuery,"SELECT {{funcBootstrapRowReportVars}}"
 			" FROM {{cTableName}}"
-			" WHERE uOwner=%u AND {{cTableKey}}=%u",guOrg,{{cTableKey}});
+			" WHERE uOwner=%1$u AND {{cTableKey}}=%2$u",guOrg,{{cTableKey}});
 	else
 		sprintf(cQuery,"SELECT {{funcBootstrapRowVars}}"
 			" FROM {{cTableName}}"
