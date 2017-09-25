@@ -571,9 +571,17 @@ void tClientList(void)
 			ctime_r(&luTime9,cBuf9);
 		else
 			sprintf(cBuf9,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td><textarea disabled>%s</textarea><td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
+		printf("<td><a class=darkLink href=?gcFunction=tClient&uClient=%s>%s</a>"//0
+			"<td>%s"//1
+			"<td><textarea disabled>%s</textarea>"//2
+			"<td>%s"//3
+			"<td>%s"//4
+			"<td>%s"//5
+			"<td>%s"//6
+			"<td>%s"//7
+			"<td>%s"//8
+			"<td>%s</tr>"//9
+			,field[0],field[0]
 			,field[1]
 			,field[2]
 			,field[3]

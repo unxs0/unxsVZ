@@ -610,9 +610,19 @@ void tAuthorizeList(void)
 			ctime_r(&luTime11,cBuf11);
 		else
 			sprintf(cBuf11,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
+		printf("<td><a class=darkLink href=?gcFunction=tAuthorize&uAuthorize=%s>%s</a>"//0
+			"<td>%s"//1
+			"<td>%s"//2
+			"<td>%s"//3
+			"<td>%s"//4
+			"<td>%s"//5
+			"<td>%s"//6
+			"<td>%s"//7
+			"<td>%s"//8
+			"<td>%s"//9
+			"<td>%s"//10
+			"<td>%s</tr>"//11
+			,field[0],field[0]
 			,field[1]
 			,field[2]
 			,field[3]

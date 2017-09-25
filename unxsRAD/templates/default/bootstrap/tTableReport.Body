@@ -78,7 +78,7 @@ jQuery(function($){
 	ft=FooTable.init($('.table'),{
 	"showToggle": false,
         "rows": $.get('{{cCGI}}','gcPage=[[cTable]]&gcFunction=[[cTable]]Rows&u[[cTable]]={{u[[cTable]]}}'),
-        "columns": $.get('{{cCGI}}','gcPage=[[cTable]]&gcFunction=[[cTable]]Cols'),
+        "columns": $.get('{{cCGI}}','gcPage=[[cTable]]&gcFunction=[[cTable]]Cols&u[[cTable]]={{u[[cTable]]}}'),
 	});
 });
 
