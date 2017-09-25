@@ -3197,15 +3197,16 @@ void funcBootstrapCols(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	sprintf(gcQuery,"SELECT cLabel,cTitle"
-			" FROM tField"
-			" WHERE uTable=%u"
-			" AND cLabel!='uOwner'"
-			" AND cLabel!='uCreatedBy'"
-			" AND cLabel!='uCreatedDate'"
-			" AND cLabel!='uModBy'"
-			" AND cLabel!='uModDate'"
-			" ORDER BY uOrder",guTable);
+	sprintf(gcQuery,"SELECT tField.cLabel,tField.cTitle,tField.cOtherOptions,tFieldType.uRADType"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -3215,18 +3216,45 @@ void funcBootstrapCols(FILE *fp)
                 return;
         }
         res=mysql_store_result(&gMysql);
+	unsigned uRADType=0;
 	char *cBreakpoints={""};
 	unsigned uCount=0;
 	unsigned uOnce=1;
+	char *cFilterable="false";
+	char *cDataType="text";
 	fprintf(fp,"\n");
 	unsigned uRows=mysql_num_rows(res);
 	char *cComma=",";
 	while((field=mysql_fetch_row(res)))
 	{
+		sscanf(field[3],"%u",&uRADType);
+
+		switch(uRADType)
+		{
+			case COLTYPE_RADPRI:
+			case COLTYPE_PRIKEY:
+			case COLTYPE_INTUNSIGNED:
+			case COLTYPE_BIGINT:
+			case COLTYPE_DECIMAL:
+			case COLTYPE_MONEY:
+				cDataType="number";
+			break;
+
+			default:
+				cDataType="text";
+		}
+
+		if(strstr(field[2],"FooTable:Filterable"))
+			cFilterable="true";
+		else
+			cFilterable="false";
 		uCount++;
 		if(uCount>=uRows) cComma="";
-		fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"%s\\\", \\\"title\\\": \\\"%s\\\", \\\"breakpoints\\\": \\\"%s\\\"}%s\\n\");\n"
-				,field[0],field[0]+1,cBreakpoints,cComma);
+		fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"%s\\\", \\\"title\\\": \\\"%s\\\","
+					" \\\"filterable\\\": %s,"
+					" \\\"data-type\\\": \\\"%s\\\","
+					" \\\"breakpoints\\\": \\\"%s\\\"}%s\\n\");\n"
+				,field[0],field[0]+1,cFilterable,cDataType,cBreakpoints,cComma);
 		if(uCount==1)
 			fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"Report\\\", \\\"title\\\": \\\"Informe\\\", \\\"breakpoints\\\": \\\"\\\","
 					" \\\"filterable\\\": false},\\n\");\n");
