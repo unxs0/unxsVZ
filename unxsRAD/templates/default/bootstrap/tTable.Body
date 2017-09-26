@@ -10,7 +10,7 @@
     <meta name="author" content="(C) Unixservice, LLC. 2014-2017">
     <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico>
 
-    <title>{{gcBrand}}</title>
+    <title>{{gcOrgName}}</title>
 
     <!-- Bootstrap core CSS -->
     <link href="/bs/css/bootstrap.min.css" rel="stylesheet">

@@ -54,7 +54,6 @@ void funcModuleLoadVars(FILE *fp);
 void funcModuleProcVars(FILE *fp);
 void funcModuleInput(FILE *fp);
 void funcModuleVars(FILE *fp);
-void funcGetHookAdditionalGentries(FILE *fp);
 void funcModuleVarList(FILE *fp);
 void funcModuleUpdateQuery(FILE *fp);
 void funcModuleInsertQuery(FILE *fp);
@@ -72,6 +71,8 @@ void funcBootstrapMainGetMenu(FILE *fp);
 void funcMainNavBars(FILE *fp);
 void funcMainPostFunctions(FILE *fp);
 void funcBootstrapMainPostFunctions(FILE *fp);
+void funcBSGetHookAdditionalGentries(FILE *fp);
+void funcBSGetHookAdditionalPages(FILE *fp);
 void funcMainTabMenu(FILE *fp);
 void funcMainInitTableList(FILE *fp);
 void funcMainCreateTables(FILE *fp);
@@ -2011,6 +2012,10 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcBootstrapColsReport(fp);
 	else if(!strcmp(cFunction,"funcBootstrapConcat"))
 		funcBootstrapConcat(fp);
+	else if(!strcmp(cFunction,"funcBSGetHookAdditionalGentries"))
+		funcBSGetHookAdditionalGentries(fp);
+	else if(!strcmp(cFunction,"funcBSGetHookAdditionalPages"))
+		funcBSGetHookAdditionalPages(fp);
 	//special func that has variants
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
@@ -3554,3 +3559,79 @@ void funcBootstrapColsReport(FILE *fp)
 	mysql_free_result(res);
 
 }//void funcBootstrapColsReport(FILE *fp)
+
+
+void funcBSGetHookAdditionalGentries(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tFieldType.uRADType=%u"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable,COLTYPE_FOREIGNKEY);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBSGetHookAdditionalPages",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+/*                else if(!strcmp(gentries[i].name,"uPaciente"))
+ *                                        sscanf(gentries[i].val,"%u",&uPaciente);
+ */
+		fprintf(fp,"\t\telse if(!strcmp(gentries[i].name,\"%1$s\"))\n"
+				"\t\t\tsscanf(gentries[i].val,\"%%u\",&%1$s);\n"
+					,field[0]);
+	}
+
+}//void funcBSGetHookAdditionalGentries(FILE *fp)
+
+
+void funcBSGetHookAdditionalPages(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tFieldType.uRADType=%u"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable,COLTYPE_FOREIGNKEY);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBSGetHookAdditionalPages",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+/*
+ *         else if(uPaciente)
+ *                         htmltConsultaFilter("Paciente");
+ */
+
+		fprintf(fp,"\t\telse if(%s)\n\t\t\thtml%sFilter(\"%s\");\n",field[0],gcTableName,gcTableName+1);
+	}
+
+}//void funcBSGetHookAdditionalPages(FILE *fp)

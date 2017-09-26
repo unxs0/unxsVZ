@@ -18,6 +18,7 @@ void {{cTableName}}GetHook(entry gentries[],int x);
 void {{cTableName}}Commands(pentry entries[], int x);
 void html{{cTableName}}(void);
 void html{{cTableName}}Report(void);
+void html{{cTableName}}Filter(char *cExtTable);
 void html{{cTableName}}Page(char *cTitle, char *cTemplateName);
 void json{{cTableName}}Rows(void);
 void json{{cTableName}}Cols(void);
@@ -43,6 +44,17 @@ void Process{{cTableName}}Vars(pentry entries[], int x)
 }//void Process{{cTableName}}Vars(pentry entries[], int x)
 
 
+void html{{cTableName}}Filter(char *cExtTable)
+{
+        char cTemplate[64]={""};
+        sprintf(cTemplate,"{{cTableNameBS}}Filter%.32s.Body",cExtTable);
+        htmlHeader("{{cTableName}}","Default.Header");
+        html{{cTableName}}Page("{{cTableName}}",cTemplate);
+        htmlFooter("Default.Footer");
+
+}//void html{{cTableName}}Filter()
+
+
 void {{cTableName}}GetHook(entry gentries[],int x)
 {
 	register int i;
@@ -50,7 +62,7 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"{{cTableKey}}"))
 			sscanf(gentries[i].val,"%u",&{{cTableKey}});
-		{{funcGetHookAdditionalGentries}}
+		{{funcBSGetHookAdditionalGentries}}
 	}
 
 
@@ -62,6 +74,7 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 
 	if({{cTableKey}})
 		html{{cTableName}}Report();
+	{{funcBSGetHookAdditionalPages}}
 	else
 		html{{cTableName}}();
 
