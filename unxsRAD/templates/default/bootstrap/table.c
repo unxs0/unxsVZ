@@ -18,13 +18,17 @@ void {{cTableName}}GetHook(entry gentries[],int x);
 void {{cTableName}}Commands(pentry entries[], int x);
 void html{{cTableName}}(void);
 void html{{cTableName}}Report(void);
-void html{{cTableName}}Filter(char *cExtTable);
+void html{{cTableName}}Filter(void);
 void html{{cTableName}}Page(char *cTitle, char *cTemplateName);
 void json{{cTableName}}Rows(void);
 void json{{cTableName}}Cols(void);
 
 //funcModuleVars
 {{funcModuleVars}}
+
+//Special template
+static char gcFilterRows[100]={""};
+static char gcFilterCols[100]={""};
 
 void Process{{cTableName}}Vars(pentry entries[], int x)
 {
@@ -44,12 +48,10 @@ void Process{{cTableName}}Vars(pentry entries[], int x)
 }//void Process{{cTableName}}Vars(pentry entries[], int x)
 
 
-void html{{cTableName}}Filter(char *cExtTable)
+void html{{cTableName}}Filter(void)
 {
-        char cTemplate[64]={""};
-        sprintf(cTemplate,"{{cTableNameBS}}Filter%.32s.Body",cExtTable);
         htmlHeader("{{cTableName}}","Default.Header");
-        html{{cTableName}}Page("{{cTableName}}",cTemplate);
+        html{{cTableName}}Page("{{cTableName}}","{{cTableNameBS}}Filter.Body");
         htmlFooter("Default.Footer");
 
 }//void html{{cTableName}}Filter()
@@ -274,7 +276,13 @@ void html{{cTableName}}Page(char *cTitle, char *cTemplateName)
 			sprintf(c{{cTableKey}},"%u",{{cTableKey}});
 			template.cpValue[10]=c{{cTableKey}};
 
-			template.cpName[11]="";
+			template.cpName[11]="cFilterRows";
+			template.cpValue[11]=gcFilterRows;
+
+			template.cpName[12]="cFilterCols";
+			template.cpValue[12]=gcFilterCols;
+
+			template.cpName[13]="";
 
 			printf("\n<!-- Start html{{cTableName}}Page(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);

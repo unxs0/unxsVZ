@@ -365,7 +365,7 @@ void Header_ism3(char *cTitle, int iJs)
 	}
 	StyleSheet();
 	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
-	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/rad.ico?v=2>\n");
+	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/rad.ico?v=3>\n");
 	printf("</head><body><form name=formMain action=unxsRAD.cgi method=post><blockquote>\n");
 	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td align=left valign=bottom>\n");
 	if(!strncmp(gcFunction,"Main",4))

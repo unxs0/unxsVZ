@@ -96,6 +96,7 @@ void funcBootstrapRowReportFormats(FILE *fp);
 //
 void funcBootstrapCols(FILE *fp);
 void funcBootstrapColsReport(FILE *fp);
+//
 
 
 //external prototypes
@@ -491,6 +492,37 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 			{
 				*cp=0;
 				sprintf(cFileName,"%.99sReport.Body",cTableName);
+				*cp='.';
+			}
+			else
+			{
+				sprintf(cFileName,"%.99s",cTableName);
+			}
+			if(guDebug) logfileLine("CreateFile5",cFileName);
+			sscanf(field[0],"%u",&uTemplate);
+			if(uTemplate && uTable)
+				uRetVal=CreateGenericFile(uTemplate,uTable,uSourceLock,cFileName);
+		}
+		//interface templates Template2 tTableFilter.Body
+		sprintf(gcQuery,"SELECT uTemplate FROM tTemplate"
+				" WHERE cLabel='tTableFilter.Body'"
+				" AND uTemplateSet=%u"
+				" AND uTemplateType=%u"
+					,uTemplateSet,uTemplateType);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			logfileLine("ProcessJobQueue",mysql_error(&gMysql));
+			return(-1);
+		}
+        	res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			char *cp;
+			if((cp=strstr(cTableName,".Body")))
+			{
+				*cp=0;
+				sprintf(cFileName,"%.99sFilter.Body",cTableName);
 				*cp='.';
 			}
 			else
@@ -3624,14 +3656,29 @@ void funcBSGetHookAdditionalPages(FILE *fp)
                 return;
         }
         res=mysql_store_result(&gMysql);
+	unsigned uNotFirst=0;
 	while((field=mysql_fetch_row(res)))
 	{
 /*
  *         else if(uPaciente)
- *                         htmltConsultaFilter("Paciente");
+ *         {
+ *         	sprintf(gcFilterRows,"&uPaciente=%u",uPaciente);
+ *         	sprintf(gcFilterCols,"&uPaciente=%u",uPaciente);
+ *         	htmltConsultaFilter();
+ *         }
  */
 
-		fprintf(fp,"\t\telse if(%s)\n\t\t\thtml%sFilter(\"%s\");\n",field[0],gcTableName,gcTableName+1);
+		if(uNotFirst++) fprintf(fp,"\t");
+		fprintf(fp,"else if(%s)\n"
+			"\t{\n"
+			"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n"
+			"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n"
+			"\t\thtml%sFilter();\n"
+			"\t}\n",
+				field[0],
+				field[0],field[0],
+				field[0],field[0],
+				gcTableName);
 	}
 
 }//void funcBSGetHookAdditionalPages(FILE *fp)
