@@ -27,6 +27,7 @@ void json{{cTableName}}Cols(void);
 {{funcModuleVars}}
 
 //Special template
+static char gcContext[100]={""};
 static char gcFilterRows[100]={""};
 static char gcFilterCols[100]={""};
 
@@ -75,7 +76,10 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 		json{{cTableName}}Cols();
 
 	if({{cTableKey}})
+	{
+		sprintf(gcContext,"%u",{{cTableKey}});
 		html{{cTableName}}Report();
+	}
 	{{funcBSGetHookAdditionalPages}}
 	else
 		html{{cTableName}}();
@@ -282,7 +286,10 @@ void html{{cTableName}}Page(char *cTitle, char *cTemplateName)
 			template.cpName[12]="cFilterCols";
 			template.cpValue[12]=gcFilterCols;
 
-			template.cpName[13]="";
+			template.cpName[13]="cContext";
+			template.cpValue[13]=gcContext;
+
+			template.cpName[14]="";
 
 			printf("\n<!-- Start html{{cTableName}}Page(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);

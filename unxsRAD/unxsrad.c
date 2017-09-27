@@ -3618,12 +3618,14 @@ void funcBSGetHookAdditionalGentries(FILE *fp)
                 return;
         }
         res=mysql_store_result(&gMysql);
+	unsigned uNotFirst=0;
 	while((field=mysql_fetch_row(res)))
 	{
 /*                else if(!strcmp(gentries[i].name,"uPaciente"))
  *                                        sscanf(gentries[i].val,"%u",&uPaciente);
  */
-		fprintf(fp,"\t\telse if(!strcmp(gentries[i].name,\"%1$s\"))\n"
+		if(uNotFirst++) fprintf(fp,"\t\t");
+		fprintf(fp,"else if(!strcmp(gentries[i].name,\"%1$s\"))\n"
 				"\t\t\tsscanf(gentries[i].val,\"%%u\",&%1$s);\n"
 					,field[0]);
 	}
@@ -3662,6 +3664,7 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 /*
  *         else if(uPaciente)
  *         {
+ *         	sprintf(gcContext,"Paciente %u",uPaciente);
  *         	sprintf(gcFilterRows,"&uPaciente=%u",uPaciente);
  *         	sprintf(gcFilterCols,"&uPaciente=%u",uPaciente);
  *         	htmltConsultaFilter();
@@ -3671,11 +3674,13 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 		if(uNotFirst++) fprintf(fp,"\t");
 		fprintf(fp,"else if(%s)\n"
 			"\t{\n"
+			"\t\tsprintf(gcContext,\"%s %%u\",%s);\n"
 			"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n"
 			"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n"
 			"\t\thtml%sFilter();\n"
 			"\t}\n",
 				field[0],
+				field[0]+1,field[0],
 				field[0],field[0],
 				field[0],field[0],
 				gcTableName);
