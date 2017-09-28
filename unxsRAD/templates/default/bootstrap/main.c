@@ -64,6 +64,8 @@ void GetPLAndClient(char *cUser);
 void htmlLogin(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
+unsigned uGetSessionConfig(const char *cName);
+unsigned uSetSessionConfig(const char *cName, unsigned uValue);
 
 static char *sgcBuildInfo=dsGitVersion;
 
@@ -1067,3 +1069,57 @@ int ReadPullDown(const char *cTableName,const char *cFieldName,const char *cLabe
         return(iRowid);
 
 }//ReadPullDown(char *cTableName,char *cLabel)
+
+
+unsigned uGetSessionConfig(const char *cName)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+	unsigned uRetVal=0;
+
+        sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='%s' AND uOwner=%u AND uCreatedBy=%u LIMIT 1",
+		cName,guOrg,guLoginClient);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+		return(uRetVal);
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uRetVal);
+        mysql_free_result(res);
+	return(uRetVal);
+
+}//unsigned uGetSessionConfig(const char *cName)
+
+
+unsigned uSetSessionConfig(const char *cName, unsigned uValue)
+{
+        MYSQL_RES *res;
+        MYSQL_ROW field;
+        unsigned uConfiguration=0;
+
+        sprintf(gcQuery,"SELECT uConfiguration FROM tConfiguration WHERE cLabel='%s' AND uOwner=%u AND uCreatedBy=%u LIMIT 1",
+                cName,guOrg,guLoginClient);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+                return(1);
+        res=mysql_store_result(&gMysql);
+        if((field=mysql_fetch_row(res)))
+                sscanf(field[0],"%u",&uConfiguration);
+        mysql_free_result(res);
+        if(uConfiguration)
+                sprintf(gcQuery,"UPDATE tConfiguration SET cValue='%u',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+                                " WHERE uConfiguration=%u",uValue,guLoginClient,uConfiguration);
+        else
+                sprintf(gcQuery,"INSERT INTO tConfiguration SET cLabel='%.32s',cValue='%u',"
+                                "uOwner=%u,uCreatedBy=%u,"
+                                "uCreatedDate=UNIX_TIMESTAMP(NOW())",
+                                                cName,uValue,
+                                                guOrg,guLoginClient);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+                return(1);
+        return(0);
+
+}//unsigned uSetSessionConfig(const char *cName,unsigned uValue)
+
+

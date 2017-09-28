@@ -78,6 +78,7 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 	if({{cTableKey}})
 	{
 		sprintf(gcContext,"%u",{{cTableKey}});
+		uSetSessionConfig("{{cTableKey}}",{{cTableKey}});
 		html{{cTableName}}Report();
 	}
 	{{funcBSGetHookAdditionalPages}}

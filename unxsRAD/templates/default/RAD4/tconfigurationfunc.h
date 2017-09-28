@@ -186,7 +186,7 @@ void ExttConfigurationSelect(void)
 		//you created it, or your company owns it you can at least read access it
 		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
 	sprintf(gcQuery,"SELECT %s FROM tConfiguration,tClient WHERE tConfiguration.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tConfiguration.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
 				" ORDER BY uConfiguration",
 					VAR_LIST_tConfiguration,uContactParentCompany,uContactParentCompany);
 					
@@ -206,7 +206,7 @@ void ExttConfigurationSelectRow(void)
 	else
                 sprintf(gcQuery,"SELECT %s FROM tConfiguration,tClient"
                                 " WHERE tConfiguration.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+				" AND tConfiguration.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
 				" AND tConfiguration.uConfiguration=%u",
                         		VAR_LIST_tConfiguration
 					,uContactParentCompany,uContactParentCompany
@@ -228,7 +228,7 @@ void ExttConfigurationListSelect(void)
 	else
 		sprintf(gcQuery,"SELECT %s FROM tConfiguration,tClient"
 				" WHERE tConfiguration.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+				" AND tConfiguration.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
 				VAR_LIST_tConfiguration
 				,uContactParentCompany
 				,uContactParentCompany);

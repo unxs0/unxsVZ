@@ -3630,7 +3630,7 @@ void funcBSGetHookAdditionalGentries(FILE *fp)
         if(mysql_errno(&gMysql))
 	{
 		if(guDebug)
-			logfileLine("funcBSGetHookAdditionalPages",gcQuery);
+			logfileLine("funcBSGetHookAdditionalGentries",gcQuery);
                 fprintf(fp,"%s",mysql_error(&gMysql));
                 return;
         }
@@ -3684,6 +3684,7 @@ void funcBSGetHookAdditionalPages(FILE *fp)
  *         	sprintf(gcContext,"Paciente %u",uPaciente);
  *         	sprintf(gcFilterRows,"&uPaciente=%u",uPaciente);
  *         	sprintf(gcFilterCols,"&uPaciente=%u",uPaciente);
+ *         	uSetSessionConfig("uPaciente",uPaciente);
  *         	htmltConsultaFilter();
  *         }
  */
@@ -3694,10 +3695,12 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 			"\t\tsprintf(gcContext,\"%s %%u\",%s);\n"
 			"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n"
 			"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n"
+			"\t\tuSetSessionConfig(\"%s\",%s);\n"
 			"\t\thtml%sFilter();\n"
 			"\t}\n",
 				field[0],
 				field[0]+1,field[0],
+				field[0],field[0],
 				field[0],field[0],
 				field[0],field[0],
 				gcTableName);
@@ -3792,6 +3795,7 @@ void funcBSTemplateFKNVPairs(FILE *fp)
 /*
  *	template.cpName[14]="uPaciente";
  *	char cuPaciente[16];
+ *	if(!uPaciente) uPaciente=uGetSessionConfig("uPaciente");
  *	sprintf(cuPaciente,"%u",uPaciente);
  *	template.cpValue[14]=cuPaciente;
  *
@@ -3800,6 +3804,7 @@ void funcBSTemplateFKNVPairs(FILE *fp)
 		if(uNotFirst++) fprintf(fp,"\t\t\t");
 		fprintf(fp,"template.cpName[%u]=\"%s\";\n",i,field[0]);
 		fprintf(fp,"\t\t\tchar c%s[16];\n",field[0]);
+		fprintf(fp,"\t\t\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",field[0]);
 		fprintf(fp,"\t\t\tsprintf(c%1$s,\"%%u\",%1$s);\n",field[0]);
 		fprintf(fp,"\t\t\ttemplate.cpValue[%u]=c%s;\n\n",i,field[0]);
 		fprintf(fp,"\t\t\ttemplate.cpName[%u]=\"\";\n",++i);
