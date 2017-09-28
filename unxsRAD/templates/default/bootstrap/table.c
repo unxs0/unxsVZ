@@ -319,6 +319,7 @@ void json{{cTableName}}Rows(void)
 		sprintf(cQuery,"SELECT {{funcBootstrapRowReportVars}}"
 			" FROM {{cTableName}}"
 			" WHERE uOwner=%1$u AND {{cTableKey}}=%2$u",guOrg,{{cTableKey}});
+	{{funcBSFKJsonRowsSelects}}
 	else
 		sprintf(cQuery,"SELECT {{funcBootstrapRowVars}}"
 			" FROM {{cTableName}}"

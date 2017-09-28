@@ -97,6 +97,7 @@ void funcBootstrapRowReportFormats(FILE *fp);
 void funcBootstrapCols(FILE *fp);
 void funcBootstrapColsReport(FILE *fp);
 //
+void funcBSFKJsonRowsSelects(FILE *fp);
 
 
 //external prototypes
@@ -2048,6 +2049,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcBSGetHookAdditionalGentries(fp);
 	else if(!strcmp(cFunction,"funcBSGetHookAdditionalPages"))
 		funcBSGetHookAdditionalPages(fp);
+	else if(!strcmp(cFunction,"funcBSFKJsonRowsSelects"))
+		funcBSFKJsonRowsSelects(fp);
 	//special func that has variants
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
@@ -3279,6 +3282,7 @@ void funcBootstrapCols(FILE *fp)
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
+			" AND (NOT tField.cOtherOptions LIKE '%%FooTable:Report:%%')"
 			" AND tField.cLabel!='uOwner'"
 			" AND tField.cLabel!='uCreatedBy'"
 			" AND tField.cLabel!='uCreatedDate'"
@@ -3306,8 +3310,8 @@ void funcBootstrapCols(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		uCount++;
-		if(strstr(field[2],"FooTable:Report:"))
-			continue;
+		//if(strstr(field[2],"FooTable:Report:"))
+		//	continue;
 
 		sscanf(field[3],"%u",&uRADType);
 
@@ -3337,7 +3341,7 @@ void funcBootstrapCols(FILE *fp)
 					" \\\"breakpoints\\\": \\\"%s\\\"}%s\\n\");\n"
 				,field[0],field[0]+1,cFilterable,cDataType,cBreakpoints,cComma);
 		if(uCount==1)
-			fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"Report\\\", \\\"title\\\": \\\"Informe\\\", \\\"breakpoints\\\": \\\"\\\","
+			fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"Report\\\", \\\"title\\\": \\\"Select\\\", \\\"breakpoints\\\": \\\"\\\","
 					" \\\"filterable\\\": false},\\n\");\n");
 		if(uOnce && uCount>1)
 		{
@@ -3687,3 +3691,56 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 	}
 
 }//void funcBSGetHookAdditionalPages(FILE *fp)
+
+
+void funcBSFKJsonRowsSelects(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tFieldType.uRADType=%u"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable,COLTYPE_FOREIGNKEY);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBSGetHookAdditionalPages",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uNotFirst=0;
+	while((field=mysql_fetch_row(res)))
+	{
+/*
+ *	else if(uPaciente)
+ *		sprintf(cQuery,"SELECT {{funcBootstrapRowReportVars}}"
+ *			" FROM {{cTableName}}"
+ *			" WHERE uOwner=%1$u AND {{cTableKey}}=%2$u",guOrg,{{cTableKey}});
+ *
+ *	else if(uPaciente)
+ *		sprintf(cQuery,"SELECT 'uConsulta',uConsulta,'cLabel',cLabel,'uPaciente',uPaciente,'cNotas',REPLACE(cNotas,'\n','\\\\n'),'uTipoConsulta',uTipoConsulta,'uVitales',uVitales,'uLaboratorio',uLaboratorio"
+ *			" FROM tConsulta"
+ *		" WHERE uOwner=%1$u AND uPaciente=%2$u",guOrg,uPaciente);
+ */
+
+		if(uNotFirst++) fprintf(fp,"\t");
+		fprintf(fp,"else if(%s)\n"
+				"\t\tsprintf(cQuery,\"SELECT ",
+					field[0]);
+		funcBootstrapRowVars(fp);
+		fprintf(fp,"\"\n\t\t\" FROM %s\"\n"
+				"\t\t\" WHERE uOwner=%%1$u AND %s=%%2$u\",guOrg,%s);\n",
+					gcTableName,field[0],field[0]);
+	}
+
+}//void funcBSFKJsonRowsSelects(FILE *fp)

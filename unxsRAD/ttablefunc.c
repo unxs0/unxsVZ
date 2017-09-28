@@ -1540,12 +1540,12 @@ void CopyAllFields(unsigned uTargetTable, unsigned uSourceTable)
 			"("
 			" cLabel,uProject,uTable,uOrder,uFieldType,uIndexType,cFKSpec,"
 			" cExtIndex,cTitle,uSQLSize,uHtmlXSize,uHtmlYSize,uHtmlMax,cFormDefault,"
-			" cSQLDefault,uReadLevel,uModLevel,uOwner,uCreatedBy,uCreatedDate"
+			" cSQLDefault,cOtherOptions,uReadLevel,uModLevel,uOwner,uCreatedBy,uCreatedDate"
 			")"
 			" SELECT "
 			" cLabel,uProject,%u,uOrder,uFieldType,uIndexType,cFKSpec,"
 			" cExtIndex,cTitle,uSQLSize,uHtmlXSize,uHtmlYSize,uHtmlMax,cFormDefault,"
-			" cSQLDefault,uReadLevel,uModLevel,%u,%u,UNIX_TIMESTAMP(NOW())"
+			" cSQLDefault,cOtherOptions,uReadLevel,uModLevel,%u,%u,UNIX_TIMESTAMP(NOW())"
 			" FROM tField WHERE uTable=%u",uTargetTable,guCompany,guLoginClient,uSourceTable);
        	mysql_query(&gMysql,gcQuery);
        	if(mysql_errno(&gMysql))

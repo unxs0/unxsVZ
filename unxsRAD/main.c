@@ -1329,27 +1329,33 @@ char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)
         MYSQL_RES *mysqlRes;
         MYSQL_ROW mysqlField;
 
-	static char cQuery[256];
+	static char cQuery[256]={""};
 
         sprintf(cQuery,"SELECT %.99s FROM %.99s WHERE _rowid=%u",
                         cFieldName,cTableName,uKey);
         mysql_query(&gMysql,cQuery);
         if(mysql_errno(&gMysql))
-		return("FK Error");
+	{
+		char *cmallocReturn=malloc(sizeof(char)*32);
+		sprintf(cmallocReturn,"FKError");
+		return(cmallocReturn);
+	}
 
         mysqlRes=mysql_store_result(&gMysql);
         if(mysql_num_rows(mysqlRes)==1)
         {
                 mysqlField=mysql_fetch_row(mysqlRes);
-		sprintf(cQuery,"%.255s",mysqlField[0]);
-		mysql_free_result(mysqlRes);
-                return(cQuery);
+		//mysql_free_result(mysqlRes);
+		//The nature of this "oneshot" cgi
+		//is that it always releases memory very soon!
+                return(mysqlField[0]);
         }
 	else
 	{
-		sprintf(cQuery,"%u",uKey);
+		char *cmallocReturn=malloc(sizeof(char)*32);
+		sprintf(cmallocReturn,"%u",uKey);
 		mysql_free_result(mysqlRes);
-        	return(cQuery);
+        	return(cmallocReturn);
 	}
 
 }//char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned uKey)

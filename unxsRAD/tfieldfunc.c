@@ -218,6 +218,8 @@ void ExttFieldButtons(void)
 		default:
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
+			if(uTable)
+				printf("tTable.uTable: %s/%s",ForeignKey("tTable","cSubDir",uTable),ForeignKey("tTable","cLabel",uTable));
 			printf("<p><u>Operations</u><br>");
 			printf("<input type=submit class=largeButton"
 				" title='Select and keep this field marked for current work flow'"

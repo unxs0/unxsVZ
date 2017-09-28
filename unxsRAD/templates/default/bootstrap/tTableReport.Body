@@ -48,7 +48,7 @@
       <div class="row row-offcanvas row-offcanvas-right">
         <div class="col-xs-12 col-sm-9">
 
-<h3>Informe [[cTable]] {{cContext}}</h3>
+<h3>[[cTable]] {{cContext}}</h3>
 <table class="table" data-paging="false" data-editing="false" data-sorting="false" data-filtering="false"></table>
 
         </div><!--/.col-xs-12.col-sm-9-->

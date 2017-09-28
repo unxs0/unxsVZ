@@ -50,7 +50,7 @@
 
         <div class="col-xs-12 col-sm-9">
 
-<h3>[[cTable]]</h3>
+<h3>[[cTable]] {{cContext}}</h3>
 <table class="table" data-paging="true" data-editing="true" data-sorting="true" data-filtering="true"></table>
 
 <!-- Editing Modal Markup -->
@@ -139,8 +139,8 @@ jQuery(function($){
 
 	ft=FooTable.init($('.table'),{
 	"showToggle": false,
-        "rows": $.get('{{cCGI}}','gcFunction=[[cTable]]Rows'),
-        "columns": $.get('{{cCGI}}','gcFunction=[[cTable]]Cols'),
+        "rows": $.get('{{cCGI}}','gcPage=[[cTable]]&gcFunction=[[cTable]]Rows{{cFilterRows}}'),
+        "columns": $.get('{{cCGI}}','gcPage=[[cTable]]&gcFunction=[[cTable]]Cols{{cFilterCols}}'),
 	editing: {
 			enabled: true,
 			deleteRow: function(row){
