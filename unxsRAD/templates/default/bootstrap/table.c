@@ -291,6 +291,9 @@ void html{{cTableName}}Page(char *cTitle, char *cTemplateName)
 
 			template.cpName[14]="";
 
+			{{funcBSTemplateFKNVPairs}}	
+
+
 			printf("\n<!-- Start html{{cTableName}}Page(%s) -->\n",cTemplateName); 
 			Template(field[0],&template,stdout);
 			printf("\n<!-- End html{{cTableName}}Page(%s) -->\n",cTemplateName); 

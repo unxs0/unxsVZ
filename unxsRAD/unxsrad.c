@@ -98,6 +98,8 @@ void funcBootstrapCols(FILE *fp);
 void funcBootstrapColsReport(FILE *fp);
 //
 void funcBSFKJsonRowsSelects(FILE *fp);
+//
+void funcBSTemplateFKNVPairs(FILE *fp);
 
 
 //external prototypes
@@ -2051,6 +2053,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcBSGetHookAdditionalPages(fp);
 	else if(!strcmp(cFunction,"funcBSFKJsonRowsSelects"))
 		funcBSFKJsonRowsSelects(fp);
+	else if(!strcmp(cFunction,"funcBSTemplateFKNVPairs"))
+		funcBSTemplateFKNVPairs(fp);
 	//special func that has variants
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
@@ -3084,6 +3088,15 @@ void funcBootstrapEditorFields(FILE *fp)
 					cFieldName,field[1]);
 			break;
 
+			case COLTYPE_FOREIGNKEY:
+				fprintf(fp,"\t\t\t\t\t\t<input value=\"{{%1$s}}\" type=\"number\""
+					" id=\"%1$s\" name=\"%1$s\" class=\"hidden\"/>\n",
+					cFieldName);
+				fprintf(fp,"\t\t\t\t\t\t<input disabled value=\"{{%1$s}}\" type=\"number\""
+					" class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\">\n",
+					cFieldName,field[1]);
+			break;
+
 			default:
 				fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\">\n",
 					cFieldName,field[1]);
@@ -3200,7 +3213,7 @@ void funcBootstrapRowFormats(FILE *fp)
 				{
 					fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\",");
 					fprintf(fp,"\\\"Report\\\": \\\""
-					"<a href=?gcPage=%1$s&u%1$s=%%s><span class=\\\\\\\"glyphicon glyphicon-list\\\\\\\">"
+					"<a href=?gcPage=%1$s&u%1$s=%%s><span class=\\\\\\\"glyphicon glyphicon-ok-circle\\\\\\\">"
 					"</span></a>\\\"",gcTableName+1);
 				}
 				else
@@ -3713,7 +3726,7 @@ void funcBSFKJsonRowsSelects(FILE *fp)
         if(mysql_errno(&gMysql))
 	{
 		if(guDebug)
-			logfileLine("funcBSGetHookAdditionalPages",gcQuery);
+			logfileLine("funcBSFKJsonRowsSelects",gcQuery);
                 fprintf(fp,"%s",mysql_error(&gMysql));
                 return;
         }
@@ -3744,3 +3757,52 @@ void funcBSFKJsonRowsSelects(FILE *fp)
 	}
 
 }//void funcBSFKJsonRowsSelects(FILE *fp)
+
+
+void funcBSTemplateFKNVPairs(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tFieldType.uRADType=%u"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable,COLTYPE_FOREIGNKEY);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBSTemplateFKNVPairs",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uNotFirst=0;
+	unsigned i=14;
+	while((field=mysql_fetch_row(res)))
+	{
+
+/*
+ *	template.cpName[14]="uPaciente";
+ *	char cuPaciente[16];
+ *	sprintf(cuPaciente,"%u",uPaciente);
+ *	template.cpValue[14]=cuPaciente;
+ *
+ *	template.cpName[15]="";
+ */
+		if(uNotFirst++) fprintf(fp,"\t\t\t");
+		fprintf(fp,"template.cpName[%u]=\"%s\";\n",i,field[0]);
+		fprintf(fp,"\t\t\tchar c%s[16];\n",field[0]);
+		fprintf(fp,"\t\t\tsprintf(c%1$s,\"%%u\",%1$s);\n",field[0]);
+		fprintf(fp,"\t\t\ttemplate.cpValue[%u]=c%s;\n\n",i,field[0]);
+		fprintf(fp,"\t\t\ttemplate.cpName[%u]=\"\";\n",++i);
+	}
+
+}//void funcBSTemplateFKNVPairs(FILE *fp)

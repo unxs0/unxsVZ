@@ -220,7 +220,7 @@ jQuery(function($){
 					function(retval){
 						var r = retval;
 						values.u[[cTable]] = +r;
-						values.Report = '<a href=?gcPage=[[cTable]]&u[[cTable]]='+values.u[[cTable]]+'><span class="glyphicon glyphicon-list"></span></a>';
+						values.Report = '<a href=?gcPage=[[cTable]]&u[[cTable]]='+values.u[[cTable]]+'><span class="glyphicon glyphicon-ok-circle"></span></a>';
 						console.log( 'Add[[cTable]] result: ' + r);
 						if ( values.u[[cTable]] > 0 )
 							ft.rows.add(values);
