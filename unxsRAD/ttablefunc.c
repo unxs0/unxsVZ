@@ -1083,7 +1083,7 @@ void RemoveTableFieldLine(char *cLine)
 	char cTitle[100]={""};
 	char cFieldType[32]={""};
 	unsigned uOrder=0;
-	char cFKSpec[32]={""};
+	char cFKSpec[65]={""};
 
 	int iCount=0;
 	unsigned uField=0;
@@ -1091,7 +1091,7 @@ void RemoveTableFieldLine(char *cLine)
 	//cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec]
 	//cLastname;Last name;Varchar Unique Key;21;
 	//uPaciente;Numero de paciente;Select Table Owner;10;"tPaciente","cLabel"
-	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/+\\.%% ];%31[a-zA-Z0-9 ];%u;%32[a-zA-Z0-9\",]",
+	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/+\\.%% ];%31[a-zA-Z0-9 ];%u;%64[a-zA-Z0-9\",]",
 					cLabel,cTitle,cFieldType,&uOrder,cFKSpec);
 	//debug1
 	//sprintf(gcQuery,"(%d) %s;%s;%s;%u;%s",iCount,cLabel,cTitle,cFieldType,uOrder,cFKSpec);
@@ -1137,7 +1137,7 @@ void AddTableFieldLine(char *cLine)
 	char cFieldType[32]={""};
 	unsigned uFieldType=0;
 	unsigned uOrder=0;
-	char cFKSpec[32]={""};
+	char cFKSpec[65]={""};
 	unsigned uSQLSize=10;//default for all except Varchar types
 
 	int iCount=0;
@@ -1147,7 +1147,7 @@ void AddTableFieldLine(char *cLine)
 	//cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec]/[uSQLSize for Varchars]
 	//cLastname;Last name;Varchar Unique Key;21;
 	//uPaciente;Numero de paciente;Select Table Owner;10;"tPaciente","cLabel"
-	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/+\\.%% ];%31[a-zA-Z0-9 ];%u;%32[a-zA-Z0-9\",]",
+	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%99[a-zA-Z0-9/+\\.%% ];%31[a-zA-Z0-9 ];%u;%64[a-zA-Z0-9\",]",
 					cLabel,cTitle,cFieldType,&uOrder,cFKSpec);
 	//debug1
 	//sprintf(gcQuery,"(%d) %s;%s;%s;%u;%s",iCount,cLabel,cTitle,cFieldType,uOrder,cFKSpec);
@@ -1208,7 +1208,7 @@ void AddTableFieldLine(char *cLine)
 				" uOrder=%u,"
 				" uFieldType=%u,"
 				" cTitle='%.100s',"
-				" cFKSpec='%.32s',"
+				" cFKSpec='%.99s',"
 				" uSQLSize='%u',"
 				" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 				" WHERE uField=%u",
@@ -1236,7 +1236,7 @@ void AddTableFieldLine(char *cLine)
 				" uOrder=%u,"
 				" uFieldType=%u,"
 				" cTitle='%.100s',"
-				" cFKSpec='%.32s',"
+				" cFKSpec='%.100s',"
 				" uSQLSize=%u,"
 				" uHtmlXSize='40',"
 				" uHtmlYSize='1',"

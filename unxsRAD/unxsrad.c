@@ -1635,32 +1635,40 @@ void funcModuleUpdateQuery(FILE *fp)
 				fprintf(fp,"\t\t\"%s=%%u",field[0]);
 			break;
 
-			case COLTYPE_CHAR:
 			case COLTYPE_DATETIME:
 			case COLTYPE_TIMESTAMP:
-			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
+			case COLTYPE_CHAR:
 			case COLTYPE_TEXT:
+				fprintf(fp,"\t\t\"%s='%%s'",field[0]);
+			break;
+
+			case COLTYPE_VARCHAR:
 				if((cp1=strstr(field[2],"CONCAT:")))
 				{
-					char cConcatField1[64]={""};
-					char cConcatField2[64]={""};
+					char cConcatField1[100]={""};
+					char cConcatField2[100]={""};
 					char *cp2;
-					if((cp2=strchr(field[2],',')))
+					if((cp2=strchr(field[2],';')))
 					{
 						*cp2=0;	
-						sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
+						sprintf(cConcatField1,"%.99s",cp1+strlen("CONCAT:"));
 						if((cp1=strchr(cp2+1,';')))
 						{
 							*cp1=0;
-							sprintf(cConcatField2,"%.63s",cp2+1);
+							sprintf(cConcatField2,"%.99s",cp2+1);
 							*cp1=';';
 						}
-						*cp2=',';	
+						*cp2=';';	
 					}
 					if(cConcatField1[0] && cConcatField2[0])
 					{
 						fprintf(fp,"\t\t\"%s=CONCAT(%s,' ',%s)",field[0],cConcatField1,cConcatField2);
+						break;
+					}
+					else if(cConcatField1[0])
+					{
+						fprintf(fp,"\t\t\"%s=%s",field[0],cConcatField1);
 						break;
 					}
 				}
@@ -1713,7 +1721,7 @@ void funcModuleUpdateQuery(FILE *fp)
 					char cConcatField1[64]={""};
 					char cConcatField2[64]={""};
 					char *cp2;
-					if((cp2=strchr(field[2],',')))
+					if((cp2=strchr(field[2],';')))
 					{
 						*cp2=0;	
 						sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
@@ -1723,9 +1731,9 @@ void funcModuleUpdateQuery(FILE *fp)
 							sprintf(cConcatField2,"%.63s",cp2+1);
 							*cp1=';';
 						}
-						*cp2=',';	
+						*cp2=';';	
 					}
-					if(cConcatField1[0] && cConcatField2[0])
+					if(cConcatField1[0])
 					{
 						break;
 					}
@@ -1799,7 +1807,7 @@ void funcModuleInsertQuery(FILE *fp)
 					char cConcatField1[64]={""};
 					char cConcatField2[64]={""};
 					char *cp2;
-					if((cp2=strchr(field[2],',')))
+					if((cp2=strchr(field[2],';')))
 					{
 						*cp2=0;	
 						sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
@@ -1809,11 +1817,22 @@ void funcModuleInsertQuery(FILE *fp)
 							sprintf(cConcatField2,"%.63s",cp2+1);
 							*cp1=';';
 						}
-						*cp2=',';	
+						*cp2=';';	
 					}
 					if(cConcatField1[0] && cConcatField2[0])
 					{
-						fprintf(fp,"\t\t\"%s=CONCAT('%%s',' ','%%s')",field[0]);
+						if(strstr(field[2],"UNSIGNED_CONCAT:"))
+							fprintf(fp,"\t\t\"%s=CONCAT('%%lu',' ','%%lu')",field[0]);
+						else
+							fprintf(fp,"\t\t\"%s=CONCAT('%%s',' ','%%s')",field[0]);
+						break;
+					}
+					else if(cConcatField1[0])
+					{
+						if(strstr(field[2],"UNSIGNED_CONCAT:"))
+							fprintf(fp,"\t\t\"%s='%%lu'",field[0]);
+						else
+							fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 						break;
 					}
 				}
@@ -1862,7 +1881,7 @@ void funcModuleInsertQuery(FILE *fp)
 					char cConcatField1[64]={""};
 					char cConcatField2[64]={""};
 					char *cp2;
-					if((cp2=strchr(field[2],',')))
+					if((cp2=strchr(field[2],';')))
 					{
 						*cp2=0;	
 						sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
@@ -1872,11 +1891,22 @@ void funcModuleInsertQuery(FILE *fp)
 							sprintf(cConcatField2,"%.63s",cp2+1);
 							*cp1=';';
 						}
-						*cp2=',';	
+						*cp2=';';	
 					}
 					if(cConcatField1[0] && cConcatField2[0])
 					{
-						fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",cConcatField1,cConcatField2);
+						if(strstr(field[2],"UNSIGNED_CONCAT:"))
+							fprintf(fp,"\t\t\t,%s,%s\n",cConcatField1,cConcatField2);
+						else
+							fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",cConcatField1,cConcatField2);
+						break;
+					}
+					else if(cConcatField1[0])
+					{
+						if(strstr(field[2],"UNSIGNED_CONCAT:"))
+							fprintf(fp,"\t\t\t,%s\n",cConcatField1);
+						else
+							fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",cConcatField1);
 						break;
 					}
 				}
@@ -2882,7 +2912,7 @@ void funcBootstrapConcat(FILE *fp)
 			char cConcatField1[64]={""};
 			char cConcatField2[64]={""};
 			char *cp2;
-			if((cp2=strchr(field[1],',')))
+			if((cp2=strchr(field[1],';')))
 			{
 				*cp2=0;	
 				sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
@@ -2898,6 +2928,11 @@ void funcBootstrapConcat(FILE *fp)
 			{
 				//values.cLabel = values.cApellido+' '+values.cNombre;
 				fprintf(fp,"values.%s = values.%s+' '+values.%s;",cFieldName,cConcatField1,cConcatField2);
+			}
+			else if(cConcatField1[0])
+			{
+				//values.cLabel = values.cApellido;
+				fprintf(fp,"values.%s = values.%s.substring(0,32);",cFieldName,cConcatField1);
 			}
 		}
 	}
@@ -2971,7 +3006,7 @@ void funcBootstrapValueFields(FILE *fp)
 			char cConcatField1[64]={""};
 			char cConcatField2[64]={""};
 			char *cp2;
-			if((cp2=strchr(field[1],',')))
+			if((cp2=strchr(field[1],';')))
 			{
 				*cp2=0;	
 				sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
@@ -2981,11 +3016,11 @@ void funcBootstrapValueFields(FILE *fp)
 					sprintf(cConcatField2,"%.63s",cp2+1);
 					*cp1=';';
 				}
-				*cp2=',';	
+				*cp2=';';	
 			}
-			if(cConcatField1[0] && cConcatField2[0])
+			if(cConcatField1[0])
 			{
-				fprintf(fp,"%s: $editor.find('#%s').val()",cFieldName,cConcatField1);
+				fprintf(fp,"%s: $editor.find('#%s').val().substring(0,32)",cFieldName,cConcatField1);
 			}
 		}
 		else
