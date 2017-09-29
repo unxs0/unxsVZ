@@ -1,6 +1,6 @@
 /*
 FILE
-	tClient source code of {{cProject}}.cgi
+	tClient source code of 
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tclient.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE

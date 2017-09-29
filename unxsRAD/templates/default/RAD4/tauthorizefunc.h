@@ -172,14 +172,14 @@ void ExttAuthorizeButtons(void)
 			printf("<u>Record Context Info</u><br>");
 			if(uCertClient>1 && uOwner>1)
 				printf("This login appears to belong to a"
-					" <a class=darkLink href={{cProject}}.cgi?gcFunction=tClient&uClient=%u>'%s'</a> company contact"
-					" '<a class=darkLink href={{cProject}}.cgi?gcFunction=tClient&uClient=%u>%s</a>'.<br>"
+					" <a class=darkLink href=?gcFunction=tClient&uClient=%u>'%s'</a> company contact"
+					" '<a class=darkLink href=?gcFunction=tClient&uClient=%u>%s</a>'.<br>"
 					"The uPerm corresponds to permission level '%s'.",
 						uOwner,ForeignKey("tClient","cLabel",uOwner),
 						uCertClient,ForeignKey("tClient","cLabel",uCertClient),cUserLevel(uPerm));
 			else if(uOwner>1)
 				printf("This login appears to belong to a"
-					" '<a class=darkLink href={{cProject}}.cgi?gcFunction=tClient&uClient=%u>%s</a>' company contact,"
+					" '<a class=darkLink href=?gcFunction=tClient&uClient=%u>%s</a>' company contact,"
 					" but that has been root aliased to usually run the back-office with complete permissions."
 					"<br>The uPerm corresponds to permission level '%s'.",
 						uOwner,ForeignKey("tClient","cLabel",uOwner),
@@ -370,7 +370,7 @@ void tAuthorizeNavList(void)
 	{
         	printf("<p><u>tAuthorizeNavList Backoffice Only</u><br>\n");
         	while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tAuthorize&uAuthorize=%s>%s/%s/%s</a><br>\n",
+			printf("<a class=darkLink href=?gcFunction=tAuthorize&uAuthorize=%s>%s/%s/%s</a><br>\n",
 				field[0],field[1],field[2],field[3]);
 	}
         mysql_free_result(res);

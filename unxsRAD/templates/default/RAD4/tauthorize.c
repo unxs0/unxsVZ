@@ -1,6 +1,6 @@
 /*
 FILE
-	tAuthorize source code of {{cProject}}.cgi
+	tAuthorize source code of 
 	Built by {{cProject}} (C) Gary Wallis 2001-2012
 	$Id: tauthorize.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE

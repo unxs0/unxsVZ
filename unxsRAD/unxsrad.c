@@ -799,7 +799,7 @@ void funcModuleListPrint(FILE *fp)
 		if( first && (uFieldType == COLTYPE_RADPRI ||
 				uFieldType == COLTYPE_PRIKEY ))
 		{
-			fprintf(fp,"<td><a class=darkLink href=%s.cgi?gcFunction=%s&%s=%%s>%%s</a>",gcProject,gcTableName,field[1]);
+			fprintf(fp,"<td><a class=darkLink href=?gcFunction=%s&%s=%%s>%%s</a>",gcTableName,field[1]);
 			first=0;
 		}
 		else if(uFieldType == COLTYPE_TEXT )
@@ -2482,7 +2482,7 @@ void funcMainTabMenu(FILE *fp)
 		fprintf(fp,"\t\t  printf(\">\\n\");\n");
 		fprintf(fp,"\t  else\n");
 		fprintf(fp,"\t\t  printf(\" id=current>\\n\");\n");
-		fprintf(fp,"\t  printf(\"\\t\\t\\t<a title='%s' href=%s.cgi?gcFunction=%s>%s</a>\\n\");\n",field[2],gcProject,field[0],field[0]);
+		fprintf(fp,"\t  printf(\"\\t\\t\\t<a title='%s' href=?gcFunction=%s>%s</a>\\n\");\n",field[2],field[0],field[0]);
 		fprintf(fp,"\t}\n");
 	}
         mysql_free_result(res);
@@ -2740,7 +2740,7 @@ void funcBootstrapNavItems(FILE *fp)
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-            	fprintf(fp,"\t\t<li><a href=\"{{cCGI}}?gcPage=%1$s\">%1$s</a></li>\n",field[0]);
+            	fprintf(fp,"\t\t<li><a href=\"?gcPage=%1$s\">%1$s</a></li>\n",field[0]);
 	}
 	mysql_free_result(res);
 
@@ -3139,8 +3139,8 @@ void funcBootstrapRowVars(FILE *fp)
 	unsigned uRADType=0;
 	while((field=mysql_fetch_row(res)))
 	{
-		if(strstr(field[2],"FooTable:Report:"))
-			continue;
+//		if(strstr(field[2],"FooTable:Report:"))
+//			continue;
 
 		sscanf(field[1],"%u",&uRADType);
 
@@ -3156,7 +3156,11 @@ void funcBootstrapRowVars(FILE *fp)
 				fprintf(fp,"'%1$s',REPLACE(%1$s,'\\n','\\\\\\\\n')",field[0]);
 			break;
 			default:
-				fprintf(fp,"'%1$s',%1$s",field[0]);
+				if(strstr(field[2],"FooTable:Report:"))
+					fprintf(fp,"'%s',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'>%s</a>')",
+						field[0],field[0]+1,gcTableName+1,gcTableName+1,field[0]+1);
+				else
+					fprintf(fp,"'%1$s',%1$s",field[0]);
 		}
 
 		uFirst=0;
@@ -3195,8 +3199,8 @@ void funcBootstrapRowFormats(FILE *fp)
 	unsigned uRADType=0;
 	while((field=mysql_fetch_row(res)))
 	{
-		if(strstr(field[2],"FooTable:Report:"))
-			continue;
+//		if(strstr(field[2],"FooTable:Report:"))
+//			continue;
 
 		sscanf(field[1],"%u",&uRADType);
 		if(uFirst++)
@@ -3255,8 +3259,8 @@ void funcBootstrapRowFields(FILE *fp)
 	unsigned uRADType=0;
 	while((field=mysql_fetch_row(res)))
 	{
-		if(strstr(field[2],"FooTable:Report:"))
-			continue;
+//		if(strstr(field[2],"FooTable:Report:"))
+//			continue;
 
 		sscanf(field[1],"%u",&uRADType);
 		if(uFirst)
@@ -3295,7 +3299,7 @@ void funcBootstrapCols(FILE *fp)
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
-			" AND (NOT tField.cOtherOptions LIKE '%%FooTable:Report:%%')"
+			//" AND (NOT tField.cOtherOptions LIKE '%%FooTable:Report:%%')"
 			" AND tField.cLabel!='uOwner'"
 			" AND tField.cLabel!='uCreatedBy'"
 			" AND tField.cLabel!='uCreatedDate'"
@@ -3337,6 +3341,10 @@ void funcBootstrapCols(FILE *fp)
 			case COLTYPE_DECIMAL:
 			case COLTYPE_MONEY:
 				cDataType="number";
+			break;
+
+			case COLTYPE_FOREIGNKEY:
+				cDataType="html";
 			break;
 
 			default:

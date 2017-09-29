@@ -167,7 +167,7 @@ void ExtMainContent(void)
 		OpenRow("Table List","black");
 		printf("<td>\n");
 		for(i=0;cTableList[i][0];i++)
-			printf("<a href={{cProject}}.cgi?gcFunction=%.32s>%.32s</a><br>\n",
+			printf("<a href=?gcFunction=%.32s>%.32s</a><br>\n",
 				cTableList[i],cTableList[i]);
 		printf("</td></tr>\n");
         	OpenRow("Admin Functions","black");
@@ -635,7 +635,7 @@ void CalledByAlias(int iArgc,char *cArgv[])
 
 		//This is the standard place. With much parsing nonsense we can
 		//	do better by using env vars
-		sprintf(cLinkStart,"%s://%s/cgi-bin/{{cProject}}.cgi",cHTTP,gcHost);
+		sprintf(cLinkStart,"%s://%s/cgi-bin/",cHTTP,gcHost);
 
 		printf("Content-type: text/xml\n\n");
 

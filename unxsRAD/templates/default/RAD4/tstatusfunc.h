@@ -333,7 +333,7 @@ void tStatusNavList(void)
         	printf("<p><u>tStatusNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tStatus"
+			printf("<a class=darkLink href=?gcFunction=tStatus"
 				"&uStatus=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

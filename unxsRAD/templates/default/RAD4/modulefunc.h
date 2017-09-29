@@ -341,11 +341,11 @@ void {{cTableName}}NavList(void)
 	        while((field=mysql_fetch_row(res)))
 		{
 			if(field[1][0])
-				printf("<a class=darkLink href={{cProject}}.cgi?gcFunction={{cTableName}}"
+				printf("<a class=darkLink href=?gcFunction={{cTableName}}"
 					"&{{cTableKey}}=%s>%s</a><br>\n",
 						field[0],field[1]);
 			else
-				printf("<a class=darkLink href={{cProject}}.cgi?gcFunction={{cTableName}}"
+				printf("<a class=darkLink href=?gcFunction={{cTableName}}"
 					"&{{cTableKey}}=%s>%s</a><br>\n",
 						field[0],field[0]);
 		}

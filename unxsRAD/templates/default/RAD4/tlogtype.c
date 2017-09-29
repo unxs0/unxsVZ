@@ -1,6 +1,6 @@
 /*
 FILE
-	tLogType source code of {{cProject}}.cgi
+	tLogType source code of 
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tlogtype.c 1953 2012-05-22 15:03:17Z Colin $
 PURPOSE

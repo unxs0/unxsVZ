@@ -333,7 +333,7 @@ void tServerNavList(void)
         	printf("<p><u>tServerNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tServer"
+			printf("<a class=darkLink href=?gcFunction=tServer"
 				"&uServer=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

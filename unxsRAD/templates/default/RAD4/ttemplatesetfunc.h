@@ -333,7 +333,7 @@ void tTemplateSetNavList(void)
         	printf("<p><u>tTemplateSetNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tTemplateSet"
+			printf("<a class=darkLink href=?gcFunction=tTemplateSet"
 				"&uTemplateSet=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

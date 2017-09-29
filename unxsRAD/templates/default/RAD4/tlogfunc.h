@@ -41,7 +41,7 @@ void ExttLogButtons(void)
 	OpenFieldSet("tLog Aux Panel",100);
 
 	printf("<u>Table Tips</u><br>");
-	printf("This table holds the non-archived logged and MD5 signed operations that have taken place in the system. Usually data is available here only for the current month. When possible context related info is provided below. Current {{cProject}} version does not save delete (Del) operation data.<p><a href={{cProject}}.cgi?gcFunction=tLogMonth>tLogMonth</a> allows access to all archived (read-only and compressed) monthly tLog data sets. These archives are created from the command line usually by crontab operation.");
+	printf("This table holds the non-archived logged and MD5 signed operations that have taken place in the system. Usually data is available here only for the current month. When possible context related info is provided below. Current {{cProject}} version does not save delete (Del) operation data.<p><a href=?gcFunction=tLogMonth>tLogMonth</a> allows access to all archived (read-only and compressed) monthly tLog data sets. These archives are created from the command line usually by crontab operation.");
 
 	LogSummary();
 
@@ -264,7 +264,7 @@ void LogSummary(void)
 			if( strcmp(cLabel,"Del") && uTPK && uZone && uRRType)
 			{
 
-				printf("<a title='Jump to tResource entry' href={{cProject}}.cgi?gcFunction=tResource&uResource=%u>tResource</a><blockquote>\n",uTPK);
+				printf("<a title='Jump to tResource entry' href=?gcFunction=tResource&uResource=%u>tResource</a><blockquote>\n",uTPK);
 				printf("cZone=%s<br>\n",ForeignKey("tZone","cZone",uZone));
 				printf("cName=%s<br>\n",ForeignKey("tResource","cName",uTPK));
 				printf("RRType=%s<br>\n",ForeignKey("tRRType","cLabel",uRRType));
@@ -275,7 +275,7 @@ void LogSummary(void)
 
 			if(uLoginClient)
 			{
-				printf("Contact=<a title='Jump to tClient entry' href={{cProject}}.cgi?gcFunction=tClient&uClient=%u>%s</a><br></blockquote>\n",uLoginClient,
+				printf("Contact=<a title='Jump to tClient entry' href=?gcFunction=tClient&uClient=%u>%s</a><br></blockquote>\n",uLoginClient,
 				ForeignKey("tClient","cLabel",uLoginClient));
 			}
 		}

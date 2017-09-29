@@ -328,7 +328,7 @@ void tJobNavList(void)
         	printf("<p><u>tJobNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tJob&uJob=%s>%s</a><br>\n",field[0],field[1]);
+			printf("<a class=darkLink href=?gcFunction=tJob&uJob=%s>%s</a><br>\n",field[0],field[1]);
 	}
         mysql_free_result(res);
 

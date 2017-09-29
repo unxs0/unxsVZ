@@ -333,7 +333,7 @@ void tTemplateTypeNavList(void)
         	printf("<p><u>tTemplateTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tTemplateType"
+			printf("<a class=darkLink href=?gcFunction=tTemplateType"
 				"&uTemplateType=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

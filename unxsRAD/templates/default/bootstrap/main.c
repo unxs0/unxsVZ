@@ -236,7 +236,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="mobile.cgi";
+			template.cpValue[1]="/unxsID";
 			
 			template.cpName[2]="cMessage";
 			template.cpValue[2]=gcMessage;

@@ -2,7 +2,7 @@
 FILE 
 	{{cProject}}/main.c
 	From unxsRAD RAD4 main.c template file.
-	unxsRAD created application file for {{cProject}}.cgi
+	unxsRAD created application file for 
 PURPOSE
 	Main cgi interface and common functions used for all the other
 	table tx.c files and their schema independent txfunc.h files
@@ -106,7 +106,7 @@ int main(int iArgc, char *cArgv[])
 
 	gethostname(gcHostname,98);
 
-	if(!strstr(cArgv[0],"{{cProject}}.cgi"))
+	if(!strstr(cArgv[0],""))
 		CalledByAlias(iArgc,cArgv);
 
 	if(getenv("REMOTE_HOST")!=NULL)
@@ -304,7 +304,7 @@ void HeaderRAD4(char *cTitle, int iJs)
 	StyleSheet();
 	printf("<script language='JavaScript' src='/css/popups.js'></script>\n");
 	printf("<link rel=\"shortcut icon\" type=image/x-icon href=/images/rad.ico?v=2>\n");
-	printf("</head><body><form name=formMain action={{cProject}}.cgi method=post><blockquote>\n");
+	printf("</head><body><form name=formMain action=/{{cProject}}/ method=post><blockquote>\n");
 	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td align=left valign=bottom>\n");
 	if(!strncmp(gcFunction,"Main",4))
 		printf("<img src=/images/rad.png>&nbsp;&nbsp;\n");
@@ -318,7 +318,7 @@ void HeaderRAD4(char *cTitle, int iJs)
 
 	//Logout link
 	if(guSSLCookieLogin)
-		printf(" <a title='Erase login cookies' href={{cProject}}.cgi?gcFunction=Logout>Logout</a> ");
+		printf(" <a title='Erase login cookies' href=?gcFunction=Logout>Logout</a> ");
 
 	//close first col
 	printf("</td><td align=right valign=bottom>\n");
@@ -346,7 +346,7 @@ void HeaderRAD4(char *cTitle, int iJs)
 		printf(">\n");
 	else
 		printf(" id=current>\n");
-		printf("\t\t\t<a title='Home start page' href={{cProject}}.cgi?gcFunction=Main>Main</a>\n");
+		printf("\t\t\t<a title='Home start page' href=?gcFunction=Main>Main</a>\n");
 	printf("\t\t\t</li>\n");
 
 	{{funcMainTabMenu}}
@@ -994,7 +994,7 @@ const char *ForeignKey(const char *cTableName, const char *cFieldName, unsigned 
 void InitialInstall(void)
 {
 	{{cProject}}("Please run\
-		{{cProject}}.cgi Initialize &lt;mysqlpwd&gt; from the command line");
+		 Initialize &lt;mysqlpwd&gt; from the command line");
 
 }//void InitialInstall(void)
 

@@ -333,7 +333,7 @@ void tLogTypeNavList(void)
         	printf("<p><u>tLogTypeNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tLogType"
+			printf("<a class=darkLink href=?gcFunction=tLogType"
 				"&uLogType=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

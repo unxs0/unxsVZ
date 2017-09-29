@@ -333,7 +333,7 @@ void tMonthNavList(void)
         	printf("<p><u>tMonthNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tMonth"
+			printf("<a class=darkLink href=?gcFunction=tMonth"
 				"&uMonth=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

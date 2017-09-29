@@ -1,6 +1,6 @@
 /*
 FILE
-	tJob source code of {{cProject}}.cgi
+	tJob source code of 
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tjob.c 1969 2012-05-31 01:48:19Z Colin $
 PURPOSE

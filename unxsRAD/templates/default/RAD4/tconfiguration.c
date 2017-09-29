@@ -1,6 +1,6 @@
 /*
 FILE
-	tConfiguration source code of {{cProject}}.cgi
+	tConfiguration source code of 
 	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
 	$Id: tconfiguration.c 1965 2012-05-29 14:21:16Z Colin $
 PURPOSE

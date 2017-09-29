@@ -333,7 +333,7 @@ void tGlossaryNavList(void)
         	printf("<p><u>tGlossaryNavList</u><br>\n");
 
 	        while((field=mysql_fetch_row(res)))
-			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tGlossary"
+			printf("<a class=darkLink href=?gcFunction=tGlossary"
 				"&uGlossary=%s>%s</a><br>\n",
 				field[0],field[1]);
 	}

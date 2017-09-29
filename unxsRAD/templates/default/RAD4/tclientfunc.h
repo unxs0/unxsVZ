@@ -333,7 +333,7 @@ void ExttClientButtons(void)
 				"enter a login (that can be the same as the tClient.cLabel) for this contact and a password. The most common "
 				"user permission level is 'Organization Admin' that would allow this contact to login to the idnsOrg.cgi "
 				"interface and have full control over the companies DNS resource records. The second most common user level is "
-				"'Back-Office Root' that will allow the user full access to this back-office {{cProject}}.cgi interface.<p>\n");
+				"'Back-Office Root' that will allow the user full access to this back-office  interface.<p>\n");
 			if(guPermLevel>7)
 				PermLevelDropDown(cuPerm);
 			printf("<br>Login <input type=text title='Login to use' name=cLogin size=20 maxlength=32>\n");
@@ -886,7 +886,7 @@ void ContactsNavList(void)
 		{
         		printf("<p><u>tAuthorize LoginNavList</u><br>\n");
 			while((field=mysql_fetch_row(res)))
-				printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tAuthorize&uAuthorize=%s>%s<a><br>",field[1],field[0]);
+				printf("<a class=darkLink href=?gcFunction=tAuthorize&uAuthorize=%s>%s<a><br>",field[1],field[0]);
 		}
         	mysql_free_result(res);
 		printf("\n");
@@ -908,7 +908,7 @@ void ContactsNavList(void)
         	printf("<p><u>ContactsNavList</u><br>\n");
 		while((field=mysql_fetch_row(res)))
         	{
-			printf("<a class=darkLink href={{cProject}}.cgi?gcFunction=tClient&uClient=%s&uOnlyOrgs=%u",field[0],uOnlyOrgs);
+			printf("<a class=darkLink href=?gcFunction=tClient&uClient=%s&uOnlyOrgs=%u",field[0],uOnlyOrgs);
 			if(cSearch[0])
 			{
 				spacetoplus(cSearch);
@@ -928,7 +928,7 @@ void htmlRecordContext(void)
 {
 	printf("<p><u>Record Context Info</u><br>");
 	if(uOwner>1)
-		printf("'%s' appears to be a contact of <a class=darkLink href={{cProject}}.cgi?gcFunction=tClient&uClient=%u>'%s'</a>",cLabel,uOwner,ForeignKey("tClient","cLabel",uOwner));
+		printf("'%s' appears to be a contact of <a class=darkLink href=?gcFunction=tClient&uClient=%u>'%s'</a>",cLabel,uOwner,ForeignKey("tClient","cLabel",uOwner));
 	else if(uOwner==1 && strcmp(cLabel,"Root"))
 		printf("'%s' appears to be a company",cLabel);
 	else if(uOwner==1)
