@@ -12,6 +12,9 @@ other column data.
 
 Technical: Implemented in unxsrad.c for `funcModuleUpdateQuery` and `funcModuleInsertQuery`.
 
+#### `FooTable:Filterable`
+
+Adds the field to the FooTable filter select.
 
 #### `FooTable:Report:tNull;`
 
