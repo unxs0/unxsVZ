@@ -1905,7 +1905,7 @@ void funcModuleInsertQuery(FILE *fp)
 					if(cConcatField1[0] && cConcatField2[0])
 					{
 						if(strstr(field[2],"UNSIGNED_CONCAT:"))
-							fprintf(fp,"\t\t\t,%s,%s\n",cConcatField1,cConcatField2);
+							fprintf(fp,"\t\t\t,(long unsigned)%s,(long unsigned)%s\n",cConcatField1,cConcatField2);
 						else
 							fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",cConcatField1,cConcatField2);
 						break;
@@ -1913,7 +1913,7 @@ void funcModuleInsertQuery(FILE *fp)
 					else if(cConcatField1[0])
 					{
 						if(strstr(field[2],"UNSIGNED_CONCAT:"))
-							fprintf(fp,"\t\t\t,%s\n",cConcatField1);
+							fprintf(fp,"\t\t\t,(long unsigned)%s\n",cConcatField1);
 						else
 							fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",cConcatField1);
 						break;

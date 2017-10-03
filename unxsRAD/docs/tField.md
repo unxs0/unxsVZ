@@ -2,13 +2,19 @@
 
 ### cOtherOptions
 
+#### `CONCAT:cFieldName;`
 #### `CONCAT:cFieldName1,cFieldName2;`
+#### `UNSIGNED_CONCAT:uFieldName;`
+#### `UNSIGNED_CONCAT:uFieldName1,uFieldName2;`
 
 If the cOtherOptions contains the above for a given field then the created table.c file will on insert and update
-set the field as: `CONCAT(cFieldName1,' ',cFieldName2)`
+set the field as: `CONCAT(cFieldName1,' ',cFieldName2)`.
+
+The UNSIGNED version is for a single or two long unsigned or unsigned fields.
+The single cFieldName version simply sets cLabel to that field.
 
 This is useful for creating the default cLabel field from
-other column data. 
+other row data. 
 
 Technical: Implemented in unxsrad.c for `funcModuleUpdateQuery` and `funcModuleInsertQuery`.
 
