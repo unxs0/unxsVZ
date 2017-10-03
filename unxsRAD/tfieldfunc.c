@@ -197,6 +197,40 @@ void ExttFieldCommands(pentry entries[], int x)
 
 void ExttFieldButtons(void)
 {
+	void htmlTableInfo(unsigned uTable)
+	{
+        	MYSQL_RES *res;
+        	MYSQL_ROW field;
+
+		sprintf(gcQuery,"SELECT cLabel,cSubDir,cDescription,uTable FROM tTable WHERE uTable=%u",uTable);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+                	tTable(mysql_error(&gMysql));
+        	res=mysql_store_result(&gMysql);
+	        if((field=mysql_fetch_row(res)))
+		{
+			printf("Table: <a href=?gcFunction=tTable&uTable=%s>%s/%s</a> %s",field[3],field[1],field[0],field[2]);
+		}
+		mysql_free_result(res);
+	}//void htmlTableInfo(unsigned uTable)
+
+	void htmlFieldInfo(unsigned uTable)
+	{
+        	MYSQL_RES *res;
+        	MYSQL_ROW field;
+
+		sprintf(gcQuery,"SELECT cLabel,cOtherOptions,uField FROM tField WHERE uTable=%u AND cOtherOptions!=''",uTable);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+                	tTable(mysql_error(&gMysql));
+        	res=mysql_store_result(&gMysql);
+	        while((field=mysql_fetch_row(res)))
+		{
+			printf("<br><a href=?gcFunction=tField&uField=%s>%s</a> %s",field[2],field[0],field[1]);
+		}
+		mysql_free_result(res);
+	}//void htmlFieldInfo(unsigned uTable)
+
 	OpenFieldSet("tField Aux Panel",100);
 	switch(guMode)
         {
@@ -219,7 +253,10 @@ void ExttFieldButtons(void)
 			printf("<u>Table Tips</u><br>");
 			printf("<p><u>Record Context Info</u><br>");
 			if(uTable)
-				printf("tTable.uTable: %s/%s",ForeignKey("tTable","cSubDir",uTable),ForeignKey("tTable","cLabel",uTable));
+			{
+				htmlTableInfo(uTable);
+				htmlFieldInfo(uTable);
+			}
 			printf("<p><u>Operations</u><br>");
 			printf("<input type=submit class=largeButton"
 				" title='Select and keep this field marked for current work flow'"
