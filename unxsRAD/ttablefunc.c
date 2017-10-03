@@ -11,6 +11,7 @@ AUTHOR
 void AddDefaultFields(void);
 
 void htmlTemplateInfo(const char *cLabel);
+void htmlDescriptionInfo(const char *cDescription);
 char *ParseTextAreaLines(char *cTextArea);//see tprojectfunc.c
 void RemoveTableFields(char *cValue);
 void AddTableFields(char *cValue);
@@ -416,6 +417,55 @@ void ExttTableCommands(pentry entries[], int x)
 }//void ExttTableCommands(pentry entries[], int x)
 
 
+void htmlDescriptionInfo(const char *cDescription)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uParentTable=0;
+
+	sscanf(cDescription,"uParentTable=%u;",&uParentTable);
+	if(!uParentTable) return;
+	sprintf(gcQuery,"SELECT tTable.cLabel,tTemplateType.cLabel FROM tTable,tTemplateType"
+			" WHERE tTable.uTable='%u'"
+			" AND tTable.uTemplateType=tTemplateType.uTemplateType",uParentTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<br>Has parent table with: %s/%s\n",
+				field[0],field[1]);
+	}
+	char *cp;
+	unsigned uNotFirst=0;
+	if((cp=strchr(cLabel,'.')))
+	{
+		*cp=0;
+		sprintf(gcQuery,"SELECT tTable.cLabel,tTemplateType.cLabel,tTable.uTable FROM tTable,tTemplateType"
+			" WHERE tTable.cLabel LIKE '%%%s%%'"
+			" AND tTable.uTable!=%u"
+			" AND tTable.uTemplateType=tTemplateType.uTemplateType",cLabel,uTable);
+		*cp='.';	
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			if(!uNotFirst++)
+				printf("<br>Other tables that may be related:<br>%s/%s/%s\n",
+					field[0],field[1],field[2]);
+			else
+				printf("<br> %s/%s/%s\n",
+					field[0],field[1],field[2]);
+		}
+	}
+        mysql_free_result(res);
+
+}//void htmlDescriptionInfo(const char *cDescription)
+
+
 void htmlTemplateInfo(const char *cLabel)
 {
 	MYSQL_RES *res;
@@ -519,6 +569,8 @@ void ExttTableButtons(void)
 				printf("Loaded table belongs to current workflow project.");
 			else if(!guCookieProject)
 				printf("First of all tables (if any) loaded.");
+			if(strstr(cDescription,"uParentTable="))
+				htmlDescriptionInfo(cDescription);
 			htmlTemplateInfo(cLabel);
 			printf("<p><u>Operations</u><br>");
 			if(uTable)

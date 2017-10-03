@@ -3192,8 +3192,9 @@ void funcBootstrapRowVars(FILE *fp)
 			break;
 			default:
 				if(strstr(field[2],"FooTable:Report:"))
-					fprintf(fp,"'%s',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'>%s</a>')",
-						field[0],field[0]+1,gcTableName+1,gcTableName+1,field[0]+1);
+					fprintf(fp,"'%s',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'><span class=\\\\\\\\\\\"glyphicon glyphicon-edit\\\\\\\\\\\"></span></a>')",
+						//field[0],field[0]+1,gcTableName+1,gcTableName+1,field[0]+1);
+						field[0],field[0]+1,gcTableName+1,gcTableName+1);
 				else
 					fprintf(fp,"'%1$s',%1$s",field[0]);
 		}
@@ -3248,7 +3249,8 @@ void funcBootstrapRowFormats(FILE *fp)
 			break;
 
 			default:
-				if(uFirst==1)
+				//if(uFirst==1)
+				if(0)
 				{
 					fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\",");
 					fprintf(fp,"\\\"Report\\\": \\\""
@@ -3308,7 +3310,8 @@ void funcBootstrapRowFields(FILE *fp)
 			break;
 
 			default:
-				if(uFirst==0)
+				//if(uFirst==0)
+				if(0)
 				{
 					fprintf(fp,"field[%u],field[%u]",uFirst,uFirst+1);
 					fprintf(fp,",field[1]");
@@ -3396,7 +3399,8 @@ void funcBootstrapCols(FILE *fp)
 					" \\\"data-type\\\": \\\"%s\\\","
 					" \\\"breakpoints\\\": \\\"%s\\\"}%s\\n\");\n"
 				,field[0],field[0]+1,cFilterable,cDataType,cBreakpoints,cComma);
-		if(uCount==1)
+		//if(uCount==1)
+		if(0)
 			fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"Report\\\", \\\"title\\\": \\\"Select\\\", \\\"breakpoints\\\": \\\"\\\","
 					" \\\"filterable\\\": false},\\n\");\n");
 		if(uOnce && uCount>1)
@@ -3725,6 +3729,7 @@ void funcBSGetHookAdditionalPages(FILE *fp)
  *         else if(uPaciente)
  *         {
  *         	sprintf(gcContext,"Paciente %u",uPaciente);
+ *         	sprintf(gcContext,"Paciente %s",ForeignKey("tPaciente","cLabel",uPaciente));
  *         	sprintf(gcFilterRows,"&uPaciente=%u",uPaciente);
  *         	sprintf(gcFilterCols,"&uPaciente=%u",uPaciente);
  *         	uSetSessionConfig("uPaciente",uPaciente);
@@ -3735,14 +3740,14 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 		if(uNotFirst++) fprintf(fp,"\t");
 		fprintf(fp,"else if(%s)\n"
 			"\t{\n"
-			"\t\tsprintf(gcContext,\"%s %%u\",%s);\n"
+			"\t\tsprintf(gcContext,\"%s %%s\",cForeignKey(\"t%s\",\"cLabel\",%s));\n"
 			"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n"
 			"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n"
 			"\t\tuSetSessionConfig(\"%s\",%s);\n"
 			"\t\thtml%sFilter();\n"
 			"\t}\n",
 				field[0],
-				field[0]+1,field[0],
+				field[0]+1,field[0]+1,field[0],
 				field[0],field[0],
 				field[0],field[0],
 				field[0],field[0],
