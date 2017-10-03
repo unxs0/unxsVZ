@@ -240,6 +240,7 @@ void MakeSourceCodeJob(unsigned uJob,char const *cJobData)
 			"tProjectStatus.cLabel,tTable.uTemplateType"
 			" FROM tProject,tTable,tProjectStatus"
 			" WHERE tTable.uProject=tProject.uProject AND"
+			" tTable.uTemplateType!=0 AND"
 			" tProject.uProjectStatus=tProjectStatus.uStatus AND"
 			" tProject.uProject=%u",
 					uProject);
@@ -331,6 +332,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 				" WHERE cLabel='%s'"
 				" AND uTemplateSet=%u"
 				" AND uTemplateType=%u"
+				" AND uTemplateType!=0"
 					,cTable,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -356,6 +358,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 				" WHERE cLabel='%s.c'"
 				" AND uTemplateSet=%u"
 				" AND uTemplateType=%u"
+				" AND uTemplateType!=0"
 					,cTable,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -382,6 +385,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 				" WHERE cLabel='%sfunc.h'"
 				" AND uTemplateSet=%u"
 				" AND uTemplateType=%u"
+				" AND uTemplateType!=0"
 					,cTable,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -407,6 +411,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 				" WHERE cLabel='modulefunc.h'"
 				" AND uTemplateSet=%u"
 				" AND uTemplateType=%u"
+				" AND uTemplateType!=0"
 					,uTemplateSet,uTemplateType);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -435,6 +440,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 				" WHERE (cLabel='module.c' OR cLabel='table.c')"
 				" AND uTemplateSet=%u"
 				" AND uTemplateType=%u"
+				" AND uTemplateType!=0"
 					,uTemplateSet,uTemplateType);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -459,6 +465,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 				" WHERE cLabel='tTable.Body'"
 				" AND uTemplateSet=%u"
 				" AND uTemplateType=%u"
+				" AND uTemplateType!=0"
 					,uTemplateSet,uTemplateType);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -480,6 +487,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 				" WHERE cLabel='tTableReport.Body'"
 				" AND uTemplateSet=%u"
 				" AND uTemplateType=%u"
+				" AND uTemplateType!=0"
 					,uTemplateSet,uTemplateType);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -511,6 +519,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 				" WHERE cLabel='tTableFilter.Body'"
 				" AND uTemplateSet=%u"
 				" AND uTemplateType=%u"
+				" AND uTemplateType!=0"
 					,uTemplateSet,uTemplateType);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))

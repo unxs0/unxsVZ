@@ -12,6 +12,7 @@ void AddDefaultFields(void);
 
 void htmlTemplateInfo(const char *cLabel);
 void htmlDescriptionInfo(const char *cDescription);
+void htmlLabelInfo(const char *cLabel);
 char *ParseTextAreaLines(char *cTextArea);//see tprojectfunc.c
 void RemoveTableFields(char *cValue);
 void AddTableFields(char *cValue);
@@ -417,26 +418,10 @@ void ExttTableCommands(pentry entries[], int x)
 }//void ExttTableCommands(pentry entries[], int x)
 
 
-void htmlDescriptionInfo(const char *cDescription)
+void htmlLabelInfo(const char *cLabel)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	unsigned uParentTable=0;
-
-	sscanf(cDescription,"uParentTable=%u;",&uParentTable);
-	if(!uParentTable) return;
-	sprintf(gcQuery,"SELECT tTable.cLabel,tTemplateType.cLabel FROM tTable,tTemplateType"
-			" WHERE tTable.uTable='%u'"
-			" AND tTable.uTemplateType=tTemplateType.uTemplateType",uParentTable);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-		htmlPlainTextError(mysql_error(&gMysql));
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		printf("<br>Has parent table with: %s/%s\n",
-				field[0],field[1]);
-	}
 	char *cp;
 	unsigned uNotFirst=0;
 	if((cp=strchr(cLabel,'.')))
@@ -454,12 +439,56 @@ void htmlDescriptionInfo(const char *cDescription)
 		while((field=mysql_fetch_row(res)))
 		{
 			if(!uNotFirst++)
-				printf("<br>Other tables that may be related:<br>%s/%s/%s\n",
-					field[0],field[1],field[2]);
+				printf("<br>Other tables that may be related:"
+					"<br><a class=darkLink href=?gcFunction=tTable&uTable=%s>%s</a>/%s/%s\n",
+				field[2],field[0],field[1],field[2]);
 			else
-				printf("<br> %s/%s/%s\n",
-					field[0],field[1],field[2]);
+				printf("<br><a class=darkLink href=?gcFunction=tTable&uTable=%s>%s</a>/%s/%s\n",
+					field[2],field[0],field[1],field[2]);
 		}
+	}
+	sprintf(gcQuery,"SELECT tTable.cLabel,tTemplateType.cLabel,tTable.uTable FROM tTable,tTemplateType"
+			" WHERE tTable.cLabel LIKE '%%%s%%'"
+			" AND tTable.uTable!=%u"
+			" AND tTable.uTemplateType=tTemplateType.uTemplateType",cLabel+1,uTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	uNotFirst=0;
+	while((field=mysql_fetch_row(res)))
+	{
+		if(!uNotFirst++)
+			printf("<br>Other tables that may be related:<br><a class=darkLink href=?gcFunction=tTable&uTable=%s>%s</a>/%s/%s\n",
+				field[2],field[0],field[1],field[2]);
+		else
+			printf("<br><a class=darkLink href=?gcFunction=tTable&uTable=%s>%s</a>/%s/%s\n",
+				field[2],field[0],field[1],field[2]);
+	}
+        mysql_free_result(res);
+
+}//void htmlLabelInfo(const char *cLabel)
+
+
+void htmlDescriptionInfo(const char *cDescription)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uParentTable=0;
+
+	sscanf(cDescription,"uParentTable=%u;",&uParentTable);
+	if(!uParentTable) return;
+	sprintf(gcQuery,"SELECT tTable.cLabel,tTemplateType.cLabel,tTable.uTable FROM tTable,tTemplateType"
+			" WHERE tTable.uTable='%u'"
+			" AND tTable.uTemplateType=tTemplateType.uTemplateType",uParentTable);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		printf("<br>Has parent table with: <a class=darkLink href=?gcFunction=tTable&uTable=%s>%s</a>/%s\n",
+				field[2],field[0],field[1]);
 	}
         mysql_free_result(res);
 
@@ -571,6 +600,8 @@ void ExttTableButtons(void)
 				printf("First of all tables (if any) loaded.");
 			if(strstr(cDescription,"uParentTable="))
 				htmlDescriptionInfo(cDescription);
+			if(cLabel[0])
+				htmlLabelInfo(cLabel);
 			htmlTemplateInfo(cLabel);
 			printf("<p><u>Operations</u><br>");
 			if(uTable)
