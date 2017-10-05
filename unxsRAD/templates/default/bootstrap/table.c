@@ -75,13 +75,15 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 	else if(!strcmp(gcFunction,"{{cTableNameBS}}Cols"))
 		json{{cTableName}}Cols();
 
+	//Add special page links
+	{{funcBSGetHookAdditionalPages}}
+	
 	if({{cTableKey}})
 	{
-		sprintf(gcContext,"%u",{{cTableKey}});
+		sprintf(gcContext,"%s",cForeignKey("{{cTableName}}","cLabel",{{cTableKey}}));
 		uSetSessionConfig("{{cTableKey}}",{{cTableKey}});
 		html{{cTableName}}Report();
 	}
-	{{funcBSGetHookAdditionalPages}}
 	else
 		html{{cTableName}}();
 

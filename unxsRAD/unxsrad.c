@@ -100,6 +100,8 @@ void funcBootstrapColsReport(FILE *fp);
 void funcBSFKJsonRowsSelects(FILE *fp);
 //
 void funcBSTemplateFKNVPairs(FILE *fp);
+//
+void funcBootstrapRetEditor(FILE *fp);
 
 
 //external prototypes
@@ -2094,6 +2096,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcBSFKJsonRowsSelects(fp);
 	else if(!strcmp(cFunction,"funcBSTemplateFKNVPairs"))
 		funcBSTemplateFKNVPairs(fp);
+	else if(!strcmp(cFunction,"funcBootstrapRetEditor"))
+		funcBootstrapRetEditor(fp);
 	//special func that has variants
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
@@ -3711,6 +3715,58 @@ void funcBSGetHookAdditionalPages(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
+	//Context generator
+	sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tFieldType.uRADType=%u"
+			" AND tField.cOtherOptions LIKE '%%Bootstrap:Context;%%'"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder LIMIT 2",guTable,COLTYPE_FOREIGNKEY);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBSGetHookAdditionalPages",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uNotFirst=0;
+	char cContextVar[2][64]={"",""};
+	while((field=mysql_fetch_row(res)))
+		sprintf(cContextVar[uNotFirst++],"%.63s",field[0]);
+/*
+ * 	if(!uPaciente) uPaciente=uGetSessionConfig("uPaciente");
+ * 	if(!uConsulta) uConsulta=uGetSessionConfig("uConsulta");
+ *      if(uConsulta && uPaciente)
+ *      {
+ *      	sprintf(gcContext,"Consulta:%s Paciente:%s",
+ *			ForeignKey("tConsulta","cLabel",uConsulta),
+ *			ForeignKey("tPaciente","cLabel",uPaciente));
+ *	}
+ */
+
+	fprintf(fp,"\n//funcBSGetHookAdditionalPages\n");
+	fprintf(fp,"\tgcContext[0]=0;\n");
+	if(cContextVar[1][0] && cContextVar[0][0])
+	{
+	
+		fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[0]);
+		fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[1]);
+		fprintf(fp,"\tif(%s && %s)\n",cContextVar[0],cContextVar[1]);
+		fprintf(fp,"\t{\n");
+		fprintf(fp,"\t\tsprintf(gcContext,\"%s:%%s %s:%%s\",\n",cContextVar[0]+1,cContextVar[1]+1);
+		fprintf(fp,"\t\t\tcForeignKey(\"t%s\",\"cLabel\",%s),\n",cContextVar[0]+1,cContextVar[0]);
+		fprintf(fp,"\t\t\tcForeignKey(\"t%s\",\"cLabel\",%s));\n",cContextVar[1]+1,cContextVar[1]);
+		fprintf(fp,"\t}\n\n");
+	}
+
 	sprintf(gcQuery,"SELECT tField.cLabel"
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
@@ -3731,14 +3787,14 @@ void funcBSGetHookAdditionalPages(FILE *fp)
                 return;
         }
         res=mysql_store_result(&gMysql);
-	unsigned uNotFirst=0;
+	char *cElse="";
 	while((field=mysql_fetch_row(res)))
 	{
 /*
  *         else if(uPaciente)
  *         {
  *         	sprintf(gcContext,"Paciente %u",uPaciente);
- *         	sprintf(gcContext,"Paciente %s",ForeignKey("tPaciente","cLabel",uPaciente));
+ *         	if(!gcContext[0]) sprintf(gcContext,"Paciente %s",ForeignKey("tPaciente","cLabel",uPaciente));
  *         	sprintf(gcFilterRows,"&uPaciente=%u",uPaciente);
  *         	sprintf(gcFilterCols,"&uPaciente=%u",uPaciente);
  *         	uSetSessionConfig("uPaciente",uPaciente);
@@ -3746,21 +3802,21 @@ void funcBSGetHookAdditionalPages(FILE *fp)
  *         }
  */
 
-		if(uNotFirst++) fprintf(fp,"\t");
-		fprintf(fp,"else if(%s)\n"
+		fprintf(fp,"\t%sif(%s)\n"
 			"\t{\n"
-			"\t\tsprintf(gcContext,\"%s %%s\",cForeignKey(\"t%s\",\"cLabel\",%s));\n"
+			"\t\tif(!gcContext[0]) sprintf(gcContext,\"%s %%s\",cForeignKey(\"t%s\",\"cLabel\",%s));\n"
 			"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n"
 			"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n"
 			"\t\tuSetSessionConfig(\"%s\",%s);\n"
 			"\t\thtml%sFilter();\n"
 			"\t}\n",
-				field[0],
+				cElse,field[0],
 				field[0]+1,field[0]+1,field[0],
 				field[0],field[0],
 				field[0],field[0],
 				field[0],field[0],
 				gcTableName);
+		cElse="else ";
 	}
 
 }//void funcBSGetHookAdditionalPages(FILE *fp)
@@ -3868,3 +3924,47 @@ void funcBSTemplateFKNVPairs(FILE *fp)
 	}
 
 }//void funcBSTemplateFKNVPairs(FILE *fp)
+
+
+void funcBootstrapRetEditor(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tFieldType.uRADType=%u"
+			" AND tField.cOtherOptions LIKE '%%FooTable:Report:%%'"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable,COLTYPE_FOREIGNKEY);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBootstrapRetEditor",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uNotFirst=0;
+	while((field=mysql_fetch_row(res)))
+	{
+
+	
+
+/*
+ * 	//table = Consulta.Body field=uAntecedente
+ * 	values.uAntecedente= '<a href=?gcPage=Antecedente&uConsulta='+values.uConsulta+'><span class="glyphicon glyphicon-edit"></span></a>';
+ */
+		if(uNotFirst++) fprintf(fp,"\t\t\t\t\t\t");
+		fprintf(fp,"values.%s= '<a href=?gcPage=%s&%s='+values.%s+'><span class=\"glyphicon glyphicon-edit\"></span></a>';\n",
+			field[0],field[0]+1,gcTableKey,gcTableKey);
+	}
+
+}//void funcBootstrapRetEditor(FILE *fp)
