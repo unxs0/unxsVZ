@@ -990,7 +990,15 @@ const char *cForeignKey(const char *cTableName, const char *cFieldName, unsigned
         if(mysql_num_rows(mysqlRes)==1)
         {
                 mysqlField=mysql_fetch_row(mysqlRes);
-                return(mysqlField[0]);
+		if(mysqlField[0][0])
+		{
+			return(mysqlField[0]);
+		}
+		else
+		{
+			sprintf(cKey,"%u",uKey);
+			return(cKey);
+		}
         }
 	
 	if(!uKey)

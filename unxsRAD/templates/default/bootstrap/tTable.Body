@@ -221,6 +221,7 @@ jQuery(function($){
 						var r = retval;
 						values.u[[cTable]] = +r;
 						values.Report = '<a href=?gcPage=[[cTable]]&u[[cTable]]='+values.u[[cTable]]+'><span class="glyphicon glyphicon-ok-circle"></span></a>';
+						[[funcBootstrapRetEditor]]
 						console.log( 'Add[[cTable]] result: ' + r);
 						if ( values.u[[cTable]] > 0 )
 							ft.rows.add(values);

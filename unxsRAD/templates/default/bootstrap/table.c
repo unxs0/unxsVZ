@@ -80,7 +80,9 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 	
 	if({{cTableKey}})
 	{
-		sprintf(gcContext,"%s",cForeignKey("{{cTableName}}","cLabel",{{cTableKey}}));
+		//<a href=?gcPage=Paciente&uPaciente=%u>%s</a>
+		sprintf(gcContext,"<a href=?gcPage={{cTableNameBS}}&{{cTableKey}}=%u>%s</a>",
+					{{cTableKey}},cForeignKey("{{cTableName}}","cLabel",{{cTableKey}}));
 		uSetSessionConfig("{{cTableKey}}",{{cTableKey}});
 		html{{cTableName}}Report();
 	}

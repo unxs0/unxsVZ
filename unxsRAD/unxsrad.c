@@ -3478,7 +3478,8 @@ void funcBootstrapRowReportVars(FILE *fp)
 
 			default:
 				if(strstr(field[2],"FooTable:Report:"))
-					fprintf(fp,"'%s','<a href=?gcPage=%s&u%s=%%2$u>%s</a>'",field[0],field[0]+1,gcTableName+1,field[0]+1);
+					fprintf(fp,"'%s',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'><span class=\\\\\\\\\\\"glyphicon glyphicon-edit\\\\\\\\\\\"></span></a>')",
+						field[0],field[0]+1,gcTableName+1,gcTableName+1);
 				else
 					fprintf(fp,"'%1$s',%1$s",field[0]);
 		}
@@ -3720,14 +3721,14 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
-			" AND tFieldType.uRADType=%u"
+			" AND (tFieldType.uRADType=%u OR tFieldType.uRADType=%u)"
 			" AND tField.cOtherOptions LIKE '%%Bootstrap:Context;%%'"
 			" AND tField.cLabel!='uOwner'"
 			" AND tField.cLabel!='uCreatedBy'"
 			" AND tField.cLabel!='uCreatedDate'"
 			" AND tField.cLabel!='uModBy'"
 			" AND tField.cLabel!='uModDate'"
-			" ORDER BY tField.uOrder LIMIT 2",guTable,COLTYPE_FOREIGNKEY);
+			" ORDER BY tField.uOrder LIMIT 2",guTable,COLTYPE_FOREIGNKEY,COLTYPE_RADPRI);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
@@ -3746,9 +3747,10 @@ void funcBSGetHookAdditionalPages(FILE *fp)
  * 	if(!uConsulta) uConsulta=uGetSessionConfig("uConsulta");
  *      if(uConsulta && uPaciente)
  *      {
- *      	sprintf(gcContext,"Consulta:%s Paciente:%s",
- *			ForeignKey("tConsulta","cLabel",uConsulta),
- *			ForeignKey("tPaciente","cLabel",uPaciente));
+ *      	sprintf(gcContext,"Consulta:<a href=?gcPage=Consulta&uConsulta=%u>%s</a>"
+ *      			" Paciente:<a href=?gcPage=Paciente&uPaciente=%u>%s</a>",
+ *			uConsulta,ForeignKey("tConsulta","cLabel",uConsulta),
+ *			uPaciente,ForeignKey("tPaciente","cLabel",uPaciente));
  *	}
  */
 
@@ -3761,9 +3763,10 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 		fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[1]);
 		fprintf(fp,"\tif(%s && %s)\n",cContextVar[0],cContextVar[1]);
 		fprintf(fp,"\t{\n");
-		fprintf(fp,"\t\tsprintf(gcContext,\"%s:%%s %s:%%s\",\n",cContextVar[0]+1,cContextVar[1]+1);
-		fprintf(fp,"\t\t\tcForeignKey(\"t%s\",\"cLabel\",%s),\n",cContextVar[0]+1,cContextVar[0]);
-		fprintf(fp,"\t\t\tcForeignKey(\"t%s\",\"cLabel\",%s));\n",cContextVar[1]+1,cContextVar[1]);
+		fprintf(fp,"\t\tsprintf(gcContext,\"%s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\"\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]+1);
+		fprintf(fp,"\t\t\t\t\" %s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\",\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]+1);
+		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s),\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]);
+		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]);
 		fprintf(fp,"\t}\n\n");
 	}
 
@@ -3793,8 +3796,8 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 /*
  *         else if(uPaciente)
  *         {
- *         	sprintf(gcContext,"Paciente %u",uPaciente);
- *         	if(!gcContext[0]) sprintf(gcContext,"Paciente %s",ForeignKey("tPaciente","cLabel",uPaciente));
+ *         	if(!gcContext[0]) sprintf(gcContext,"Paciente <a href=?gcPage=Paciente&uPaciente=%u>%s</a>",
+ *         					uPaciente,ForeignKey("tPaciente","cLabel",uPaciente));
  *         	sprintf(gcFilterRows,"&uPaciente=%u",uPaciente);
  *         	sprintf(gcFilterCols,"&uPaciente=%u",uPaciente);
  *         	uSetSessionConfig("uPaciente",uPaciente);
@@ -3804,7 +3807,8 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 
 		fprintf(fp,"\t%sif(%s)\n"
 			"\t{\n"
-			"\t\tif(!gcContext[0]) sprintf(gcContext,\"%s %%s\",cForeignKey(\"t%s\",\"cLabel\",%s));\n"
+			"\t\tif(!gcContext[0]) sprintf(gcContext,\"%s <a href=?gcPage=%s&%s=%%u>%%s</a>\",\n"
+			"\t\t\t\t%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n"
 			"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n"
 			"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n"
 			"\t\tuSetSessionConfig(\"%s\",%s);\n"
@@ -3812,6 +3816,7 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 			"\t}\n",
 				cElse,field[0],
 				field[0]+1,field[0]+1,field[0],
+				field[0],field[0]+1,field[0],
 				field[0],field[0],
 				field[0],field[0],
 				field[0],field[0],
