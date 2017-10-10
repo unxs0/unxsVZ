@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{gcBrand}} User tab">
     <meta name="author" content="(C) Unixservice, LLC. 2014-2017">
-    <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico>
+    <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico?v=1>
 
     <title>{{gcOrgName}}</title>
 

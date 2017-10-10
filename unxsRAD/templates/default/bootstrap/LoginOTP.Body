@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{gcBrand}} web console">
     <meta name="author" content="Unixservice, LLC.">
-    <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico>
+    <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico?v=1>
 
     <title>{{gcBrand}}</title>
 
