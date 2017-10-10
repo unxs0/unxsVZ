@@ -27,7 +27,7 @@ void json{{cTableName}}Cols(void);
 {{funcModuleVars}}
 
 //Special template
-static char gcContext[100]={""};
+static char gcContext[256]={""};
 static char gcFilterRows[100]={""};
 static char gcFilterCols[100]={""};
 
