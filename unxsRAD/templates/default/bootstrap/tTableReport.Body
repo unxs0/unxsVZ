@@ -49,7 +49,10 @@
         <div class="col-xs-12 col-sm-9">
 
 <h3>[[cTable]] {{cContext}}</h3>
-<table class="table" data-paging="false" data-editing="false" data-sorting="false" data-filtering="false"></table>
+<table class="table" id="table1" data-paging="false" data-editing="false" data-sorting="false" data-filtering="false"></table>
+
+<h3>Latest Data</h3>
+<table class="table" id="table2" data-paging="false" data-editing="false" data-sorting="false" data-filtering="false"></table>
 
         </div><!--/.col-xs-12.col-sm-9-->
        </div><!--/row-->
@@ -71,10 +74,15 @@
 
 <script>
 jQuery(function($){
-	ft=FooTable.init($('.table'),{
+	ft=FooTable.init($('#table1'),{
 	"showToggle": false,
         "rows": $.get('{{cCGI}}','gcPage=[[cTable]]&gcFunction=[[cTable]]Rows&u[[cTable]]={{u[[cTable]]}}'),
         "columns": $.get('{{cCGI}}','gcPage=[[cTable]]&gcFunction=[[cTable]]Cols&u[[cTable]]={{u[[cTable]]}}'),
+	});
+	ft2=FooTable.init($('#table2'),{
+	"showToggle": false,
+        "rows": $.get('{{cCGI}}','gcPage=[[cTable]]&gcFunction=[[cTable]]LDRows&u[[cTable]]={{u[[cTable]]}}'),
+        "columns": $.get('{{cCGI}}','gcPage=[[cTable]]&gcFunction=[[cTable]]LDCols&u[[cTable]]={{u[[cTable]]}}'),
 	});
 });
 

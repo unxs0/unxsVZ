@@ -3200,8 +3200,6 @@ void funcBootstrapRowVars(FILE *fp)
 	unsigned uRADType=0;
 	while((field=mysql_fetch_row(res)))
 	{
-//		if(strstr(field[2],"FooTable:Report:"))
-//			continue;
 
 		sscanf(field[1],"%u",&uRADType);
 
@@ -3217,9 +3215,12 @@ void funcBootstrapRowVars(FILE *fp)
 				fprintf(fp,"'%1$s',REPLACE(%1$s,'\\n','\\\\\\\\n')",field[0]);
 			break;
 			default:
-				if(strstr(field[2],"FooTable:Report:"))
-					fprintf(fp,"'%s',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'><span class=\\\\\\\\\\\"glyphicon glyphicon-edit\\\\\\\\\\\"></span></a>')",
-						//field[0],field[0]+1,gcTableName+1,gcTableName+1,field[0]+1);
+				if(!strcmp(field[0],"cLabel"))
+					fprintf(fp,"'%s',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'>',cLabel,'</a>')",
+						field[0],gcTableName+1,gcTableName+1,gcTableName+1);
+				else if(strstr(field[2],"FooTable:Report:"))
+					fprintf(fp,"'%s',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'>"
+						"<span class=\\\\\\\\\\\"glyphicon glyphicon-edit\\\\\\\\\\\"></span></a>')",
 						field[0],field[0]+1,gcTableName+1,gcTableName+1);
 				else
 					fprintf(fp,"'%1$s',%1$s",field[0]);
@@ -3261,8 +3262,6 @@ void funcBootstrapRowFormats(FILE *fp)
 	unsigned uRADType=0;
 	while((field=mysql_fetch_row(res)))
 	{
-//		if(strstr(field[2],"FooTable:Report:"))
-//			continue;
 
 		sscanf(field[1],"%u",&uRADType);
 		if(uFirst++)
@@ -3275,18 +3274,7 @@ void funcBootstrapRowFormats(FILE *fp)
 			break;
 
 			default:
-				//if(uFirst==1)
-				if(0)
-				{
-					fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\",");
-					fprintf(fp,"\\\"Report\\\": \\\""
-					"<a href=?gcPage=%1$s&u%1$s=%%s><span class=\\\\\\\"glyphicon glyphicon-ok-circle\\\\\\\">"
-					"</span></a>\\\"",gcTableName+1);
-				}
-				else
-				{
-					fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
-				}
+				fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
 		}
 	}
 	mysql_free_result(res);
@@ -3322,8 +3310,6 @@ void funcBootstrapRowFields(FILE *fp)
 	unsigned uRADType=0;
 	while((field=mysql_fetch_row(res)))
 	{
-//		if(strstr(field[2],"FooTable:Report:"))
-//			continue;
 
 		sscanf(field[1],"%u",&uRADType);
 		if(uFirst)
@@ -3363,7 +3349,6 @@ void funcBootstrapCols(FILE *fp)
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
-			//" AND (NOT tField.cOtherOptions LIKE '%%FooTable:Report:%%')"
 			" AND tField.cLabel!='uOwner'"
 			" AND tField.cLabel!='uCreatedBy'"
 			" AND tField.cLabel!='uCreatedDate'"
@@ -3391,8 +3376,6 @@ void funcBootstrapCols(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		uCount++;
-		//if(strstr(field[2],"FooTable:Report:"))
-		//	continue;
 
 		sscanf(field[3],"%u",&uRADType);
 
@@ -3419,16 +3402,14 @@ void funcBootstrapCols(FILE *fp)
 			cFilterable="true";
 		else
 			cFilterable="false";
+		if(!strcmp(field[0],"cLabel"))
+				cDataType="html";
 		if(uCount>=uRows) cComma="";
 		fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"%s\\\", \\\"title\\\": \\\"%s\\\","
 					" \\\"filterable\\\": %s,"
 					" \\\"data-type\\\": \\\"%s\\\","
 					" \\\"breakpoints\\\": \\\"%s\\\"}%s\\n\");\n"
 				,field[0],field[0]+1,cFilterable,cDataType,cBreakpoints,cComma);
-		//if(uCount==1)
-		if(0)
-			fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"Report\\\", \\\"title\\\": \\\"Select\\\", \\\"breakpoints\\\": \\\"\\\","
-					" \\\"filterable\\\": false},\\n\");\n");
 		if(uOnce && uCount>1)
 		{
 			cBreakpoints="all";
@@ -3491,7 +3472,8 @@ void funcBootstrapRowReportVars(FILE *fp)
 
 			default:
 				if(strstr(field[2],"FooTable:Report:"))
-					fprintf(fp,"'%s',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'><span class=\\\\\\\\\\\"glyphicon glyphicon-edit\\\\\\\\\\\"></span></a>')",
+					fprintf(fp,"'%s',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'>"
+						"<span class=\\\\\\\\\\\"glyphicon glyphicon-edit\\\\\\\\\\\"></span></a>')",
 						field[0],field[0]+1,gcTableName+1,gcTableName+1);
 				else
 					fprintf(fp,"'%1$s',%1$s",field[0]);
@@ -3662,7 +3644,7 @@ void funcBootstrapColsReport(FILE *fp)
 			cFilterable="true";
 		else
 			cFilterable="false";
-		if(strstr(field[2],"FooTable:Report:"))
+		if(strstr(field[2],"FooTable:Report:") || !strcmp(field[0],"cLabel"))
 		{
 				cDataType="html";
 		}
@@ -3729,7 +3711,9 @@ void funcBSGetHookPrePages(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	//Context generator
+	//Context generator: Bootstrap table
+	char cTableOptions[64]={""};
+	sprintf(cTableOptions,"%.63s",ForeignKey("tTable","cDescription",guTable));
 	sprintf(gcQuery,"SELECT tField.cLabel"
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
@@ -3756,13 +3740,71 @@ void funcBSGetHookPrePages(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 		sprintf(cContextVar[uNotFirst++],"%.63s",field[0]);
 
-	fprintf(fp,"//funcBSGetHookPrePages\n");
-	fprintf(fp,"\tgcContext[0]=0;\n");
-	if(cContextVar[1][0] && cContextVar[0][0])
+	if(strstr(cTableOptions,"Bootstrap:Level1"))
 	{
-		fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[0]);
-		fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[1]);
-	}
+		fprintf(fp,"//funcBSGetHookPrePages Bootstrap:Level1\n");
+	
+		fprintf(fp,"\tgcContext[0]=0;\n");
+//if({{cTableKey}})
+//{
+//	sprintf(gcContext,"<a href=?gcPage={{cTableNameBS}}&{{cTableKey}}=%u>%s</a>",
+//				{{cTableKey}},cForeignKey("{{cTableName}}","cLabel",{{cTableKey}}));
+//	uSetSessionConfig("{{cTableKey}}",{{cTableKey}});
+//	uSetSessionConfig("{{cContextVar}}",0);
+//	html{{cTableName}}Report();
+//}
+		if(cContextVar[0][0] || cContextVar[1][0])
+		{
+			char *cp=cContextVar[1];
+			if(!cContextVar[1][0])
+				cp=cContextVar[0];
+			fprintf(fp,"\tif(%s)\n"
+			"\t{\n"
+			"\t\tsprintf(gcContext,\"<a href=?gcPage=%s&%s=%%u>%%s</a>\",\n"
+			"\t\t\t\t%s,cForeignKey(\"%s\",\"cLabel\",%s));\n"
+			"\t\tuSetSessionConfig(\"%s\",%s);\n"
+			"\t\tuSetSessionConfig(\"%s\",0);\n"
+			"\t\thtml%sReport();\n"
+			"\t}\n",
+				gcTableKey,
+				gcTableNameBS,gcTableKey,
+				gcTableKey,gcTableName,gcTableKey,
+				gcTableKey,gcTableKey,
+				cp,
+				gcTableName);
+		}
+		else
+			fprintf(fp,"\tif(%s)\n"
+			"\t{\n"
+			"\t\tsprintf(gcContext,\"<a href=?gcPage=%s&%s=%%u>%%s</a>\",\n"
+			"\t\t\t\t%s,cForeignKey(\"%s\",\"cLabel\",%s));\n"
+			"\t\tuSetSessionConfig(\"%s\",%s);\n"
+			"\t\thtml%sReport();\n"
+			"\t}\n",
+				gcTableKey,
+				gcTableNameBS,gcTableKey,
+				gcTableKey,gcTableName,gcTableKey,
+				gcTableKey,gcTableKey,
+				gcTableName);
+	}//Bootstrap:Level1 end
+	else if(strstr(cTableOptions,"Bootstrap:Level2"))
+	{
+		fprintf(fp,"//funcBSGetHookPrePages Bootstrap:Level2\n");
+		if(cContextVar[0][0])
+			fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[0]);
+		if(cContextVar[1][0])
+			fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[1]);
+	}//Bootstrap:Level2 end
+	else
+	{
+		fprintf(fp,"//funcBSGetHookPrePages Bootstrap:Level3\n");
+		if(cContextVar[0][0])
+			fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[0]);
+		if(cContextVar[1][0])
+			fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[1]);
+	
+	}//Bootstrap:Level3 implicit end
+	
 }//void funcBSGetHookPrePages(FILE *fp)
 
 
@@ -3771,7 +3813,9 @@ void funcBSGetHookPages(FILE *fp)
        	MYSQL_RES *res;
         MYSQL_ROW field;
 
-	//Context generator
+	//Context generator: Bootstrap table
+	char cTableOptions[64]={""};
+	sprintf(cTableOptions,"%.63s",ForeignKey("tTable","cDescription",guTable));
 	sprintf(gcQuery,"SELECT tField.cLabel"
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
@@ -3798,10 +3842,6 @@ void funcBSGetHookPages(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 		sprintf(cContextVar[uNotFirst++],"%.63s",field[0]);
 /*
- * 	//Moved to PrePages
- * 	if(!uPaciente) uPaciente=uGetSessionConfig("uPaciente");
- * 	if(!uConsulta) uConsulta=uGetSessionConfig("uConsulta");
- *	//End moved
  *      if(uConsulta && uPaciente)
  *      {
  *      	sprintf(gcContext,"Consulta:<a href=?gcPage=Consulta&uConsulta=%u>%s</a>"
@@ -3811,9 +3851,16 @@ void funcBSGetHookPages(FILE *fp)
  *	}
  */
 
-	fprintf(fp,"//funcBSGetHookPages\n");
-	if(cContextVar[1][0] && cContextVar[0][0])
+	if(strstr(cTableOptions,"Bootstrap:Level1"))
 	{
+		fprintf(fp,"//funcBSGetHookPages Bootstrap:Level1\n");
+	
+	}
+	else if(strstr(cTableOptions,"Bootstrap:Level2"))
+	{
+		fprintf(fp,"//funcBSGetHookPages Bootstrap:Level2\n");
+		if(cContextVar[1][0] && cContextVar[0][0])
+		{
 	
 		fprintf(fp,"\tif(%s && %s)\n",cContextVar[0],cContextVar[1]);
 		fprintf(fp,"\t{\n");
@@ -3821,32 +3868,37 @@ void funcBSGetHookPages(FILE *fp)
 		fprintf(fp,"\t\t\t\t\" %s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\",\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]+1);
 		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s),\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]);
 		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]);
+		fprintf(fp,"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n",cContextVar[0],cContextVar[0]);
+		fprintf(fp,"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n",cContextVar[0],cContextVar[0]);
+		fprintf(fp,"\t\tuSetSessionConfig(\"%s\",%s);\n",cContextVar[0],cContextVar[0]);
+		fprintf(fp,"\t\thtml%sFilter();\n",gcTableName);
 		fprintf(fp,"\t}\n\n");
-	}
+		}
 
-	sprintf(gcQuery,"SELECT tField.cLabel"
+		sprintf(gcQuery,"SELECT tField.cLabel"
 			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
 			" AND tFieldType.uRADType=%u"
+			" AND tField.cOtherOptions LIKE '%%Bootstrap:Context;%%'"
 			" AND tField.cLabel!='uOwner'"
 			" AND tField.cLabel!='uCreatedBy'"
 			" AND tField.cLabel!='uCreatedDate'"
 			" AND tField.cLabel!='uModBy'"
 			" AND tField.cLabel!='uModDate'"
 			" ORDER BY tField.uOrder",guTable,COLTYPE_FOREIGNKEY);
-        mysql_query(&gMysql,gcQuery);
-        if(mysql_errno(&gMysql))
-	{
-		if(guDebug)
-			logfileLine("funcBSGetHookPages",gcQuery);
-                fprintf(fp,"%s",mysql_error(&gMysql));
-                return;
-        }
-        res=mysql_store_result(&gMysql);
-	char *cElse="";
-	while((field=mysql_fetch_row(res)))
-	{
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+		{
+			if(guDebug)
+				logfileLine("funcBSGetHookPages",gcQuery);
+			fprintf(fp,"%s",mysql_error(&gMysql));
+			return;
+		}
+		res=mysql_store_result(&gMysql);
+		char *cElse="";
+		while((field=mysql_fetch_row(res)))
+		{
 /*
  *         else if(uPaciente)
  *         {
@@ -3855,11 +3907,12 @@ void funcBSGetHookPages(FILE *fp)
  *         	sprintf(gcFilterRows,"&uPaciente=%u",uPaciente);
  *         	sprintf(gcFilterCols,"&uPaciente=%u",uPaciente);
  *         	uSetSessionConfig("uPaciente",uPaciente);
+ *         	uSetSessionConfig("uConsulta",0);
  *         	htmltConsultaFilter();
  *         }
  */
 
-		fprintf(fp,"\t%sif(%s)\n"
+			fprintf(fp,"\t%sif(%s)\n"
 			"\t{\n"
 			"\t\tif(!gcContext[0]) sprintf(gcContext,\"%s <a href=?gcPage=%s&%s=%%u>%%s</a>\",\n"
 			"\t\t\t\t%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n"
@@ -3875,8 +3928,98 @@ void funcBSGetHookPages(FILE *fp)
 				field[0],field[0],
 				field[0],field[0],
 				gcTableName);
-		cElse="else ";
+		
+			cElse="else ";
+		}
 	}
+	else
+	{
+		fprintf(fp,"//funcBSGetHookPages Bootstrap:Level3\n");
+		if(cContextVar[1][0] && cContextVar[0][0])
+		{
+	
+		fprintf(fp,"\tif(%s && %s && %s)\n",cContextVar[0],cContextVar[1],field[0]);
+		fprintf(fp,"\t{\n");
+		fprintf(fp,"\t\tsprintf(gcContext,\"%s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\"\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]+1);
+		fprintf(fp,"\t\t\t\t\" %s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\",\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]+1);
+		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s),\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]);
+		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]);
+		fprintf(fp,"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n",field[0],field[0]);
+		fprintf(fp,"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n",field[0],field[0]);
+		fprintf(fp,"\t\tuSetSessionConfig(\"%s\",%s);\n",field[0],field[0]);
+		fprintf(fp,"\t\thtml%sFilter();\n",gcTableName);
+		fprintf(fp,"\t}\n\n");
+		fprintf(fp,"\telse if(%s && %s)\n",cContextVar[0],cContextVar[1]);
+		fprintf(fp,"\t{\n");
+		fprintf(fp,"\t\tsprintf(gcContext,\"%s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\"\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]+1);
+		fprintf(fp,"\t\t\t\t\" %s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\",\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]+1);
+		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s),\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]);
+		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]);
+		fprintf(fp,"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n",cContextVar[0],cContextVar[0]);
+		fprintf(fp,"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n",cContextVar[0],cContextVar[0]);
+		fprintf(fp,"\t\tuSetSessionConfig(\"%s\",%s);\n",cContextVar[0],cContextVar[0]);
+		fprintf(fp,"\t\thtml%sFilter();\n",gcTableName);
+		fprintf(fp,"\t}\n\n");
+		}
+
+		sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tFieldType.uRADType=%u"
+			" AND tField.cOtherOptions LIKE '%%Bootstrap:Context;%%'"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",guTable,COLTYPE_FOREIGNKEY);
+        	mysql_query(&gMysql,gcQuery);
+        	if(mysql_errno(&gMysql))
+		{
+			if(guDebug)
+				logfileLine("funcBSGetHookPages",gcQuery);
+			fprintf(fp,"%s",mysql_error(&gMysql));
+			return;
+		}
+		res=mysql_store_result(&gMysql);
+		char *cElse="";
+		while((field=mysql_fetch_row(res)))
+		{
+/*
+ *         else if(uPaciente)
+ *         {
+ *         	if(!gcContext[0]) sprintf(gcContext,"Paciente <a href=?gcPage=Paciente&uPaciente=%u>%s</a>",
+ *         					uPaciente,ForeignKey("tPaciente","cLabel",uPaciente));
+ *         	sprintf(gcFilterRows,"&uPaciente=%u",uPaciente);
+ *         	sprintf(gcFilterCols,"&uPaciente=%u",uPaciente);
+ *         	uSetSessionConfig("uPaciente",uPaciente);
+ *         	uSetSessionConfig("uConsulta",0);
+ *         	htmltConsultaFilter();
+ *         }
+ */
+
+			fprintf(fp,"\t%sif(%s)\n"
+			"\t{\n"
+			"\t\tif(!gcContext[0]) sprintf(gcContext,\"%s <a href=?gcPage=%s&%s=%%u>%%s</a>\",\n"
+			"\t\t\t\t%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n"
+			"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n"
+			"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n"
+			"\t\tuSetSessionConfig(\"%s\",%s);\n"
+			"\t\thtml%sFilter();\n"
+			"\t}\n",
+				cElse,field[0],
+				field[0]+1,field[0]+1,field[0],
+				field[0],field[0]+1,field[0],
+				field[0],field[0],
+				field[0],field[0],
+				field[0],field[0],
+				gcTableName);
+		
+			cElse="else ";
+		}
+
+	}//All other implicit Bootstrap:Level3
 
 }//void funcBSGetHookPages(FILE *fp)
 

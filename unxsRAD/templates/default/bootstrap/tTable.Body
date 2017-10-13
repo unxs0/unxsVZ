@@ -50,7 +50,7 @@
 
         <div class="col-xs-12 col-sm-9">
 
-<h3>[[cTable]]</h3>
+<h3>[[cTable]] {{cContext}}</h3>
 <table class="table" data-paging="true" data-editing="true" data-sorting="true" data-filtering="true"></table>
 
 <!-- Editing Modal Markup -->
@@ -148,7 +148,7 @@ jQuery(function($){
 				$delform.find('#u[[cTable]]').val(values.u[[cTable]]);
 				$delform.find('#cLabel').val(values.cLabel);
 				$deleteModal.data('row', row);
-				$deleteTitle.text('Eliminar [[cTable]] {{cContext}} ' + values.u[[cTable]]);
+				$deleteTitle.html('Eliminar [[cTable]] {{cContext}} ' + values.u[[cTable]]);
 				$deleteButton.text('Eliminar [[cTable]] Cuidado!');
 				$deleteModal.modal('show');
 			},
@@ -157,14 +157,14 @@ jQuery(function($){
 				$editor.find('#u[[cTable]]').val(values.u[[cTable]]);
                                 [[funcBootstrapFindFields]]			
 				$editorModal.data('row', row);
-				$editorTitle.text('Modificar [[cTable]] {{cContext}} ' + values.u[[cTable]]);
+				$editorTitle.html('Modificar [[cTable]] {{cContext}} ' + values.u[[cTable]]);
 				$editorButton.text('Modificar [[cTable]]');
 				$editorModal.modal('show');
 			},
 			addRow: function(){
 				$editorModal.removeData('row');
 				$editor[0].reset();
-				$editorTitle.text('Agregar [[cTable]]');
+				$editorTitle.html('Agregar [[cTable]] {{cContext}}');
 				$editorButton.text('Agregar [[cTable]]');
 				$editorModal.modal('show');
 			}

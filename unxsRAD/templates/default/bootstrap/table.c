@@ -84,14 +84,6 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 	//Add special page links
 	
 	{{funcBSGetHookPrePages}}
-	if({{cTableKey}})
-	{
-		//<a href=?gcPage=Paciente&uPaciente=%u>%s</a>
-		sprintf(gcContext,"<a href=?gcPage={{cTableNameBS}}&{{cTableKey}}=%u>%s</a>",
-					{{cTableKey}},cForeignKey("{{cTableName}}","cLabel",{{cTableKey}}));
-		uSetSessionConfig("{{cTableKey}}",{{cTableKey}});
-		html{{cTableName}}Report();
-	}
 	{{funcBSGetHookPages}}
 	html{{cTableName}}();
 
