@@ -22,6 +22,8 @@ void html{{cTableName}}Filter(void);
 void html{{cTableName}}Page(char *cTitle, char *cTemplateName);
 void json{{cTableName}}Rows(void);
 void json{{cTableName}}Cols(void);
+void json{{cTableName}}LDRows(void);
+void json{{cTableName}}LDCols(void);
 
 //funcModuleVars
 {{funcModuleVars}}
@@ -74,10 +76,14 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 		json{{cTableName}}Rows();
 	else if(!strcmp(gcFunction,"{{cTableNameBS}}Cols"))
 		json{{cTableName}}Cols();
+	else if(!strcmp(gcFunction,"{{cTableNameBS}}LDRows"))
+		json{{cTableName}}LDRows();
+	else if(!strcmp(gcFunction,"{{cTableNameBS}}LDCols"))
+		json{{cTableName}}LDCols();
 
 	//Add special page links
-	{{funcBSGetHookAdditionalPages}}
 	
+	{{funcBSGetHookPrePages}}
 	if({{cTableKey}})
 	{
 		//<a href=?gcPage=Paciente&uPaciente=%u>%s</a>
@@ -86,8 +92,8 @@ void {{cTableName}}GetHook(entry gentries[],int x)
 		uSetSessionConfig("{{cTableKey}}",{{cTableKey}});
 		html{{cTableName}}Report();
 	}
-	else
-		html{{cTableName}}();
+	{{funcBSGetHookPages}}
+	html{{cTableName}}();
 
 }//void {{cTableName}}GetHook(entry gentries[],int x)
 
@@ -385,3 +391,148 @@ void json{{cTableName}}Cols(void)
 	printf("]\n");
 	exit(0);
 }//void json{{cTableName}}Cols(void)
+
+
+void json{{cTableName}}LDRows(void)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cQuery[1028]={""};
+
+	char cTables[16][64]={"{{funcBSLDTables}}"};
+
+	//for errors
+	printf("Content-type: text/json\n\n");
+	printf("[\n");
+
+	sprintf(cQuery,"CREATE TEMPORARY TABLE tLatestData"
+			" ("
+			" uLatestData INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cuTableKey VARCHAR(16) NOT NULL DEFAULT '',"
+			" cTable VARCHAR(32) NOT NULL DEFAULT '',"
+			" cTableLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			" cLastDate VARCHAR(32) NOT NULL DEFAULT '',"
+			" cuLastUser VARCHAR(16) NOT NULL DEFAULT '',"
+			" cCreatedDate VARCHAR(32) NOT NULL DEFAULT '',"
+			" cModDate VARCHAR(32) NOT NULL DEFAULT '',"
+			" cuCreatedBy VARCHAR(16) NOT NULL DEFAULT '',"
+			" cuModBy VARCHAR(16) NOT NULL DEFAULT '',"
+			" c{{funcBSLDContextVar2}} VARCHAR(16) NOT NULL DEFAULT ''"
+			" )");
+	mysql_query(&gMysql,cQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("\t{\n");
+		printf("\"status\" : \"error\",");
+		printf("\"message\" : \"error1: %s\"",mysql_error(&gMysql));
+		printf("}\n");
+		printf("]\n");
+		exit(0);
+	}
+
+	register int i;
+	for(i=0;i<16 && cTables[i][0];i++)
+	{
+		sprintf(cQuery,"INSERT INTO tLatestData"
+			" ("
+			" cuTableKey,cTable,cTableLabel,"
+			" cCreatedDate,cModDate,"
+			" cuCreatedBy,cuModBy,c{{funcBSLDContextVar2}},"
+			" cLastDate,cuLastUser"
+			" )"
+			" SELECT u%s,'%s',cLabel,"
+			" FROM_UNIXTIME(uCreatedDate),IF(uModDate,FROM_UNIXTIME(uModDate),'Not Modified'),"
+			" uCreatedBy,uModBy,{{funcBSLDContextVar2}},"
+			" IF(uModDate,FROM_UNIXTIME(uModDate),FROM_UNIXTIME(uCreatedDate)),"
+			" IF(uModDate,uModBy,uCreatedBy)"
+			" FROM t%s"
+			" WHERE {{funcBSLDContextVar1}}=%u"
+			" ORDER BY uModDate DESC,uCreatedDate DESC",
+				cTables[i],cTables[i],cTables[i],{{funcBSLDContextVar1}});
+		mysql_query(&gMysql,cQuery);
+		if(mysql_errno(&gMysql))
+		{
+			printf("\t{\n");
+			printf("\t\t\"status\" : \"error\",\n");
+			printf("\t\t\"message\" : \"error2: %s\"\n",mysql_error(&gMysql));
+			printf("\t}\n");
+			printf("]\n");
+			exit(0);
+		}
+	}
+
+	sprintf(cQuery,"SELECT 'cuTableKey',cuTableKey,"
+			"'cTable',cTable,"
+			"'cTableLabel',cTableLabel,"
+			"'cLastDate',cLastDate,"
+			"'cLastUser',cuLastUser,"
+			"'cCreatedDate',cCreatedDate,"
+			"'cModDate',cModDate,"
+			"'cCreatedBy',cuCreatedBy,"
+			"'cModBy',cuModBy,"
+			"'c{{funcBSLDContextVar2}}',c{{funcBSLDContextVar2}}"
+			" FROM tLatestData");
+	mysql_query(&gMysql,cQuery);
+	if(mysql_errno(&gMysql))
+	{
+		printf("\t{\n");
+		printf("\t\t\"status\" : \"error\",\n");
+		printf("\t\t\"message\" : \"error3: %s\"\n",mysql_error(&gMysql));
+		printf("\t}\n");
+		printf("]\n");
+		exit(0);
+	}
+	res=mysql_store_result(&gMysql);
+	unsigned uNumRows=0;
+	if((uNumRows=mysql_num_rows(res))>0)
+	{
+		unsigned uLast=0;
+		while((field=mysql_fetch_row(res)))
+		{
+			unsigned uLastUser=0;
+			sscanf(field[9],"%u",&uLastUser);
+			printf("\t{");
+				printf("\"%s\": \"%s\","
+					"\"%s\": \"<a href=?gcPage=%s&u%s=%s&{{funcBSLDContextVar1}}=%u&{{funcBSLDContextVar2}}=%s>%s</a>\","
+					"\"%s\": \"%s\","
+					"\"%s\": \"%s\",\"%s\": \"%s\",\"%s\": \"%s\","
+					"\"%s\": \"%s\",\"%s\": \"%s\",\"%s\": \"%s\"",
+					field[2],field[3],
+					field[4],field[3],field[3],field[1],{{funcBSLDContextVar1}},field[19],field[5],
+					field[6],field[7],
+					field[8],cForeignKey("tClient","cLabel",uLastUser),field[10],field[11],field[12],field[13],
+					field[14],field[15],field[16],field[17],field[18],field[19]);
+			printf("}");
+			if((++uLast)<uNumRows)
+				printf(",\n");
+			else
+				printf("\n");
+		}
+	}
+	mysql_free_result(res);
+	printf("]\n");
+	exit(0);
+
+}//void json{{cTableName}}LDRows(void)
+
+
+void json{{cTableName}}LDCols(void)
+{
+	printf("Content-type: text/json\n\n");
+	printf("[\n");
+
+	printf("\t{\"name\": \"cTable\", \"title\": \"Table\", \"filterable\": true, \"data-type\": \"html\", \"breakpoints\": \"\"},\n");
+	printf("\t{\"name\": \"cTableLabel\", \"title\": \"TableLabel\", \"filterable\": true, \"data-type\": \"html\", \"breakpoints\": \"\"},\n");
+	printf("\t{\"name\": \"cLastDate\", \"title\": \"LastDate\", \"filterable\": true, \"data-type\": \"text\", \"breakpoints\": \"\"},\n");
+	printf("\t{\"name\": \"cLastUser\", \"title\": \"LastUser\", \"filterable\": true, \"data-type\": \"text\", \"breakpoints\": \"\"},\n");
+	printf("\t{\"name\": \"cCreatedDate\", \"title\": \"CreatedDate\", \"filterable\": true, \"data-type\": \"text\", \"breakpoints\": \"all\"},\n");
+	printf("\t{\"name\": \"cModDate\", \"title\": \"ModDate\", \"filterable\": true, \"data-type\": \"text\", \"breakpoints\": \"all\"},\n");
+	printf("\t{\"name\": \"cCreatedBy\", \"title\": \"CreatedBy\", \"filterable\": true, \"data-type\": \"text\", \"breakpoints\": \"all\"},\n");
+	printf("\t{\"name\": \"cModBy\", \"title\": \"ModBy\", \"filterable\": true, \"data-type\": \"text\", \"breakpoints\": \"all\"},\n");
+	//last line no ,		
+	printf("\t{\"name\": \"c{{funcBSLDContextVar2}}\", \"title\": \"c{{funcBSLDContextVar2}}\", \"filterable\": true, \"data-type\": \"html\", \"breakpoints\": \"all\"}\n");
+
+	printf("]\n");
+	exit(0);
+}//void json{{cTableName}}LDCols(void)
+

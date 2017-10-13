@@ -536,7 +536,16 @@ void tStatusList(void)
 
 void CreatetStatus(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tStatus ( uStatus INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(32) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0 )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tStatus"
+			" ("
+			" uStatus INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cLabel VARCHAR(32) NOT NULL DEFAULT '',"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0"
+			" )");
 	macro_mySQLQueryHTMLError;
 
 }//CreatetStatus()

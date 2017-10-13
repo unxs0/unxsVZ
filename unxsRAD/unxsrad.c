@@ -72,7 +72,8 @@ void funcMainNavBars(FILE *fp);
 void funcMainPostFunctions(FILE *fp);
 void funcBootstrapMainPostFunctions(FILE *fp);
 void funcBSGetHookAdditionalGentries(FILE *fp);
-void funcBSGetHookAdditionalPages(FILE *fp);
+void funcBSGetHookPrePages(FILE *fp);
+void funcBSGetHookPages(FILE *fp);
 void funcMainTabMenu(FILE *fp);
 void funcMainInitTableList(FILE *fp);
 void funcMainCreateTables(FILE *fp);
@@ -102,6 +103,10 @@ void funcBSFKJsonRowsSelects(FILE *fp);
 void funcBSTemplateFKNVPairs(FILE *fp);
 //
 void funcBootstrapRetEditor(FILE *fp);
+//table.c Latest Linked Data
+void funcBSLDTables(FILE *fp);
+void funcBSLDContextVar1(FILE *fp);//uPaciente
+void funcBSLDContextVar2(FILE *fp);//uConsulta
 
 
 //external prototypes
@@ -2090,14 +2095,22 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcBootstrapConcat(fp);
 	else if(!strcmp(cFunction,"funcBSGetHookAdditionalGentries"))
 		funcBSGetHookAdditionalGentries(fp);
-	else if(!strcmp(cFunction,"funcBSGetHookAdditionalPages"))
-		funcBSGetHookAdditionalPages(fp);
+	else if(!strcmp(cFunction,"funcBSGetHookPrePages"))
+		funcBSGetHookPrePages(fp);
+	else if(!strcmp(cFunction,"funcBSGetHookPages"))
+		funcBSGetHookPages(fp);
 	else if(!strcmp(cFunction,"funcBSFKJsonRowsSelects"))
 		funcBSFKJsonRowsSelects(fp);
 	else if(!strcmp(cFunction,"funcBSTemplateFKNVPairs"))
 		funcBSTemplateFKNVPairs(fp);
 	else if(!strcmp(cFunction,"funcBootstrapRetEditor"))
 		funcBootstrapRetEditor(fp);
+	else if(!strcmp(cFunction,"funcBSLDTables"))
+		funcBSLDTables(fp);
+	else if(!strcmp(cFunction,"funcBSLDContextVar1"))
+		funcBSLDContextVar1(fp);
+	else if(!strcmp(cFunction,"funcBSLDContextVar2"))
+		funcBSLDContextVar2(fp);
 	//special func that has variants
 	else if(!strncmp(cFunction,"funcConfiguration",17))
 		funcConfiguration(fp,cFunction);
@@ -3711,7 +3724,7 @@ void funcBSGetHookAdditionalGentries(FILE *fp)
 }//void funcBSGetHookAdditionalGentries(FILE *fp)
 
 
-void funcBSGetHookAdditionalPages(FILE *fp)
+void funcBSGetHookPrePages(FILE *fp)
 {
        	MYSQL_RES *res;
         MYSQL_ROW field;
@@ -3733,7 +3746,49 @@ void funcBSGetHookAdditionalPages(FILE *fp)
         if(mysql_errno(&gMysql))
 	{
 		if(guDebug)
-			logfileLine("funcBSGetHookAdditionalPages",gcQuery);
+			logfileLine("funcBSGetHookPages",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	unsigned uNotFirst=0;
+	char cContextVar[2][64]={"",""};
+	while((field=mysql_fetch_row(res)))
+		sprintf(cContextVar[uNotFirst++],"%.63s",field[0]);
+
+	fprintf(fp,"//funcBSGetHookPrePages\n");
+	fprintf(fp,"\tgcContext[0]=0;\n");
+	if(cContextVar[1][0] && cContextVar[0][0])
+	{
+		fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[0]);
+		fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[1]);
+	}
+}//void funcBSGetHookPrePages(FILE *fp)
+
+
+void funcBSGetHookPages(FILE *fp)
+{
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//Context generator
+	sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND (tFieldType.uRADType=%u OR tFieldType.uRADType=%u)"
+			" AND tField.cOtherOptions LIKE '%%Bootstrap:Context;%%'"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder LIMIT 2",guTable,COLTYPE_FOREIGNKEY,COLTYPE_RADPRI);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBSGetHookPages",gcQuery);
                 fprintf(fp,"%s",mysql_error(&gMysql));
                 return;
         }
@@ -3743,8 +3798,10 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 		sprintf(cContextVar[uNotFirst++],"%.63s",field[0]);
 /*
+ * 	//Moved to PrePages
  * 	if(!uPaciente) uPaciente=uGetSessionConfig("uPaciente");
  * 	if(!uConsulta) uConsulta=uGetSessionConfig("uConsulta");
+ *	//End moved
  *      if(uConsulta && uPaciente)
  *      {
  *      	sprintf(gcContext,"Consulta:<a href=?gcPage=Consulta&uConsulta=%u>%s</a>"
@@ -3754,13 +3811,10 @@ void funcBSGetHookAdditionalPages(FILE *fp)
  *	}
  */
 
-	fprintf(fp,"\n//funcBSGetHookAdditionalPages\n");
-	fprintf(fp,"\tgcContext[0]=0;\n");
+	fprintf(fp,"//funcBSGetHookPages\n");
 	if(cContextVar[1][0] && cContextVar[0][0])
 	{
 	
-		fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[0]);
-		fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[1]);
 		fprintf(fp,"\tif(%s && %s)\n",cContextVar[0],cContextVar[1]);
 		fprintf(fp,"\t{\n");
 		fprintf(fp,"\t\tsprintf(gcContext,\"%s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\"\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]+1);
@@ -3785,7 +3839,7 @@ void funcBSGetHookAdditionalPages(FILE *fp)
         if(mysql_errno(&gMysql))
 	{
 		if(guDebug)
-			logfileLine("funcBSGetHookAdditionalPages",gcQuery);
+			logfileLine("funcBSGetHookPages",gcQuery);
                 fprintf(fp,"%s",mysql_error(&gMysql));
                 return;
         }
@@ -3824,7 +3878,7 @@ void funcBSGetHookAdditionalPages(FILE *fp)
 		cElse="else ";
 	}
 
-}//void funcBSGetHookAdditionalPages(FILE *fp)
+}//void funcBSGetHookPages(FILE *fp)
 
 
 void funcBSFKJsonRowsSelects(FILE *fp)
@@ -3973,3 +4027,23 @@ void funcBootstrapRetEditor(FILE *fp)
 	}
 
 }//void funcBootstrapRetEditor(FILE *fp)
+
+
+void funcBSLDTables(FILE *fp)
+{
+	fprintf(fp,"Antecedente\",\"CultivoCateter\",\"CultivoEsputo\",\"CultivoHueso\",\"CultivoLCR\",\"CultivoPB\",\"Hemocultivo\",\"Orina\",\"Sangre\",\"Serologia\",\"Urocultivo\",\"Virologia\",\"Vitales\",\"");
+
+}//void funcBSLDTables(FILE *fp)
+
+
+void funcBSLDContextVar1(FILE *fp)
+{
+	fprintf(fp,"uPaciente");
+
+}//void funcBSLDContextVar1(FILE *fp)
+
+
+void funcBSLDContextVar2(FILE *fp)
+{
+	fprintf(fp,"uConsulta");
+}//void funcBSLDContextVar2(FILE *fp)
