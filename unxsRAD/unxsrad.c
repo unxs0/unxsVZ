@@ -3896,7 +3896,6 @@ void funcBSGetHookPages(FILE *fp)
 			return;
 		}
 		res=mysql_store_result(&gMysql);
-		char *cElse="";
 		while((field=mysql_fetch_row(res)))
 		{
 /*
@@ -3912,7 +3911,7 @@ void funcBSGetHookPages(FILE *fp)
  *         }
  */
 
-			fprintf(fp,"\t%sif(%s)\n"
+			fprintf(fp,"\telse if(%s)\n"
 			"\t{\n"
 			"\t\tif(!gcContext[0]) sprintf(gcContext,\"%s <a href=?gcPage=%s&%s=%%u>%%s</a>\",\n"
 			"\t\t\t\t%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n"
@@ -3921,15 +3920,13 @@ void funcBSGetHookPages(FILE *fp)
 			"\t\tuSetSessionConfig(\"%s\",%s);\n"
 			"\t\thtml%sFilter();\n"
 			"\t}\n",
-				cElse,field[0],
+				field[0],
 				field[0]+1,field[0]+1,field[0],
 				field[0],field[0]+1,field[0],
 				field[0],field[0],
 				field[0],field[0],
 				field[0],field[0],
 				gcTableName);
-		
-			cElse="else ";
 		}
 	}
 	else
@@ -3938,15 +3935,15 @@ void funcBSGetHookPages(FILE *fp)
 		if(cContextVar[1][0] && cContextVar[0][0])
 		{
 	
-		fprintf(fp,"\tif(%s && %s && %s)\n",cContextVar[0],cContextVar[1],field[0]);
+		fprintf(fp,"\tif(%s && %s && %s)\n",cContextVar[0],cContextVar[1],gcTableKey);
 		fprintf(fp,"\t{\n");
 		fprintf(fp,"\t\tsprintf(gcContext,\"%s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\"\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]+1);
 		fprintf(fp,"\t\t\t\t\" %s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\",\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]+1);
 		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s),\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]);
 		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]);
-		fprintf(fp,"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n",field[0],field[0]);
-		fprintf(fp,"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n",field[0],field[0]);
-		fprintf(fp,"\t\tuSetSessionConfig(\"%s\",%s);\n",field[0],field[0]);
+		fprintf(fp,"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n",gcTableKey,gcTableKey);
+		fprintf(fp,"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n",gcTableKey,gcTableKey);
+		fprintf(fp,"\t\tuSetSessionConfig(\"%s\",%s);\n",gcTableKey,gcTableKey);
 		fprintf(fp,"\t\thtml%sFilter();\n",gcTableName);
 		fprintf(fp,"\t}\n\n");
 		fprintf(fp,"\telse if(%s && %s)\n",cContextVar[0],cContextVar[1]);
@@ -3983,7 +3980,6 @@ void funcBSGetHookPages(FILE *fp)
 			return;
 		}
 		res=mysql_store_result(&gMysql);
-		char *cElse="";
 		while((field=mysql_fetch_row(res)))
 		{
 /*
@@ -3999,7 +3995,7 @@ void funcBSGetHookPages(FILE *fp)
  *         }
  */
 
-			fprintf(fp,"\t%sif(%s)\n"
+			fprintf(fp,"\telse if(%s)\n"
 			"\t{\n"
 			"\t\tif(!gcContext[0]) sprintf(gcContext,\"%s <a href=?gcPage=%s&%s=%%u>%%s</a>\",\n"
 			"\t\t\t\t%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n"
@@ -4008,15 +4004,13 @@ void funcBSGetHookPages(FILE *fp)
 			"\t\tuSetSessionConfig(\"%s\",%s);\n"
 			"\t\thtml%sFilter();\n"
 			"\t}\n",
-				cElse,field[0],
+				field[0],
 				field[0]+1,field[0]+1,field[0],
 				field[0],field[0]+1,field[0],
 				field[0],field[0],
 				field[0],field[0],
 				field[0],field[0],
 				gcTableName);
-		
-			cElse="else ";
 		}
 
 	}//All other implicit Bootstrap:Level3
