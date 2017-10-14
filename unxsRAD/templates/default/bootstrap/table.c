@@ -391,7 +391,7 @@ void json{{cTableName}}LDRows(void)
 	MYSQL_ROW field;
 	char cQuery[1028]={""};
 
-	char cTables[16][64]={"{{funcBSLDTables}}"};
+	char cTables[32][64]={"{{funcBSLDTables}}"};
 
 	//for errors
 	printf("Content-type: text/json\n\n");
@@ -423,7 +423,7 @@ void json{{cTableName}}LDRows(void)
 	}
 
 	register int i;
-	for(i=0;i<16 && cTables[i][0];i++)
+	for(i=0;i<32 && cTables[i][0];i++)
 	{
 		sprintf(cQuery,"INSERT INTO tLatestData"
 			" ("

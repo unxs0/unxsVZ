@@ -4168,7 +4168,7 @@ void funcBootstrapRetEditor(FILE *fp)
 
 void funcBSLDTables(FILE *fp)
 {
-	fprintf(fp,"Antecedente\",\"CultivoCateter\",\"CultivoEsputo\",\"CultivoHueso\",\"CultivoLCR\",\"CultivoPB\",\"Hemocultivo\",\"Orina\",\"Sangre\",\"Serologia\",\"Urocultivo\",\"Virologia\",\"Vitales\",\"");
+	fprintf(fp,"Antecedente\",\"CultivoCateter\",\"CultivoEsputo\",\"CultivoHueso\",\"CultivoLCR\",\"CultivoMF\",\"CultivoPB\",\"Hemocultivo\",\"Inmunizacion\",\"Medicacion\",\"Orina\",\"Sangre\",\"Serologia\",\"Urocultivo\",\"Virologia\",\"Vitales\",\"");
 
 }//void funcBSLDTables(FILE *fp)
 
