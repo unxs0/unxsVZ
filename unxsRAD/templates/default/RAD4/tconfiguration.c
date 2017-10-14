@@ -1,12 +1,10 @@
 /*
 FILE
-	tConfiguration source code of 
-	Built by mysqlRAD2.cgi (C) Gary Wallis 2001-2007
-	$Id: tconfiguration.c 1965 2012-05-29 14:21:16Z Colin $
+	unxsVZ/unxsRAD/templates/default/tconfiguration.c
+	(C) 2001-2017 Gary Wallis for Unixservice, LLC.
 PURPOSE
-	Schema dependent RAD generated file.
-	Program app functionality in tconfigurationfunc.h while 
-	RAD is still to be used.
+	RAD4 Template file
+	Backend RAD4 Configuration table
 */
 
 
@@ -568,7 +566,7 @@ void CreatetConfiguration(void)
 			"uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
-			"cLabel VARCHAR(100) NOT NULL DEFAULT '',UNIQUE (cLabel,uServer),"
+			"cLabel VARCHAR(100) NOT NULL DEFAULT '',INDEX (cLabel),"
 			"uConfiguration INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
 			"cComment TEXT NOT NULL DEFAULT '',"
 			"uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
