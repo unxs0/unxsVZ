@@ -4168,19 +4168,161 @@ void funcBootstrapRetEditor(FILE *fp)
 
 void funcBSLDTables(FILE *fp)
 {
-	fprintf(fp,"Antecedente\",\"CultivoCateter\",\"CultivoEsputo\",\"CultivoHueso\",\"CultivoLCR\",\"CultivoMF\",\"CultivoPB\",\"Hemocultivo\",\"Inmunizacion\",\"Medicacion\",\"Orina\",\"Sangre\",\"Serologia\",\"Urocultivo\",\"Virologia\",\"Vitales\",\"");
+	char cTableOptions[64]={""};
+	sprintf(cTableOptions,"%.63s",ForeignKey("tTable","cDescription",guTable));
+	if(!strstr(cTableOptions,"Bootstrap:Level1;"))
+		return;
+
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//First get the Level2 table
+	sprintf(gcQuery,"SELECT tField.cFKSpec"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tFieldType.uRADType=%u"
+			" AND tField.cOtherOptions LIKE '%%Bootstrap:Context;Root;%%'",
+				guTable,COLTYPE_FOREIGNKEY);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBSLDTables",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	char cLevel2TableName[100]={""};
+	unsigned uLevel2Table=0;
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"\"%99[a-zA-Z0-9\\.]\"",cLevel2TableName);
+		if(cLevel2TableName[0])
+		{
+			sprintf(gcQuery,"SELECT uTable FROM tTable"
+					" WHERE cLabel='%s' AND cDescription LIKE '%%Bootstrap:Level2;%%'"
+					" AND uProject=%u",cLevel2TableName,guProject);
+        		mysql_query(&gMysql,gcQuery);
+        		if(mysql_errno(&gMysql))
+			{
+				if(guDebug)
+					logfileLine("funcBSLDTables",gcQuery);
+               			 fprintf(fp,"%s",mysql_error(&gMysql));
+               			 return;
+        		}
+        		res=mysql_store_result(&gMysql);
+			if((field=mysql_fetch_row(res)))
+				sscanf(field[0],"%u",&uLevel2Table);
+		}
+		else
+			return;
+	}
+	else
+		return;
+
+	if(!uLevel2Table)
+		return;
+
+	sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND tFieldType.uRADType=%u"
+			" AND tField.cOtherOptions LIKE '%%FooTable:Report:%%'"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder",uLevel2Table,COLTYPE_FOREIGNKEY);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBSLDTables",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		//fprintf(fp,"Antecedente\",\"CultivoCateter\",\"CultivoEsputo\",\"CultivoHueso\",\"CultivoLCR\",\"CultivoMF\",\"CultivoPB\",\"Hemocultivo\",\"Inmunizacion\",\"Medicacion\",\"Orina\",\"Sangre\",\"Serologia\",\"Urocultivo\",\"Virologia\",\"Vitales\",\"");
+		fprintf(fp,"%s\",\"",field[0]+1);
+	}
 
 }//void funcBSLDTables(FILE *fp)
 
 
 void funcBSLDContextVar1(FILE *fp)
 {
-	fprintf(fp,"uPaciente");
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//Context generator: Bootstrap table
+	sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND (tFieldType.uRADType=%u OR tFieldType.uRADType=%u)"
+			" AND tField.cOtherOptions LIKE '%%Bootstrap:Context;%%'"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder LIMIT 1",guTable,COLTYPE_FOREIGNKEY,COLTYPE_RADPRI);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBSGetHookPages",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	char cContextVar[64]={"uNoContextVar1"};
+	if((field=mysql_fetch_row(res)))
+		sprintf(cContextVar,"%.63s",field[0]);
+
+	//fprintf(fp,"uPaciente");
+	fprintf(fp,"%s",cContextVar);
 
 }//void funcBSLDContextVar1(FILE *fp)
 
 
 void funcBSLDContextVar2(FILE *fp)
 {
-	fprintf(fp,"uConsulta");
+       	MYSQL_RES *res;
+        MYSQL_ROW field;
+
+	//Context generator: Bootstrap table
+	sprintf(gcQuery,"SELECT tField.cLabel"
+			" FROM tField,tFieldType"
+			" WHERE tField.uFieldType=tFieldType.uFieldType"
+			" AND tField.uTable=%u"
+			" AND (tFieldType.uRADType=%u OR tFieldType.uRADType=%u)"
+			" AND tField.cOtherOptions LIKE '%%Bootstrap:Context;%%'"
+			" AND tField.cLabel!='uOwner'"
+			" AND tField.cLabel!='uCreatedBy'"
+			" AND tField.cLabel!='uCreatedDate'"
+			" AND tField.cLabel!='uModBy'"
+			" AND tField.cLabel!='uModDate'"
+			" ORDER BY tField.uOrder DESC LIMIT 1",guTable,COLTYPE_FOREIGNKEY,COLTYPE_RADPRI);
+        mysql_query(&gMysql,gcQuery);
+        if(mysql_errno(&gMysql))
+	{
+		if(guDebug)
+			logfileLine("funcBSGetHookPages",gcQuery);
+                fprintf(fp,"%s",mysql_error(&gMysql));
+                return;
+        }
+        res=mysql_store_result(&gMysql);
+	char cContextVar[64]={"uNoContextVar2"};
+	if((field=mysql_fetch_row(res)))
+		sprintf(cContextVar,"%.63s",field[0]);
+
+	//fprintf(fp,"uConsulta");
+	fprintf(fp,"%s",cContextVar);
+
 }//void funcBSLDContextVar2(FILE *fp)
