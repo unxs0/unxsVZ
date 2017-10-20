@@ -3216,8 +3216,10 @@ void funcBootstrapRowVars(FILE *fp)
 			break;
 			default:
 				if(!strcmp(field[0],"cLabel"))
-					fprintf(fp,"'%s',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'>',cLabel,'</a>')",
-						field[0],gcTableName+1,gcTableName+1,gcTableName+1);
+					fprintf(fp,"'cLabel',cLabel,"
+						"'cLink',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'>"
+						"<span class=\\\\\\\\\\\"glyphicon glyphicon-check\\\\\\\\\\\"></span></a>')",
+							gcTableName+1,gcTableName+1,gcTableName+1);
 				else if(strstr(field[2],"FooTable:Report:"))
 					fprintf(fp,"'%s',CONCAT('<a href=?gcPage=%s&u%s=',u%s,'>"
 						"<span class=\\\\\\\\\\\"glyphicon glyphicon-edit\\\\\\\\\\\"></span></a>')",
@@ -3268,13 +3270,21 @@ void funcBootstrapRowFormats(FILE *fp)
 			fprintf(fp,",");
 		switch(uRADType)
 		{
-			case COLTYPE_SELECTTABLE:
-			case COLTYPE_SELECTTABLE_OWNER:
-				fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
+			//Number data
+			case COLTYPE_RADPRI:
+			case COLTYPE_PRIKEY:
+			case COLTYPE_INTUNSIGNED:
+			case COLTYPE_BIGINT:
+				fprintf(fp,"\\\"%%s\\\": %%s");
 			break;
 
+			case COLTYPE_DATEEUR:
+			case COLTYPE_DATETIME:
 			default:
-				fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
+				if(!strcmp(field[0],"cLabel"))
+					fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\",\\\"%%s\\\": \\\"%%s\\\"");
+				else
+					fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
 		}
 	}
 	mysql_free_result(res);
@@ -3322,11 +3332,11 @@ void funcBootstrapRowFields(FILE *fp)
 			break;
 
 			default:
-				//if(uFirst==0)
-				if(0)
+				if(!strcmp(field[0],"cLabel"))
 				{
+					fprintf(fp,"field[%u],field[%u],",uFirst,uFirst+1);
+					uFirst+=2;
 					fprintf(fp,"field[%u],field[%u]",uFirst,uFirst+1);
-					fprintf(fp,",field[1]");
 				}
 				else
 				{
@@ -3379,19 +3389,19 @@ void funcBootstrapCols(FILE *fp)
 
 		sscanf(field[3],"%u",&uRADType);
 
+		unsigned uHtml=0;
 		switch(uRADType)
 		{
 			case COLTYPE_RADPRI:
 			case COLTYPE_PRIKEY:
 			case COLTYPE_INTUNSIGNED:
 			case COLTYPE_BIGINT:
-			case COLTYPE_DECIMAL:
-			case COLTYPE_MONEY:
 				cDataType="number";
 			break;
 
 			case COLTYPE_FOREIGNKEY:
 				cDataType="html";
+				uHtml=1;
 			break;
 
 			default:
@@ -3402,14 +3412,29 @@ void funcBootstrapCols(FILE *fp)
 			cFilterable="true";
 		else
 			cFilterable="false";
-		if(!strcmp(field[0],"cLabel"))
-				cDataType="html";
 		if(uCount>=uRows) cComma="";
-		fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"%s\\\", \\\"title\\\": \\\"%s\\\","
+		if(uHtml)
+			fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"%s\\\", \\\"title\\\": \\\"%s\\\","
+					" \\\"filterable\\\": %s,"
+					" \\\"data-type\\\": \\\"html\\\","
+					" \\\"sortable\\\": false,"
+					" \\\"breakpoints\\\": \\\"%s\\\"}%s\\n\");\n"
+				,field[0],field[0]+1,cFilterable,cBreakpoints,cComma);
+		else
+			fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"%s\\\", \\\"title\\\": \\\"%s\\\","
 					" \\\"filterable\\\": %s,"
 					" \\\"data-type\\\": \\\"%s\\\","
 					" \\\"breakpoints\\\": \\\"%s\\\"}%s\\n\");\n"
 				,field[0],field[0]+1,cFilterable,cDataType,cBreakpoints,cComma);
+		if(!strcmp(field[0],"cLabel"))
+		{
+			fprintf(fp,"\tprintf(\"\\t{\\\"name\\\": \\\"cLink\\\", \\\"title\\\": \\\"Link\\\","
+					" \\\"filterable\\\": false,"
+					" \\\"data-type\\\": \\\"html\\\","
+					" \\\"sortable\\\": false,"
+					" \\\"breakpoints\\\": \\\"\\\"}%s\\n\");\n"
+						,cComma);
+		}
 		if(uOnce && uCount>1)
 		{
 			cBreakpoints="all";
@@ -3520,9 +3545,12 @@ void funcBootstrapRowReportFormats(FILE *fp)
 			fprintf(fp,",");
 		switch(uRADType)
 		{
-			case COLTYPE_SELECTTABLE:
-			case COLTYPE_SELECTTABLE_OWNER:
-				fprintf(fp,"\\\"%%s\\\": \\\"%%s\\\"");
+			//Number data
+			case COLTYPE_RADPRI:
+			case COLTYPE_PRIKEY:
+			case COLTYPE_INTUNSIGNED:
+			case COLTYPE_BIGINT:
+				fprintf(fp,"\\\"%%s\\\": %%s");
 			break;
 
 			default:

@@ -9,7 +9,7 @@ AUTHOR
 */
 
 #define INTERFACE_HEADER_TITLE "{{cProject}}"
-#define INTERFACE_COPYRIGHT "<font color=gray>Mobile Centric Software by Unixservice, LLC.</font>"
+#define INTERFACE_COPYRIGHT "<font color=gray>Mobile Centric Software by <a href=https://unixservice.com>Unixservice, LLC.</a></font>"
 
 
 #include "mysqlrad.h"
