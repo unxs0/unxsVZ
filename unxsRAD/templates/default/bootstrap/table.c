@@ -292,7 +292,10 @@ void html{{cTableName}}Page(char *cTitle, char *cTemplateName)
 			template.cpName[13]="cContext";
 			template.cpValue[13]=gcContext;
 
-			template.cpName[14]="";
+			template.cpName[14]="cNavBarClass{{cTableNameBS}}";
+			template.cpValue[14]="class=\"active\"";
+
+			template.cpName[15]="";
 
 			{{funcBSTemplateFKNVPairs}}	
 

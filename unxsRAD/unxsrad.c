@@ -2796,7 +2796,7 @@ void funcBootstrapNavItems(FILE *fp)
         res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-            	fprintf(fp,"\t\t<li><a href=\"?gcPage=%1$s\">%1$s</a></li>\n",field[0]);
+            	fprintf(fp,"\t\t<li {{cNavBarClass%1$s}}><a href=\"?gcPage=%1$s\">%1$s</a></li>\n",field[0]);
 	}
 	mysql_free_result(res);
 
@@ -4125,7 +4125,7 @@ void funcBSTemplateFKNVPairs(FILE *fp)
         }
         res=mysql_store_result(&gMysql);
 	unsigned uNotFirst=0;
-	unsigned i=14;
+	unsigned i=15;
 	while((field=mysql_fetch_row(res)))
 	{
 
