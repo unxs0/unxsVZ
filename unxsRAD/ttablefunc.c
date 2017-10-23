@@ -619,8 +619,8 @@ void ExttTableButtons(void)
 			if(uTable && uTemplateType==uTEMPLATETYPE_BOOTSTRAP)
 				printf("<br><input type=submit class=largeButton title='Copy Fields from RAD4 same name table in this same project'"
 					" name=gcCommand value='Copy Fields'>");
-			tTableNavList();
 			tTableFieldNavList();
+			tTableNavList();
 	}
 	CloseFieldSet();
 
@@ -914,10 +914,10 @@ void tTableFieldNavList(void)
         MYSQL_ROW field;
 	
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
-		sprintf(gcQuery,"SELECT uField,cLabel FROM tField WHERE uTable=%u ORDER BY uOrder,cLabel",uTable);
+		sprintf(gcQuery,"SELECT uField,cLabel,cOtherOptions FROM tField WHERE uTable=%u ORDER BY uOrder,cLabel",uTable);
 	else
 		sprintf(gcQuery,"SELECT tField.uField,"
-				" tField.cLabel"
+				" tField.cLabel,tField.cOtherOptions"
 				" FROM tField,tClient"
 				" WHERE tField.uOwner=tClient.uClient"
 				" AND tField.uTable=%u"
@@ -943,8 +943,8 @@ void tTableFieldNavList(void)
 			else
 				cColor="black";
 			printf("<a class=darkLink href=unxsRAD.cgi?gcFunction=tField"
-				"&uField=%s><font color=%s>%s</font></a><br>\n",
-				field[0],cColor,field[1]);
+				"&uField=%s><font color=%s>%s %s</font></a><br>\n",
+				field[0],cColor,field[1],field[2]);
 		}
 	}
 	else

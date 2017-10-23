@@ -1665,7 +1665,7 @@ void funcModuleUpdateQuery(FILE *fp)
 					char cConcatField1[100]={""};
 					char cConcatField2[100]={""};
 					char *cp2;
-					if((cp2=strchr(field[2],';')))
+					if((cp2=strchr(cp1+strlen("CONCAT:"),';')))
 					{
 						*cp2=0;	
 						sprintf(cConcatField1,"%.99s",cp1+strlen("CONCAT:"));
@@ -1737,7 +1737,7 @@ void funcModuleUpdateQuery(FILE *fp)
 					char cConcatField1[64]={""};
 					char cConcatField2[64]={""};
 					char *cp2;
-					if((cp2=strchr(field[2],';')))
+					if((cp2=strchr(cp1+strlen("CONCAT:"),';')))
 					{
 						*cp2=0;	
 						sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
@@ -1823,7 +1823,7 @@ void funcModuleInsertQuery(FILE *fp)
 					char cConcatField1[64]={""};
 					char cConcatField2[64]={""};
 					char *cp2;
-					if((cp2=strchr(field[2],';')))
+					if((cp2=strchr(cp1+strlen("CONCAT:"),';')))
 					{
 						*cp2=0;	
 						sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
@@ -1897,7 +1897,7 @@ void funcModuleInsertQuery(FILE *fp)
 					char cConcatField1[64]={""};
 					char cConcatField2[64]={""};
 					char *cp2;
-					if((cp2=strchr(field[2],';')))
+					if((cp2=strchr(cp1+strlen("CONCAT:"),';')))
 					{
 						*cp2=0;	
 						sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
@@ -2887,27 +2887,6 @@ void funcBootstrapConcat(FILE *fp)
         MYSQL_ROW field;
 	char cFieldName[100];
 
-	//If named table get parent guTable
-	sprintf(gcQuery,"SELECT cDescription FROM tTable"
-			" WHERE uTable=%u"
-			" AND cDescription!=''",
-					guTable);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(fp,"<!-- Error: %s -->\n",mysql_error(&gMysql));
-		return;
-	}
-        res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-		sscanf(field[0],"uParentTable=%u;",&guTable);
-	else
-	{
-		fprintf(fp,"<!-- No uParentTable for %u -->\n",guTable);
-		mysql_free_result(res);
-		return;
-	}
-
 	sprintf(gcQuery,"SELECT cLabel,cOtherOptions FROM tField"
 			" WHERE uTable=%u"
 			" AND cOtherOptions LIKE '%%CONCAT:%%'"
@@ -2928,7 +2907,7 @@ void funcBootstrapConcat(FILE *fp)
 
         res=mysql_store_result(&gMysql);
 	char *cp1;
-	fprintf(fp,"//funcBootstrapConcat()");
+	fprintf(fp,"//funcBootstrapConcat() %u",guTable);
 	while((field=mysql_fetch_row(res)))
 	{
 		sprintf(cFieldName,"%.99s",field[0]);
@@ -2938,7 +2917,7 @@ void funcBootstrapConcat(FILE *fp)
 			char cConcatField1[64]={""};
 			char cConcatField2[64]={""};
 			char *cp2;
-			if((cp2=strchr(field[1],';')))
+			if((cp2=strchr(cp1+strlen("CONCAT:"),';')))
 			{
 				*cp2=0;	
 				sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
@@ -3032,7 +3011,7 @@ void funcBootstrapValueFields(FILE *fp)
 			char cConcatField1[64]={""};
 			char cConcatField2[64]={""};
 			char *cp2;
-			if((cp2=strchr(field[1],';')))
+			if((cp2=strchr(cp1+strlen("CONCAT:"),';')))
 			{
 				*cp2=0;	
 				sprintf(cConcatField1,"%.63s",cp1+strlen("CONCAT:"));
@@ -3092,7 +3071,9 @@ void funcBootstrapEditorFields(FILE *fp)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tField.cTitle,tField.cOtherOptions,tFieldType.uRADType FROM tField,tFieldType"
+	sprintf(gcQuery,"SELECT tField.cLabel,tField.cTitle,"
+			" tField.cOtherOptions,tFieldType.uRADType,tField.cFormDefault"
+			" FROM tField,tFieldType"
 			" WHERE tField.uFieldType=tFieldType.uFieldType"
 			" AND tField.uTable=%u"
 			" AND tField.uFieldType!=1"//not equal Rad Primary
@@ -3122,7 +3103,7 @@ void funcBootstrapEditorFields(FILE *fp)
 			continue;
 
 		sprintf(cFieldName,"%.99s",field[0]);
-		if(strstr(field[2],"required"))
+		if(strstr(field[2],"FooTable:Required;"))
 			cRequired=" required";
 		else
 			cRequired="";
@@ -3135,8 +3116,9 @@ void funcBootstrapEditorFields(FILE *fp)
 		switch(uRADType)
 		{
 			case COLTYPE_DATEEUR:
-				fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\">\n",
-					cFieldName,field[1]);
+				fprintf(fp,"\t\t\t\t\t\t<input%1$s type=\"text\" class=\"form-control\""
+					" id=\"%2$s\" name=\"%2$s\" title=\"%3$s\">\n",
+						cRequired,cFieldName,field[1]);
 			break;
 
 			case COLTYPE_SELECTTABLE:
@@ -3145,8 +3127,9 @@ void funcBootstrapEditorFields(FILE *fp)
 			break;
 
 			case COLTYPE_TEXT:
-				fprintf(fp,"\t\t\t\t\t\t<textarea class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\"></textarea>\n",
-					cFieldName,field[1]);
+				fprintf(fp,"\t\t\t\t\t\t<textarea%1$s class=\"form-control\""
+					" id=\"%2$s\" name=\"%2$s\" title=\"%3$s\"></textarea>\n",
+						cRequired,cFieldName,field[1]);
 			break;
 
 			case COLTYPE_FOREIGNKEY:
@@ -3159,8 +3142,9 @@ void funcBootstrapEditorFields(FILE *fp)
 			break;
 
 			default:
-				fprintf(fp,"\t\t\t\t\t\t<input type=\"text\" class=\"form-control\" id=\"%1$s\" name=\"%1$s\" title=\"%2$s\">\n",
-					cFieldName,field[1]);
+				fprintf(fp,"\t\t\t\t\t\t<input%1$s type=\"text\" class=\"form-control\""
+					" id=\"%2$s\" name=\"%2$s\" title=\"%3$s\">\n",
+						cRequired,cFieldName,field[1]);
 		}
 		//fprintf(fp,"\t\t\t\t\t\t\tplaceholder=\"%s\" required>\n",cFieldName);
 		fprintf(fp,"\t\t\t\t\t</div>\n");

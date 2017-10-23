@@ -159,6 +159,37 @@ void ExttFieldCommands(pentry entries[], int x)
 			else
 				tField("<blink>Error</blink>: Denied by permissions settings");
                 }
+		else if(!strcmp(gcCommand,"Reorder"))
+                {
+                        ProcesstFieldVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) && uTable)
+			{
+        			MYSQL_RES *res;
+        			MYSQL_ROW field;
+
+				sprintf(gcQuery,"SELECT uField FROM tField"
+						" WHERE uOrder>2 AND uOrder<1000"
+						" AND uTable=%u"
+						" ORDER BY uOrder"
+						" LIMIT 99",uTable);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					tTable(mysql_error(&gMysql));
+				res=mysql_store_result(&gMysql);
+				unsigned uNewOrder=10;
+				while((field=mysql_fetch_row(res)))
+				{
+					sprintf(gcQuery,"UPDATE tField SET uOrder=%u WHERE uField=%s",uNewOrder+=10,field[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						tTable(mysql_error(&gMysql));
+				}
+				mysql_free_result(res);
+				tField("Attempt to reorder fields has been done.");
+			}
+			else
+				tField("<blink>Error</blink>: Denied by permissions settings");
+		}
 		else if(!strcmp(gcCommand,"Select"))
                 {
                         ProcesstFieldVars(entries,x);
@@ -267,6 +298,9 @@ void ExttFieldButtons(void)
 			printf("<br><input type=submit class=largeButton"
 				" title='Copy this field to another table as specified above.'"
 				" name=gcCommand value='Copy'>");
+			printf("<p><input type=submit class=largeButton"
+				" title='Reorder fields larger than 2 and less than 1000 by uOrder. And set uOrder=uOrder+10.'"
+				" name=gcCommand value='Reorder'>");
 			tFieldNavList();
 	}
 	CloseFieldSet();
