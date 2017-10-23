@@ -1615,7 +1615,7 @@ void funcModuleUpdateQuery(FILE *fp)
 
 	fprintf(fp,"sprintf(gcQuery,\"UPDATE %s SET \"\n",gcTableName);
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions,tTable.uTemplateType"
 			" FROM tField,tTable,tFieldType"
 			" WHERE tField.uTable=tTable.uTable"
 			" AND tField.uFieldType=tFieldType.uFieldType"
@@ -1630,6 +1630,7 @@ void funcModuleUpdateQuery(FILE *fp)
         res=mysql_store_result(&gMysql);
 	unsigned uFirst=0;
 	unsigned uRADType=0;
+	unsigned uTemplateType=0;
 	char *cp1;
 	while((field=mysql_fetch_row(res)))
 	{
@@ -1641,6 +1642,7 @@ void funcModuleUpdateQuery(FILE *fp)
 		if(!strcmp(field[0],"uCreatedDate"))
 			continue;
 		sscanf(field[1],"%u",&uRADType);
+		if(!uTemplateType) sscanf(field[3],"%u",&uTemplateType);
 		if(uRADType==COLTYPE_RADPRI)
 			continue;
 		if(uFirst)
@@ -1660,7 +1662,7 @@ void funcModuleUpdateQuery(FILE *fp)
 			break;
 
 			case COLTYPE_VARCHAR:
-				if((cp1=strstr(field[2],"CONCAT:")))
+				if((cp1=strstr(field[2],"CONCAT:")) && uTemplateType==uTEMPLATETYPE_BOOTSTRAP)
 				{
 					char cConcatField1[100]={""};
 					char cConcatField2[100]={""};
@@ -1740,7 +1742,7 @@ void funcModuleUpdateQuery(FILE *fp)
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_TEXT:
-				if((cp1=strstr(field[2],"CONCAT:")))
+				if((cp1=strstr(field[2],"CONCAT:")) && uTemplateType==uTEMPLATETYPE_BOOTSTRAP)
 				{
 					char cConcatField1[64]={""};
 					char cConcatField2[64]={""};
@@ -1796,7 +1798,7 @@ void funcModuleInsertQuery(FILE *fp)
 
 	fprintf(fp,"sprintf(gcQuery,\"INSERT INTO %s SET \"\n",gcTableName);
 
-	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions"
+	sprintf(gcQuery,"SELECT tField.cLabel,tFieldType.uRADType,tField.cOtherOptions,tTable.uTemplateType"
 			" FROM tField,tTable,tFieldType"
 			" WHERE tField.uTable=tTable.uTable"
 			" AND tField.uFieldType=tFieldType.uFieldType"
@@ -1811,6 +1813,7 @@ void funcModuleInsertQuery(FILE *fp)
         res=mysql_store_result(&gMysql);
 	unsigned uFirst=0;
 	unsigned uRADType=0;
+	unsigned uTemplateType=0;
 	char *cp1;
 	while((field=mysql_fetch_row(res)))
 	{
@@ -1820,6 +1823,7 @@ void funcModuleInsertQuery(FILE *fp)
 		if(!strcmp(field[0],"uModDate"))
 			continue;
 		sscanf(field[1],"%u",&uRADType);
+		if(!uTemplateType) sscanf(field[3],"%u",&uTemplateType);
 		if(uRADType==COLTYPE_RADPRI)
 			continue;
 		if(uFirst)
@@ -1839,7 +1843,7 @@ void funcModuleInsertQuery(FILE *fp)
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_TEXT:
-				if((cp1=strstr(field[2],"CONCAT:")))
+				if((cp1=strstr(field[2],"CONCAT:")) && uTemplateType==uTEMPLATETYPE_BOOTSTRAP)
 				{
 					char cConcatField1[64]={""};
 					char cConcatField2[64]={""};
@@ -1915,7 +1919,7 @@ void funcModuleInsertQuery(FILE *fp)
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_TEXT:
-				if((cp1=strstr(field[2],"CONCAT:")))
+				if((cp1=strstr(field[2],"CONCAT:")) && uTemplateType==uTEMPLATETYPE_BOOTSTRAP)
 				{
 					char cConcatField1[64]={""};
 					char cConcatField2[64]={""};
