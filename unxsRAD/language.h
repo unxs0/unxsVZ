@@ -391,7 +391,12 @@
 #define LANG_FL_tTable_uSourceLock "uSourceLock"
 #define LANG_FT_tTable_uSourceLock ""
 #define LANG_FL_tTable_cDescription "cDescription"
-#define LANG_FT_tTable_cDescription "Description text. Extended functionality: uParentTable=237;"
+/*
+ *  Bootstrap:Level1;                                     |
+ *  | uParentTable=2;                                       |
+ *  | Bootstrap:Level2;       
+ */
+#define LANG_FT_tTable_cDescription "Description text. Extended functionality: uParentTable=237; Bootstrap:Level2; Bootstrap:Level1"
 #define LANG_FL_tTable_cSubDir "cSubDir"
 #define LANG_FT_tTable_cSubDir "Source code sub directory"
 #define LANG_FL_tTable_cLegend "cLegend"
@@ -452,7 +457,29 @@
 #define LANG_FL_tField_cSQLDefault "cSQLDefault"
 #define LANG_FT_tField_cSQLDefault "SQL Default Value if Applies"
 #define LANG_FL_tField_cOtherOptions "cOtherOptions"
-#define LANG_FT_tField_cOtherOptions "Like bootstrap breakpoints=xm sm;"
+/*
+|FooTable:Filterable                           |
+| CONCAT:cApellido;cNombre;                     |
+| FooTable:Report:tNull;                        |
+| CONCAT:cNotas;                                |
+| FooTable:Required;FooTable:Filterable;        |
+| Bootstrap:Context;                            |
+| required                                      |
+| FooTable:Filterable;FooTable:Required;        |
+| FooTable:Required;                            |
+| CONCAT:cBacteria;                             |
+|  FooTable:Filterable                          |
+| FooTable:Filterable;Bootstrap:Context;        |
+| FooTable:Report:tNull;Bootstrap:Context;Root; |
+| UNSIGNED_CONCAT:uTemp;uTAS;                   |
+| CONCAT:cLaboratorio;cOtro;                    |
+| UNSIGNED_CONCAT:uLeucocitos;uPiocitos;        |
+| UNSIGNED_CONCAT:uHIV;uHVB;                    |
+| CONCAT:cAntecedente;                          |
+| CONCAT:cNotas;cBacteria;                      |
+| FooTable:Filterable;                          |
+*/
+#define LANG_FT_tField_cOtherOptions "FooTable:Filterable; CONCAT:cNotas; UNSIGNED_CONCAT:uTemp;uTAS; CONCAT:cLaboratorio;cOtro; FooTable:Filterable; FooTable:Required; Bootstrap:Context; Bootstrap:Context;Root; Boostrap:Hidden; Usage:Options that apply to named template tables must be specified in RAD4 parent table."
 #define LANG_FL_tField_uReadLevel "uReadLevel"
 #define LANG_FT_tField_uReadLevel "Row Read/Display Level"
 #define LANG_FL_tField_uModLevel "uModLevel"

@@ -1677,14 +1677,26 @@ void funcModuleUpdateQuery(FILE *fp)
 						}
 						*cp2=';';	
 					}
-					if(cConcatField1[0] && cConcatField2[0])
+					if(strstr(field[2],"UNSIGNED_CONCAT:"))
 					{
-						fprintf(fp,"\t\t\"%s=CONCAT(%s,' ',%s)",field[0],cConcatField1,cConcatField2);
+						if(cConcatField1[0] && cConcatField2[0])
+							fprintf(fp,"\t\t\"%s=CONCAT('%c:%%lu',' ','%c:%%lu')",
+								field[0],cConcatField1[1],cConcatField2[1]);
+						else if(cConcatField1[0])
+							fprintf(fp,"\t\t\"%s='%c:%%u'",field[0],cConcatField1[1]);
 						break;
 					}
-					else if(cConcatField1[0])
+					else
 					{
-						fprintf(fp,"\t\t\"%s=%s",field[0],cConcatField1);
+						//CONCAT(SUBSTR('%%s',INSTR('%%s',' ')+1)
+						if(cConcatField1[0] && cConcatField2[0])
+							fprintf(fp,"\t\t\"%s=CONCAT(SUBSTR('%%s',1,INSTR('%%s',' ')),"
+							"' ',"
+							"SUBSTR('%%s',1,INSTR('%%s',' ')))",
+								field[0]);
+						else if(cConcatField1[0])
+							fprintf(fp,"\t\t\"%s=SUBSTR('%%s',1,INSTR('%%s',' '))",
+								field[0]);
 						break;
 					}
 				}
@@ -1749,10 +1761,23 @@ void funcModuleUpdateQuery(FILE *fp)
 						}
 						*cp2=';';	
 					}
-					if(cConcatField1[0])
+					if(strstr(field[2],"UNSIGNED_CONCAT:"))
 					{
-						break;
+						if(cConcatField1[0])
+							fprintf(fp,"\t\t\t,(long unsigned)%s\n",cConcatField1);
+						if(cConcatField2[0])
+							fprintf(fp,"\t\t\t,(long unsigned)%s\n",cConcatField2);
 					}
+					else
+					{
+						if(cConcatField1[0])
+							fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",
+								cConcatField1,cConcatField1);
+						if(cConcatField2[0])
+							fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",
+								cConcatField2,cConcatField2);
+					}
+					break;
 				}
 				fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",field[0]);
 			break;
@@ -1838,17 +1863,21 @@ void funcModuleInsertQuery(FILE *fp)
 					if(cConcatField1[0] && cConcatField2[0])
 					{
 						if(strstr(field[2],"UNSIGNED_CONCAT:"))
-							fprintf(fp,"\t\t\"%s=CONCAT('%%lu',' ','%%lu')",field[0]);
+							fprintf(fp,"\t\t\"%s=CONCAT('%c:%%lu',' ','%c:%%lu')",
+								field[0],cConcatField1[1],cConcatField2[1]);
 						else
-							fprintf(fp,"\t\t\"%s=CONCAT('%%s',' ','%%s')",field[0]);
+							fprintf(fp,"\t\t\"%s=CONCAT(SUBSTR('%%s',1,INSTR('%%s',' ')),"
+								"' ',"
+								"CONCAT(SUBSTR('%%s',1,INSTR('%%s',' ')))",
+									field[0]);
 						break;
 					}
 					else if(cConcatField1[0])
 					{
 						if(strstr(field[2],"UNSIGNED_CONCAT:"))
-							fprintf(fp,"\t\t\"%s='%%lu'",field[0]);
+							fprintf(fp,"\t\t\"%s='%c:%%lu'",field[0],cConcatField1[1]);
 						else
-							fprintf(fp,"\t\t\"%s='%%s'",field[0]);
+							fprintf(fp,"\t\t\"%s=SUBSTR('%%s',1,INSTR('%%s',' '))",field[0]);
 						break;
 					}
 				}
@@ -1914,7 +1943,9 @@ void funcModuleInsertQuery(FILE *fp)
 						if(strstr(field[2],"UNSIGNED_CONCAT:"))
 							fprintf(fp,"\t\t\t,(long unsigned)%s,(long unsigned)%s\n",cConcatField1,cConcatField2);
 						else
-							fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",cConcatField1,cConcatField2);
+							fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n"
+									"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",
+										cConcatField1,cConcatField1,cConcatField2,cConcatField2);
 						break;
 					}
 					else if(cConcatField1[0])
@@ -1922,7 +1953,7 @@ void funcModuleInsertQuery(FILE *fp)
 						if(strstr(field[2],"UNSIGNED_CONCAT:"))
 							fprintf(fp,"\t\t\t,(long unsigned)%s\n",cConcatField1);
 						else
-							fprintf(fp,"\t\t\t,TextAreaSave(%s)\n",cConcatField1);
+							fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",cConcatField1,cConcatField1);
 						break;
 					}
 				}
@@ -3040,15 +3071,12 @@ void funcBootstrapValueFields(FILE *fp)
 }//void funcBootstrapValueFields(FILE *fp)
 
 
+//Used by special template table requires parent
 void funcBootstrapEditorFields(FILE *fp)
 {
 	if(!guTable) return;
-
        	MYSQL_RES *res;
         MYSQL_ROW field;
-	char cFieldName[100];
-	char cBSLabelClass[64]={"col-sm-6"};
-	char cBSInputClass[64]={"col-sm-6"};
 
 	//If named table get parent guTable
 	sprintf(gcQuery,"SELECT cDescription FROM tTable"
@@ -3070,6 +3098,11 @@ void funcBootstrapEditorFields(FILE *fp)
 		mysql_free_result(res);
 		return;
 	}
+
+
+	char cFieldName[100];
+	char cBSLabelClass[64]={"col-sm-6"};
+	char cBSInputClass[64]={"col-sm-6"};
 
 	sprintf(gcQuery,"SELECT tField.cLabel,tField.cTitle,"
 			" tField.cOtherOptions,tFieldType.uRADType,tField.cFormDefault"
