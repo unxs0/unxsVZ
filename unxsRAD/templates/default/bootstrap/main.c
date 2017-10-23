@@ -66,6 +66,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName);
 void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
 unsigned uGetSessionConfig(const char *cName);
 unsigned uSetSessionConfig(const char *cName, unsigned uValue);
+char *cEndAtSpace(char *cBuffer);
 
 static char *sgcBuildInfo=dsGitVersion;
 
@@ -1130,4 +1131,34 @@ unsigned uSetSessionConfig(const char *cName, unsigned uValue)
 
 }//unsigned uSetSessionConfig(const char *cName,unsigned uValue)
 
+
+//If possible within our defined constraints
+char *cEndAtSpace(char *cBuffer)
+{
+#define uMaxStringLen 24
+#define uSmallestWord 3
+	static char *cReturn=NULL;
+	cReturn=(char *)malloc(32);
+        if(!cReturn) return("Malloc Error");
+
+	cReturn[0]=0;
+
+	if(!cBuffer[0]) return(cReturn);
+
+	register int i;
+	unsigned uStart=strlen(cBuffer);
+	if(uStart>uMaxStringLen) uStart=uMaxStringLen;
+
+	for(i=uStart;i>0;i--)
+		if(cBuffer[i]==' ') break;
+
+	if(i<uSmallestWord) i=uMaxStringLen;
+
+	cBuffer[i]=0;
+	sprintf(cReturn,"%.31s",cBuffer);
+	cBuffer[i]=' ';
+
+	return(cReturn);
+
+}//char *cEndAtSpace(char *cBuffer)
 

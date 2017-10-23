@@ -1688,14 +1688,10 @@ void funcModuleUpdateQuery(FILE *fp)
 					}
 					else
 					{
-						//CONCAT(SUBSTR('%%s',INSTR('%%s',' ')+1)
 						if(cConcatField1[0] && cConcatField2[0])
-							fprintf(fp,"\t\t\"%s=CONCAT(SUBSTR('%%s',1,INSTR('%%s',' ')),"
-							"' ',"
-							"SUBSTR('%%s',1,INSTR('%%s',' ')))",
-								field[0]);
+							fprintf(fp,"\t\t\"%s=CONCAT('%%s',' ','%%s')",field[0]);
 						else if(cConcatField1[0])
-							fprintf(fp,"\t\t\"%s=SUBSTR('%%s',1,INSTR('%%s',' '))",
+							fprintf(fp,"\t\t\"%s='%%s'",
 								field[0]);
 						break;
 					}
@@ -1771,11 +1767,11 @@ void funcModuleUpdateQuery(FILE *fp)
 					else
 					{
 						if(cConcatField1[0])
-							fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",
-								cConcatField1,cConcatField1);
+							fprintf(fp,"\t\t\t,cEndAtSpace(TextAreaSave(%s))\n",
+								cConcatField1);
 						if(cConcatField2[0])
-							fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",
-								cConcatField2,cConcatField2);
+							fprintf(fp,"\t\t\t,cEndAtSpace(TextAreaSave(%s))\n",
+								cConcatField2);
 					}
 					break;
 				}
@@ -1866,9 +1862,7 @@ void funcModuleInsertQuery(FILE *fp)
 							fprintf(fp,"\t\t\"%s=CONCAT('%c:%%lu',' ','%c:%%lu')",
 								field[0],cConcatField1[1],cConcatField2[1]);
 						else
-							fprintf(fp,"\t\t\"%s=CONCAT(SUBSTR('%%s',1,INSTR('%%s',' ')),"
-								"' ',"
-								"CONCAT(SUBSTR('%%s',1,INSTR('%%s',' ')))",
+							fprintf(fp,"\t\t\"%s=CONCAT('%%s',' ','%%s')",
 									field[0]);
 						break;
 					}
@@ -1877,7 +1871,7 @@ void funcModuleInsertQuery(FILE *fp)
 						if(strstr(field[2],"UNSIGNED_CONCAT:"))
 							fprintf(fp,"\t\t\"%s='%c:%%lu'",field[0],cConcatField1[1]);
 						else
-							fprintf(fp,"\t\t\"%s=SUBSTR('%%s',1,INSTR('%%s',' '))",field[0]);
+							fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 						break;
 					}
 				}
@@ -1943,9 +1937,8 @@ void funcModuleInsertQuery(FILE *fp)
 						if(strstr(field[2],"UNSIGNED_CONCAT:"))
 							fprintf(fp,"\t\t\t,(long unsigned)%s,(long unsigned)%s\n",cConcatField1,cConcatField2);
 						else
-							fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n"
-									"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",
-										cConcatField1,cConcatField1,cConcatField2,cConcatField2);
+							fprintf(fp,"\t\t\t,cEndAtSpace(TextAreaSave(%s)),cEndAtSpace(TextAreaSave(%s))\n",
+										cConcatField1,cConcatField2);
 						break;
 					}
 					else if(cConcatField1[0])
@@ -1953,7 +1946,7 @@ void funcModuleInsertQuery(FILE *fp)
 						if(strstr(field[2],"UNSIGNED_CONCAT:"))
 							fprintf(fp,"\t\t\t,(long unsigned)%s\n",cConcatField1);
 						else
-							fprintf(fp,"\t\t\t,TextAreaSave(%s),TextAreaSave(%s)\n",cConcatField1,cConcatField1);
+							fprintf(fp,"\t\t\t,cEndAtSpace(TextAreaSave(%s))\n",cConcatField1);
 						break;
 					}
 				}

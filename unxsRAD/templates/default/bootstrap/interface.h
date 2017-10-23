@@ -65,6 +65,7 @@ const char *cForeignKeyStr(const char *cTableName, const char *cFieldName, const
 void fpTemplate(FILE *fp,char *cTemplateName,struct t_template *template);
 void InterfaceLogoutFirewallJobs(unsigned uLoginClient);
 void InterfaceLoginFirewallJobs(unsigned uLoginClient);
+char *cEndAtSpace(char *cBuffer);
 
 //Global vars all declared in main.c
 //libtemplate.a required

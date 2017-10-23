@@ -33,6 +33,7 @@ void ExportInterfaceTables(void);
 void CopyAllFields(unsigned uTargetTable, unsigned uSourceTable);
 void CopyFieldsFromSameNameTable(unsigned uTargetTable,unsigned uProject);
 
+
 void ExtProcesstTableVars(pentry entries[], int x)
 {
 	//register int i;
