@@ -2960,7 +2960,8 @@ void funcBootstrapConcat(FILE *fp)
 			if(cConcatField1[0] && cConcatField2[0])
 			{
 				//values.cLabel = values.cApellido+' '+values.cNombre;
-				fprintf(fp,"values.%s = values.%s+' '+values.%s;",cFieldName,cConcatField1,cConcatField2);
+				fprintf(fp,"values.%s = values.%s.substring(0,16)+' '+values.%s.substring(0,16);",
+					cFieldName,cConcatField1,cConcatField2);
 			}
 			else if(cConcatField1[0])
 			{
@@ -3832,10 +3833,10 @@ void funcBSGetHookPrePages(FILE *fp)
 	else if(strstr(cTableOptions,"Bootstrap:Level2"))
 	{
 		fprintf(fp,"//funcBSGetHookPrePages Bootstrap:Level2\n");
-		if(cContextVar[0][0])
-			fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[0]);
-		if(cContextVar[1][0])
-			fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[1]);
+		//if(cContextVar[0][0])
+		//	fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[0]);
+		//if(cContextVar[1][0])
+		//	fprintf(fp,"\tif(!%1$s) %1$s=uGetSessionConfig(\"%1$s\");\n",cContextVar[1]);
 	}//Bootstrap:Level2 end
 	else
 	{
@@ -3884,14 +3885,22 @@ void funcBSGetHookPages(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 		sprintf(cContextVar[uNotFirst++],"%.63s",field[0]);
 /*
- *      if(uConsulta && uPaciente)
- *      {
- *      	sprintf(gcContext,"Consulta:<a href=?gcPage=Consulta&uConsulta=%u>%s</a>"
- *      			" Paciente:<a href=?gcPage=Paciente&uPaciente=%u>%s</a>",
- *			uConsulta,ForeignKey("tConsulta","cLabel",uConsulta),
- *			uPaciente,ForeignKey("tPaciente","cLabel",uPaciente));
- *	}
- */
+       if(uConsulta)
+        {
+                uPaciente=uGetSessionConfig("uPaciente");
+                if(uPaciente)
+                        sprintf(gcContext,"Paciente:<a href=?gcPage=Paciente&uPaciente=%u>%s</a>"
+                                " Consulta:<a href=?gcPage=Consulta&uConsulta=%u>%s</a>",
+                        uPaciente,cForeignKey("tPaciente","cLabel",uPaciente),
+                        uConsulta,cForeignKey("tConsulta","cLabel",uConsulta));
+                else
+                        sprintf(gcContext,"Consulta <a href=?gcPage=Consulta&uConsulta=%u>%s</a>",
+                                uPaciente,cForeignKey("tConsulta","cLabel",uConsulta));
+                sprintf(gcFilterRows,"&uConsulta=%u",uConsulta);
+                sprintf(gcFilterCols,"&uConsulta=%u",uConsulta);
+                htmltConsultaFilter();
+        }
+*/
 
 	if(strstr(cTableOptions,"Bootstrap:Level1"))
 	{
@@ -3904,15 +3913,19 @@ void funcBSGetHookPages(FILE *fp)
 		if(cContextVar[1][0] && cContextVar[0][0])
 		{
 	
-		fprintf(fp,"\tif(%s && %s)\n",cContextVar[0],cContextVar[1]);
+		fprintf(fp,"\tif(%s)\n",cContextVar[1]);
 		fprintf(fp,"\t{\n");
-		fprintf(fp,"\t\tsprintf(gcContext,\"%s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\"\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]+1);
+		fprintf(fp,"\t\t%s=uGetSessionConfig(\"%s\");\n",cContextVar[0],cContextVar[0]);
+		fprintf(fp,"\t\tif(%s)\n",cContextVar[0]);
+		fprintf(fp,"\t\t\tsprintf(gcContext,\"%s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\"\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]+1);
 		fprintf(fp,"\t\t\t\t\" %s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\",\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]+1);
-		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s),\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]);
-		fprintf(fp,"\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]);
-		fprintf(fp,"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n",cContextVar[0],cContextVar[0]);
-		fprintf(fp,"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n",cContextVar[0],cContextVar[0]);
-		fprintf(fp,"\t\tuSetSessionConfig(\"%s\",%s);\n",cContextVar[0],cContextVar[0]);
+		fprintf(fp,"\t\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s),\n",cContextVar[0]+1,cContextVar[0]+1,cContextVar[0]);
+		fprintf(fp,"\t\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]);
+		fprintf(fp,"\t\telse\n");
+		fprintf(fp,"\t\t\tsprintf(gcContext,\"%s:<a href=?gcPage=%s&u%s=%%u>%%s</a>\",\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]+1);
+		fprintf(fp,"\t\t\t\tu%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n",cContextVar[1]+1,cContextVar[1]+1,cContextVar[1]);
+		fprintf(fp,"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n",cContextVar[1],cContextVar[1]);
+		fprintf(fp,"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n",cContextVar[1],cContextVar[1]);
 		fprintf(fp,"\t\thtml%sFilter();\n",gcTableName);
 		fprintf(fp,"\t}\n\n");
 		}
@@ -3947,8 +3960,6 @@ void funcBSGetHookPages(FILE *fp)
  *         					uPaciente,ForeignKey("tPaciente","cLabel",uPaciente));
  *         	sprintf(gcFilterRows,"&uPaciente=%u",uPaciente);
  *         	sprintf(gcFilterCols,"&uPaciente=%u",uPaciente);
- *         	uSetSessionConfig("uPaciente",uPaciente);
- *         	uSetSessionConfig("uConsulta",0);
  *         	htmltConsultaFilter();
  *         }
  */
@@ -3959,13 +3970,11 @@ void funcBSGetHookPages(FILE *fp)
 			"\t\t\t\t%s,cForeignKey(\"t%s\",\"cLabel\",%s));\n"
 			"\t\tsprintf(gcFilterRows,\"&%s=%%u\",%s);\n"
 			"\t\tsprintf(gcFilterCols,\"&%s=%%u\",%s);\n"
-			"\t\tuSetSessionConfig(\"%s\",%s);\n"
 			"\t\thtml%sFilter();\n"
 			"\t}\n",
 				field[0],
 				field[0]+1,field[0]+1,field[0],
 				field[0],field[0]+1,field[0],
-				field[0],field[0],
 				field[0],field[0],
 				field[0],field[0],
 				gcTableName);
