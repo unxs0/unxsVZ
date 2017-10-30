@@ -34,6 +34,38 @@ void CopyAllFields(unsigned uTargetTable, unsigned uSourceTable);
 void CopyFieldsFromSameNameTable(unsigned uTargetTable,unsigned uProject);
 
 
+void voidSetupBSParentTable();
+void voidSetupBSParentTable()
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT cLabel,uTable FROM tTable WHERE uTemplateType=%u",uTEMPLATETYPE_RAD4);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		tTable("Error-1 voidSetupBSParentTable");
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		MYSQL_RES *res2;
+		MYSQL_ROW field2;
+		sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel LIKE '%s.%%' AND uTemplateType=%u AND cSubDir!=''",
+						field[0]+1,uTEMPLATETYPE_BOOTSTRAP);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			tTable("Error-2 voidSetupBSParentTable");
+		res2=mysql_store_result(&gMysql);
+		while((field2=mysql_fetch_row(res2)))
+		{
+			sprintf(gcQuery,"UPDATE tTable SET cDescription='uParentTable=%s;' WHERE uTable=%s",field[1],field2[0]);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+				tTable("Error-3 voidSetupBSParentTable");
+		}
+	}
+}//void voidSetupBSParentTable()
+
+
 void ExtProcesstTableVars(pentry entries[], int x)
 {
 	//register int i;
@@ -376,6 +408,19 @@ void ExttTableCommands(pentry entries[], int x)
 				tTable("Error: Denied by permissions settings");
 			}
 		}
+                else if(!strcmp(gcCommand,"Setup BS ParentTable"))
+                {
+                        ProcesstTableVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) || guPermLevel>=10)
+			{
+				voidSetupBSParentTable();
+				tTable("Setup BS ParentTable Done.");
+			}
+			else
+			{
+				tTable("Error: Denied by permissions settings");
+			}
+		}
                 else if(!strcmp(gcCommand,"Copy Fields"))
                 {
                         ProcesstTableVars(entries,x);
@@ -431,7 +476,8 @@ void htmlLabelInfo(const char *cLabel)
 		sprintf(gcQuery,"SELECT tTable.cLabel,tTemplateType.cLabel,tTable.uTable FROM tTable,tTemplateType"
 			" WHERE tTable.cLabel LIKE '%%%s%%'"
 			" AND tTable.uTable!=%u"
-			" AND tTable.uTemplateType=tTemplateType.uTemplateType",cLabel,uTable);
+			" AND tTable.uProject=%u"
+			" AND tTable.uTemplateType=tTemplateType.uTemplateType",cLabel,uTable,uProject);
 		*cp='.';	
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -451,7 +497,8 @@ void htmlLabelInfo(const char *cLabel)
 	sprintf(gcQuery,"SELECT tTable.cLabel,tTemplateType.cLabel,tTable.uTable FROM tTable,tTemplateType"
 			" WHERE tTable.cLabel LIKE '%%%s%%'"
 			" AND tTable.uTable!=%u"
-			" AND tTable.uTemplateType=tTemplateType.uTemplateType",cLabel+1,uTable);
+			" AND tTable.uProject=%u"
+			" AND tTable.uTemplateType=tTemplateType.uTemplateType",cLabel+1,uTable,uProject);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -614,6 +661,9 @@ void ExttTableButtons(void)
 				printf("<br><input type=submit class=largeButton"
 				" title='Select and keep this table marked for current work flow. Release any selected field.'"
 				" name=gcCommand value='Select'>");
+				printf("<p><input type=submit class=largeButton"
+				" title='Setup bootstrap no field template tables cDescription uParentTable=X; for any RAD4 based tables'"
+				" name=gcCommand value='Setup BS ParentTable'>");
 			}
 			printf("<br><input type=submit class=largeButton title='Open the field and table import panel.'"
 					" name=gcCommand value='Import'>");

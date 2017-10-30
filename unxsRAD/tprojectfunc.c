@@ -35,6 +35,53 @@ void ExtProcesstProjectVars(pentry entries[], int x)
 }//void ExtProcesstProjectVars(pentry entries[], int x)
 
 
+void voidCopyFields(unsigned uNewTable, unsigned uSourceTable,unsigned uNewProject);
+void voidCopyFields(unsigned uNewTable, unsigned uSourceTable,unsigned uNewProject)
+{
+	sprintf(gcQuery,"INSERT INTO tField"
+			"("
+			" cLabel,uProject,uTable,uOrder,uFieldType,uIndexType,cFKSpec,"
+			" cExtIndex,cTitle,uSQLSize,uHtmlXSize,uHtmlYSize,uHtmlMax,cFormDefault,"
+			" cSQLDefault,cOtherOptions,uReadLevel,uModLevel,uOwner,uCreatedBy,uCreatedDate"
+			")"
+			" SELECT "
+			" cLabel,'%u','%u',uOrder,uFieldType,uIndexType,cFKSpec,"
+			" cExtIndex,cTitle,uSQLSize,uHtmlXSize,uHtmlYSize,uHtmlMax,cFormDefault,"
+			" cSQLDefault,cOtherOptions,uReadLevel,uModLevel,'%u','%u',UNIX_TIMESTAMP(NOW())"
+			" FROM tField WHERE uTable=%u",uNewProject,uNewTable,guCompany,guLoginClient,uSourceTable);
+       	mysql_query(&gMysql,gcQuery);
+       	if(mysql_errno(&gMysql))
+		tProject("Error-1 CopyFields");
+
+}//void voidCopyFields(unsigned uNewTable, unsigned uSourceTable,unsigned uNewProject)
+
+void voidCopyTableAndFields(unsigned uSourceTable,unsigned uNewProject);
+void voidCopyTableAndFields(unsigned uSourceTable,unsigned uNewProject)
+{
+	sprintf(gcQuery,"INSERT INTO tTable"
+			"("
+			" cLabel,uProject,uClass,uTemplateType,uTableOrder,uSourceLock,"
+			" cDescription,cSubDir,cLegend,cToolTip,"
+			" uNewLevel,uModLevel,uDelLevel,uReadLevel,uOwner,uCreatedBy,uCreatedDate"
+			")"
+			" SELECT "
+			" cLabel,'%u',uClass,uTemplateType,uTableOrder,uSourceLock,"
+			" cDescription,cSubDir,cLegend,cToolTip,"
+			" uNewLevel,uModLevel,uDelLevel,uReadLevel,'%u','%u',UNIX_TIMESTAMP(NOW())"
+			" FROM tTable WHERE uTable=%u",uNewProject,guCompany,guLoginClient,uSourceTable);
+       	mysql_query(&gMysql,gcQuery);
+       	if(mysql_errno(&gMysql))
+		tProject("Error-1 voidCopyTableAndFields");
+	unsigned uNewTable=0;
+	uNewTable=mysql_insert_id(&gMysql);
+	if(!uNewTable)
+		tProject("Error-2 voidCopyTableAndFields");
+	voidCopyFields(uNewTable,uSourceTable,uNewProject);
+
+}//voidCopyTableAndFields(unsigned uSourceTable,unsigned uNewProject)
+
+
+
 void ExttProjectCommands(pentry entries[], int x)
 {
 
@@ -92,6 +139,14 @@ void ExttProjectCommands(pentry entries[], int x)
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
 				guMode=5;
+				sprintf(gcQuery,"DELETE FROM tTable WHERE uProject=%u",uProject);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					tProject("Error-1 Delete Project");
+				sprintf(gcQuery,"DELETE FROM tField WHERE uProject=%u",uProject);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					tProject("Error-2 Delete Project");
 				DeletetProject();
 			}
 			else
@@ -182,6 +237,43 @@ void ExttProjectCommands(pentry entries[], int x)
 			else
 				tProject("<blink>Error</blink>: Denied by permissions settings");
 		}
+		else if(!strcmp(gcCommand,"Clone Project"))
+                {
+                        ProcesstProjectVars(entries,x);
+			if(uAllowMod(uOwner,uCreatedBy) && uProject)
+			{
+				unsigned uOldProject=uProject;
+				//Create new project
+				uProject=0;
+				uCreatedBy=guLoginClient;
+				uModBy=0;//Never modified
+				uModDate=0;//Never modified
+				char cLabelTmp[32]={""};
+				sprintf(cLabelTmp,"%.25s",cLabel);
+				sprintf(cLabel,"%.25s-Clone",cLabelTmp);
+				sprintf(cDirectory,"%.25s-Clone",cLabelTmp);
+				NewtProject(1);//Sets uProject
+				if(!uProject)
+					tProject("Error-1 Clone Project");
+				//Loop start for every table
+				sprintf(gcQuery,"SELECT uTable FROM tTable WHERE uProject=%u",uOldProject);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					tProject("Error-2 Clone Project");
+				MYSQL_RES *res;
+				MYSQL_ROW field;
+        			res=mysql_store_result(&gMysql);
+				while((field=mysql_fetch_row(res)))
+				{
+					unsigned uSourceTable=0;
+					sscanf(field[0],"%u",&uSourceTable);
+					voidCopyTableAndFields(uSourceTable,uProject);
+				}
+				//Loop end
+			}
+			else
+				tProject("<blink>Error</blink>: Denied by permissions settings");
+		}
 	}
 
 }//void ExttProjectCommands(pentry entries[], int x)
@@ -198,7 +290,7 @@ void ExttProjectButtons(void)
                 break;
 
                 case 2001:
-                        printf("<p><u>Think twice</u><br>");
+                        printf("<p><u>Think twice. Removes all tables and fields of the project!</u><br>");
                         printf(LANG_NBB_CONFIRMDEL);
                 break;
 
@@ -238,6 +330,9 @@ void ExttProjectButtons(void)
 				" title='Create a make source code job for loaded project. See tJob for status. Depending on tConfiguration"
 				" settings the project may also be compiled and installed'"
 				" name=gcCommand value='Make Source Code'>");
+			printf("<p><input type=submit class=lalertButton"
+				" title='Clone current project to \"%s-Clone\". Clone all tables and all fields.'"
+				" name=gcCommand value='Clone Project'>",cLabel);
 			tProjectNavList();
 			tProjectTableNavList();
 			tProjectTableFieldNavList();
