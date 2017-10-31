@@ -32,8 +32,14 @@ static char cuIndexTypePullDown[256]={""};
 static char cFKSpec[101]={""};
 //cExtIndex: Optional Multiple Index SQL Create Code
 static char cExtIndex[101]={""};
-//cTitle: Tool Tip Text
+//cTitle: Displayed field name in interfaces.
 static char cTitle[101]={""};
+//cDescription: Tool tip
+static char cDescription[101]={""};
+//cTitle2: 2nd language
+static char cTitle2[101]={""};
+//cDescription2: Tool tip 2nd language
+static char cDescription2[101]={""};
 //uSQLSize: SQL Data Storage Size if Applies
 static unsigned uSQLSize=0;
 //uHtmlXSize: HTML X/Width Size if Applies
@@ -67,7 +73,7 @@ static time_t uModDate=0;
 
 
 
-#define VAR_LIST_tField "tField.uField,tField.cLabel,tField.uProject,tField.uTable,tField.uOrder,tField.uFieldType,tField.uIndexType,tField.cFKSpec,tField.cExtIndex,tField.cTitle,tField.uSQLSize,tField.uHtmlXSize,tField.uHtmlYSize,tField.uHtmlMax,tField.cFormDefault,tField.cSQLDefault,tField.uReadLevel,tField.uModLevel,tField.uOwner,tField.uCreatedBy,tField.uCreatedDate,tField.uModBy,tField.uModDate,tField.uClass,tField.cOtherOptions"
+#define VAR_LIST_tField "tField.uField,tField.cLabel,tField.uProject,tField.uTable,tField.uOrder,tField.uFieldType,tField.uIndexType,tField.cFKSpec,tField.cExtIndex,tField.cTitle,tField.uSQLSize,tField.uHtmlXSize,tField.uHtmlYSize,tField.uHtmlMax,tField.cFormDefault,tField.cSQLDefault,tField.uReadLevel,tField.uModLevel,tField.uOwner,tField.uCreatedBy,tField.uCreatedDate,tField.uModBy,tField.uModDate,tField.uClass,tField.cOtherOptions,tField.cDescription,tField.cTitle2,tField.cDescription2"
 
  //Local only
 void Insert_tField(void);
@@ -136,6 +142,12 @@ void ProcesstFieldVars(pentry entries[], int x)
 			sprintf(cExtIndex,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cTitle"))
 			sprintf(cTitle,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cDescription"))
+			sprintf(cDescription,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cTitle2"))
+			sprintf(cTitle2,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cDescription2"))
+			sprintf(cDescription2,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uSQLSize"))
 			sscanf(entries[i].val,"%u",&uSQLSize);
 		else if(!strcmp(entries[i].name,"uHtmlXSize"))
@@ -277,6 +289,9 @@ void tField(const char *cResult)
 			sscanf(field[22],"%lu",&uModDate);
 			sscanf(field[23],"%u",&uClass);
 			sprintf(cOtherOptions,"%.100s",field[24]);
+			sprintf(cDescription,"%.100s",field[25]);
+			sprintf(cTitle2,"%.100s",field[26]);
+			sprintf(cDescription2,"%.100s",field[27]);
 		}
 
 	}//Internal Skip
@@ -435,6 +450,45 @@ void tFieldInput(unsigned uMode)
 	{
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cTitle value=\"%s\">\n",EncodeDoubleQuotes(cTitle));
+	}
+//cDescription
+	OpenRow(LANG_FL_tField_cDescription,"black");
+	printf("<input title='%s' type=text name=cDescription value=\"%s\" size=40 maxlength=100 "
+,LANG_FT_tField_cDescription,EncodeDoubleQuotes(cDescription));
+	if(guPermLevel>=7 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cDescription value=\"%s\">\n",EncodeDoubleQuotes(cDescription));
+	}
+//cTitle2
+	OpenRow(LANG_FL_tField_cTitle2,"black");
+	printf("<input title='%s' type=text name=cTitle2 value=\"%s\" size=40 maxlength=100 "
+,LANG_FT_tField_cTitle2,EncodeDoubleQuotes(cTitle2));
+	if(guPermLevel>=7 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cTitle2 value=\"%s\">\n",EncodeDoubleQuotes(cTitle2));
+	}
+//cDescription2
+	OpenRow(LANG_FL_tField_cDescription2,"black");
+	printf("<input title='%s' type=text name=cDescription2 value=\"%s\" size=40 maxlength=100 "
+,LANG_FT_tField_cDescription2,EncodeDoubleQuotes(cDescription2));
+	if(guPermLevel>=7 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cDescription2 value=\"%s\">\n",EncodeDoubleQuotes(cDescription2));
 	}
 //uSQLSize
 	OpenRow(LANG_FL_tField_uSQLSize,"black");
@@ -640,6 +694,9 @@ void Insert_tField(void)
 			"cFKSpec='%s',"
 			"cExtIndex='%s',"
 			"cTitle='%s',"
+			"cDescription='%s',"
+			"cTitle2='%s',"
+			"cDescription2='%s',"
 			"uSQLSize=%u,"
 			"uHtmlXSize=%u,"
 			"uHtmlYSize=%u,"
@@ -662,6 +719,9 @@ void Insert_tField(void)
 			,TextAreaSave(cFKSpec)
 			,TextAreaSave(cExtIndex)
 			,TextAreaSave(cTitle)
+			,TextAreaSave(cDescription)
+			,TextAreaSave(cTitle2)
+			,TextAreaSave(cDescription2)
 			,uSQLSize
 			,uHtmlXSize
 			,uHtmlYSize
@@ -695,6 +755,9 @@ void Update_tField(char *cRowid)
 			"cFKSpec='%s',"
 			"cExtIndex='%s',"
 			"cTitle='%s',"
+			"cDescription='%s',"
+			"cTitle2='%s',"
+			"cDescription2='%s',"
 			"uSQLSize=%u,"
 			"uHtmlXSize=%u,"
 			"uHtmlYSize=%u,"
@@ -716,6 +779,9 @@ void Update_tField(char *cRowid)
 			,TextAreaSave(cFKSpec)
 			,TextAreaSave(cExtIndex)
 			,TextAreaSave(cTitle)
+			,TextAreaSave(cDescription)
+			,TextAreaSave(cTitle2)
+			,TextAreaSave(cDescription2)
 			,uSQLSize
 			,uHtmlXSize
 			,uHtmlYSize
@@ -820,7 +886,10 @@ void tFieldList(void)
 		"<td><font color=white>uCreatedBy"
 		"<td><font color=white>uCreatedDate"
 		"<td><font color=white>uModBy"
-		"<td><font color=white>uModDate</tr>");
+		"<td><font color=white>uModDate"
+		"<td><font color=white>cDescription"
+		"<td><font color=white>cTitle2"
+		"<td><font color=white>cDescription2</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -880,7 +949,8 @@ void tFieldList(void)
 			"<td>%s"
 			"<td>%s"
 			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s"
-			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
+			"<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s"
+			"<td>%s<td>%s<td>%s</tr>"
 			,field[0],field[0]
 			,field[1]
 			,cBuf2
@@ -906,6 +976,9 @@ void tFieldList(void)
 			,cBuf20
 			,cBuf21
 			,cBuf22
+			,field[25]
+			,field[26]
+			,field[27]
 				);
 
 	}
@@ -934,6 +1007,9 @@ void CreatetField(void)
 				" cExtIndex VARCHAR(100) NOT NULL DEFAULT '',"
 				" uOrder INT UNSIGNED NOT NULL DEFAULT 0,"
 				" cTitle VARCHAR(100) NOT NULL DEFAULT '',"
+				" cDescription VARCHAR(100) NOT NULL DEFAULT '',"
+				" cTitle2 VARCHAR(100) NOT NULL DEFAULT '',"
+				" cDescription2 VARCHAR(100) NOT NULL DEFAULT '',"
 				" uSQLSize INT UNSIGNED NOT NULL DEFAULT 0,"
 				" uHtmlXSize INT UNSIGNED NOT NULL DEFAULT 0,"
 				" uHtmlYSize INT UNSIGNED NOT NULL DEFAULT 0,"
