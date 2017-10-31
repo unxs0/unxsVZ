@@ -26,14 +26,20 @@ static unsigned uTableOrder=0;
 //uSourceLock: Allow overwrite of table source code
 static unsigned uSourceLock=0;
 static char cYesNouSourceLock[32]={""};
-//cDescription: Description of table function in project context
-static char cDescription[256]={""};
 //cSubDir: Optional subdir where source code is created for this table
 static char cSubDir[101]={""};
+//cDescription: Description of table function in project context
+static char cDescription[256]={""};
 //cLegend: Optional legend for table record group
 static char cLegend[101]={""};
 //cToolTip: Optional title link tool tip
 static char cToolTip[101]={""};
+//cDescription2: Description of table function in project context
+static char cDescription2[256]={""};
+//cLegend2: Optional legend for table record group
+static char cLegend2[101]={""};
+//cToolTip2: Optional title link tool tip
+static char cToolTip2[101]={""};
 //uNewLevel: New Table Creation Minimum uPermLevel
 static unsigned uNewLevel=0;
 //uModLevel: Table Modification Minimum uPermLevel
@@ -54,10 +60,9 @@ static unsigned uModBy=0;
 static time_t uModDate=0;
 
 
-//cDescription: Description of table function in project context
 static char *cImport="#Import field data format:\n#one field per line:\n#cLabel;cTitle;tFieldType.cLabel;uOrder;[cFKSpec/uSQLSize]\n#\n#tFieldType.cLabel can be:\n#BigInt Unsigned\n#Date Time\n#Decimal\n#Foreign Key\n#Int Unsigned\n#Select Table\n#Select Table Owner\n#Text\n#Time Stamp\n#Unixtime\n#Varchar\n#Varchar Unique Key\n#Yes/No\n#Empty lines stop processing and lines starting with a # or a space are ignored. Try the export options for more info.\n";
 
-#define VAR_LIST_tTable "tTable.uTable,tTable.cLabel,tTable.uProject,tTable.uTableOrder,tTable.uSourceLock,tTable.cDescription,tTable.cSubDir,tTable.cLegend,tTable.cToolTip,tTable.uNewLevel,tTable.uModLevel,tTable.uDelLevel,tTable.uReadLevel,tTable.uOwner,tTable.uCreatedBy,tTable.uCreatedDate,tTable.uModBy,tTable.uModDate,tTable.uClass,tTable.uTemplateType"
+#define VAR_LIST_tTable "tTable.uTable,tTable.cLabel,tTable.uProject,tTable.uTableOrder,tTable.uSourceLock,tTable.cDescription,tTable.cSubDir,tTable.cLegend,tTable.cToolTip,tTable.uNewLevel,tTable.uModLevel,tTable.uDelLevel,tTable.uReadLevel,tTable.uOwner,tTable.uCreatedBy,tTable.uCreatedDate,tTable.uModBy,tTable.uModDate,tTable.uClass,tTable.uTemplateType,tTable.cDescription2,tTable.cLegend2,tTable.cToolTip2"
 
  //Local only
 void Insert_tTable(void);
@@ -124,6 +129,12 @@ void ProcesstTableVars(pentry entries[], int x)
 			sprintf(cLegend,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cToolTip"))
 			sprintf(cToolTip,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cDescription2"))
+			sprintf(cDescription2,"%.255s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cLegend2"))
+			sprintf(cLegend2,"%.100s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cToolTip2"))
+			sprintf(cToolTip2,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uNewLevel"))
 			sscanf(entries[i].val,"%u",&uNewLevel);
 		else if(!strcmp(entries[i].name,"uModLevel"))
@@ -234,7 +245,7 @@ void tTable(const char *cResult)
 		sscanf(field[2],"%u",&uProject);
 		sscanf(field[3],"%u",&uTableOrder);
 		sscanf(field[4],"%u",&uSourceLock);
-		sprintf(cDescription,"%.100s",field[5]);
+		sprintf(cDescription,"%.255s",field[5]);
 		sprintf(cSubDir,"%.100s",field[6]);
 		sprintf(cLegend,"%.100s",field[7]);
 		sprintf(cToolTip,"%.100s",field[8]);
@@ -249,6 +260,9 @@ void tTable(const char *cResult)
 		sscanf(field[17],"%lu",&uModDate);
 		sscanf(field[18],"%u",&uClass);
 		sscanf(field[19],"%u",&uTemplateType);
+		sprintf(cDescription2,"%.255s",field[20]);
+		sprintf(cLegend2,"%.100s",field[21]);
+		sprintf(cToolTip2,"%.100s",field[22]);
 
 		}
 
@@ -411,19 +425,6 @@ void tTableInput(unsigned uMode)
 		YesNoPullDown("uSourceLock",uSourceLock,1);
 	else
 		YesNoPullDown("uSourceLock",uSourceLock,0);
-//cDescription
-	OpenRow(LANG_FL_tTable_cDescription,"black");
-	printf("<input title='%s' type=text name=cDescription value=\"%s\" size=40 maxlength=100 ",
-		LANG_FT_tTable_cDescription,EncodeDoubleQuotes(cDescription));
-	if(guPermLevel>=7 && uMode)
-	{
-		printf("></td></tr>\n");
-	}
-	else
-	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cDescription value=\"%s\">\n",EncodeDoubleQuotes(cDescription));
-	}
 //cSubDir
 	OpenRow(LANG_FL_tTable_cSubDir,"black");
 	printf("<input title='%s' type=text name=cSubDir value=\"%s\" size=40 maxlength=100 ",
@@ -436,6 +437,19 @@ void tTableInput(unsigned uMode)
 	{
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cSubDir value=\"%s\">\n",EncodeDoubleQuotes(cSubDir));
+	}
+//cDescription
+	OpenRow(LANG_FL_tTable_cDescription,"black");
+	printf("<input title='%s' type=text name=cDescription value=\"%s\" size=40 maxlength=100 ",
+		LANG_FT_tTable_cDescription,EncodeDoubleQuotes(cDescription));
+	if(guPermLevel>=7 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cDescription value=\"%s\">\n",EncodeDoubleQuotes(cDescription));
 	}
 //cLegend
 	OpenRow(LANG_FL_tTable_cLegend,"black");
@@ -462,6 +476,45 @@ void tTableInput(unsigned uMode)
 	{
 		printf("disabled></td></tr>\n");
 		printf("<input type=hidden name=cToolTip value=\"%s\">\n",EncodeDoubleQuotes(cToolTip));
+	}
+//cDescription2
+	OpenRow(LANG_FL_tTable_cDescription2,"black");
+	printf("<input title='%s' type=text name=cDescription2 value=\"%s\" size=40 maxlength=100 ",
+		LANG_FT_tTable_cDescription2,EncodeDoubleQuotes(cDescription2));
+	if(guPermLevel>=7 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cDescription2 value=\"%s\">\n",EncodeDoubleQuotes(cDescription2));
+	}
+//cLegend2
+	OpenRow(LANG_FL_tTable_cLegend2,"black");
+	printf("<input title='%s' type=text name=cLegend2 value=\"%s\" size=40 maxlength=100 "
+		,LANG_FT_tTable_cLegend2,EncodeDoubleQuotes(cLegend2));
+	if(guPermLevel>=7 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cLegend2 value=\"%s\">\n",EncodeDoubleQuotes(cLegend2));
+	}
+//cToolTip2
+	OpenRow(LANG_FL_tTable_cToolTip2,"black");
+	printf("<input title='%s' type=text name=cToolTip2 value=\"%s\" size=40 maxlength=100 "
+		,LANG_FT_tTable_cToolTip2,EncodeDoubleQuotes(cToolTip2));
+	if(guPermLevel>=7 && uMode)
+	{
+		printf("></td></tr>\n");
+	}
+	else
+	{
+		printf("disabled></td></tr>\n");
+		printf("<input type=hidden name=cToolTip2 value=\"%s\">\n",EncodeDoubleQuotes(cToolTip2));
 	}
 //uNewLevel
 	OpenRow(LANG_FL_tTable_uNewLevel,"black");
@@ -604,7 +657,9 @@ void Insert_tTable(void)
 {
 	//insert query
 	sprintf(gcQuery,"INSERT INTO tTable SET uTable=%u,cLabel='%s',uProject=%u,uClass=%u,uTemplateType=%u,uTableOrder=%u,uSourceLock=%u,"
-			"cDescription='%s',cSubDir='%s',cLegend='%s',cToolTip='%s',uNewLevel=%u,uModLevel=%u,uDelLevel=%u,"
+			"cDescription='%s',cSubDir='%s',cLegend='%s',cToolTip='%s',"
+			"cDescription2='%s',cLegend2='%s',cToolTip2='%s',"
+			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,"
 			"uReadLevel=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uTable
 			,TextAreaSave(cLabel)
@@ -617,6 +672,9 @@ void Insert_tTable(void)
 			,TextAreaSave(cSubDir)
 			,TextAreaSave(cLegend)
 			,TextAreaSave(cToolTip)
+			,TextAreaSave(cDescription2)
+			,TextAreaSave(cLegend2)
+			,TextAreaSave(cToolTip2)
 			,uNewLevel
 			,uModLevel
 			,uDelLevel
@@ -635,7 +693,9 @@ void Update_tTable(char *cRowid)
 
 	//update query
 	sprintf(gcQuery,"UPDATE tTable SET uTable=%u,cLabel='%s',uProject=%u,uClass=%u,uTemplateType=%u,uTableOrder=%u,uSourceLock=%u,"
-			"cDescription='%s',cSubDir='%s',cLegend='%s',cToolTip='%s',uNewLevel=%u,uModLevel=%u,uDelLevel=%u,"
+			"cDescription='%s',cSubDir='%s',cLegend='%s',cToolTip='%s',"
+			"cDescription2='%s',cLegend2='%s',cToolTip2='%s',"
+			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,"
 			"uReadLevel=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uTable
 			,TextAreaSave(cLabel)
@@ -648,6 +708,9 @@ void Update_tTable(char *cRowid)
 			,TextAreaSave(cSubDir)
 			,TextAreaSave(cLegend)
 			,TextAreaSave(cToolTip)
+			,TextAreaSave(cDescription2)
+			,TextAreaSave(cLegend2)
+			,TextAreaSave(cToolTip2)
 			,uNewLevel
 			,uModLevel
 			,uDelLevel
@@ -743,6 +806,9 @@ void tTableList(void)
 			"<td><font color=white>uModDate"
 			"<td><font color=white>uClass"
 			"<td><font color=white>uTemplateType"
+			"<td><font color=white>cDescription2"
+			"<td><font color=white>cLegend2"
+			"<td><font color=white>cToolTip2"
 		"</tr>");
 
 	mysql_data_seek(res,guStart-1);
@@ -812,6 +878,9 @@ void tTableList(void)
 				"<td>%s"
 				"<td>%s"
 				"<td>%s"
+				"<td>%s"
+				"<td>%s"
+				"<td>%s"
 				"<td>%s</tr>"
 			,field[0]
 			,field[0]
@@ -834,6 +903,9 @@ void tTableList(void)
 			,cBuf17
 			,field[18]
 			,field[19]
+			,field[20]
+			,field[21]
+			,field[22]
 				);
 
 	}
@@ -863,6 +935,9 @@ void CreatetTable(void)
 			"cLegend VARCHAR(100) NOT NULL DEFAULT '',"
 			"cToolTip VARCHAR(100) NOT NULL DEFAULT '',"
 			"cDescription VARCHAR(255) NOT NULL DEFAULT '',"
+			"cLegend2 VARCHAR(100) NOT NULL DEFAULT '',"
+			"cToolTip2 VARCHAR(100) NOT NULL DEFAULT '',"
+			"cDescription2 VARCHAR(255) NOT NULL DEFAULT '',"
 			"cSubDir VARCHAR(100) NOT NULL DEFAULT '',"
 			"uProject INT UNSIGNED NOT NULL DEFAULT 0,"
 			"uTemplateType INT UNSIGNED NOT NULL DEFAULT 0,"
