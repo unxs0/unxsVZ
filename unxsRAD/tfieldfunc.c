@@ -13,6 +13,7 @@ AUTHOR
 void DeleteField(unsigned uField);
 
 static unsigned uTargetTable=0;
+static unsigned uModBSField=0;
 
 void tFieldNavList(void);
 
@@ -24,6 +25,8 @@ void ExtProcesstFieldVars(pentry entries[], int x)
 	{
 		if(!strcmp(entries[i].name,"uTargetTable"))
 			sscanf(entries[i].val,"%u",&uTargetTable);
+		else if(!strcmp(entries[i].name,"uModBSField"))
+			uModBSField=1;
 		else if(!strncmp(entries[i].name,"CB",2))
 		{
 			//insider xss protection
@@ -58,6 +61,9 @@ void ExttFieldCommands(pentry entries[], int x)
 	if(!strcmp(gcFunction,"tFieldTools"))
 	{
 		//ModuleFunctionProcess()
+        	MYSQL_RES *res;
+        	MYSQL_ROW field;
+
 
 		if(!strcmp(gcCommand,LANG_NB_NEW))
                 {
@@ -68,7 +74,7 @@ void ExttFieldCommands(pentry entries[], int x)
 	                        tField(LANG_NB_CONFIRMNEW);
 			}
 			else
-				tField("<blink>Error</blink>: Denied by permissions settings");
+				tField("Error: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_CONFIRMNEW))
                 {
@@ -81,9 +87,9 @@ void ExttFieldCommands(pentry entries[], int x)
                         	guMode=2000;
 				//Check entries here
 				if(!cLabel[0])
-					tField("<blink>Error</blink>: cLabel empty");
+					tField("Error: cLabel empty");
 				if(strchr(cLabel,' '))
-					tField("<blink>Error</blink>: Blank in cLabel");
+					tField("Error: Blank in cLabel");
                         	guMode=0;
 
 				uField=0;
@@ -94,7 +100,7 @@ void ExttFieldCommands(pentry entries[], int x)
 				NewtField(0);
 			}
 			else
-				tField("<blink>Error</blink>: Denied by permissions settings");
+				tField("Error: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,LANG_NB_DELETE))
                 {
@@ -108,7 +114,7 @@ void ExttFieldCommands(pentry entries[], int x)
 				tField(LANG_NB_CONFIRMDEL);
 			}
 			else
-				tField("<blink>Error</blink>: Denied by permissions settings");
+				tField("Error: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMDEL))
                 {
@@ -119,7 +125,7 @@ void ExttFieldCommands(pentry entries[], int x)
 				DeletetField();
 			}
 			else
-				tField("<blink>Error</blink>: Denied by permissions settings");
+				tField("Error: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,LANG_NB_MODIFY))
                 {
@@ -130,7 +136,7 @@ void ExttFieldCommands(pentry entries[], int x)
 				tField(LANG_NB_CONFIRMMOD);
 			}
 			else
-				tField("<blink>Error</blink>: Denied by permissions settings");
+				tField("Error: Denied by permissions settings");
                 }
                 else if(!strcmp(gcCommand,LANG_NB_CONFIRMMOD))
                 {
@@ -150,23 +156,65 @@ void ExttFieldCommands(pentry entries[], int x)
 							" E.g. <i>\"tClient\",\"cLabel\",uClient</i>"
 							" where uClient is only required for ForeignKey like field types.");
 				}
+				if(!cLabel[0] || strlen(cLabel)<3)
+					tField("Error: No Label or too short");
+				char cuBSField[16]={""};
+				char cBSOtherOptions[100]={""};
+				unsigned uBSTable=0;
+				if(uModBSField)
+				{
+					sprintf(gcQuery,"SELECT tField.uField,tField.uTable,tField.cOtherOptions FROM tField,tTable"
+						" WHERE tField.uTable=tTable.uTable"
+						" AND tTable.cLabel='%s'"
+						" AND tField.cLabel='%s'"
+						" AND tField.uField!=%u"
+						" AND tTable.uTemplateType=%u LIMIT 1",
+							ForeignKey("tTable","cLabel",uTable),
+							ForeignKey("tField","cLabel",uField),
+							uField,
+							uTEMPLATETYPE_BOOTSTRAP);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						tTable(gcQuery);
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+					{
+						sprintf(cuBSField,"%.15s",field[0]);
+						sscanf(field[1],"%u",&uBSTable);
+						sprintf(cBSOtherOptions,"%.99s",field[2]);
+					}
+				}
+				//sprintf(gcQuery,"cuBSField=%s uBSTable=%u",cuBSField,uBSTable);
+				//tTable(gcQuery);
 				
                         	guMode=0;
-
 				uModBy=guLoginClient;
+				if(uModBSField && cuBSField[0] && uBSTable)
+				{
+					unsigned uSaveTable=uTable;
+					unsigned uSaveField=uField;
+					char cSaveOtherOptions[100]={""};
+					sprintf(cSaveOtherOptions,"%.99s",cOtherOptions);
+
+					uTable=uBSTable;
+					sprintf(cOtherOptions,"%.99s",cBSOtherOptions);
+					sscanf(cuBSField,"%u",&uField);
+					Update_tField(cuBSField);
+
+					uTable=uSaveTable;
+					uField=uSaveField;
+					sprintf(cOtherOptions,"%.99s",cSaveOtherOptions);
+				}
 				ModtField();
 			}
 			else
-				tField("<blink>Error</blink>: Denied by permissions settings");
+				tField("Error: Denied by permissions settings");
                 }
 		else if(!strcmp(gcCommand,"Reorder"))
                 {
                         ProcesstFieldVars(entries,x);
 			if(uAllowMod(uOwner,uCreatedBy) && uTable)
 			{
-        			MYSQL_RES *res;
-        			MYSQL_ROW field;
-
 				sprintf(gcQuery,"SELECT uField FROM tField"
 						" WHERE uOrder>2 AND uOrder<1000"
 						" AND uTable=%u"
@@ -188,7 +236,7 @@ void ExttFieldCommands(pentry entries[], int x)
 				tField("Attempt to reorder fields has been done.");
 			}
 			else
-				tField("<blink>Error</blink>: Denied by permissions settings");
+				tField("Error: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,"Select"))
                 {
@@ -203,7 +251,7 @@ void ExttFieldCommands(pentry entries[], int x)
 				}
 			}
 			else
-				tField("<blink>Error</blink>: Denied by permissions settings");
+				tField("Error: Denied by permissions settings");
 		}
 		else if(!strcmp(gcCommand,"Copy"))
                 {
@@ -219,7 +267,7 @@ void ExttFieldCommands(pentry entries[], int x)
 				}
 			}
 			else
-				tField("<blink>Error</blink>: Denied by permissions settings");
+				tField("Error: Denied by permissions settings");
 		}
 	}
 
@@ -278,6 +326,12 @@ void ExttFieldButtons(void)
                 case 2002:
 			printf("<p><u>Review changes</u><br>");
                         printf(LANG_NBB_CONFIRMMOD);
+			printf("<p><input type=checkbox"
+				" title='Also modify same name Bootstrap table field,but  keeps original cOtherOptions and uTable'"
+				" name=uModBSField");
+			if(uModBSField)
+				printf(" checked");
+			printf("> Modify BS Table Field");
                 break;
 
 		default:
