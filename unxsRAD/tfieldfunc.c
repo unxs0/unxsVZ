@@ -155,6 +155,42 @@ void ExttFieldCommands(pentry entries[], int x)
 						tField("cFKSpec not formatted correctly."
 							" E.g. <i>\"tClient\",\"cLabel\",uClient</i>"
 							" where uClient is only required for ForeignKey like field types.");
+					//Now verfiy that such table and field exist
+					sprintf(gcQuery,"SELECT uField FROM tField,tTable"
+						" WHERE tField.uTable=tTable.uTable"
+						" AND tTable.cLabel='%s'"
+						" AND tField.cLabel='%s'"
+						" AND tField.uProject=%u"
+						" AND tTable.uTemplateType=%u LIMIT 1",
+							cTable,
+							cField,
+							uProject,
+							uTEMPLATETYPE_RAD4);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						tTable(gcQuery);
+					res=mysql_store_result(&gMysql);
+					if(!(field=mysql_fetch_row(res)))
+						tField("cFKSpec contains invalid table and/or field");
+					//Now verfiy that such table and key exist
+					sprintf(gcQuery,"SELECT uField FROM tField,tTable"
+						" WHERE tField.uTable=tTable.uTable"
+						" AND tTable.cLabel='%s'"
+						" AND tField.cLabel='%s'"
+						" AND tField.uProject=%u"
+						" AND tTable.uTemplateType=%u LIMIT 1",
+							cTable,
+							cuKey,
+							uProject,
+							uTEMPLATETYPE_RAD4);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+						tField(gcQuery);
+					res=mysql_store_result(&gMysql);
+					if(!(field=mysql_fetch_row(res)))
+						tField("cFKSpec contains invalid table and/or key");
+					
+					//tField("passed check");
 				}
 				if(!cLabel[0] || strlen(cLabel)<3)
 					tField("Error: No Label or too short");
@@ -175,7 +211,7 @@ void ExttFieldCommands(pentry entries[], int x)
 							uTEMPLATETYPE_BOOTSTRAP);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
-						tTable(gcQuery);
+						tField(gcQuery);
 					res=mysql_store_result(&gMysql);
 					if((field=mysql_fetch_row(res)))
 					{
