@@ -560,7 +560,6 @@ void RRCheck(int uMode)
 	}
 	else if(!strcmp(cRRType,"TXT"))
 	{
-		cParam2[0]=0;
 		if(!cParam1[0])
 		{
 			guMode=uMode;
@@ -1852,6 +1851,10 @@ void ExttResourceButtons(void)
 					" CNAME records in n.0-(2^(32-CIDR))-1 "
 					"style for supplied NS previously defined in tNSSet to this zone' class=largeButton "
 					"type=submit name=gcCommand value='Delegation Wizard'>");
+			}
+			else if(uRRType==6)
+			{
+				printf("<p>You can split long TXT records into cParam1-4. Max 255 chars each. Please quote correctly.");
 			}
 
                 break;

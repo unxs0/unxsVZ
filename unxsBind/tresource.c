@@ -1,16 +1,15 @@
 /*
 FILE
 	tResource source code of iDNS.cgi
-	Built by mysqlRAD2.cgi (C) Gary Wallis and Hugo Urquiza 2001-2009
 PURPOSE
 	Zone db resource records. Excluding zone SOA records that we save via tZone.
 AUTHOR/LEGAL
-        (C) 2001-2016 Gary Wallis for Unixservice, LLC.
+	(C) 2001-2018 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See LICENSE file.
 */
+
 //git describe version info
 static char *cGitVersion="GitVersion:"GitVersion;
-
 
 #include "mysqlrad.h"
 
@@ -87,6 +86,7 @@ void ExttResourceAuxTable(void);
 void ProcesstResourceVars(pentry entries[], int x)
 {
 	register int i;
+	char *cp;
 
 
 	for(i=0;i<x;i++)
@@ -107,13 +107,33 @@ void ProcesstResourceVars(pentry entries[], int x)
 			uRRType=ReadPullDown("tRRType","cLabel",cuRRTypePullDown);
 		}
 		else if(!strcmp(entries[i].name,"cParam1"))
+		{
+			if((cp=strchr(entries[i].val,'\n'))) *cp=0;
+			if((cp=strchr(entries[i].val,'\r'))) *cp=0;
+			if((cp=strchr(entries[i].val,'\t'))) *cp=0;
 			sprintf(cParam1,"%.255s",entries[i].val);
+		}
 		else if(!strcmp(entries[i].name,"cParam2"))
+		{
+			if((cp=strchr(entries[i].val,'\n'))) *cp=0;
+			if((cp=strchr(entries[i].val,'\r'))) *cp=0;
+			if((cp=strchr(entries[i].val,'\t'))) *cp=0;
 			sprintf(cParam2,"%.255s",entries[i].val);
+		}
 		else if(!strcmp(entries[i].name,"cParam3"))
+		{
+			if((cp=strchr(entries[i].val,'\n'))) *cp=0;
+			if((cp=strchr(entries[i].val,'\r'))) *cp=0;
+			if((cp=strchr(entries[i].val,'\t'))) *cp=0;
 			sprintf(cParam3,"%.255s",entries[i].val);
+		}
 		else if(!strcmp(entries[i].name,"cParam4"))
+		{
+			if((cp=strchr(entries[i].val,'\n'))) *cp=0;
+			if((cp=strchr(entries[i].val,'\r'))) *cp=0;
+			if((cp=strchr(entries[i].val,'\t'))) *cp=0;
 			sprintf(cParam4,"%.255s",entries[i].val);
+		}
 		else if(!strcmp(entries[i].name,"cComment"))
 			cComment=entries[i].val;
 		else if(!strcmp(entries[i].name,"uOwner"))
@@ -443,30 +463,30 @@ void tResourceInput(unsigned uMode)
 	else
 		tTablePullDown("tRRType;cuRRTypePullDown","cLabel","cLabel",uRRType,0);
 //cParam1
-	OpenRow(LANG_FL_tResource_cParam1,EmptyString(cParam1));
-	printf("<input title='%s' type=text name=cParam1 value=\"%s\" size=80 maxlength=255 "
-		,LANG_FT_tResource_cParam1,EncodeDoubleQuotes(cParam1));
+	OpenRow(LANG_FL_tResource_cParam1,"black");
+	printf("<textarea title='%s' cols=77 wrap=soft rows=3 name=cParam1 "
+		,LANG_FT_tResource_cParam1);
 	if(guPermLevel>=0 && uMode)
 	{
-		printf("></td></tr>\n");
+		printf(">%s</textarea></td></tr>\n",cParam1);
 	}
 	else
 	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cParam1 value=\"%s\">\n",EncodeDoubleQuotes(cParam1));
+		printf("disabled>%s</textarea></td></tr>\n",cParam1);
+		printf("<input type=hidden name=cParam1 value=\"%s\" >\n",EncodeDoubleQuotes(cParam1));
 	}
 //cParam2
 	OpenRow(LANG_FL_tResource_cParam2,"black");
-	printf("<input title='%s' type=text name=cParam2 value=\"%s\" size=80 maxlength=255 "
-		,LANG_FT_tResource_cParam2,EncodeDoubleQuotes(cParam2));
+	printf("<textarea title='%s' cols=77 wrap=soft rows=3 name=cParam2 "
+		,LANG_FT_tResource_cParam2);
 	if(guPermLevel>=0 && uMode)
 	{
-		printf("></td></tr>\n");
+		printf(">%s</textarea></td></tr>\n",cParam2);
 	}
 	else
 	{
-		printf("disabled></td></tr>\n");
-		printf("<input type=hidden name=cParam2 value=\"%s\">\n",EncodeDoubleQuotes(cParam2));
+		printf("disabled>%s</textarea></td></tr>\n",cParam2);
+		printf("<input type=hidden name=cParam2 value=\"%s\" >\n",EncodeDoubleQuotes(cParam2));
 	}
 //cParam3
 	OpenRow(LANG_FL_tResource_cParam3,"black");
@@ -606,7 +626,7 @@ void Insert_tResource(void)
 {
 
 	//insert query
-	sprintf(gcQuery,"INSERT INTO tResource SET uResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+	sprintf(gcQuery,"INSERT INTO tResource SET uResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1=TRIM('%s'),cParam2=TRIM('%s'),cParam3=TRIM('%s'),cParam4=TRIM('%s'),cComment='%s',uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			uResource
 			,uZone
 			,TextAreaSave(cName)
@@ -630,7 +650,7 @@ void Update_tResource(char *cRowid)
 {
 
 	//update query
-	sprintf(gcQuery,"UPDATE tResource SET uResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1='%s',cParam2='%s',cParam3='%s',cParam4='%s',cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
+	sprintf(gcQuery,"UPDATE tResource SET uResource=%u,uZone=%u,cName='%s',uTTL=%u,uRRType=%u,cParam1=TRIM('%s'),cParam2=TRIM('%s'),cParam3=TRIM('%s'),cParam4=TRIM('%s'),cComment='%s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE _rowid=%s",
 			uResource
 			,uZone
 			,TextAreaSave(cName)

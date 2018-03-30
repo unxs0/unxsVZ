@@ -690,6 +690,17 @@ void CreateMasterFiles(char *cMasterNS, char *cZone, unsigned uModDBFiles,
 								field2[4],
 								field2[5],
 								field2[6]);
+ 					else if(!strcmp(cRRType,"TXT"))
+ 						fprintf(zfp,"%s\t%s\t%s\t"
+ 								"(%s\n"
+ 								"\t%s\n"
+ 								"\t%s\n"
+ 								"\t%s);\n",
+ 								field2[0], cTTL, cRRType,
+ 								field2[3],
+ 								field2[4],
+ 								field2[5],
+ 								field2[6]);
 					else if(1)
 						fprintf(zfp,"%s\t%s\t%s\t%s\t%s\n",
 								field2[0],

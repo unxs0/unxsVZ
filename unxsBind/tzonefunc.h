@@ -2116,8 +2116,8 @@ tResource.uResource 8
 */
 			printf("<tr>"
 				"<td valign=top><a class=darkLink href=?gcFunction=tResource&uResource=%s>%s</a></td>"
-				"<td valign=top>%s</td><td valign=top>%s</td><td valign=top>%.64s</td><td valign=top>%s</td>"
-				"<td valign=top>%s</td><td valign=top>%s</td><td valign=top>%s</td>"
+				"<td valign=top>%s</td><td valign=top>%s</td><td valign=top>%.32s</td><td valign=top>%.32s</td>"
+ 				"<td valign=top>%.32s</td><td valign=top>%.32s</td><td valign=top>%s</td>"
 				"</tr>\n",
 					field[8],cName,cTTL,field[2],
 					field[3],field[4],field[5],
