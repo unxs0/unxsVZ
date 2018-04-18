@@ -26,10 +26,10 @@ unxsrad.o: unxsrad.c unxsrad.h mysqlrad.h local.h
 
 unxsRAD.cgi: tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o\
 	 tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o\
-	 tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o mysqlconnect.o  main.o cgi.o
+	 tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o mysqlconnect.o glossary.o main.o cgi.o
 	cc tproject.o ttable.o tfield.o ttemplate.o ttemplateset.o ttemplatetype.o tprojectstatus.o\
 	 tfieldtype.o tindextype.o tclient.o tauthorize.o tstatus.o tlog.o tlogtype.o tlogmonth.o\
-	 tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o mysqlconnect.o  main.o cgi.o -o unxsRAD.cgi $(LIBS) 
+	 tglossary.o tjob.o tmonth.o tjobstatus.o tconfiguration.o tserver.o mysqlconnect.o glossary.o main.o cgi.o -o unxsRAD.cgi $(LIBS) 
 
 tproject.o: tproject.c mysqlrad.h language.h tprojectfunc.c local.h
 	cc -c tproject.c -o tproject.o $(CFLAGS)
@@ -100,6 +100,9 @@ main.o: main.c mysqlrad.h mainfunc.c language.h local.h
 
 cgi.o: cgi.h cgi.c
 	cc -c cgi.c -o cgi.o $(CFLAGS)
+
+glossary.o: glossary.c mysqlrad.h local.h
+	cc -c glossary.c -o glossary.o $(CFLAGS)
 
 mysqlconnect.o: mysqlconnect.c mysqlrad.h local.h
 	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)

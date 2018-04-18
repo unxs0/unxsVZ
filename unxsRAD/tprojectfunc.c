@@ -801,18 +801,20 @@ void AddTableFromDefaultTablesLine(char *cLine)
 	unsigned uModLevel=0;
 	unsigned uDelLevel=0;
 	unsigned uReadLevel=0;
+	unsigned uTemplateType=0;
 	unsigned uTable=0;
 	int iCount=0;
 
 	char gcQuery[512];
 
 	//tClient;1000;1;Organizations and their contacts;7;7;7;7;
-	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%u;%u;%99[a-zA-Z0-9 ];%u;%u;%u;%u;%99[a-zA-Z0-9\\./];",cTable,&uOrder,&uSourceLock,
-						cDescription,&uNewLevel,&uModLevel,&uDelLevel,&uReadLevel,cSubDir);
-	if(!cTable[0] || iCount<8)
+	iCount=sscanf(cLine,"%31[a-zA-Z0-9\\.];%u;%u;%99[a-zA-Z0-9 ];%u;%u;%u;%u;%u;%99[a-zA-Z0-9\\./];",cTable,&uOrder,&uSourceLock,
+						cDescription,&uNewLevel,&uModLevel,&uDelLevel,&uReadLevel,&uTemplateType,cSubDir);
+	if(!cTable[0] || iCount<9)
 	{
-		sprintf(gcQuery,"Error2 iCount=%d %s;%u;%u;%s;%u;%u;%u;%u; (%s)",
-				iCount,cTable,uOrder,uSourceLock,cDescription,uNewLevel,uModLevel,uDelLevel,uReadLevel,cLine);
+		sprintf(gcQuery,"Error2 iCount=%d %s;%u;%u;%s;%u;%u;%u;%u;%u; (%s)",
+				iCount,cTable,uOrder,uSourceLock,cDescription,uNewLevel,uModLevel,uDelLevel,uReadLevel,
+					uTemplateType,cLine);
 		tProject(gcQuery);
 	}
 
@@ -831,6 +833,9 @@ void AddTableFromDefaultTablesLine(char *cLine)
 		sscanf(field[0],"%u",&uTable);
         mysql_free_result(res);
 
+	if(uTemplateType==0)
+		uTemplateType=uTEMPLATETYPE_RAD4;
+
 
 	if(uTable)
 	{
@@ -840,14 +845,14 @@ void AddTableFromDefaultTablesLine(char *cLine)
 			"uModBy=%u,"
 			"uModDate=UNIX_TIMESTAMP(NOW()) WHERE uTable=%u",
 			cTable,uOrder,uSourceLock,
-			cDescription,cSubDir,uTEMPLATETYPE_BOOTSTRAP,
+			cDescription,cSubDir,uTemplateType,
 			uNewLevel,uModLevel,uDelLevel,uReadLevel,
 			guLoginClient,
 				uTable);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
 		{
-        		sprintf(gcQuery,"%.511s",mysql_error(&gMysql));
+        		sprintf(gcQuery,"UQ: %.511s",mysql_error(&gMysql));
 			tProject(gcQuery);
 		}
 	}
@@ -857,18 +862,18 @@ void AddTableFromDefaultTablesLine(char *cLine)
 			"cDescription='%.100s',cSubDir='%.100s',"
 			"cLegend='%.100s',cToolTip='%.100s',"
 			"uNewLevel=%u,uModLevel=%u,uDelLevel=%u,uReadLevel=%u,"
-			"uProject=%u,uClass=%u,uTemplateType=%u"
+			"uProject=%u,uClass=%u,uTemplateType=%u,"
 			"uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
 			cTable,uOrder,uSourceLock,
 			cDescription,cSubDir,
 			cDescription,cDescription,
 			uNewLevel,uModLevel,uDelLevel,uReadLevel,
-			uProject,uDEFAULTCLASS,uTEMPLATETYPE_BOOTSTRAP,
+			uProject,uDEFAULTCLASS,uTemplateType,
 				guCompany,guLoginClient);
         	mysql_query(&gMysql,gcQuery);
         	if(mysql_errno(&gMysql))
 		{
-        		sprintf(gcQuery,"%.511s",mysql_error(&gMysql));
+        		sprintf(gcQuery,"IQ: %.511s",mysql_error(&gMysql));
 			tProject(gcQuery);
 		}
 	}

@@ -498,6 +498,8 @@ void DeletetServer(void);
 void ExttServerGetHook(entry gentries[], int x);
 void ExttServerNavBar(void);
 
+//glossary.c
+void GlossaryGetHook(entry gentries[],int x);
 
 
 //In-line code macros
