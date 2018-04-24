@@ -30,8 +30,8 @@ all: {{cProject}}.cgi {{cProject}}
 	@ if [ ! -f {{cProjectLC}}.c ];then cp -i unxsrad.c {{cProjectLC}}.c; fi
 
 #included standard RAD4 objects
-{{cProject}}.cgi: {{funcMakefileObjects}} mysqlconnect.o main.o cgi.o
-	cc {{funcMakefileObjects}} mysqlconnect.o main.o cgi.o -o {{cProject}}.cgi $(LIBS) 
+{{cProject}}.cgi: {{funcMakefileObjects}} mysqlconnect.o main.o cgi.o glossary.o
+	cc {{funcMakefileObjects}} mysqlconnect.o main.o cgi.o glossary.o -o {{cProject}}.cgi $(LIBS) 
 
 {{funcMakefileRules}}
 
@@ -44,6 +44,9 @@ cgi.o: cgi.h cgi.c
 
 mysqlconnect.o: mysqlconnect.c mysqlrad.h local.h
 	cc -c mysqlconnect.c -o mysqlconnect.o $(CFLAGS)
+
+glossary.o: glossary.c mysqlrad.h local.h
+	cc -c glossary.c -o glossary.o $(CFLAGS)
 
 local.h: local.h.default
 	@ if [ ! -f local.h ];then cp -i local.h.default local.h; fi

@@ -1,9 +1,9 @@
 /*
 FILE
-	$Id: mysqlrad.h 2085 2012-09-06 03:27:21Z Dylan $
+	From unxsRAD template/default/RAD4/mysqlrad.h
 AUTHOR
 	(C) 2001-2008 Gary Wallis and Hugo Urquiza. 
-	(C) 2009-2012 Gary Wallis for Unixservice LLC.
+	(C) 2009-2018 Gary Wallis for Unixservice LLC.
 */
 
 #include <stdio.h>
@@ -402,6 +402,8 @@ void ExttServerGetHook(entry gentries[], int x);
 void ExttServerNavBar(void);
 
 
+//glossary.c
+void GlossaryGetHook(entry gentries[],int x);
 
 //In-line code macros
 

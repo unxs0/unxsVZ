@@ -2436,7 +2436,17 @@ void funcMainGetMenu(FILE *fp)
 		if(uFirst)
 			fprintf(fp,"\t\t\tif(!strcmp(gcFunction,\"%s\"))\n",field[0]);
 		else
+		{
 			fprintf(fp,"\t\t\telse if(!strcmp(gcFunction,\"%s\"))\n",field[0]);
+			//Special Glossary GetHook for OpenRow tGlossary functionality
+			if(!strcmp(field[0],"tGlossary"))
+			{
+				fprintf(fp,"\t\t\t\tExt%sGetHook(gentries,x);\n",field[0]);
+				fprintf(fp,"\t\t\telse if(!strcmp(gcFunction,\"Glossary\"))\n");
+				fprintf(fp,"\t\t\t\tGlossaryGetHook(gentries,x);\n");
+				continue;
+			}
+		}
 		fprintf(fp,"\t\t\t\tExt%sGetHook(gentries,x);\n",field[0]);
 		uFirst=0;
 	}

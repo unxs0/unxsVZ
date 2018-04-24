@@ -559,7 +559,34 @@ void CloseFieldSet(void)
 
 void OpenRow(const char *cFieldLabel, const char *cColor)
 {
-	printf("<tr><td width=20%% valign=top><font color=%.32s>%.32s</td><td>",cColor,cFieldLabel);
+	//Skip underlined cFieldLabel for tGlossary.cLabel use.
+	if(cFieldLabel[0]=='<')
+	{
+		register int j;
+		char cGlossary[33]="";
+
+		for(j=3;cFieldLabel[j]&&j<32;j++)
+		{
+			if(!isalnum(cFieldLabel[j]) && cFieldLabel[j]!=' ')
+			{
+				cGlossary[j]=0;
+				break;
+			}
+			else
+			{
+				cGlossary[j]=cFieldLabel[j];
+			}
+		}
+		printf("<tr><td width=20%% valign=top><a class=darkLink "
+			"href=# onClick=\"open_popup('?gcFunction=Glossary&cLabel=%2$s')\">"
+			"<font color=%1$s>%3$s</font></td><td>",cColor,cGlossary+3,cFieldLabel);
+	}
+	else
+	{
+		printf("<tr><td width=20%% valign=top><a class=darkLink "
+			"href=# onClick=\"open_popup('?gcFunction=Glossary&cLabel=%2$s')\">"
+			"<font color=%1$s>%2$s</font></td><td>",cColor,cFieldLabel);
+	}
 
 }//void OpenRow()
 
