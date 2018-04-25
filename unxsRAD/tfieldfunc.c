@@ -171,7 +171,12 @@ void ExttFieldCommands(pentry entries[], int x)
 						tTable(gcQuery);
 					res=mysql_store_result(&gMysql);
 					if(!(field=mysql_fetch_row(res)))
-						tField("cFKSpec contains invalid table and/or field");
+					{
+						char cMessage[256];
+						sprintf(cMessage,"%.99s %.99s %99s",cTable,cField,cuKey);
+						//tField("cFKSpec contains invalid table and/or field");
+						tField(cMessage);
+					}
 					//Now verfiy that such table and key exist
 					sprintf(gcQuery,"SELECT uField FROM tField,tTable"
 						" WHERE tField.uTable=tTable.uTable"

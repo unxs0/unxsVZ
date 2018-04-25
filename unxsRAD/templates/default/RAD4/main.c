@@ -307,7 +307,7 @@ void HeaderRAD4(char *cTitle, int iJs)
 	printf("</head><body><form name=formMain action=/{{cProject}}/ method=post><blockquote>\n");
 	printf("<table width=100%% cellpadding=0 cellspacing=0 ><tr><td align=left valign=bottom>\n");
 	if(!strncmp(gcFunction,"Main",4))
-		printf("<img src=/images/rad.png>&nbsp;&nbsp;\n");
+		printf("<img src=/images/rad.png width=22>&nbsp;&nbsp;\n");
 
 	{{funcMainNavBars}}
 
