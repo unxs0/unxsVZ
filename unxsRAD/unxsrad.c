@@ -1486,7 +1486,7 @@ void funcModuleVars(FILE *fp)
 				fprintf(fp,"static char %s[20]={\"%s\"};\n",
 					field[0],field[3]);
 			else
-				fprintf(fp,"static char %s[20]={\"2000-01-01 00:00:00\"};\n",field[0]);
+				fprintf(fp,"static char %s[20]={\"01/01/1900 00:00:00\"};\n",field[0]);
 			break;
 
 			case COLTYPE_DATEEUR:

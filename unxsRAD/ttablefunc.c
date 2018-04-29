@@ -637,8 +637,8 @@ void ExttTableButtons(void)
 			OpenFieldSet("tTable Aux Panel",100);
 			printf("<u>Table Tips</u><br>");
 			printf("Here we manage mostly project tables. We also have included misc source code files"
-				" and even data init .txt files. The other tables refer to templates that are"
-				" required to build or initialize the target apps.");
+				" and even data init .txt files. The other tables refer to source code templates that are"
+				" required to build or initialize the target apps. See tTemplate.");
 			printf("<p><u>Record Context Info</u><br>");
 			if(guCookieProject && guCookieProject!=uProject)
 				printf("Current workflow project has no tables.");
@@ -804,6 +804,15 @@ void ExttTableListSelect(void)
 		sprintf(cCat,"tTable.cSubDir LIKE '%s' ORDER BY tTable.cSubDir",gcCommand);
 		strcat(gcQuery,cCat);
 	}
+        else if(!strcmp(gcFilter,"cLabel"))
+        {
+		if(guPermLevel<10)
+			strcat(gcQuery," AND ");
+		else
+			strcat(gcQuery," WHERE ");
+		sprintf(cCat,"tTable.cLabel LIKE '%s' ORDER BY tTable.cLabel",gcCommand);
+		strcat(gcQuery,cCat);
+	}
         else if(!strcmp(gcFilter,"cDescription"))
         {
 		if(guPermLevel<10)
@@ -842,6 +851,10 @@ void ExttTableListFilter(void)
                 printf("<option>uProject</option>");
         else
                 printf("<option selected>uProject</option>");
+        if(strcmp(gcFilter,"cLabel"))
+                printf("<option>cLabel</option>");
+        else
+                printf("<option selected>cLabel</option>");
         if(strcmp(gcFilter,"cSubDir"))
                 printf("<option>cSubDir</option>");
         else
@@ -1000,7 +1013,9 @@ void tTableFieldNavList(void)
 	}
 	else
 	{
-		printf("Table has no fields, might be a special default table created directly from a \"named\" template");
+		printf("Table has no fields, might be a special default table created directly from a \"named\" template."
+			" Default tables have the fields hardcoded in their source files. Check tTemplate for the fields that"
+			" will be created.");
 	}
         mysql_free_result(res);
 

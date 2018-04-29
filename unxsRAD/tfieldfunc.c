@@ -153,9 +153,12 @@ void ExttFieldCommands(pentry entries[], int x)
 					if(sscanf(cFKSpec,"\"%99[a-zA-Z0-9\\.]\",\"%99[a-zA-Z0-9\\.]\",%99[a-zA-Z0-9\\.]"
 						,cTable,cField,cuKey)<2)
 						tField("cFKSpec not formatted correctly."
-							" E.g. <i>\"tClient\",\"cLabel\",uClient</i>"
+							" E.g. <i>\"tClient\",\"cLabel\",uField</i>"
 							" where uClient is only required for ForeignKey like field types.");
 					//Now verfiy that such table and field exist
+					//If the field is created by a source code template on app generation
+					//this is hard to do.
+					/*
 					sprintf(gcQuery,"SELECT uField FROM tField,tTable"
 						" WHERE tField.uTable=tTable.uTable"
 						" AND tTable.cLabel='%s'"
@@ -173,8 +176,9 @@ void ExttFieldCommands(pentry entries[], int x)
 					if(!(field=mysql_fetch_row(res)))
 					{
 						char cMessage[256];
-						sprintf(cMessage,"%.99s %.99s %99s",cTable,cField,cuKey);
-						//tField("cFKSpec contains invalid table and/or field");
+						sprintf(cMessage,"cFKSpec contains invalid table and/or field."
+							" cTable=%.99s cField=%.99s cuKey=%99s",
+									cTable,cField,cuKey);
 						tField(cMessage);
 					}
 					//Now verfiy that such table and key exist
@@ -194,6 +198,7 @@ void ExttFieldCommands(pentry entries[], int x)
 					res=mysql_store_result(&gMysql);
 					if(!(field=mysql_fetch_row(res)))
 						tField("cFKSpec contains invalid table and/or key");
+					*/
 					
 					//tField("passed check");
 				}

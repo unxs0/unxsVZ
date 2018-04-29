@@ -1,9 +1,10 @@
 #!/bin/bash
 #
 #FILE
-# $Id: importTemplates.sh 1954 2012-05-22 16:11:09Z Colin $
+#	{{cProject}}/utils/importTemplate.sh
+#	Template unxsRAD/templates/default/bootstrap/importTemplate.sh
 #PURPOSE
-#	Import unxsRAD.cgi templates in one fell swoop.
+#	Import {{cProject}}.cgi templates in one fell swoop.
 #	Very useful when moving application to new server.
 #	Or during development work with vi editing of templates.
 #AUTHOR/LEGAL
@@ -19,8 +20,9 @@ if [ -d "$CGIDIR" ];then
 	cCGIDIR=${CGIDIR};
 	echo $cCGIDIR;
 fi
-if [ -d "$UNXSRAD" ];then
-	cunxsRAD=${UNXSRAD};
+if [ -d "${{cProject}}" ];then
+	#cunxsRAD=${{{cProject}}};
+	cunxsRAD={{funcBashEnvProject}};
 	echo $cunxsRAD;
 fi
 
@@ -28,22 +30,21 @@ if [ "$cunxsRAD" != "" ] && [ "$cCGIDIR" != "" ];then
 	if [ "$1" == "--help" ];then
 		echo "usage: $0 [<template set>] | --help";
 		echo cgi-dir set via ENV $cCGIDIR;
-		echo unxsRAD dir set via ENV $cunxsRAD;
+		echo {{cProject}} dir set via ENV {{cProject}};
 		echo "	ttemplate set default is $cTemplateSet."
 		exit;
 	fi
 
 	if [ "$1" != "" ];then
-		cTemplateSet=$1;
-		echo "$cTemplateSet";
+		cTemplateSet=$2;
 	fi
 
 else
 	if [ "$2" == "" ] || [ "$1" == "--help" ];then
-		echo "usage: $0 <unxsRAD dir> <cgi-dir> [<template set>] | --help";
-		echo "	or export CGIDIR=/var/www/cgi-bin && export UNXSRAD=/home/unxs/unxsVZ/unxsRAD";
+		echo "usage: $0 <{{cProject}} dir> <cgi-dir> [<template set>] | --help";
+		echo "	or export CGIDIR=/var/www/cgi-bin && export {{cProject}}=/home/user/{{cProject}}";
 			echo "	and then usage is only: $0 [<template set>]";
-		echo "	unxsRAD dir e.g. /home/unxs/unxsVZ/unxsRAD"
+		echo "	{{cProject}} dir via {{cProject}} env e.g. /home/user/{{cProject}}"
 		echo "	cgi-dir e.g. /var/www/cgi-bin"
 		echo "	ttemplate set default is $cTemplateSet."
 		exit;
@@ -62,20 +63,17 @@ else
 	fi
 fi
 
-#echo "d1 $1";
-#exit;
-
 if [ ! -d "$cunxsRAD/templates/$cTemplateSet" ]; then
 	echo "no dir $cunxsRAD/templates/$cTemplateSet";
 	exit 1;
 fi
 
-if [ -e "$cCGIDIR/unxsRAD.cgi" ]; then
+if [ -e "$cCGIDIR/{{cProject}}.cgi" ]; then
     for i in `find $cunxsRAD/templates/$cTemplateSet/*/ -maxdepth 1 -type f`; do
 	cTemplateType=`echo $i | rev | cut -f 2 -d / | rev`;
 	cFilename=`echo $i | rev | cut -f 1 -d / | rev`;
-        $cCGIDIR/unxsRAD.cgi ImportTemplateFile $cFilename $i $cTemplateSet $cTemplateType;
+        $cCGIDIR/{{cProject}}.cgi ImportTemplateFile $cFilename $i $cTemplateSet $cTemplateType;
     done
 else
-	echo "unxsRAD.cgi isn't present in the CGIDIR you've defined!";
+	echo "{{cProject}}.cgi isn't present in the CGIDIR you've defined!";
 fi

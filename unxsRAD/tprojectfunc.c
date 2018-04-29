@@ -712,11 +712,11 @@ char *ParseTextAreaLines(char *cTextArea)
 
 void RemoveDefaultTables(unsigned uProject)
 {
-	char cValue[2048];
+	char cValue[4096];
 	char cLine[256];
 
         sprintf(cLine,"cDefaultTablesList_TemplateSet_%s",ForeignKey("tTemplateSet","cLabel",uTemplateSet));
-	GetConfiguration(cLine,cValue,2047,0,1);
+	GetConfiguration(cLine,cValue,4095,0,1);
 
 	while(1)
 	{
@@ -732,11 +732,11 @@ void RemoveDefaultTables(unsigned uProject)
 
 void AddDefaultTables(unsigned uProject)
 {
-	char cValue[2048];
+	char cValue[4096];
 	char cLine[256];
 
         sprintf(cLine,"cDefaultTablesList_TemplateSet_%s",ForeignKey("tTemplateSet","cLabel",uTemplateSet));
-	GetConfiguration(cLine,cValue,2047,0,1);
+	GetConfiguration(cLine,cValue,4095,0,1);
 
 	while(1)
 	{
@@ -820,8 +820,8 @@ void AddTableFromDefaultTablesLine(char *cLine)
 
         MYSQL_RES *res;
         MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u AND uClass=%u",
-				cTable,uProject,uDEFAULTCLASS);
+	sprintf(gcQuery,"SELECT uTable FROM tTable WHERE cLabel='%.32s' AND uProject=%u AND uClass=%u AND uTemplateType=%u",
+				cTable,uProject,uDEFAULTCLASS,uTemplateType);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
 	{
