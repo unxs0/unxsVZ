@@ -721,6 +721,16 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 		}
 
 		fclose(fp);
+		//if file ends with .sh chmod +x
+		unsigned ucFileName=strlen(cFileName);
+		if(cFileName[ucFileName-3]=='.' && cFileName[ucFileName-2]=='s' && cFileName[ucFileName-1]=='h')
+		{
+			//chmod +x
+			char cMode[5]={"0777"};
+			if(chmod(cFile,atoi(cMode)))
+				logfileLine("CreateGenericFile","error chmod .sh file");
+			logfileLine("CreateGenericFile","chmod .sh file");
+		}
 		uRetVal=0;
 	}
 	else

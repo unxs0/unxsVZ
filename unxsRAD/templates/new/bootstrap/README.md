@@ -18,6 +18,18 @@ provided template files.
 The provided template web apps are simple C cgi's that require an Apache style
 https server that supports .cgi executables.
 
+### Web server config
+
+In order to provide multi app hosting on dev httpd servers, we use the simple
+aliasing scheme (apache example):
+
+```
+#backend
+ScriptAlias "/unxsAK/" "/var/www/cgi-bin/unxsAK.cgi"
+#mobile app
+ScriptAlias "/unxsAKApp/" "/var/www/unxs/html/unxsAK/mobile.cgi"
+```
+
 ### Development Workflow Notes
 
 #### Basics

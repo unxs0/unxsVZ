@@ -1,9 +1,9 @@
 /*
 FILE 
 	{{cProject}}/interfaces/bootstrap/main.c
-	template unxsRAD/templates/default/bootstrap/main.c
+	template unxsRAD/templates/new/bootstrap/main.c
 AUTHOR/LEGAL
-	(C) 2010-2017 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2018 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.
 PURPOSE
 	Bootstrap interface program file
@@ -237,7 +237,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="/unxsID";
+			template.cpValue[1]="";
 			
 			template.cpName[2]="cMessage";
 			template.cpValue[2]=gcMessage;

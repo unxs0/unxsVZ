@@ -1,13 +1,12 @@
 /*
 FILE 
-	user.c
-	svn ID removed
+	{{cProject}}/interfaces/bootstrap/main.c
+	template/new/bootstrap/main.c
 AUTHOR/LEGAL
-	(C) 2010-2017 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2018 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.
 PURPOSE
-	OneLogin program file.
-	User tab functions.
+	bootstrap user default home page code
 */
 
 #include "interface.h"
@@ -216,7 +215,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="/unxsID";
+			template.cpValue[1]="";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcUser;

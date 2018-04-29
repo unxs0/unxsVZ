@@ -36,7 +36,7 @@ if [ "$cunxsRAD" != "" ] && [ "$cCGIDIR" != "" ];then
 	fi
 
 	if [ "$1" != "" ];then
-		cTemplateSet=$2;
+		cTemplateSet=$1;
 	fi
 
 else
