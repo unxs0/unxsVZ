@@ -387,6 +387,8 @@ void ExttFieldButtons(void)
 			{
 				htmlTableInfo(uTable);
 				htmlFieldInfo(uTable);
+				if((uFieldType==7 || uFieldType==23) && uSQLSize<19)
+					printf("<br>uSQLSize should be at least 19 for full \"12/15/2000 19:23:34\" data input.");
 			}
 			printf("<p><u>Operations</u><br>");
 			printf("<input type=submit class=largeButton"

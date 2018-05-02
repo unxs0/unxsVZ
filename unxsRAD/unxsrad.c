@@ -1496,7 +1496,7 @@ void funcModuleVars(FILE *fp)
 				fprintf(fp,"static char %s[20]={\"%s\"};\n",
 					field[0],field[3]);
 			else
-				fprintf(fp,"static char %s[20]={\"01/01/1900 00:00:00\"};\n",field[0]);
+				fprintf(fp,"static char %s[20]={\"12/15/2000 00:00:00\"};\n",field[0]);
 			break;
 
 			case COLTYPE_DATEEUR:
@@ -1504,7 +1504,7 @@ void funcModuleVars(FILE *fp)
 				fprintf(fp,"static char %s[20]={\"%s\"};\n",
 					field[0],field[3]);
 			else
-				fprintf(fp,"static char %s[20]={\"01/01/1900\"};\n",field[0]);
+				fprintf(fp,"static char %s[20]={\"15/12/2000\"};\n",field[0]);
 			break;
 
 			case COLTYPE_TIMESTAMP:
@@ -1598,12 +1598,17 @@ void funcModuleVarList(FILE *fp)
 		if(uFirst) fprintf(fp,",");
 
 		//testing a simple hack
-		if(uRADType==COLTYPE_DATETIME)
+		if(uRADType==COLTYPE_DATETIME || uRADType==COLTYPE_DATEEUR)
 			sprintf(gcuJs,"1");
 		if(uRADType==COLTYPE_DATEEUR)
 		{
-			sprintf(gcuJs,"1");
+			//fprintf(fp,"DATE_FORMAT(%s.%s,'%%d/%%m/%%Y %%H:%%i:%%s')",gcTableName,field[0]);
 			fprintf(fp,"DATE_FORMAT(%s.%s,'%%d/%%m/%%Y')",gcTableName,field[0]);
+		}	
+		else if(uRADType==COLTYPE_DATETIME)
+		{
+			//fprintf(fp,"DATE_FORMAT(%s.%s,'%%m/%%d/%%Y %%H:%%i:%%s')",gcTableName,field[0]);
+			fprintf(fp,"DATE_FORMAT(%s.%s,'%%m/%%d/%%Y')",gcTableName,field[0]);
 		}	
 		else
 		{
@@ -1663,7 +1668,6 @@ void funcModuleUpdateQuery(FILE *fp)
 				fprintf(fp,"\t\t\"%s=%%u",field[0]);
 			break;
 
-			case COLTYPE_DATETIME:
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_CHAR:
@@ -1715,8 +1719,15 @@ void funcModuleUpdateQuery(FILE *fp)
 				fprintf(fp,"\t\t\"%s=UNIX_TIMESTAMP(NOW())",field[0]);
 			break;
 
+			case COLTYPE_DATETIME:
+				//STR_TO_DATE('12/15/2011','%d/%m/%Y')
+				//fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y')",field[0]);
+			break;
+
 			case COLTYPE_DATEEUR:
 				//STR_TO_DATE('20/2/2011','%d/%m/%Y')
+				//fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
 				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y')",field[0]);
 			break;
 		}
@@ -1848,7 +1859,6 @@ void funcModuleInsertQuery(FILE *fp)
 			break;
 
 			case COLTYPE_CHAR:
-			case COLTYPE_DATETIME:
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
@@ -1896,9 +1906,14 @@ void funcModuleInsertQuery(FILE *fp)
 				fprintf(fp,"\t\t\"%s=UNIX_TIMESTAMP(NOW())",field[0]);
 			break;
 
+			case COLTYPE_DATETIME:
+				//STR_TO_DATE('12/15/2011','%d/%m/%Y')
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
+			break;
+
 			case COLTYPE_DATEEUR:
 				//STR_TO_DATE('20/2/2011','%d/%m/%Y')
-				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y')",field[0]);
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
 			break;
 		}
 		uFirst=1;
@@ -3244,6 +3259,10 @@ void funcBootstrapRowVars(FILE *fp)
 		{
 			case COLTYPE_DATEEUR:
 				fprintf(fp,"'%1$s',DATE_FORMAT(%1$s,'%%%%d/%%%%m/%%%%Y')",field[0]);
+			break;
+
+			case COLTYPE_DATETIME:
+				fprintf(fp,"'%1$s',DATE_FORMAT(%1$s,'%%%%m/%%%%d/%%%%Y')",field[0]);
 			break;
 
 			case COLTYPE_TEXT:
