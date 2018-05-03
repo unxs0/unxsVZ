@@ -20,7 +20,7 @@ char gcQuery[4096]={""};
 
 //
 //Template vars
-char *gcMessage="&nbsp;";
+char *gcMessage="Enter valid data";
 char gcInputStatus[32]={"disabled"};
 char gcModStep[32]={""};
 char gcNewStep[32]={""};

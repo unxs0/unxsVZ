@@ -60,11 +60,13 @@
 			<a data-toggle="collapse" data-target="#collapseFive" href="#collapseFive" class="collapsed">Change Your Password</a>
 		</h4>
 	</div><!-- "panel-heading" -->
-	<div id="collapseFive" class="panel-collapse collapse">
+	<div id="collapseFive" class="panel-collapse collapse {{gcFiveIn}}">
 	<div class="panel-body">
 
           <div class="list-group">
-		<h5>{{gcMessage}}</h5>
+        	<input disabled maxlength="31" title='Message'
+			type="login" id="gcMessage" class="form-control" placeholder="{{gcMessage}}" name="gcMessage" >
+		<br>
       		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
 		<input type=hidden name="gcPage" value="User">
 		<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">

@@ -16,6 +16,7 @@ extern char gcCtHostname[];
 static char cCurPasswd[32]={""};
 static char cPasswd[32]={""};
 static char cPasswd2[32]={""};
+static char *gcFiveIn="out";
 
 //TOC
 void ProcessUserVars(pentry entries[], int x);
@@ -123,10 +124,16 @@ unsigned uChangePassword(const char *cPasswd)
 			cBuffer,guLoginClient,gcLogin);
 	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
+	{
+		unxsvzLog(guLoginClient,"tAuthorize","Password Not Changed Error1",guPermLevel,guLoginClient,gcLogin,gcHost);
 		return(1);
+	}
 	if(mysql_affected_rows(&gMysql)<1)
+	{
+		unxsvzLog(guLoginClient,"tAuthorize","Password Not Changed Error2",guPermLevel,guLoginClient,gcLogin,gcHost);
 		return(1);
-	unxsvzLog(guLoginClient,"tClient","Password Changed",guPermLevel,guLoginClient,gcLogin,gcHost);
+	}
+	unxsvzLog(guLoginClient,"tAuthorize","Password Changed",guPermLevel,guLoginClient,gcLogin,gcHost);
 	return(0);
 }//unsigned uChangePassword(const char *cPasswd)
 
@@ -136,30 +143,35 @@ void UserCommands(pentry entries[], int x)
 	if(!strcmp(gcPage,"User"))
 	{
 		ProcessUserVars(entries,x);
-		if(!strcmp(gcFunction,"Change Password"))
+		if(!strcmp(gcFunction,"Change Password") || !strcmp(gcFunction,"ChangePassword"))
 		{
 			if(!cCurPasswd[0])
 			{
+				gcFiveIn="in";
 				gcMessage="Error: Must enter 'Current Password'";
 				htmlUser();
 			}
 			if(!uValidPasswd(cCurPasswd,guLoginClient))
 			{
+				gcFiveIn="in";
 				gcMessage="Error: Invalid current password entered";
 				htmlUser();
 			}
 			if(!cPasswd[0] || !cPasswd2[0] || strcmp(cPasswd,cPasswd2))
 			{
+				gcFiveIn="in";
 				gcMessage="Error: Must enter new 'Password' twice and they must match";
 				htmlUser();
 			}
 			if(!strcmp(cCurPasswd,cPasswd))
 			{
+				gcFiveIn="in";
 				gcMessage="Error: New 'Password' is the same as current password";
 				htmlUser();
 			}
 			if(strlen(cPasswd)<6)
 			{
+				gcFiveIn="in";
 				gcMessage="Error: New 'Password' must be at least 6 chars long";
 				htmlUser();
 			}
@@ -167,17 +179,20 @@ void UserCommands(pentry entries[], int x)
 				strstr(cPasswd,gcName) || strstr(gcName,cPasswd) ||
 				strstr(gcOrgName,cPasswd) || strstr(cPasswd,gcOrgName))
 			{
+				gcFiveIn="in";
 				gcMessage="Error: New 'Password' must not be related to your login or company";
 				htmlUser();
 			}
 			if(uNoUpper(cPasswd) || uNoLower(cPasswd) || uNoDigit(cPasswd))
 			{
+				gcFiveIn="in";
 				gcMessage="Error: New 'Password' must have some upper and lower case letters,"
 						" and at least one number";
 				htmlUser();
 			}
 			if(uChangePassword(cPasswd))
 			{
+				gcFiveIn="in";
 				gcMessage="Error: Password not changed contact system admin";
 				htmlUser();
 			}
@@ -241,7 +256,10 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[9]="gcCopyright";
 			template.cpValue[9]=INTERFACE_COPYRIGHT;
 
-			template.cpName[10]="";
+			template.cpName[10]="gcFiveIn";
+			template.cpValue[10]=gcFiveIn;
+
+			template.cpName[11]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");
