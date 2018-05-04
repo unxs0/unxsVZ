@@ -6,10 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{gcBrand}} User tab">
-    <meta name="author" content="(C) Unixservice, LLC. 2014-2017">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
     <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico?v=1>
 
-    <title>{{gcOrgName}}</title>
+    <title>{{gcBrand}} Settings</title>
 
     <!-- Bootstrap core CSS -->
     <!-- <link href="/bs/css/bootstrap.min.css" rel="stylesheet"> -->

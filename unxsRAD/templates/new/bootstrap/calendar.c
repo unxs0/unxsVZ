@@ -101,7 +101,7 @@ void funcCalendar(FILE *fp)
 	printf("  <div class=\"text-center\">\n");
 	printf("    <a class=\"month-selector\" href=\"?gcPage=Calendar&uYear=%u&uMonth=%u\">%s %u</a>\n",
 			uPrevYear,uPrevMonth,cPrevMonth,uPrevYear);
-	printf("    <h2 class=\"month-header\">%s %s %u</h2>\n",gcLogin,cMonth,guYear);
+	printf("    <h2 class=\"month-header\">%s %s %u</h2>\n",gcName,cMonth,guYear);
 	printf("    <a class=\"month-selector\" href=\"?gcPage=Calendar&uYear=%u&uMonth=%u\">%s %u</a>\n",
 			uNextYear,uNextMonth,cNextMonth,uNextYear);
 	printf("  </div>\n");
@@ -130,7 +130,7 @@ void funcCalendar(FILE *fp)
 		printf("        <h4>%u %s</h4>\n",uDay,cWeekDay[(uCount%7)]);
 		printf("      </div>\n");
 		printf("      <div class=\"date-item none\">\n");
-		printf("        <b data=\"no-items\" class=\"no-items\">No Events Scheduled</b>\n");
+		printf("        <b data=\"no-items\" class=\"no-items\">No work scheduled</b>\n");
 		printf("      </div>\n");
 		printf("    </div>\n");
 		uCount++;
@@ -152,7 +152,7 @@ void funcCalendar(FILE *fp)
 		printf("        <h4>%u %s</h4>\n",uDay,cWeekDay[(uCount%7)]);
 		printf("      </div>\n");
 		printf("      <div class=\"date-item none\">\n");
-		printf("        <b data=\"no-items\" class=\"no-items\">No Events Scheduled</b>\n");
+		printf("        <b data=\"no-items\" class=\"no-items\">No work scheduled</b>\n");
 		printf("      </div>\n");
 		printf("    </div>\n");
 		uCount++;
