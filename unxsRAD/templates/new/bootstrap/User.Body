@@ -12,11 +12,14 @@
     <title>{{gcOrgName}}</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="/bs/css/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="/bs/css/bootstrap.min.css" rel="stylesheet"> -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
     <link href="/bs/css/offcanvas.css" rel="stylesheet">
     <link href="/bs/css/collapse.css" rel="stylesheet">
+    <link href="/bs/css/calendargrid.css" rel="stylesheet">
+
 
   </head>
 
@@ -42,16 +45,15 @@
       </div><!-- /.container -->
     </nav><!-- /.navbar -->
 
-    <div class="container">
+{{funcCalendar}}
 
-      <div class="row row-offcanvas row-offcanvas-right">
+<!-- start collapse area -->
+<div class="container">
 
-        <div class="col-xs-12 col-sm-9">
+<!-- <div class="row row-offcanvas row-offcanvas-right"> -->
+<div class="row">
 
-          <div>
-        	<h4>Usuario {{gcName}} de {{gcOrgName}}</h4>
-		<h5>{{funcMOTD}}</h5>
-          </div>
+<div class="col-xs-12 col-sm-9">
 
 <!-- start jquery collapse Change Passwd -->
 <div class="panel panel-default" id="panel5">
@@ -117,8 +119,10 @@
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="/bs/js/bootstrap.min.js"></script>
-    <script src="/bs/js/offcanvas.js"></script>
+    <!-- <script src="/bs/js/bootstrap.min.js"></script> -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <!-- <script src="/bs/js/offcanvas.js"></script> -->
+	<!--
     <script>
 	$('#collapseThree').on('shown.bs.collapse', function () {
 		$("#collapseThree").load("{{cCGI}}?gcPage=User&gcFunction=LoginInfo");
@@ -127,5 +131,6 @@
 		$("#collapseFour").load("{{cCGI}}?gcPage=User&gcFunction=OperationsInfo");
 	});
     </script>
+	-->
   </body>
 </html>

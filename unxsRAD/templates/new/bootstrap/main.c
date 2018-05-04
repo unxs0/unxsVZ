@@ -53,6 +53,8 @@ char gcHostname[100]={""};
 char gcFunction[100]={""};
 char gcPage[100]={""};
 unsigned guBrowserFirefox=0;
+unsigned guYear=2018;
+unsigned guMonth=5;
 
 //
 //Local only
@@ -402,6 +404,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcOperationHistory(fp);
 	else if(!strcmp(cFunction,"funcLoginHistory"))
 		funcLoginHistory(fp);
+	else if(!strcmp(cFunction,"funcCalendar"))
+		funcCalendar(fp);
 	else if(!strncmp(cFunction,"funcSelect(",11))
 	{
 		char cTable[32]={""};
@@ -768,10 +772,20 @@ void SetLogin(void)
 {
 	if(iValidLogin(0))
 	{
-		printf("Set-Cookie: {{cProject}}SessionId=%s; secure;\n",gcLogin);
-		printf("Set-Cookie: {{cProject}}SessionHash=%s; secure;\n",gcPasswd);
 		sprintf(gcUser,"%.41s",gcLogin);
 		GetPLAndClient(gcUser);
+		if(guPermLevel>10)
+		{
+			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login2 NOT OK %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"
+				"cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,uCreatedBy=1,"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW())",
+				gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname,guOrg);
+			mysql_query(&gMysql,gcQuery);
+			guSSLCookieLogin=0;
+			SSLCookieLogin();
+		}
+		printf("Set-Cookie: {{cProject}}SessionId=%s; secure;\n",gcLogin);
+		printf("Set-Cookie: {{cProject}}SessionHash=%s; secure;\n",gcPasswd);
 		guSSLCookieLogin=1;
 		//tLogType.cLabel='org login'->uLogType=8
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login2 ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"

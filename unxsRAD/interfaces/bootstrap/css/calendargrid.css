@@ -1,0 +1,143 @@
+/* This file includes custom Bootstrap helper classes as well as some basic CSS to style the calendar. These could use some cleaning up, but gives the gist of the concept here. The important stuff starts around line 107. */
+
+h1, h2 {
+    color: #00245d;
+}
+.month-selector {
+    background-color: #e4e4e4;
+    border-radius: 4px;
+    padding: 10px;
+    position: relative;
+    top: -5px;
+    margin: 10px 0;
+}
+#calendar {
+    padding-top: 10px;
+}
+#calendar h2 {
+    display: inline-block;
+    padding: 0 30px;
+    margin: 20px 0 25px;
+}
+#calendar h2 span {
+    color: #FFD555;
+}
+#cal-wrapper {
+    font-size: 0;
+}
+ .date {
+    margin-bottom: 20px;
+}
+.date-header {
+    height: 40px;
+    background-color: #011a42;
+}
+.date-header h4 {
+    color: #ffffff;
+    margin: 10px;
+    font-size: 16px;
+    padding-top: 10px;
+}
+.date-item {
+    margin-top: 10px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+.date-item.none {
+    text-align: center;
+}
+.yesterday .date-header {
+    background-color: #e0e0e0;
+}
+.yesterday .date-header h4 {
+    color: #2d2d2d;
+    font-size: 16px;
+}
+.today .date-header {
+    background-color: #00245d;
+}
+.today .date-header h4 {
+    color: #ffffff;
+    font-size: 16px;
+}
+.no-items {
+    color: #cbcbcb;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-style: italic;
+    font-size: 14px;
+}
+.show-past {
+    color: #2d2d2d;
+    font-weight: bold;
+    font-size: 130%;
+    margin-top: 20px;
+    background-color: #ffffff;
+    border: 1px solid #2d2d2d;
+}
+.nextmonth {
+    margin-top: 10px;
+}
+.nextmonth .date-header {
+    background-color: #E0E0E0;
+    height: auto;
+}
+.nextmonth .date-header a {
+    text-decoration: none;
+}
+.nextmonth .date-header a:hover span,
+.nextmonth .date-header a:hover h4 {
+    color: #ffffff;
+    text-decoration: none;
+}
+.nextmonth .date-header a span {
+    color: #acacac;
+    font-size: 300%;
+    padding-top: 15px;
+}
+.nextmonth .date-header a h4 {
+    color: #2d2d2d;
+    margin-top: 0px;
+    padding-bottom: 10px;
+}
+.month-header {
+    position: relative;
+}
+
+/* CALENDAR BOOTSTRAP HELPER CLASSES -- VERY IMPORTANT STUFF HERE */
+@media (min-width: 1220px) {
+    .clearfix.clearfix-lg {
+        display: block;
+    }
+    .clearfix.clearfix-md {
+        display: none;
+    }
+    .sevencols.col-lg-2 {
+        padding-left: 3px;
+        padding-right: 3px;
+        width: 14.2857%;
+    }
+}
+@media (max-width: 1219px) {
+    .clearfix.clearfix-lg {
+        display: none;
+    }
+}
+@media (min-width: 992px) and (max-width: 1219px) {
+    .clearfix.clearfix-md {
+        display: block;
+    }
+}
+@media (min-width: 992px) {
+    .clearfix.clearfix-sm {
+        display: none;
+    }
+}
+@media (max-width: 991px) {
+    .clearfix.clearfix-md {
+        display: none;
+    }
+    .clearfix.clearfix-sm {
+        display: block;
+    }
+}

@@ -145,6 +145,12 @@ void UserCommands(pentry entries[], int x)
 		ProcessUserVars(entries,x);
 		if(!strcmp(gcFunction,"Change Password") || !strcmp(gcFunction,"ChangePassword"))
 		{
+			if(guPermLevel>10)
+			{
+				gcFiveIn="in";
+				gcMessage="Error: Admin users not allowed to change password here";
+				htmlUser();
+			}
 			if(!cCurPasswd[0])
 			{
 				gcFiveIn="in";

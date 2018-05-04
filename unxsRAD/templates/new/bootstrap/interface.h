@@ -86,6 +86,8 @@ extern char gcName[];
 extern char gcOrgName[];
 extern char gcHost[];
 extern unsigned guBrowserFirefox;
+extern unsigned guYear;
+extern unsigned guMonth;
 
 //Cgi form commands and major area function
 extern char gcFunction[];
@@ -116,3 +118,7 @@ void funcLoginHistory(FILE *fp);
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
 
 void logfileLine(const char *cFunction,const char *cLogline);
+
+//calendar.c
+//uses globals guMonth and guYear
+void funcCalendar(FILE *fp);
