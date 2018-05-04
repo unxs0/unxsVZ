@@ -50,15 +50,29 @@ void ProcessUserVars(pentry entries[], int x)
 }//void ProcessUserVars(pentry entries[], int x)
 
 
+void CalendarGetHook(entry gentries[],int x)
+{
+	register int i;
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"uMonth"))
+			sscanf(gentries[i].val,"%u",&guMonth);
+		else if(!strcmp(gentries[i].name,"uYear"))
+			sscanf(gentries[i].val,"%u",&guYear);
+	}
+
+	if(!strcmp(gcFunction,"Calendar"))
+		htmlCalendar();
+
+	htmlCalendar();
+
+}//void UserGetHook(entry gentries[],int x)
+
+
 void UserGetHook(entry gentries[],int x)
 {
-	//register int i;
-	//for(i=0;i<x;i++)
-	//{
-	//}
-
-	if(!strcmp(gcFunction,"OperationsInfo"))
-		htmlOperationsInfo();
+	if(!strcmp(gcFunction,"LoginInfo"))
+		htmlLoginInfo();
 	if(!strcmp(gcFunction,"LoginInfo"))
 		htmlLoginInfo();
 
@@ -208,6 +222,15 @@ void UserCommands(pentry entries[], int x)
 	}
 
 }//void UserCommands(pentry entries[], int x)
+
+
+void htmlCalendar(void)
+{
+	htmlHeader("User","Default.Header");
+	htmlUserPage("User","Calendar.Body");
+	htmlFooter("Default.Footer");
+
+}//void htmlCalendar(void)
 
 
 void htmlUser(void)

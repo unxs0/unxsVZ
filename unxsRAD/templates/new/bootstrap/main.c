@@ -53,8 +53,8 @@ char gcHostname[100]={""};
 char gcFunction[100]={""};
 char gcPage[100]={""};
 unsigned guBrowserFirefox=0;
-unsigned guYear=2018;
-unsigned guMonth=5;
+unsigned guYear=0;
+unsigned guMonth=0;
 
 //
 //Local only
@@ -121,6 +121,8 @@ int main(int argc, char *argv[])
 		{
 			if(!strcmp(gcPage,"User"))
 				UserGetHook(gentries,x);
+			if(!strcmp(gcPage,"Calendar"))
+				CalendarGetHook(gentries,x);
 			{{funcBootstrapMainGetMenu}}
 		}
 	}
@@ -205,6 +207,7 @@ int main(int argc, char *argv[])
 	
 	//default logged in page
 	htmlUser();
+	htmlCalendar();
 	return(0);
 
 }//end of main()

@@ -9,6 +9,8 @@ PURPOSE
 	Aux code for generating bootstrap calendar
 REQUIRES
 	calendargrid.css
+	guYear
+	guMonth
 */
 
 #include "interface.h"
@@ -31,9 +33,27 @@ void funcCalendar(FILE *fp)
 	unsigned uPrevYear=0;
 	unsigned uNextYear=0;
 
-	//Get last day and month name and next and prev data
         MYSQL_RES *res;
 	MYSQL_ROW field;
+
+	if(!guYear || !guMonth)
+	{
+		guYear=2018;
+		guMonth=5;
+
+		sprintf(gcQuery,"SELECT MONTH(NOW()),YEAR(NOW())");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&guMonth);
+			sscanf(field[1],"%u",&guYear);
+		}
+	}
+
+	//Get last day and month name and next and prev data
 	sprintf(gcQuery,"SELECT DAY(LAST_DAY('%1$u-%2$u-10')),"
 				"MONTHNAME('%1$u-%2$u-10'),"
 				"MONTHNAME(DATE_SUB('%1$u-%2$u-10',INTERVAL 1 MONTH)),"
@@ -69,13 +89,20 @@ void funcCalendar(FILE *fp)
 		sscanf(field[12],"%u",&uPrevMonthLastDay);
 	}
 	mysql_free_result(res);
-
-	printf("<div id=\"calendar\">\n");
+//<div class="container">
+// <div class="row">
+//   <div class="twelve columns">
+//       <h1>Calendar of Events</h1>
+//
+	uMonthFirstDayWeek++;
+	printf("<!-- funcCalendar() guYear=%u guMonth=%u uPrevMonthLastDay=%u uMonthFirstDayWeek=%u -->\n",
+				guYear,guMonth,uPrevMonthLastDay,uMonthFirstDayWeek);
+	printf("<div class=\"container\"><div class=\"row\"><div class=\"twelve columns\"><div id=\"calendar\">\n");
 	printf("  <div class=\"text-center\">\n");
-	printf("    <a class=\"month-selector\" href=\"?gcFunction=Calendar&uYear=%u&uMonth=%u\">%s %u</a>\n",
+	printf("    <a class=\"month-selector\" href=\"?gcPage=Calendar&uYear=%u&uMonth=%u\">%s %u</a>\n",
 			uPrevYear,uPrevMonth,cPrevMonth,uPrevYear);
-	printf("    <h2 class=\"month-header\">%s %u</h2>\n",cMonth,guYear);
-	printf("    <a class=\"month-selector\" href=\"?gcFunction=Calendar&uYear=%u&uMonth=%u\">%s %u</a>\n",
+	printf("    <h2 class=\"month-header\">%s %s %u</h2>\n",gcLogin,cMonth,guYear);
+	printf("    <a class=\"month-selector\" href=\"?gcPage=Calendar&uYear=%u&uMonth=%u\">%s %u</a>\n",
 			uNextYear,uNextMonth,cNextMonth,uNextYear);
 	printf("  </div>\n");
 	printf("  <div id=\"cal-wrapper\">\n");
@@ -92,7 +119,6 @@ void funcCalendar(FILE *fp)
 //
 	char cWeekDay[7][4]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 
-	uMonthFirstDayWeek++;
 	//uMonthFirstDayWeek=2 e.g. May 1st 2018 is Tue
 	//uPrevMonthLastDay=30 e.g. April 30th 2018  DayWeek is 2-1 = 1 Mon
 	unsigned uStartDay=uPrevMonthLastDay-uMonthFirstDayWeek+1;//e.g. 30 - 2 + 1= 29
@@ -101,7 +127,7 @@ void funcCalendar(FILE *fp)
 	{
 		printf("    <div class=\"date yesterday col-xs-12 col-sm-6 col-md-3 sevencols col-lg-2\">\n");
 		printf("      <div class=\"date-header\">\n");
-		printf("        <h4>%u %s (%u %u)</h4>\n",uDay,cWeekDay[(uCount%7)],uPrevMonthLastDay,uMonthFirstDayWeek);
+		printf("        <h4>%u %s</h4>\n",uDay,cWeekDay[(uCount%7)]);
 		printf("      </div>\n");
 		printf("      <div class=\"date-item none\">\n");
 		printf("        <b data=\"no-items\" class=\"no-items\">No Events Scheduled</b>\n");
@@ -110,6 +136,11 @@ void funcCalendar(FILE *fp)
 		uCount++;
 	}
 
+//<div class="date-item">
+//  <b>12:00 am</b><br />
+//  <a href="?gcPage=Calendar&uJobOffer=85794">Major Tear Switchblade 2016</a>
+//</div>
+//
 	for(uDay=1;uDay<=uLastDay;uDay++)
 	{
 		//today
@@ -127,7 +158,7 @@ void funcCalendar(FILE *fp)
 		uCount++;
 	}
 	printf("  </div>\n");
-	printf("</div>\n");
+	printf("</div></div></div></div>\n");
 
 
 }//void funcCalendar()

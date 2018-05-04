@@ -109,8 +109,10 @@ extern char gcOTPInfo[];
 //user.c
 void ProcessUserVars(pentry entries[], int x);
 void UserGetHook(entry gentries[],int x);
+void CalendarGetHook(entry gentries[],int x);
 void UserCommands(pentry entries[], int x);
 void htmlUser(void);
+void htmlCalendar(void);
 void htmlUserPage(char *cTitle, char *cTemplateName);
 void funcMOTD(FILE *fp);
 void funcOperationHistory(FILE *fp);

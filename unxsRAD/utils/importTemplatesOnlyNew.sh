@@ -71,7 +71,7 @@ if [ ! -d "$cunxsRAD/templates/$cTemplateSet" ]; then
 fi
 
 if [ -e "$cCGIDIR/unxsRAD.cgi" ]; then
-    for i in `find $cunxsRAD/templates/$cTemplateSet/*/ -maxdepth 1 -type f -mmin -360`; do
+    for i in `find $cunxsRAD/templates/$cTemplateSet/*/ -maxdepth 1 -type f -mmin -15`; do
 	cTemplateType=`echo $i | rev | cut -f 2 -d / | rev`;
 	cFilename=`echo $i | rev | cut -f 1 -d / | rev`;
         $cCGIDIR/unxsRAD.cgi ImportTemplateFile $cFilename $i $cTemplateSet $cTemplateType;
