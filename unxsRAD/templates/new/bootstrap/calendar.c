@@ -15,6 +15,30 @@ REQUIRES
 
 #include "interface.h"
 
+unsigned uDayOpenForBids(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned uVendor)
+{
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uReturn=0;
+
+	if(uYear && uMonth && uDay && uVendor)
+	{
+		sprintf(gcQuery,"SELECT uCalendar FROM tCalendar"
+				" WHERE (uVendor=%u OR uVendor=%u) AND dDate='%u-%u-%u'",uVendor,guOrg,uYear,uMonth,uDay);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			return(0);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			uReturn=1;
+		mysql_free_result(res);
+	}
+
+	return(uReturn);
+
+}//unsigned uDayOpenForBids(unsigned uYear,unsigned uMonth, unsigned uDay)
+
+
 void funcCalendar(FILE *fp)
 {
 
@@ -95,6 +119,8 @@ void funcCalendar(FILE *fp)
 //       <h1>Calendar of Events</h1>
 //
 	uMonthFirstDayWeek++;
+//<form class="form-signin" role="form" method="post" action="/{{cProject}}App/">
+//</form>
 	printf("<!-- funcCalendar() guYear=%u guMonth=%u uPrevMonthLastDay=%u uMonthFirstDayWeek=%u -->\n",
 				guYear,guMonth,uPrevMonthLastDay,uMonthFirstDayWeek);
 	printf("<div class=\"container\"><div class=\"row\"><div class=\"twelve columns\"><div id=\"calendar\">\n");
@@ -129,8 +155,16 @@ void funcCalendar(FILE *fp)
 		printf("      <div class=\"date-header\">\n");
 		printf("        <h4>%u %s</h4>\n",uDay,cWeekDay[(uCount%7)]);
 		printf("      </div>\n");
-		printf("      <div class=\"date-item none\">\n");
-		printf("        <b data=\"no-items\" class=\"no-items\">No work scheduled</b>\n");
+		if(uDayOpenForBids(guYear,uPrevMonth,uDay,guLoginClient))
+		{
+			printf("      <div class=\"date-item\">\n");
+			printf("        <b data=\"no-items\" class=\"no-items\">Available</b>\n");
+		}
+		else
+		{
+			printf("      <div class=\"date-item none\">\n");
+			printf("        <b data=\"no-items\" class=\"no-items\">X</b>\n");
+		}
 		printf("      </div>\n");
 		printf("    </div>\n");
 		uCount++;
@@ -149,16 +183,39 @@ void funcCalendar(FILE *fp)
 		else
 			printf("    <div class=\"date future col-xs-12 col-sm-6 col-md-3 sevencols col-lg-2\">\n");
 		printf("      <div class=\"date-header\">\n");
-		printf("        <h4>%u %s</h4>\n",uDay,cWeekDay[(uCount%7)]);
+		//printf("<h4>%u %s <div class='text-right'>"
+		printf("<h4>%u %s</h4> "
+				"<form method='post' action='/{{cProject}}App/'>"
+				"<input type=hidden name=guMonth value=%u>"
+				"<input type=hidden name=guYear value=%u>"
+				"<input type=hidden name=gcPage value=Calendar>"
+				"<input type=hidden name=uDay value=%u>"
+				"<div class='text-right'><button type=submit name=gcFunction value=ToggleDay class='btn btn-link'>"
+					"    <span class='glyphicon glyphicon-retweet'></span>"
+				"</button></div>"
+				"</form>",
+			//"</div></h4>\n",
+			//"</h4>\n",
+					uDay,cWeekDay[(uCount%7)],
+						guMonth,guYear,uDay);
 		printf("      </div>\n");
-		printf("      <div class=\"date-item none\">\n");
-		printf("        <b data=\"no-items\" class=\"no-items\">No work scheduled</b>\n");
+		if(uDayOpenForBids(guYear,guMonth,uDay,guLoginClient))
+		{
+			printf("      <div class=\"date-item\">\n");
+			printf("        <b data=\"no-items\" class=\"no-items\">Available</b>\n");
+		}
+		else
+		{
+			printf("      <div class=\"date-item\">\n");
+			printf("        <b data=\"no-items\" class=\"no-items\">X</b>\n");
+		}
 		printf("      </div>\n");
 		printf("    </div>\n");
 		uCount++;
 	}
 	printf("  </div>\n");
 	printf("</div></div></div></div>\n");
+	printf("<!-- end of funcCalendar -->\n");//used by get style buttons
 
 
 }//void funcCalendar()

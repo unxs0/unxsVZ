@@ -33,6 +33,25 @@ void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPer
 void htmlOperationsInfo(void);
 void htmlLoginInfo(void);
 
+static unsigned uDay=0;
+
+void ProcessCalendarVars(pentry entries[], int x)
+{
+	register int i;
+	
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(entries[i].name,"guMonth"))
+			sscanf(entries[i].val,"%u",&guMonth);
+		else if(!strcmp(entries[i].name,"guYear"))
+			sscanf(entries[i].val,"%u",&guYear);
+		else if(!strcmp(entries[i].name,"uDay"))
+			sscanf(entries[i].val,"%u",&uDay);
+	}
+
+}//void ProcessCalendarVars(pentry entries[], int x)
+
+
 void ProcessUserVars(pentry entries[], int x)
 {
 	register int i;
@@ -50,19 +69,48 @@ void ProcessUserVars(pentry entries[], int x)
 }//void ProcessUserVars(pentry entries[], int x)
 
 
+void ToggleAvailableDay(unsigned uYear,unsigned uMonth,unsigned uDay)
+{
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT uCalendar FROM tCalendar"
+				" WHERE (uVendor=%u OR uVendor=%u) AND dDate='%u-%u-%u'",guLoginClient,guOrg,uYear,uMonth,uDay);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return;
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"DELETE FROM tCalendar WHERE uCalendar=%s",field[0]);
+		mysql_query(&gMysql,gcQuery);
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tCalendar"
+				" SET uVendor=%u,uOwner=%u,dDate='%u-%u-%u',"
+				"uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",guLoginClient,guOrg,uYear,uMonth,uDay,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+	}
+	mysql_free_result(res);
+}//
+
+
 void CalendarGetHook(entry gentries[],int x)
 {
 	register int i;
+	unsigned uDay=0;
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(gentries[i].name,"uMonth"))
 			sscanf(gentries[i].val,"%u",&guMonth);
 		else if(!strcmp(gentries[i].name,"uYear"))
 			sscanf(gentries[i].val,"%u",&guYear);
+		else if(!strcmp(gentries[i].name,"uDay"))
+			sscanf(gentries[i].val,"%u",&uDay);
 	}
 
-	if(!strcmp(gcFunction,"Calendar"))
-		htmlCalendar();
+	if(!strcmp(gcFunction,"ToggleDay")&&uDay&&guMonth&&guYear)
+		ToggleAvailableDay(guYear,guMonth,uDay);
 
 	htmlCalendar();
 
@@ -151,10 +199,20 @@ unsigned uChangePassword(const char *cPasswd)
 	return(0);
 }//unsigned uChangePassword(const char *cPasswd)
 
-
+//CalendarCommands
 void UserCommands(pentry entries[], int x)
 {
-	if(!strcmp(gcPage,"User"))
+	if(!strcmp(gcPage,"Calendar"))
+	{
+		ProcessCalendarVars(entries,x);
+		if(!strcmp(gcFunction,"ToggleDay"))
+		{
+			if(guYear && guMonth && uDay);
+			ToggleAvailableDay(guYear,guMonth,uDay);
+			htmlCalendar();
+		}
+	}
+	else if(!strcmp(gcPage,"User"))
 	{
 		ProcessUserVars(entries,x);
 		if(!strcmp(gcFunction,"Change Password") || !strcmp(gcFunction,"ChangePassword"))
@@ -259,7 +317,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpValue[0]=cTitle;
 			
 			template.cpName[1]="cCGI";
-			template.cpValue[1]="";
+			template.cpValue[1]="/{{cProject}}App/";
 			
 			template.cpName[2]="gcLogin";
 			template.cpValue[2]=gcUser;

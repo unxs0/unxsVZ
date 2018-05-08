@@ -33,14 +33,13 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{{cCGI}}?gcPage=Project">{{gcBrand}}</a>
+           <button class='navbar-brand btn btn-link' type=submit name=gcPage value=Calendar>{{gcBrand}}</button>
         </div><!--/navbar-header-->
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li><a href="{{cCGI}}?gcPage=Calendar">Calendar</a></li>
-            <li class="active"><a href="{{cCGI}}?gcPage=User">Settings</a></li>
-            [[funcBootstrapNavItems]]
-            <li><a href="{{cCGI}}?gcFunction=Logout">Logout</a></li>
+            <li><a title='Calendar' href="?gcPage=Calendar"><span class='glyphicon glyphicon-calendar'></span></a></li>
+            <li class="active"><a title='Settings'  href="?gcPage=User"><span class='glyphicon glyphicon-cog'></span></a></li>
+            <li><a title='Logout' href="?gcFunction=Logout"><span class='glyphicon glyphicon-off'></span></a></li>
           </ul>
         </div><!-- /.nav-collapse -->
       </div><!-- /.container -->
@@ -118,18 +117,6 @@
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <!-- <script src="/bs/js/bootstrap.min.js"></script> -->
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-    <!-- <script src="/bs/js/offcanvas.js"></script> -->
-	<!--
-    <script>
-	$('#collapseThree').on('shown.bs.collapse', function () {
-		$("#collapseThree").load("{{cCGI}}?gcPage=User&gcFunction=LoginInfo");
-	});
-	$('#collapseFour').on('shown.bs.collapse', function () {
-		$("#collapseFour").load("{{cCGI}}?gcPage=User&gcFunction=OperationsInfo");
-	});
-    </script>
-	-->
   </body>
 </html>

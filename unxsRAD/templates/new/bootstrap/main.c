@@ -123,7 +123,6 @@ int main(int argc, char *argv[])
 				UserGetHook(gentries,x);
 			if(!strcmp(gcPage,"Calendar"))
 				CalendarGetHook(gentries,x);
-			{{funcBootstrapMainGetMenu}}
 		}
 	}
 	else
@@ -171,8 +170,8 @@ int main(int argc, char *argv[])
 		if(!strncmp(gcFunction,"Logout",5))
 		{
 			//8 idnsOrg log type, need to globally add 9 for OneLogin
-			printf("Set-Cookie: {{cProject}}SessionId=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			printf("Set-Cookie: {{cProject}}SessionHash=; discard; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: {{cProject}}SessionId=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: {{cProject}}SessionHash=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=8,uPermLevel=%u,"
 					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -188,26 +187,31 @@ int main(int argc, char *argv[])
 			guLoginClient=0;
 			htmlLogin();
 		}
+        	else if(!strcmp(gcFunction,"Login")) 
+			SetLogin();
 	}
-
-        if(!strcmp(gcFunction,"Login")) 
-		SetLogin();
 
         if(!guPermLevel || !gcUser[0] || !guLoginClient)
                 SSLCookieLogin();
 
 	//First page after valid login
 	if(!strcmp(gcFunction,"Login"))
-		htmlUser();
+		htmlCalendar();
 
 	//Per page command tree
 	UserCommands(entries,x);
 	//Main Post Menu
-	{{funcBootstrapMainPostFunctions}}
 	
 	//default logged in page
-	htmlUser();
+	if(gcPage[0])
+	{
+		if(!strcmp(gcPage,"User"))
+			htmlUser();
+		else if(!strcmp(gcPage,"Calendar"))
+			htmlCalendar();
+	}
 	htmlCalendar();
+	htmlUser();
 	return(0);
 
 }//end of main()
@@ -787,8 +791,8 @@ void SetLogin(void)
 			guSSLCookieLogin=0;
 			SSLCookieLogin();
 		}
-		printf("Set-Cookie: {{cProject}}SessionId=%s; secure;\n",gcLogin);
-		printf("Set-Cookie: {{cProject}}SessionHash=%s; secure;\n",gcPasswd);
+		printf("Set-Cookie: {{cProject}}SessionId=%s; secure; httponly; samesite=strict;\n",gcLogin);
+		printf("Set-Cookie: {{cProject}}SessionHash=%s; secure; httponly; samesite=strict;\n",gcPasswd);
 		guSSLCookieLogin=1;
 		//tLogType.cLabel='org login'->uLogType=8
 		sprintf(gcQuery,"INSERT INTO tLog SET cLabel='login2 ok %.99s',uLogType=8,uPermLevel=%u,uLoginClient=%u,"

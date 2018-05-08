@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{gcBrand}} web console">
     <meta name="author" content="Unixservice, LLC.">
-    <link rel="shortcut icon" type=image/x-icon href=/images/onelogin.ico?v=1>
+    <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf3.ico?v=0>
 
     <title>{{gcBrand}}</title>
 
@@ -23,7 +23,7 @@
 
     <div class="container">
 
-      <form class="form-signin" role="form" method="post" action="{{cCGI}}">
+      <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
         <h3 class="form-signin-heading">{{gcBrand}}</h3>
         <label for="inputEmail" class="sr-only">Login</label>
         <input maxlength="31" title='Input your login'
@@ -31,6 +31,11 @@
         <label title='Input your password' for="inputPassword" class="sr-only">Password</label>
         <input maxlength="31" type="password" id="inputPassword" class="form-control" placeholder="Password" name="gcPasswd" required>
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Sign in</button>
+      </form>
+
+      <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
+	<button type="submit" name=gcFunction value='Signup' class="btn btn-link">Sign Up</button>
+	<button type="submit" name=gcFunction value='ResetPasswd' class="btn btn-link">Reset Password</button>
       </form>
 
     </div> <!-- /container -->
