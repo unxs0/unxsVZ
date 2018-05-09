@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <!-- unxsRAD.Template2 -->
 <html lang="en">
   <head>
@@ -27,15 +26,15 @@
         <h3 class="form-signin-heading">{{gcBrand}}</h3>
         <label for="inputEmail" class="sr-only">Login</label>
         <input maxlength="31" title='Input your login'
-			type="login" id="inputEmail" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" required autofocus>
+		type="email" id="inputEmail" class="form-control" placeholder="email@somewhere.something" name="gcLogin" required autofocus>
         <label title='Input your password' for="inputPassword" class="sr-only">Password</label>
         <input maxlength="31" type="password" id="inputPassword" class="form-control" placeholder="Password" name="gcPasswd" required>
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Sign in</button>
       </form>
 
       <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
-	<button type="submit" name=gcFunction value='Signup' class="btn btn-link">Sign Up</button>
-	<button type="submit" name=gcFunction value='ResetPasswd' class="btn btn-link">Reset Password</button>
+	<button title='Sign up for a free account. Very quick and easy.' type="submit" name=gcPage value='SignUp' class="btn btn-link">Sign Up</button>
+	<button title='If you do not remember your password, do not worry!' type="submit" name=gcPage value='LostPassword' class="btn btn-link">Lost Password</button>
       </form>
 
     </div> <!-- /container -->

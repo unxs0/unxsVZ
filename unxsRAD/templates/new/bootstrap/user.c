@@ -282,10 +282,55 @@ void UserCommands(pentry entries[], int x)
 }//void UserCommands(pentry entries[], int x)
 
 
+void htmlSignUp(void)
+{
+	htmlHeader("Sign Up","Default.Header");
+	htmlUserPage("Sign Up","SignUp.Body");
+	htmlFooter("Default.Footer");
+
+}//void htmlSignUp(void)
+
+
+void htmlSignUpStep1(void)
+{
+	htmlHeader("Sign Up","Default.Header");
+	htmlUserPage("Sign Up","SignUpStep1.Body");
+	htmlFooter("Default.Footer");
+
+}//void htmlSignUpStep1(void)
+
+
+void htmlSignUpDone(void)
+{
+	htmlHeader("Sign Up","Default.Header");
+	htmlUserPage("Sign Up","SignUpDone.Body");
+	htmlFooter("Default.Footer");
+
+}//void htmlSignUpDone(void);
+
+
+void htmlLostPasswordDone(void)
+{
+	htmlHeader("Lost Password","Default.Header");
+	htmlUserPage("Lost Password","LostPasswordDone.Body");
+	htmlFooter("Default.Footer");
+
+}//void htmlLostPasswordDone(void);
+
+
+void htmlLostPassword(void)
+{
+	htmlHeader("Lost Password","Default.Header");
+	htmlUserPage("Lost Password","LostPassword.Body");
+	htmlFooter("Default.Footer");
+
+}//void htmlLostPassword(void)
+
+
 void htmlCalendar(void)
 {
-	htmlHeader("User","Default.Header");
-	htmlUserPage("User","Calendar.Body");
+	htmlHeader("Calendar","Default.Header");
+	htmlUserPage("Calendar","Calendar.Body");
 	htmlFooter("Default.Footer");
 
 }//void htmlCalendar(void)
@@ -320,7 +365,11 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpValue[1]="/{{cProject}}App/";
 			
 			template.cpName[2]="gcLogin";
-			template.cpValue[2]=gcUser;
+			if(gcUser[0])
+				template.cpValue[2]=gcUser;
+			else
+				//Lost Login or Signup Login
+				template.cpValue[2]=gcLogin;
 
 			template.cpName[3]="gcName";
 			template.cpValue[3]=gcName;

@@ -31,6 +31,7 @@ unsigned guView=0;
 //SSLLoginCookie()
 char gcCookie[1024]={""};
 char gcLogin[100]={""};
+char gcSixDigitCode[7]={""};
 char cLogKey[16]={"Ksdj458jssdUjf79"};
 char gcPasswd[100]={""};
 unsigned guSSLCookieLogin=0;
@@ -155,6 +156,8 @@ int main(int argc, char *argv[])
 				sprintf(gcPage,"%.99s",entries[x].val);
 			else if(!strcmp(entries[x].name,"gcLogin"))
 				sprintf(gcLogin,"%.99s",entries[x].val);
+			else if(!strcmp(entries[x].name,"gcSixDigitCode"))
+				sprintf(gcSixDigitCode,"%.6s",entries[x].val);
 			else if(!strcmp(entries[x].name,"gcPasswd"))
 				sprintf(gcPasswd,"%.99s",entries[x].val);
                 	else if(!strcmp(entries[x].name,"gcOTP"))
@@ -164,7 +167,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	//Not required to be logged in gcFunction section
+	//Not required to be logged in sections
+	if(gcPage[0])
+	{
+		if(!strcmp(gcPage,"LostPassword"))
+			htmlLostPassword();
+		else if(!strcmp(gcPage,"SignUp"))
+			htmlSignUp();
+	}
 	if(gcFunction[0])
 	{
 		if(!strncmp(gcFunction,"Logout",5))
@@ -189,6 +199,12 @@ int main(int argc, char *argv[])
 		}
         	else if(!strcmp(gcFunction,"Login")) 
 			SetLogin();
+		else if(!strcmp(gcFunction,"SignUpStep1"))
+			htmlSignUpStep1();
+		else if(!strcmp(gcFunction,"SignUpDone") && gcSixDigitCode[0])
+			htmlSignUpDone();
+		else if(!strcmp(gcFunction,"LostPassword") && gcLogin[0])
+			htmlLostPasswordDone();
 	}
 
         if(!guPermLevel || !gcUser[0] || !guLoginClient)
