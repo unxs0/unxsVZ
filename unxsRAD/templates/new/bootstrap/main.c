@@ -20,7 +20,7 @@ char gcQuery[4096]={""};
 
 //
 //Template vars
-char *gcMessage="Enter valid data";
+char *gcMessage="";
 char gcInputStatus[32]={"disabled"};
 char gcModStep[32]={""};
 char gcNewStep[32]={""};
@@ -31,7 +31,7 @@ unsigned guView=0;
 //SSLLoginCookie()
 char gcCookie[1024]={""};
 char gcLogin[100]={""};
-char gcSixDigitCode[7]={""};
+char gcEmailCode[32]={""};
 char cLogKey[16]={"Ksdj458jssdUjf79"};
 char gcPasswd[100]={""};
 unsigned guSSLCookieLogin=0;
@@ -156,8 +156,8 @@ int main(int argc, char *argv[])
 				sprintf(gcPage,"%.99s",entries[x].val);
 			else if(!strcmp(entries[x].name,"gcLogin"))
 				sprintf(gcLogin,"%.99s",entries[x].val);
-			else if(!strcmp(entries[x].name,"gcSixDigitCode"))
-				sprintf(gcSixDigitCode,"%.6s",entries[x].val);
+			else if(!strcmp(entries[x].name,"gcEmailCode"))
+				sprintf(gcEmailCode,"%.31s",entries[x].val);
 			else if(!strcmp(entries[x].name,"gcPasswd"))
 				sprintf(gcPasswd,"%.99s",entries[x].val);
                 	else if(!strcmp(entries[x].name,"gcOTP"))
@@ -200,8 +200,11 @@ int main(int argc, char *argv[])
         	else if(!strcmp(gcFunction,"Login")) 
 			SetLogin();
 		else if(!strcmp(gcFunction,"SignUpStep1"))
+		{
+			ProcessUserVars(entries,x);
 			htmlSignUpStep1();
-		else if(!strcmp(gcFunction,"SignUpDone") && gcSixDigitCode[0])
+		}
+		else if(!strcmp(gcFunction,"SignUpDone") && gcEmailCode[0])
 			htmlSignUpDone();
 		else if(!strcmp(gcFunction,"LostPassword") && gcLogin[0])
 			htmlLostPasswordDone();

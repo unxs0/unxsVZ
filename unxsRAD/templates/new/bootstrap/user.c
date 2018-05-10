@@ -35,6 +35,35 @@ void htmlLoginInfo(void);
 
 static unsigned uDay=0;
 
+
+void SendEmail(char *cMsg,char *cMailTo,char *cFrom,char *cSubject,char *cBcc)
+{
+	FILE *pp;
+	pid_t pidChild;
+
+	pidChild=fork();
+	if(pidChild!=0)
+		return;
+
+	fclose(stdout);
+	pp=popen("/usr/lib/sendmail -t","w");
+	if(pp==NULL)
+		return;
+			
+	fprintf(pp,"To: %s\n",cMailTo);
+	if(cBcc[0]) fprintf(pp,"Bcc: %s\n",cBcc);
+	fprintf(pp,"From: %s\n",cFrom);
+	fprintf(pp,"Subject: %s\n",cSubject);
+
+	fprintf(pp,"%s\n",cMsg);
+
+	fprintf(pp,".\n");
+
+	pclose(pp);
+
+}//void SendEmail()
+
+
 void ProcessCalendarVars(pentry entries[], int x)
 {
 	register int i;
@@ -162,7 +191,7 @@ static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
 
 void to64(s, v, n)
   register char *s;
-  register long v;
+  register long long v;
   register int n;
 {
     while (--n >= 0) {
@@ -176,7 +205,7 @@ unsigned uChangePassword(const char *cPasswd)
 {
 	char cBuffer[100]={""};
 	char cSalt[16]={"$1$23abc123$"};//TODO set to random salt;
-	(void)srand((int)time((time_t *)NULL));
+	(void)srand((long long)time((time_t *)NULL)*getpid());
 	to64(&cSalt[3],rand(),8);
 
 	sprintf(cBuffer,"%.99s",cPasswd);
@@ -284,6 +313,7 @@ void UserCommands(pentry entries[], int x)
 
 void htmlSignUp(void)
 {
+	
 	htmlHeader("Sign Up","Default.Header");
 	htmlUserPage("Sign Up","SignUp.Body");
 	htmlFooter("Default.Footer");
@@ -291,17 +321,199 @@ void htmlSignUp(void)
 }//void htmlSignUp(void)
 
 
+void NewCodeAndEmail(unsigned uAuthorize,char *cEmail)
+{
+	char cMsg[256]={""};
+	char cEmailCode[32]={""};
+
+	(void)srand((long long)time((time_t *)NULL)*getpid()+77);
+	register int i;
+	for(i=0;i<16;i++)
+		sprintf(cEmailCode+i,"%x",rand()%16);
+
+	sprintf(gcQuery,"UPDATE tAuthorize SET cIpMask='%.20s' WHERE uAuthorize=%u",cEmailCode,uAuthorize);
+	mysql_query(&gMysql,gcQuery);
+
+	sprintf(cMsg,"The activation code is: %.16s\n",cEmailCode);
+
+	SendEmail(cMsg,cEmail,"unxsak@unxs.io","unxsAK New Account Confirmation","unxsak@unxs.io");
+
+}//void NewCodeAndEMail(unsigned uAuthorize,char *cEmail)
+
+
 void htmlSignUpStep1(void)
 {
-	htmlHeader("Sign Up","Default.Header");
-	htmlUserPage("Sign Up","SignUpStep1.Body");
-	htmlFooter("Default.Footer");
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uPerm=0;
+	unsigned uAuthorize=0;
+	char cEmail[32]={""};
+
+	sprintf(gcQuery,"SELECT uAuthorize,uPerm,cLabel FROM tAuthorize"
+			" WHERE cLabel='%s' LIMIT 1",TextAreaSave(gcLogin));
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unknown error try again later";
+		htmlHeader("Sign Up","Default.Header");
+		htmlUserPage("Sign Up","SignUp.Body");
+		htmlFooter("Default.Footer");
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uAuthorize);
+		sscanf(field[1],"%u",&uPerm);
+		sprintf(cEmail,"%.31s",field[2]);
+	}
+	mysql_free_result(res);
+
+	if(uAuthorize && uPerm)
+	{
+		sleep(3);
+		gcMessage="That user is already signed up and active.";
+		htmlHeader("Sign Up","Default.Header");
+		htmlUserPage("Sign Up","SignUp.Body");
+		htmlFooter("Default.Footer");
+	}
+	else if(uAuthorize)
+	{
+		//sleep(3);
+		NewCodeAndEmail(uAuthorize,cEmail);
+		htmlHeader("Sign Up","Default.Header");
+		gcMessage="Login email is waiting code confirmation, another email with new code was sent.";
+		htmlUserPage("Sign Up","SignUpStep1.Body");
+		htmlFooter("Default.Footer");
+	}
+	else
+	{
+		if(!cPasswd[0] || !cPasswd2[0] || strcmp(cPasswd,cPasswd2))
+		{
+			gcMessage="Both passwords must match";
+			htmlHeader("Sign Up","Default.Header");
+			htmlUserPage("Sign Up","SignUp.Body");
+			htmlFooter("Default.Footer");//Footer exits
+		}
+		if(strlen(cPasswd)<8)
+		{
+			gcMessage="Password must be at least 8 characters long";
+			htmlHeader("Sign Up","Default.Header");
+			htmlUserPage("Sign Up","SignUp.Body");
+			htmlFooter("Default.Footer");//Footer exits
+		}
+		if(uNoUpper(cPasswd) || uNoLower(cPasswd) || uNoDigit(cPasswd))
+		{
+			gcMessage="Password have upper and lower case letters and at least one number";
+			htmlHeader("Sign Up","Default.Header");
+			htmlUserPage("Sign Up","SignUp.Body");
+			htmlFooter("Default.Footer");//Footer exits
+		}
+
+		char cBuffer[100]={""};
+		char cSalt[16]={"$1$23abc123$"};//TODO set to random salt;
+		(void)srand((long long)time((time_t *)NULL)*getpid());
+		to64(&cSalt[3],rand(),8);
+
+		sprintf(cBuffer,"%.99s",cPasswd);
+		EncryptPasswdWithSalt(cBuffer,cSalt);
+
+		sprintf(gcQuery,"INSERT INTO tClient SET"
+			" uOwner=4,"//end user
+			" uCreatedBy=1,"
+			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+			" cEmail='%1$.31s',"
+			" cLabel='%1$.31s'"
+				,TextAreaSave(gcLogin));
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			gcMessage="Unknown error try again later";
+			htmlHeader("Sign Up","Default.Header");
+			htmlUserPage("Sign Up","SignUp.Body");
+			htmlFooter("Default.Footer");//Footer exits
+		}
+
+		unsigned uClient=mysql_insert_id(&gMysql);
+		sprintf(gcQuery,"INSERT INTO tAuthorize SET"
+			" cIpMask='',"
+			" uPerm=0,"//waiting for activation
+			" uCertClient=%u,"
+			" cClrPasswd='%s',"
+			" cPasswd='%s',"
+			" uOwner=4,"//end user
+			" uCreatedBy=1,"
+			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
+			" cLabel='%s'"
+				,uClient
+				,cPasswd
+				,cBuffer
+				,TextAreaSave(gcLogin));
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			gcMessage="Unknown error try again later";
+			htmlHeader("Sign Up","Default.Header");
+			htmlUserPage("Sign Up","SignUp.Body");
+			htmlFooter("Default.Footer");
+		}
+		uAuthorize=mysql_insert_id(&gMysql);
+		NewCodeAndEmail(uAuthorize,TextAreaSave(gcLogin));
+		htmlHeader("Sign Up","Default.Header");
+		htmlUserPage("Sign Up","SignUpStep1.Body");
+		htmlFooter("Default.Footer");
+	}
 
 }//void htmlSignUpStep1(void)
 
 
 void htmlSignUpDone(void)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uPerm=0;
+	unsigned uAuthorize=0;
+	char cEmail[32]={""};
+
+	sprintf(gcQuery,"SELECT uAuthorize,uPerm,cLabel FROM tAuthorize"
+			" WHERE cLabel='%s' AND cIpMask='%s' AND uPerm=0 LIMIT 1",TextAreaSave(gcLogin),TextAreaSave(gcEmailCode));
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unknown error try again later";
+		htmlHeader("Sign Up","Default.Header");
+		htmlUserPage("Sign Up","SignUpStep1.Body");
+		htmlFooter("Default.Footer");
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uAuthorize);
+		sscanf(field[1],"%u",&uPerm);
+		sprintf(cEmail,"%.31s",field[2]);
+	}
+	mysql_free_result(res);
+
+	//check code
+	//if valid update tAuthorize.uPerm
+	if(!uAuthorize)
+	{
+		gcMessage="Code is wrong, or user does not exist, or user has already been activated.";
+		htmlHeader("Sign Up","Default.Header");
+		htmlUserPage("Sign Up","SignUpStep1.Body");
+		htmlFooter("Default.Footer");
+	}
+
+	sprintf(gcQuery,"UPDATE tAuthorize SET uPerm=7 WHERE uAuthorize=%u",uAuthorize);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unknown error try again later";
+		htmlHeader("Sign Up","Default.Header");
+		htmlUserPage("Sign Up","SignUpStep1.Body");
+		htmlFooter("Default.Footer");
+	}
+
+	gcMessage="You can login now.";
 	htmlHeader("Sign Up","Default.Header");
 	htmlUserPage("Sign Up","SignUpDone.Body");
 	htmlFooter("Default.Footer");
