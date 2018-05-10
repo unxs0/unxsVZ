@@ -150,14 +150,13 @@ void ExttClientCommands(pentry entries[], int x)
 			if(uAllowDel(uOwner,uCreatedBy))
 			{
                         	guMode=2001;
-				sprintf(gcQuery,"DELETE FROM tAuthorize WHERE (cLabel='%s' OR uCertClient=%u) AND (uOwner=%u OR uOwner=%u)",
-						cLabel
-						,uClient
-						,uClient
-						,guLoginClient);
+				sprintf(gcQuery,"DELETE FROM tAuthorize WHERE uCertClient=%u"
+						" AND (uOwner=%u OR uOwner=%u OR uCreatedBy=%u)",
+							uClient,uClient,guLoginClient,guLoginClient);
 				mysql_query(&gMysql,gcQuery);
         			if(mysql_errno(&gMysql))
                 			tClient(mysql_error(&gMysql));
+				{{cProject}}Log(uClient,"tAuthorize","Del attempt via uClient=uCertClient");
                         	guMode=5;
                         	DeletetClient();
 			}
