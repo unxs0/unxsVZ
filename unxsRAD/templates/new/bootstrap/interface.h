@@ -76,6 +76,7 @@ extern char gcQuery[];
 extern char gcCookie[];
 extern char gcLogin[];
 extern char gcPasswd[];
+extern char gcPasswd2[];
 extern char gcEmailCode[];
 extern unsigned guSSLCookieLogin;
 extern int guPermLevel;

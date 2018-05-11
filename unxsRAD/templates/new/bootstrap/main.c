@@ -34,6 +34,7 @@ char gcLogin[100]={""};
 char gcEmailCode[32]={""};
 char cLogKey[16]={"Ksdj458jssdUjf79"};
 char gcPasswd[100]={""};
+char gcPasswd2[100]={""};
 unsigned guSSLCookieLogin=0;
 unsigned guRequireOTPLogin=0;
 unsigned guOTPExpired=0;
@@ -100,9 +101,8 @@ int main(int argc, char *argv[])
 	char cTable[100]={""};
 	if(strcmp(getenv("REQUEST_METHOD"),"POST"))
 	{
-		//Get	
-		SSLCookieLogin();
 		
+		//Get	
 		gcl = getenv("QUERY_STRING");
 		for(x=0;gcl[0] != '\0' && x<MAXGETVARS;x++)
 		{
@@ -117,7 +117,18 @@ int main(int argc, char *argv[])
 				sprintf(gcPage,"%.99s",gentries[x].val);
                 	else if(!strcmp(gentries[x].name,"cTable"))
 				sprintf(cTable,"%.99s",gentries[x].val);
+			else if(!strcmp(gentries[x].name,"gcEmailCode"))
+				sprintf(gcEmailCode,"%.31s",gentries[x].val);
+			else if(!strcmp(gentries[x].name,"gcLogin"))
+				sprintf(gcLogin,"%.99s",gentries[x].val);
 		}
+		//Prelogin
+		if(gcFunction[0])
+		{
+			if(!strcmp(gcFunction,"ChangePassword") && gcEmailCode[0] && gcLogin[0])
+				htmlLostPasswordDone();
+		}
+		SSLCookieLogin();
 		if(gcPage[0])
 		{
 			if(!strcmp(gcPage,"User"))
@@ -160,6 +171,8 @@ int main(int argc, char *argv[])
 				sprintf(gcEmailCode,"%.31s",entries[x].val);
 			else if(!strcmp(entries[x].name,"gcPasswd"))
 				sprintf(gcPasswd,"%.99s",entries[x].val);
+			else if(!strcmp(entries[x].name,"gcPasswd2"))
+				sprintf(gcPasswd2,"%.99s",entries[x].val);
                 	else if(!strcmp(entries[x].name,"gcOTP"))
 				sprintf(gcOTP,"%.15s",entries[x].val);
                 	else if(!strcmp(entries[x].name,"cTable"))
@@ -207,6 +220,8 @@ int main(int argc, char *argv[])
 		else if(!strcmp(gcFunction,"SignUpDone") && gcEmailCode[0])
 			htmlSignUpDone();
 		else if(!strcmp(gcFunction,"LostPassword") && gcLogin[0])
+			htmlLostPasswordDone();
+		else if(!strcmp(gcFunction,"ChangePassword") && gcLogin[0] && gcEmailCode[0] && gcPasswd[0] && gcPasswd2[0])
 			htmlLostPasswordDone();
 	}
 

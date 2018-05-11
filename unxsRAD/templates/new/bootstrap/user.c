@@ -211,7 +211,9 @@ unsigned uChangePassword(const char *cPasswd)
 	sprintf(cBuffer,"%.99s",cPasswd);
 	EncryptPasswdWithSalt(cBuffer,cSalt);
 
-	sprintf(gcQuery,"UPDATE tAuthorize SET cPasswd='%.99s',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel='%s'",
+	//Here we allow private passwords
+	sprintf(gcQuery,"UPDATE tAuthorize SET cIpMask='',cPasswd='%.99s',cClrPasswd='',"
+			"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE cLabel='%s'",
 			cBuffer,guLoginClient,gcLogin);
 	mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))
@@ -227,6 +229,7 @@ unsigned uChangePassword(const char *cPasswd)
 	unxsvzLog(guLoginClient,"tAuthorize","Password Changed",guPermLevel,guLoginClient,gcLogin,gcHost);
 	return(0);
 }//unsigned uChangePassword(const char *cPasswd)
+
 
 //CalendarCommands
 void UserCommands(pentry entries[], int x)
@@ -276,10 +279,10 @@ void UserCommands(pentry entries[], int x)
 				gcMessage="Error: New 'Password' is the same as current password";
 				htmlUser();
 			}
-			if(strlen(cPasswd)<6)
+			if(strlen(cPasswd)<8)
 			{
 				gcFiveIn="in";
-				gcMessage="Error: New 'Password' must be at least 6 chars long";
+				gcMessage="Error: New 'Password' must be at least 8 chars long";
 				htmlUser();
 			}
 			if(strstr(cPasswd,gcLogin) || strstr(gcLogin,cPasswd) ||
@@ -321,6 +324,29 @@ void htmlSignUp(void)
 }//void htmlSignUp(void)
 
 
+void NewCodeAndLinkEmail(unsigned uAuthorize,char *cEmail,char *cServer)
+{
+	char cMsg[512]={""};
+	char cEmailCode[32]={""};
+
+	(void)srand((long long)time((time_t *)NULL)*getpid()+77);
+	register int i;
+	for(i=0;i<16;i++)
+		sprintf(cEmailCode+i,"%x",rand()%16);
+
+	sprintf(gcQuery,"UPDATE tAuthorize SET cIpMask='%.20s',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+			" WHERE uAuthorize=%u",cEmailCode,uAuthorize);
+	mysql_query(&gMysql,gcQuery);
+
+	sprintf(cMsg,"The link to change your password is:\n"
+		"https://%s/{{cProject}}App/?gcFunction=ChangePassword&gcEmailCode=%.16s&gcLogin=%s\n",
+				cServer,cEmailCode,cEmail);
+
+	SendEmail(cMsg,cEmail,"unxsak@unxs.io","unxsAK New Account Confirmation","unxsak@unxs.io");
+
+}//void NewCodeAndLinkEmail()
+
+
 void NewCodeAndEmail(unsigned uAuthorize,char *cEmail)
 {
 	char cMsg[256]={""};
@@ -331,7 +357,8 @@ void NewCodeAndEmail(unsigned uAuthorize,char *cEmail)
 	for(i=0;i<16;i++)
 		sprintf(cEmailCode+i,"%x",rand()%16);
 
-	sprintf(gcQuery,"UPDATE tAuthorize SET cIpMask='%.20s' WHERE uAuthorize=%u",cEmailCode,uAuthorize);
+	sprintf(gcQuery,"UPDATE tAuthorize SET cIpMask='%.20s',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+			" WHERE uAuthorize=%u",cEmailCode,uAuthorize);
 	mysql_query(&gMysql,gcQuery);
 
 	sprintf(cMsg,"The activation code is: %.16s\n",cEmailCode);
@@ -347,9 +374,8 @@ void htmlSignUpStep1(void)
 	MYSQL_ROW field;
 	unsigned uPerm=0;
 	unsigned uAuthorize=0;
-	char cEmail[32]={""};
 
-	sprintf(gcQuery,"SELECT uAuthorize,uPerm,cLabel FROM tAuthorize"
+	sprintf(gcQuery,"SELECT uAuthorize,uPerm FROM tAuthorize"
 			" WHERE cLabel='%s' LIMIT 1",TextAreaSave(gcLogin));
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -364,7 +390,6 @@ void htmlSignUpStep1(void)
 	{
 		sscanf(field[0],"%u",&uAuthorize);
 		sscanf(field[1],"%u",&uPerm);
-		sprintf(cEmail,"%.31s",field[2]);
 	}
 	mysql_free_result(res);
 
@@ -379,7 +404,7 @@ void htmlSignUpStep1(void)
 	else if(uAuthorize)
 	{
 		//sleep(3);
-		NewCodeAndEmail(uAuthorize,cEmail);
+		NewCodeAndEmail(uAuthorize,TextAreaSave(gcLogin));
 		htmlHeader("Sign Up","Default.Header");
 		gcMessage="Login email is waiting code confirmation, another email with new code was sent.";
 		htmlUserPage("Sign Up","SignUpStep1.Body");
@@ -472,14 +497,13 @@ void htmlSignUpDone(void)
 	MYSQL_ROW field;
 	unsigned uPerm=0;
 	unsigned uAuthorize=0;
-	char cEmail[32]={""};
 
-	sprintf(gcQuery,"SELECT uAuthorize,uPerm,cLabel FROM tAuthorize"
+	sprintf(gcQuery,"SELECT uAuthorize,uPerm FROM tAuthorize"
 			" WHERE cLabel='%s' AND cIpMask='%s' AND uPerm=0 LIMIT 1",TextAreaSave(gcLogin),TextAreaSave(gcEmailCode));
 	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
+	if(mysql_errno(&gMysql) || strlen(gcEmailCode)!=16)
 	{
-		gcMessage="Unknown error try again later";
+		gcMessage="Unexpected error try again later";
 		htmlHeader("Sign Up","Default.Header");
 		htmlUserPage("Sign Up","SignUpStep1.Body");
 		htmlFooter("Default.Footer");
@@ -489,7 +513,6 @@ void htmlSignUpDone(void)
 	{
 		sscanf(field[0],"%u",&uAuthorize);
 		sscanf(field[1],"%u",&uPerm);
-		sprintf(cEmail,"%.31s",field[2]);
 	}
 	mysql_free_result(res);
 
@@ -503,7 +526,8 @@ void htmlSignUpDone(void)
 		htmlFooter("Default.Footer");
 	}
 
-	sprintf(gcQuery,"UPDATE tAuthorize SET uPerm=7 WHERE uAuthorize=%u",uAuthorize);
+	sprintf(gcQuery,"UPDATE tAuthorize SET uPerm=7,cIpMask='',uModBy=1,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uAuthorize=%u",uAuthorize);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -523,15 +547,119 @@ void htmlSignUpDone(void)
 
 void htmlLostPasswordDone(void)
 {
-	htmlHeader("Lost Password","Default.Header");
-	htmlUserPage("Lost Password","LostPasswordDone.Body");
-	htmlFooter("Default.Footer");
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uPerm=0;
+	unsigned uAuthorize=0;
+
+	if(!strcmp(gcFunction,"ChangePassword") && 
+			gcLogin[0] && gcEmailCode[0] && strlen(gcEmailCode)==16 && gcPasswd[0] && gcPasswd2[0])
+	{
+		if(strcmp(gcPasswd,gcPasswd2))
+		{
+			gcMessage="Both passwords must match";
+			htmlHeader("Lost Password","Default.Header");
+			htmlUserPage("Lost Password","LostPasswordDone.Body");
+			htmlFooter("Default.Footer");
+		}
+		if(strlen(gcPasswd)<8)
+		{
+			gcMessage="Password must be at least 8 characters long";
+			htmlHeader("Lost Password","Default.Header");
+			htmlUserPage("Lost Password","LostPasswordDone.Body");
+			htmlFooter("Default.Footer");
+		}
+		if(uNoUpper(gcPasswd) || uNoLower(gcPasswd) || uNoDigit(gcPasswd))
+		{
+			gcMessage="Password must have upper and lower case letters and at least one number";
+			htmlHeader("Lost Password","Default.Header");
+			htmlUserPage("Lost Password","LostPasswordDone.Body");
+			htmlFooter("Default.Footer");//Footer exits
+		}
+
+		char cBuffer[100]={""};
+		char cSalt[16]={"$1$23abc123$"};//TODO set to random salt;
+		(void)srand((long long)time((time_t *)NULL)*getpid());
+		to64(&cSalt[3],rand(),8);
+
+		sprintf(cBuffer,"%.99s",gcPasswd);
+		EncryptPasswdWithSalt(cBuffer,cSalt);
+
+		sprintf(gcQuery,"UPDATE tAuthorize SET"
+			" cClrPasswd='%s',"
+			" cPasswd='%s',"
+			" cIpMask='',"
+			" uModBy=1,"
+			" uModDate=UNIX_TIMESTAMP(NOW())"
+			" WHERE cLabel='%s' AND cIpMask='%s'"
+				,gcPasswd
+				,cBuffer
+				,TextAreaSave(gcLogin),TextAreaSave(gcEmailCode));
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			gcMessage="Unknown error try again later";
+			htmlHeader("Lost Password","Default.Header");
+			htmlUserPage("Lost Password","LostPasswordDone.Body");
+			htmlFooter("Default.Footer");
+		}
+		gcMessage="Password changed if code was valid.";
+		htmlHeader("Lost Password","Default.Header");
+		htmlUserPage("Lost Password","Login.Body");
+		htmlFooter("Default.Footer");
+	}
+	else if(!strcmp(gcFunction,"ChangePassword") && gcLogin[0] && gcEmailCode[0])
+	{
+		gcMessage="Enter new password twice.";
+		htmlHeader("Lost Password","Default.Header");
+		htmlUserPage("Lost Password","LostPasswordDone.Body");//Almost Done ;)
+		htmlFooter("Default.Footer");
+	}
+
+	//
+	//check to see if active account if active send mail change link
+	//
+	sprintf(gcQuery,"SELECT uAuthorize,uPerm FROM tAuthorize"
+			" WHERE cLabel='%s' LIMIT 1",TextAreaSave(gcLogin));
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unknown error try again later";
+		htmlHeader("Lost Password","Default.Header");
+		htmlUserPage("Lost Password","LostPassword.Body");
+		htmlFooter("Default.Footer");
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uAuthorize);
+		sscanf(field[1],"%u",&uPerm);
+	}
+	mysql_free_result(res);
+
+	if(uAuthorize && uPerm)
+	{
+		NewCodeAndLinkEmail(uAuthorize,TextAreaSave(gcLogin),"raddev.unxs.io:9333");
+		sleep(3);
+		gcMessage="Link sent to your email if it exists.";
+		htmlHeader("Lost Password","Default.Header");
+		htmlUserPage("Lost Password","LostPassword.Body");
+		htmlFooter("Default.Footer");
+	}
+	else
+	{
+		gcMessage="Or user does not exist or it is not active yet.";
+		htmlHeader("Lost Password","Default.Header");
+		htmlUserPage("Lost Password","LostPassword.Body");
+		htmlFooter("Default.Footer");
+	}
 
 }//void htmlLostPasswordDone(void);
 
 
 void htmlLostPassword(void)
 {
+	gcMessage="Enter your login email.";
 	htmlHeader("Lost Password","Default.Header");
 	htmlUserPage("Lost Password","LostPassword.Body");
 	htmlFooter("Default.Footer");
@@ -607,7 +735,10 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[10]="gcFiveIn";
 			template.cpValue[10]=gcFiveIn;
 
-			template.cpName[11]="";
+			template.cpName[11]="gcEmailCode";
+			template.cpValue[11]=gcEmailCode;
+
+			template.cpName[12]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");

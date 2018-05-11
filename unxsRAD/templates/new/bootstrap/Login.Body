@@ -30,6 +30,7 @@
         <label title='Input your password' for="inputPassword" class="sr-only">Password</label>
         <input maxlength="31" type="password" id="inputPassword" class="form-control" placeholder="Password" name="gcPasswd" required>
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Sign in</button>
+        <h4 class="form-signin-heading">{{gcMessage}}</h4>
       </form>
 
       <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
