@@ -119,6 +119,7 @@ void htmlLostPassword(void);
 void htmlSignUpStep1(void);
 void htmlSignUpDone(void);
 void htmlLostPasswordDone(void);
+void htmlJobOffer(void);
 void htmlCalendar(void);
 void htmlUserPage(char *cTitle, char *cTemplateName);
 void funcMOTD(FILE *fp);
@@ -131,3 +132,6 @@ void logfileLine(const char *cFunction,const char *cLogline);
 //calendar.c
 //uses globals guMonth and guYear
 void funcCalendar(FILE *fp);
+
+//joboffers.c
+void funcJobOffer(FILE *fp);

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{gcBrand}} Login">
+    <meta name="description" content="{{gcBrand}} Sign Up">
     <meta name="author" content="Unixservice, LLC.">
     <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
 
@@ -23,20 +23,17 @@
     <div class="container">
 
       <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
-        <h3 class="form-signin-heading">{{gcBrand}}</h3>
+        <h3 class="form-signin-heading">{{gcBrand}} Sign Up Done</h3>
         <label for="inputEmail" class="sr-only">Login</label>
-        <input maxlength="31" title='Input your login'
-		type="email" id="inputEmail" class="form-control" placeholder="email@somewhere.something" name="gcLogin" required autofocus>
+        <input disabled maxlength="31" title='Input your login'
+		type="email" id="inputEmail" class="form-control" value="{{gcLogin}}" name="gcLogin" required >
+	<input hidden value="{{gcLogin}}" name="gcLogin">
         <label title='Input your password' for="inputPassword" class="sr-only">Password</label>
         <input maxlength="31" type="password" id="inputPassword" class="form-control" placeholder="Password" name="gcPasswd" required>
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Sign in</button>
         <h4 class="form-signin-heading">{{gcMessage}}</h4>
       </form>
 
-      <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
-	<button title='Sign up for a free account. Very quick and easy.' type="submit" name=gcPage value='SignUp' class="btn btn-link">Sign Up</button>
-	<button title='If you do not remember your password, do not worry!' type="submit" name=gcPage value='LostPassword' class="btn btn-link">Lost Password</button>
-      </form>
 
     </div> <!-- /container -->
   </body>

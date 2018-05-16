@@ -1,0 +1,45 @@
+<!-- unxsRAD.Template2 -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{gcBrand}} Sign Up">
+    <meta name="author" content="Unixservice, LLC.">
+    <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
+
+    <title>{{gcBrand}}</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/bs/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="/bs/css/signin.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+
+    <div class="container">
+
+      <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
+        <h3 class="form-signin-heading">{{gcBrand}} Sign Up</h3>
+        <label for="inputEmail" class="sr-only">Email Address</label>
+        <input maxlength="31" title='Input your working email address. An email will be sent so you can finish the sign up process.'
+		type="email" id="inputEmail" class="form-control" placeholder="email@somewhere.something" name="gcLogin" value="{{gcLogin}}" required autofocus>
+       	<label for="inputPassword" class="sr-only">New Password</label>
+       	<input maxlength="31"
+		title='Input a password: Must be at least 8 characters long and have upper and lower case letters and at least one number.'
+		type="password" id="inputPassword2" class="form-control" placeholder="New Password" name="cPasswd" required>
+
+       	<label for="inputPassword" class="sr-only">New Password Again</label>
+       	<input maxlength="31" title='Input your new password again please.'
+		type="password" id="inputPassword3" class="form-control" placeholder="New Password Again" name="cPasswd2" required>
+        <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='SignUpStep1'>Sign Up</button>
+        <h4 class="form-signin-heading">{{gcMessage}}</h4>
+      </form>
+
+
+    </div> <!-- /container -->
+  </body>
+</html>

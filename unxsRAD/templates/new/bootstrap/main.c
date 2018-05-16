@@ -230,22 +230,23 @@ int main(int argc, char *argv[])
 
 	//First page after valid login
 	if(!strcmp(gcFunction,"Login"))
-		htmlCalendar();
+		htmlJobOffer();
 
 	//Per page command tree
 	UserCommands(entries,x);
 	//Main Post Menu
 	
-	//default logged in page
 	if(gcPage[0])
 	{
 		if(!strcmp(gcPage,"User"))
 			htmlUser();
 		else if(!strcmp(gcPage,"Calendar"))
 			htmlCalendar();
+		else if(!strcmp(gcPage,"JobOffer"))
+			htmlJobOffer();
 	}
-	htmlCalendar();
-	htmlUser();
+	//default logged in page
+	htmlJobOffer();
 	return(0);
 
 }//end of main()
@@ -447,6 +448,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcLoginHistory(fp);
 	else if(!strcmp(cFunction,"funcCalendar"))
 		funcCalendar(fp);
+	else if(!strcmp(cFunction,"funcJobOffer"))
+		funcJobOffer(fp);
 	else if(!strncmp(cFunction,"funcSelect(",11))
 	{
 		char cTable[32]={""};

@@ -2305,7 +2305,7 @@ void funcMakefileRules(FILE *fp)
 	{
 		WordToLower(field[0]);
 		if(guTemplateType==14)//bootstrap fix asap
-			fprintf(fp,"%1$s.o: %1$s.c interface.h local.h ../../mysqlrad.h\n",field[0]);
+			fprintf(fp,"%1$s.o: %1$s.c interface.h local.h ../mysqlrad.h\n",field[0]);
 		else
 			fprintf(fp,"%1$s.o: %1$s.c mysqlrad.h language.h %1$sfunc.h local.h\n",field[0]);
 		fprintf(fp,"\tcc -c %1$s.c -o %1$s.o $(CFLAGS)\n\n",field[0]);

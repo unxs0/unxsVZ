@@ -23,8 +23,8 @@ help:
 	@echo "make install-test"
 	@echo "make install-bootstrap"
 
-interface.cgi: {{funcMakefileObjects}} calendar.o user.o main.o cgi.o mysqlconnect.o
-	cc {{funcMakefileObjects}} calendar.o user.o main.o cgi.o mysqlconnect.o -o interface.cgi $(LIBS)
+interface.cgi: {{funcMakefileObjects}} joboffer.o calendar.o user.o main.o cgi.o mysqlconnect.o
+	cc {{funcMakefileObjects}} joboffer.o calendar.o user.o main.o cgi.o mysqlconnect.o -o interface.cgi $(LIBS)
 
 {{funcMakefileRules}}
 
@@ -36,6 +36,9 @@ user.o: user.c interface.h local.h ../mysqlrad.h
 
 calendar.o: calendar.c interface.h local.h ../mysqlrad.h
 	cc -c calendar.c -o calendar.o $(CFLAGS)
+
+joboffer.o: joboffer.c interface.h local.h ../mysqlrad.h
+	cc -c joboffer.c -o joboffer.o $(CFLAGS)
 
 mysqlconnect.o: mysqlconnect.c  local.h interface.h
 	cc -o mysqlconnect.o -c mysqlconnect.c $(CFLAGS)

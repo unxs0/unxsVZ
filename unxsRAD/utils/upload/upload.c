@@ -3,6 +3,8 @@
 #include <string.h>
 #include "./multipart-parser-c/multipart_parser.h"
 
+char boundary[256] = "--"; // boundary starts with double dash
+
 struct parsedata
 {
     int inContentDisposition;  // flag for the right header to look for fields
@@ -97,8 +99,8 @@ int handle_contentdata(multipart_parser *parser, const char *at, size_t length)
         if(!fwrite(at, length, 1, data->saveto))
 	{
     		puts("Content-Type: text/html\n");
-    		printf("<html><head><title>Test</title></head><body>Error handle_contentdata() %s %lu</body></html>",
-			data->partname,length);
+    		printf("<html><head><title>Test</title></head><body>Error handle_contentdata() %s %lu %s</body></html>",
+			data->partname,length,boundary);
     		exit(0);
 	}
     }
@@ -113,12 +115,13 @@ char *upload(void)
     if (!method || strcmp(method, "POST")) return 0;
 
     // check for multipart/form-data and extract boundary if present
-    char boundary[128] = "--"; // boundary starts with double dash
     const char *conttype = getenv("CONTENT_TYPE");
     if (!conttype || sscanf(conttype,
-                "multipart/form-data; boundary=%125s", boundary+2)
+                "multipart/form-data; boundary=%254s", boundary+2)
             < 1) return 0;
 
+if(0)
+{
     // see https://github.com/iafonov/multipart-parser-c
     multipart_parser_settings callbacks = {0};
     callbacks.on_header_field = handle_headername;
@@ -129,6 +132,15 @@ char *upload(void)
 
     multipart_parser *parser = multipart_parser_init(boundary, &callbacks);
     multipart_parser_set_data(parser, &data);
+}
+
+//debug
+char localfilename[1024]={""};
+snprintf(localfilename, 1023, "/var/www/unxs/html/images/debug.contents");
+FILE *fp=NULL;
+if((fp=fopen(localfilename, "w"))==NULL)
+	return 0;
+//debug
 
     // read body from stdin:
     char reqdata[64 * 1024];
@@ -136,18 +148,24 @@ char *upload(void)
     while ((length = fread(reqdata, 1, 64 * 1024, stdin)) > 0)
     {
         // and feed it to the parser:
-        multipart_parser_execute(parser, reqdata, length);
+        //multipart_parser_execute(parser, reqdata, length);
+//debug
+fprintf(fp,"%s",reqdata);
+//debug path
     }
+//debug
+return(0);
+//debug
 
-    multipart_parser_free(parser);
+//    multipart_parser_free(parser);
 
-    free(data.partname);
-    if (data.filename && data.saveto)
-    {
-        fclose(data.saveto);
-        return data.filename;
-    }
-    free(data.filename);
+ //   free(data.partname);
+  //  if (data.filename && data.saveto)
+   // {
+    //    fclose(data.saveto);
+     //   return data.filename;
+   // }
+    //free(data.filename);
 
     return 0;
 }

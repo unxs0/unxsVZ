@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{gcBrand}} Calendar tab">
+    <meta name="description" content="{{gcBrand}} Job offer tab">
     <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
     <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
 
@@ -36,8 +36,8 @@
         </div><!--/navbar-header-->
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li><a title='Job Offer' href="?gcPage=JobOffer"><span class='glyphicon glyphicon-user'></span></a></li>
-            <li class="active"><a title='Calendar' href="?gcPage=Calendar"><span class='glyphicon glyphicon-calendar'></span></a></li>
+            <li class="active"><a title='Job Offer' href="?gcPage=JobOffer"><span class='glyphicon glyphicon-user'></span></a></li>
+            <li><a title='Calendar' href="?gcPage=Calendar"><span class='glyphicon glyphicon-calendar'></span></a></li>
             <li><a title='Settings'  href="?gcPage=User"><span class='glyphicon glyphicon-cog'></span></a></li>
             <li><a title='Logout' href="?gcFunction=Logout"><span class='glyphicon glyphicon-off'></span></a></li>
           </ul>
@@ -45,7 +45,7 @@
       </div><!-- /.container -->
     </nav><!-- /.navbar -->
 
-{{funcCalendar}}
+{{funcJobOffer}}
 
 
       <hr>

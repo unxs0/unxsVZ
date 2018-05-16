@@ -667,6 +667,15 @@ void htmlLostPassword(void)
 }//void htmlLostPassword(void)
 
 
+void htmlJobOffer(void)
+{
+	htmlHeader("JobOffer","Default.Header");
+	htmlUserPage("JobOffer","JobOffer.Body");
+	htmlFooter("Default.Footer");
+
+}//void htmlJobOffer(void)
+
+
 void htmlCalendar(void)
 {
 	htmlHeader("Calendar","Default.Header");
