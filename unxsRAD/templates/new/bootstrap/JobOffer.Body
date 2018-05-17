@@ -26,7 +26,8 @@
     <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
       <div class="container">
         <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+			data-target="#navbar" aria-expanded="false" aria-controls="navbar">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
@@ -36,16 +37,132 @@
         </div><!--/navbar-header-->
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a title='Job Offer' href="?gcPage=JobOffer"><span class='glyphicon glyphicon-user'></span></a></li>
+            <li class="active"><a title='Job Offers' href="?gcPage=JobOffer"><span class='glyphicon glyphicon-edit'></span></a></li>
             <li><a title='Calendar' href="?gcPage=Calendar"><span class='glyphicon glyphicon-calendar'></span></a></li>
-            <li><a title='Settings'  href="?gcPage=User"><span class='glyphicon glyphicon-cog'></span></a></li>
+            <li><a title='User Settings'  href="?gcPage=User"><span class='glyphicon glyphicon-user'></span></a></li>
             <li><a title='Logout' href="?gcFunction=Logout"><span class='glyphicon glyphicon-off'></span></a></li>
           </ul>
         </div><!-- /.nav-collapse -->
       </div><!-- /.container -->
     </nav><!-- /.navbar -->
 
-{{funcJobOffer}}
+<!-- Job Offers -->
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <h2>Job Offers</h2>
+        {{funcJobOffer}}
+      <p class="big-para">Click to select. If none found any Upload or Submit will create a new one and select it.</p>
+   </div>
+  </div>
+</div>
+
+<!-- Start Upload Job Images Form -->
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <h2>Upload Job Images</h2>
+      <p class="big-para">Upload up to three images that show job areas. The images will be used
+		by bidders to quote you price and delivery times.
+		Use the image details text area to further explain or provide more information.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <div class="contact-form">
+        <form class="clearfix" accept-charset="utf-8" method="post"
+				action="/pictureframe.cgi" enctype="multipart/form-data" onsubmit="return checkForm(this);">
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="exampleTextarea">Image details/explanation</label>
+              <textarea class="form-control" name = "Image details"
+				id="exampleTextarea" rows="3" placeholder="Image details and futher explaination."></textarea>
+           </div>
+         </div>
+         <div class="row">
+           <div class="col-sm-12 form-group">
+             <label for="exampleInputFile">Choose an image</label>
+             <input type="file" name="file_source" class="form-control-file"
+						id="exampleInputFile" aria-describedby="fileHelp">
+             <small id="fileHelp" class="form-text text-muted">Choose an image from your phone or computer.</small>
+           </div>
+         </div>
+         <button class="btn btn-success btn-lg btn-block wow fadeInDown"
+					data-wow-delay="1200ms" data-wow-duration="1000ms" type="submit" id="submitbutton">Upload Image</button>
+       </form>
+     </div>
+   </div>
+  </div>
+</div> 
+<!-- End Upload Job Images Form -->
+
+<!-- Start Upload Job Details Form -->
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <h2>Dates, Brand, Model and Year Information</h2>
+      <p class="big-para">Select the start date when you will first have the item available for repair and the end date
+		that would be the maximum date that you can wait for the job to be completed and delivered to you by. Please note that
+		bidders may select a start date later than yours and an end date before your last available day.
+		Select the brand, enter the model and year of the item you wish repaired. If the brand is not listed explain in the 
+		job description.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <div class="contact-form">
+        <form class="clearfix" accept-charset="utf-8" method="post"
+				action="/" enctype="multipart/form-data" onsubmit="return checkForm(this);">
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="StartDate">First day you have available to start work on job</label>
+              <input type=date class="form-control" name = "dStart"
+				id="StartDate" </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="EndDate">Last day you have available to get the job delivered</label>
+              <input type=date class="form-control" name = "dEnd"
+				id="EndDate" </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="Brand">Brand</label>
+		{{funcSelect(tBrand)}}
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="Model">Model</label>
+              <input type=text class="form-control" name = "cModel" placeholder="Vegas"
+				id="Model" </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="Year">Year</label>
+              <input type=text class="form-control" name = "cYear" placeholder="2014"
+				id="Year" </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="DesciptionTextarea">Job Description</label>
+              <textarea class="form-control" name = "cDescription"
+				id="DesciptionTextarea" rows="3" placeholder="Describe in detail the work you need done. If the brand is other please provide brand name here or explain further."></textarea>
+           </div>
+         </div>
+         <button class="btn btn-success btn-lg btn-block wow fadeInDown"
+					data-wow-delay="1200ms" data-wow-duration="1000ms" name="gcFunction" value="SetJobDates"
+					type="submit" id="submitbutton">Submit Job Information</button>
+       </form>
+     </div>
+   </div>
+  </div>
+</div> 
+<!-- End Upload Job Images Form -->
 
 
       <hr>

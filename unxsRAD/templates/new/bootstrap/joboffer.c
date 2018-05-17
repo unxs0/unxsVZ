@@ -11,11 +11,28 @@ REQUIRES
 */
 
 #include "interface.h"
+//TOC
+void htmlJobOfferSelect(FILE *fp);
+void funcJobOffer(FILE *fp);
+
+unsigned guJobOffer=0;
+
+void htmlJobOfferSelect(FILE *fp)
+{
+	if(!guJobOffer)
+	{
+		fprintf(fp,"None found.");
+	}
+	else
+	{
+	}
+}//void htmlJobOfferSelect(FILE *fp)
 
 void funcJobOffer(FILE *fp)
 {
 
 	fprintf(fp,"<!-- funcJobOffer()-->\n");
+	htmlJobOfferSelect(fp);
 	fprintf(fp,"<!-- End of funcJobOffer()-->\n");
 
 
