@@ -80,6 +80,8 @@ void ProcessJobOfferVars(pentry entries[], int x)
 		
 		if(!strcmp(entries[i].name,"uYear"))
 			sscanf(entries[i].val,"%u",&uYear);
+		if(!strcmp(entries[i].name,"uJobOffer"))
+			sscanf(entries[i].val,"%u",&guJobOffer);
 		else if(!strcmp(entries[i].name,"uBrand"))
 			sprintf(cBrand,"%.31s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cModel"))
@@ -285,7 +287,11 @@ void UserCommands(pentry entries[], int x)
 	else if(!strcmp(gcPage,"JobOffer"))
 	{
 		ProcessJobOfferVars(entries,x);
-		if(!strcmp(gcFunction,"AMJobOffer"))
+		if(!strcmp(gcFunction,"SetJobOffer"))
+		{
+			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
+		}
+		else if(!strcmp(gcFunction,"AMJobOffer"))
 		{
 			if(!uYear)
 				gcMessage="Must provide year";
@@ -344,6 +350,8 @@ void UserCommands(pentry entries[], int x)
 				htmlJobOffer();
 			}
 	
+			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",uJobOffer);
+
 			//Add job offer as available for range of days to calendar	
 			sprintf(gcQuery,"SELECT ADDDATE('%u-%u-%u', INTERVAL @i:=@i+1 DAY) AS DAY FROM"
 					" ( SELECT a.a FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL"

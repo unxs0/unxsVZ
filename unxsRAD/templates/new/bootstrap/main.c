@@ -550,6 +550,11 @@ void SSLCookieLogin(void)
 				sprintf(gcPasswd,"%.99s",cP);
 			}
 		}
+		if((cP=strstr(gcCookie,"{{cProject}}JobOffer=")))
+		{
+			cP+=strlen("{{cProject}}JobOffer=");
+			sscanf(cP,"%u",&guJobOffer);
+		}
 	}//if gcCookie[0] time saver
 
 

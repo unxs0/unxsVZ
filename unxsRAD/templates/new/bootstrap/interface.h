@@ -90,6 +90,7 @@ extern char gcHost[];
 extern unsigned guBrowserFirefox;
 extern unsigned guYear;
 extern unsigned guMonth;
+extern unsigned guJobOffer;
 
 //Cgi form commands and major area function
 extern char gcFunction[];

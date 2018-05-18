@@ -15,18 +15,44 @@ REQUIRES
 void htmlJobOfferSelect(FILE *fp);
 void funcJobOffer(FILE *fp);
 
-unsigned guJobOffer=0;
+unsigned guJobOffer= -1;
 
 void htmlJobOfferSelect(FILE *fp)
 {
-	if(!guJobOffer)
+	sprintf(gcQuery,"SELECT uJobOffer,cLabel FROM tJobOffer"
+				" WHERE uOwner=%u ORDER BY uModDate DESC, uCreatedDate DESC LIMIT 7",guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
 	{
-		fprintf(fp,"None found.");
+		gcMessage="Unexpected error (s7) try again later!";
+		htmlJobOffer();
 	}
-	else
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	res=mysql_store_result(&gMysql);
+
+	fprintf(fp,"\t\t<input type=hidden name=gcPage value=JobOffer >\n");
+	fprintf(fp,"\t\t<input type=hidden name=gcFunction value=SetJobOffer >\n");
+	fprintf(fp,"\t\t<select onchange=\"this.form.submit()\" class=\"form-control\" id=\"uJobOffer\" name=\"uJobOffer\">\n");
+	fprintf(fp,"\t\t\t<option value='0'>Create new job offer</option>\n");
+	unsigned uJobOffer=0;
+	unsigned uFirst=1;
+	while((field=mysql_fetch_row(res)))
 	{
+		sscanf(field[0],"%u",&uJobOffer);
+		if(uFirst && guJobOffer== -1)
+		{
+			guJobOffer=uJobOffer;
+			uFirst=0;
+		}
+		fprintf(fp,"\t\t\t<option ");
+		if(uJobOffer==guJobOffer)
+			fprintf(fp,"selected ");
+		fprintf(fp," value='%s'>%s</option>\n",field[0],field[1]);
 	}
+	fprintf(fp,"\t\t</select>\n");
 }//void htmlJobOfferSelect(FILE *fp)
+
 
 void funcJobOffer(FILE *fp)
 {

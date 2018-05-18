@@ -46,16 +46,101 @@
       </div><!-- /.container -->
     </nav><!-- /.navbar -->
 
-<!-- Job Offers -->
+<!-- Select Job Offers -->
 <div class="container">
   <div class="row">
     <div class="col-sm-9 col-xs-12">
       <h2>Job Offers {{gcMessage}}</h2>
-        {{funcJobOffer}}
-      <p class="big-para">Click to select. If none found any Upload or Submit will create a new one and select it.</p>
+      <p class="big-para">Use the currently selected job offer, select another or create a new one.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <div class="contact-form">
+        <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/">
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+
+              {{funcJobOffer}}
+
+           </div>
+         </div>
+       </form>
+     </div>
    </div>
   </div>
-</div>
+</div> 
+<!-- End Select Job Form -->
+
+
+<!-- Start Upload Job Details Form -->
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <h2>Dates, Brand, Model and Year Information</h2>
+      <p class="big-para">Select the start date when you will first have the item available for repair and the end date
+		that would be the maximum date that you can wait for the job to be completed and delivered to you by. Please note that
+		bidders may select a start date later than yours and an end date before your last available day.
+		Select the brand, enter the model and year of the item you wish repaired. If the brand is not listed explain in the 
+		job description.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <div class="contact-form">
+        <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/" >
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="StartDate">First day you have available to start work on job</label>
+              <input type=date class="form-control" name = "dStart" value="{{dStart}}"
+				id="StartDate" required </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="EndDate">Last day you have available to get the job delivered</label>
+              <input type=date class="form-control" name = "dEnd" value="{{dEnd}}"
+				id="EndDate" required </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="Brand">Brand</label>
+		{{funcSelect(tBrand)}}
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="Model">Model</label>
+              <input type=text class="form-control" name = "cModel" placeholder="Vegas" value="{{cModel}}"
+				id="Model" required=true </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="Year">Year</label>
+              <input type=text class="form-control" name = "uYear" placeholder="2014" value="{{uYear}}"
+				id="Year" required=true  </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="DesciptionTextarea">Job Description</label>
+              <textarea class="form-control" name = "cDescription" required=true value="{{cDescription}}"
+				id="DesciptionTextarea" rows="3" placeholder="Describe in detail the work you need done. If the brand is other please provide brand name here or explain further."></textarea>
+           </div>
+         </div>
+         <input type=hidden name="gcPage" value="JobOffer">
+         <button class="btn btn-success btn-lg btn-block wow fadeInDown"
+					data-wow-delay="1200ms" data-wow-duration="1000ms" name="gcFunction" value="AMJobOffer"
+					type="submit" id="submitbutton">Submit Job Information</button>
+       </form>
+     </div>
+   </div>
+  </div>
+</div> 
+<!-- End Upload Job Images Form -->
+
 
 <!-- Start Upload Job Images Form -->
 <div class="container">
@@ -94,75 +179,6 @@
   </div>
 </div> 
 <!-- End Upload Job Images Form -->
-
-<!-- Start Upload Job Details Form -->
-<div class="container">
-  <div class="row">
-    <div class="col-sm-9 col-xs-12">
-      <h2>Dates, Brand, Model and Year Information</h2>
-      <p class="big-para">Select the start date when you will first have the item available for repair and the end date
-		that would be the maximum date that you can wait for the job to be completed and delivered to you by. Please note that
-		bidders may select a start date later than yours and an end date before your last available day.
-		Select the brand, enter the model and year of the item you wish repaired. If the brand is not listed explain in the 
-		job description.</p>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-sm-9 col-xs-12">
-      <div class="contact-form">
-        <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/" >
-          <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="StartDate">First day you have available to start work on job</label>
-              <input type=date class="form-control" name = "dStart"
-				id="StartDate" required </input>
-           </div>
-         </div>
-          <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="EndDate">Last day you have available to get the job delivered</label>
-              <input type=date class="form-control" name = "dEnd"
-				id="EndDate" required </input>
-           </div>
-         </div>
-          <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="Brand">Brand</label>
-		{{funcSelect(tBrand)}}
-           </div>
-         </div>
-          <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="Model">Model</label>
-              <input type=text class="form-control" name = "cModel" placeholder="Vegas"
-				id="Model" required=true </input>
-           </div>
-         </div>
-          <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="Year">Year</label>
-              <input type=text class="form-control" name = "uYear" placeholder="2014"
-				id="Year" required=true  </input>
-           </div>
-         </div>
-          <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="DesciptionTextarea">Job Description</label>
-              <textarea class="form-control" name = "cDescription" required=true
-				id="DesciptionTextarea" rows="3" placeholder="Describe in detail the work you need done. If the brand is other please provide brand name here or explain further."></textarea>
-           </div>
-         </div>
-         <input type=hidden name="gcPage" value="JobOffer">
-         <button class="btn btn-success btn-lg btn-block wow fadeInDown"
-					data-wow-delay="1200ms" data-wow-duration="1000ms" name="gcFunction" value="AMJobOffer"
-					type="submit" id="submitbutton">Submit Job Information</button>
-       </form>
-     </div>
-   </div>
-  </div>
-</div> 
-<!-- End Upload Job Images Form -->
-
 
       <hr>
 
