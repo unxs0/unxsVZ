@@ -18,6 +18,13 @@ static char cPasswd[32]={""};
 static char cPasswd2[32]={""};
 static char *gcFiveIn="out";
 
+unsigned uYear=0;
+char cBrand[32]={""};
+char cModel[32]={""};
+char dStart[32]={""};
+char dEnd[32]={""};
+char *cDescription="";
+
 //TOC
 void ProcessUserVars(pentry entries[], int x);
 void UserGetHook(entry gentries[],int x);
@@ -62,6 +69,30 @@ void SendEmail(char *cMsg,char *cMailTo,char *cFrom,char *cSubject,char *cBcc)
 	pclose(pp);
 
 }//void SendEmail()
+
+
+void ProcessJobOfferVars(pentry entries[], int x)
+{
+	register int i;
+
+	for(i=0;i<x;i++)
+	{
+		
+		if(!strcmp(entries[i].name,"uYear"))
+			sscanf(entries[i].val,"%u",&uYear);
+		else if(!strcmp(entries[i].name,"uBrand"))
+			sprintf(cBrand,"%.31s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cModel"))
+			sprintf(cModel,"%.31s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cDescription"))
+			cDescription=entries[i].val;
+		else if(!strcmp(entries[i].name,"dStart"))
+			sprintf(dStart,"%.31s",entries[i].val);
+		else if(!strcmp(entries[i].name,"dEnd"))
+			sprintf(dEnd,"%.31s",entries[i].val);
+	}
+
+}//void ProcessJobOfferVars(pentry entries[], int x)
 
 
 void ProcessCalendarVars(pentry entries[], int x)
@@ -158,6 +189,13 @@ void UserGetHook(entry gentries[],int x)
 }//void UserGetHook(entry gentries[],int x)
 
 
+void JobOfferGetHook(entry gentries[],int x)
+{
+	htmlJobOffer();
+
+}//void JobOfferGetHook(entry gentries[],int x)
+
+
 unsigned uNoUpper(const char *cPasswd)
 {
 	register int i;
@@ -242,6 +280,144 @@ void UserCommands(pentry entries[], int x)
 			if(guYear && guMonth && uDay);
 			ToggleAvailableDay(guYear,guMonth,uDay);
 			htmlCalendar();
+		}
+	}
+	else if(!strcmp(gcPage,"JobOffer"))
+	{
+		ProcessJobOfferVars(entries,x);
+		if(!strcmp(gcFunction,"AMJobOffer"))
+		{
+			if(!uYear)
+				gcMessage="Must provide year";
+			else if(!cBrand[0])
+				gcMessage="Must provide brand";
+			else if(!cModel[0])
+				gcMessage="Must provide model";
+			else if(!cDescription[0])
+				gcMessage="Must provide cDescription";
+			else if(!dStart[0])
+				gcMessage="Must provide first day";
+			else if(!dEnd[0])
+				gcMessage="Must provide last day";
+			unsigned uStartMonth=0,uStartDay=0,uStartYear=0;
+			unsigned uEndMonth=0,uEndDay=0,uEndYear=0;
+			sscanf(dStart,"%u-%u-%u",&uStartYear,&uStartMonth,&uStartDay);
+			sscanf(dEnd,"%u-%u-%u",&uEndYear,&uEndMonth,&uEndDay);
+			if(!uStartMonth || !uStartDay || !uStartYear ||
+				!uEndMonth || !uEndDay || !uEndYear)
+			{
+				gcMessage="Start and/or end date format error";
+				htmlJobOffer();
+			}
+			char cStart[32],cEnd[32];
+			sprintf(cStart,"%u%u%u",uStartYear,uStartMonth,uStartDay);
+			sprintf(cEnd,"%u%u%u",uEndYear,uEndMonth,uEndDay);
+			unsigned uStart=0,uEnd=0;
+			sscanf(cStart,"%u",&uStart);
+			sscanf(cEnd,"%u",&uEnd);
+			if(uEnd<=uStart)
+			{
+				gcMessage="End date must be larger than start date!";
+				htmlJobOffer();
+			}
+
+			//Create new job offer
+			unsigned uJobOffer=0;
+			sprintf(gcQuery,"INSERT INTO tJobOffer SET"
+				" cLabel='%s %s %u',"
+				" uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
+				" cDescription='%s',"
+				" dStart='%s',dEnd='%s',"
+				"uVendor=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
+							cBrand,TextAreaSave(cModel),uYear,
+							cBrand,TextAreaSave(cModel),uYear,
+							TextAreaSave(cDescription),
+							dStart,dEnd,
+							guLoginClient,guOrg,guLoginClient);
+			mysql_query(&gMysql,gcQuery);
+			uJobOffer=mysql_insert_id(&gMysql);
+			if(mysql_errno(&gMysql) || !uJobOffer)
+			{
+				gcMessage="Unexpected error (i0) try again later!";
+				htmlJobOffer();
+			}
+	
+			//Add job offer as available for range of days to calendar	
+			sprintf(gcQuery,"SELECT ADDDATE('%u-%u-%u', INTERVAL @i:=@i+1 DAY) AS DAY FROM"
+					" ( SELECT a.a FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL"
+					" SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL"
+					" SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL"
+					" SELECT 8 UNION ALL SELECT 9)"
+					" AS a CROSS JOIN (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL"
+					" SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL"
+					" SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL"
+					" SELECT 8 UNION ALL SELECT 9)"
+					" AS b CROSS JOIN (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL"
+					" SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL"
+					" SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL"
+					" SELECT 8 UNION ALL SELECT 9)"
+					" AS c ) a JOIN (SELECT @i := -1) r1 WHERE"
+					" @i < DATEDIFF('%u-%u-%u', '%u-%u-%u');",
+										uStartYear,uStartMonth,uStartDay,
+										uEndYear,uEndMonth,uEndDay,
+										uStartYear,uStartMonth,uStartDay);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Unexpected error try again later!";
+				htmlJobOffer();
+			}
+			MYSQL_RES *res;
+			MYSQL_ROW field;
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)>0)
+			{
+			while((field=mysql_fetch_row(res)))
+			{
+				MYSQL_RES *res2;
+				MYSQL_ROW field2;
+				sprintf(gcQuery,"SELECT uCalendar FROM tCalendar"
+					" WHERE (uVendor=%u OR uVendor=%u) AND dDate='%s' AND uJobOffer=%u",
+							guLoginClient,guOrg,field[0],uJobOffer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Unexpected error1 try again later!";
+					htmlJobOffer();
+				}
+				res2=mysql_store_result(&gMysql);
+				if((field2=mysql_fetch_row(res2)))
+				{
+					sprintf(gcQuery,"DELETE FROM tCalendar WHERE uCalendar=%s",field2[0]);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						gcMessage="Unexpected error2 try again later!";
+						htmlJobOffer();
+					}
+				}
+				else
+				{
+					sprintf(gcQuery,"INSERT INTO tCalendar"
+					" SET uJobOffer=%u,uVendor=%u,uOwner=%u,dDate='%s',"
+					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",uJobOffer,guLoginClient,guOrg,field[0],guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						gcMessage="Unexpected error3 try again later!";
+						htmlJobOffer();
+					}
+				}
+				mysql_free_result(res2);
+			}//while
+			}//if rows
+			else
+			{
+				gcMessage="Unexpected error0 try again later!";
+				htmlJobOffer();
+			}
+			mysql_free_result(res);
+			htmlJobOffer();
 		}
 	}
 	else if(!strcmp(gcPage,"User"))

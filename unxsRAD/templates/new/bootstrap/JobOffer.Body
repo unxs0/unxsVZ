@@ -50,7 +50,7 @@
 <div class="container">
   <div class="row">
     <div class="col-sm-9 col-xs-12">
-      <h2>Job Offers</h2>
+      <h2>Job Offers {{gcMessage}}</h2>
         {{funcJobOffer}}
       <p class="big-para">Click to select. If none found any Upload or Submit will create a new one and select it.</p>
    </div>
@@ -70,8 +70,7 @@
   <div class="row">
     <div class="col-sm-9 col-xs-12">
       <div class="contact-form">
-        <form class="clearfix" accept-charset="utf-8" method="post"
-				action="/pictureframe.cgi" enctype="multipart/form-data" onsubmit="return checkForm(this);">
+        <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/">
           <div class="row">
             <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
               <label for="exampleTextarea">Image details/explanation</label>
@@ -83,11 +82,11 @@
            <div class="col-sm-12 form-group">
              <label for="exampleInputFile">Choose an image</label>
              <input type="file" name="file_source" class="form-control-file"
-						id="exampleInputFile" aria-describedby="fileHelp">
+						id="exampleInputFile" aria-describedby="fileHelp" required>
              <small id="fileHelp" class="form-text text-muted">Choose an image from your phone or computer.</small>
            </div>
          </div>
-         <button class="btn btn-success btn-lg btn-block wow fadeInDown"
+         <button class="btn btn-success btn-lg btn-block wow fadeInDown" name="gcFunction" value="AddJobOfferImage"
 					data-wow-delay="1200ms" data-wow-duration="1000ms" type="submit" id="submitbutton">Upload Image</button>
        </form>
      </div>
@@ -111,20 +110,19 @@
   <div class="row">
     <div class="col-sm-9 col-xs-12">
       <div class="contact-form">
-        <form class="clearfix" accept-charset="utf-8" method="post"
-				action="/" enctype="multipart/form-data" onsubmit="return checkForm(this);">
+        <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/" >
           <div class="row">
             <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
               <label for="StartDate">First day you have available to start work on job</label>
               <input type=date class="form-control" name = "dStart"
-				id="StartDate" </input>
+				id="StartDate" required </input>
            </div>
          </div>
           <div class="row">
             <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
               <label for="EndDate">Last day you have available to get the job delivered</label>
               <input type=date class="form-control" name = "dEnd"
-				id="EndDate" </input>
+				id="EndDate" required </input>
            </div>
          </div>
           <div class="row">
@@ -137,25 +135,26 @@
             <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
               <label for="Model">Model</label>
               <input type=text class="form-control" name = "cModel" placeholder="Vegas"
-				id="Model" </input>
+				id="Model" required=true </input>
            </div>
          </div>
           <div class="row">
             <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
               <label for="Year">Year</label>
-              <input type=text class="form-control" name = "cYear" placeholder="2014"
-				id="Year" </input>
+              <input type=text class="form-control" name = "uYear" placeholder="2014"
+				id="Year" required=true  </input>
            </div>
          </div>
           <div class="row">
             <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
               <label for="DesciptionTextarea">Job Description</label>
-              <textarea class="form-control" name = "cDescription"
+              <textarea class="form-control" name = "cDescription" required=true
 				id="DesciptionTextarea" rows="3" placeholder="Describe in detail the work you need done. If the brand is other please provide brand name here or explain further."></textarea>
            </div>
          </div>
+         <input type=hidden name="gcPage" value="JobOffer">
          <button class="btn btn-success btn-lg btn-block wow fadeInDown"
-					data-wow-delay="1200ms" data-wow-duration="1000ms" name="gcFunction" value="SetJobDates"
+					data-wow-delay="1200ms" data-wow-duration="1000ms" name="gcFunction" value="AMJobOffer"
 					type="submit" id="submitbutton">Submit Job Information</button>
        </form>
      </div>

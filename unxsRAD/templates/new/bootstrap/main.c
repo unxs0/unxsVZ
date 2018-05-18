@@ -133,8 +133,12 @@ int main(int argc, char *argv[])
 		{
 			if(!strcmp(gcPage,"User"))
 				UserGetHook(gentries,x);
-			if(!strcmp(gcPage,"Calendar"))
+			else if(!strcmp(gcPage,"Calendar"))
 				CalendarGetHook(gentries,x);
+			else if(!strcmp(gcPage,"JobOffer"))
+				JobOfferGetHook(gentries,x);
+			//Need to catch all pages here or else have default
+			htmlJobOffer();
 		}
 	}
 	else

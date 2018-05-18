@@ -112,6 +112,7 @@ extern char gcOTPInfo[];
 void ProcessUserVars(pentry entries[], int x);
 void UserGetHook(entry gentries[],int x);
 void CalendarGetHook(entry gentries[],int x);
+void JobOfferGetHook(entry gentries[],int x);
 void UserCommands(pentry entries[], int x);
 void htmlUser(void);
 void htmlSignUp(void);
