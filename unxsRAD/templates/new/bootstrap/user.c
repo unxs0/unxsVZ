@@ -325,20 +325,22 @@ void UserCommands(pentry entries[], int x)
 			unsigned uJobOffer=0;
 			sprintf(gcQuery,"INSERT INTO tJobOffer SET"
 				" cLabel='%s %s %u',"
-				" uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
-				" cDescription='%s',"
-				" dStart='%s',dEnd='%s',"
-				"uVendor=%u,uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
+				"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
+				"cDescription='%s',"
+				"dStart='%s',dEnd='%s',"
+				"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
 							cBrand,TextAreaSave(cModel),uYear,
 							cBrand,TextAreaSave(cModel),uYear,
 							TextAreaSave(cDescription),
 							dStart,dEnd,
-							guLoginClient,guOrg,guLoginClient);
+							guLoginClient,guLoginClient);
 			mysql_query(&gMysql,gcQuery);
 			uJobOffer=mysql_insert_id(&gMysql);
 			if(mysql_errno(&gMysql) || !uJobOffer)
 			{
 				gcMessage="Unexpected error (i0) try again later!";
+				//debug only
+				//gcMessage=gcQuery;
 				htmlJobOffer();
 			}
 	
