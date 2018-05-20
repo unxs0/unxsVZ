@@ -8,7 +8,6 @@ AUTHOR/LEGAL
 PURPOSE
 	Aux code for generating bootstrap calendar
 REQUIRES
-	calendargrid.css
 	guYear
 	guMonth
 */
@@ -37,6 +36,35 @@ unsigned uDayOpenForBids(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned
 	return(uReturn);
 
 }//unsigned uDayOpenForBids(unsigned uYear,unsigned uMonth, unsigned uDay)
+
+
+void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned uVendor);
+void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned uVendor)
+{
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+	if(uYear && uMonth && uDay && uVendor)
+	{
+		sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tCalendar,tJobOffer"
+				" WHERE tCalendar.uJobOffer=tJobOffer.uJobOffer"
+				" AND tCalendar.uVendor=%u AND tCalendar.dDate='%u-%u-%u'",uVendor,uYear,uMonth,uDay);
+		mysql_query(&gMysql,gcQuery);
+		printf("<font size=-2>");
+		if(mysql_errno(&gMysql))
+		{
+			printf("<a class='event d-block p-1 pl-2 pr-2 mb-1 text-truncate small bg-danger text-white'"
+				">%s</a>\n",mysql_error(&gMysql));
+			return;
+		}
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+			printf("<a href='?gcPage=JobOffer&uJobOffer=%s'"
+				" class='event d-block p-1 pl-2 pr-2 mb-1 text-truncate small bg-info text-white'"
+				" title='%s'>%s</a>\n",field[0],field[1],field[1]);
+		mysql_free_result(res);
+		printf("</font>");
+	}
+}//void htmlPrintJobOffers()
 
 
 void funcCalendar(FILE *fp)
@@ -113,109 +141,102 @@ void funcCalendar(FILE *fp)
 		sscanf(field[12],"%u",&uPrevMonthLastDay);
 	}
 	mysql_free_result(res);
-//<div class="container">
-// <div class="row">
-//   <div class="twelve columns">
-//       <h1>Calendar of Events</h1>
-//
 	uMonthFirstDayWeek++;
-//<form class="form-signin" role="form" method="post" action="/{{cProject}}App/">
-//</form>
+
+
+	//Header
+	//BS 4: Html page must have <meta name='viewport' content='width=device-width, initial-scale=1'>
 	printf("<!-- funcCalendar() guYear=%u guMonth=%u uPrevMonthLastDay=%u uMonthFirstDayWeek=%u -->\n",
 				guYear,guMonth,uPrevMonthLastDay,uMonthFirstDayWeek);
-	printf("<div class=\"container\"><div class=\"row\"><div class=\"twelve columns\"><div id=\"calendar\">\n");
-	printf("  <div class=\"text-center\">\n");
-	printf("    <a class=\"month-selector\" href=\"?gcPage=Calendar&uYear=%u&uMonth=%u\">%s %u</a>\n",
-			uPrevYear,uPrevMonth,cPrevMonth,uPrevYear);
-	printf("    <h2 class=\"month-header\">%s %s %u</h2>\n",gcName,cMonth,guYear);
-	printf("    <a class=\"month-selector\" href=\"?gcPage=Calendar&uYear=%u&uMonth=%u\">%s %u</a>\n",
-			uNextYear,uNextMonth,cNextMonth,uNextYear);
+	printf("<div class='container-fluid'>\n");
+	printf("<header>\n");
+	printf("  <h4 class='display-4 mb-4 text-center'>%s %u</h4>\n",cMonth,guYear);
+	printf("  <div class='row d-none d-sm-flex p-1 bg-dark text-white'>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Sunday</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Monday</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Tuesday</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Wednesday</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Thursday</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Friday</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Saturday</h5>\n");
 	printf("  </div>\n");
-	printf("  <div id=\"cal-wrapper\">\n");
+	printf("</header>\n");
+	printf("<div class='row border border-right-0 border-bottom-0'>\n");
 
-//<div class="date future col-xs-12 col-sm-6 col-md-3 sevencols col-lg-2">
-//  <div class="date-header">
-//    <h4>2 Sat</h4>
-//  </div>
-//
-//  <div class="date-item none">
-//    <b data="no-items" class="no-items">No Events Scheduled</b>
-//  </div>
-//</div>
-//
 	char cWeekDay[7][4]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 
 	//uMonthFirstDayWeek=2 e.g. May 1st 2018 is Tue
 	//uPrevMonthLastDay=30 e.g. April 30th 2018  DayWeek is 2-1 = 1 Mon
 	unsigned uStartDay=uPrevMonthLastDay-uMonthFirstDayWeek+1;//e.g. 30 - 2 + 1= 29
 	unsigned uCount=0;
+
+	//Previous month lead into current month days
 	for(uDay=uStartDay;uDay<=uPrevMonthLastDay;uDay++)
 	{
-		printf("    <div class=\"date yesterday col-xs-12 col-sm-6 col-md-3 sevencols col-lg-2\">\n");
-		printf("      <div class=\"date-header\">\n");
-		printf("        <h4>%u %s</h4>\n",uDay,cWeekDay[(uCount%7)]);
-		printf("      </div>\n");
-		if(uDayOpenForBids(guYear,uPrevMonth,uDay,guLoginClient))
-		{
-			printf("      <div class=\"date-item\">\n");
-			printf("        <b data=\"no-items\" class=\"no-items\">Available</b>\n");
-		}
+		printf("<div class='day col-sm p-2 border border-left-0"
+				" border-top-0 text-truncate d-none d-sm-inline-block bg-light text-muted'>\n");
+		printf("  <h5 class='row align-items-center'>\n");
+		printf("    <span class='date col-1'>%u</span>\n",uDay);
+		printf("    <small class='col d-sm-none text-center text-muted'>%s</small>\n",cWeekDay[(uCount%7)]);
+		printf("    <span class='col-1'></span>\n");
+		printf("  </h5>\n");
+		if(uDayOpenForBids(guYear,guMonth,uDay,guLoginClient))
+			printf("<a class='event d-block p-1 pl-2 pr-2 mb-1 text-truncate small bg-danger text-white'"
+				" title='Test Event 3'>Test Event 3</a>\n");
 		else
-		{
-			printf("      <div class=\"date-item none\">\n");
-			printf("        <b data=\"no-items\" class=\"no-items\">X</b>\n");
-		}
-		printf("      </div>\n");
-		printf("    </div>\n");
+			printf("<p class='d-sm-none'>No events</p>\n");
+		printf("</div>\n");
+		if((uCount%7)==6)
+			printf("<div class='w-100'></div>\n");
 		uCount++;
 	}
 
-//<div class="date-item">
-//  <b>12:00 am</b><br />
-//  <a href="?gcPage=Calendar&uJobOffer=85794">Major Tear Switchblade 2016</a>
-//</div>
-//
+	//Current month
 	for(uDay=1;uDay<=uLastDay;uDay++)
 	{
 		//today
 		if(uThisYear==guYear && uThisMonth==guMonth && uThisDay==uDay)
-			printf("    <div class=\"date today col-xs-12 col-sm-6 col-md-3 sevencols col-lg-2\">\n");
+			printf("<div class='day col-sm p-2 border border-left-0 border-top-0 text-truncate'>\n");
 		else
-			printf("    <div class=\"date future col-xs-12 col-sm-6 col-md-3 sevencols col-lg-2\">\n");
-		printf("      <div class=\"date-header\">\n");
-		//printf("<h4>%u %s <div class='text-right'>"
-		printf("<h4>%u %s</h4> "
-				"<form method='post' action='/{{cProject}}App/'>"
-				"<input type=hidden name=guMonth value=%u>"
-				"<input type=hidden name=guYear value=%u>"
-				"<input type=hidden name=gcPage value=Calendar>"
-				"<input type=hidden name=uDay value=%u>"
-				"<div class='text-right'><button type=submit name=gcFunction value=ToggleDay class='btn btn-link'>"
-					"    <span class='glyphicon glyphicon-retweet'></span>"
-				"</button></div>"
-				"</form>",
-			//"</div></h4>\n",
-			//"</h4>\n",
-					uDay,cWeekDay[(uCount%7)],
-						guMonth,guYear,uDay);
-		printf("      </div>\n");
+			printf("<div class='day col-sm p-2 border border-left-0 border-top-0 text-truncate'>\n");
+		printf("  <h5 class='row align-items-center'>\n");
+		printf("    <span class='date col-1'>%u</span>\n",uDay);
+		printf("    <small class='col d-sm-none text-center text-muted'>%s</small>\n",cWeekDay[(uCount%7)]);
+		printf("    <span class='col-1'></span>\n");
+		printf("  </h5>\n");
 		if(uDayOpenForBids(guYear,guMonth,uDay,guLoginClient))
-		{
-			printf("      <div class=\"date-item\">\n");
-			printf("        <b data=\"no-items\" class=\"no-items\">Available</b>\n");
-		}
+			htmlPrintJobOffers(guYear,guMonth,uDay,guLoginClient);
 		else
-		{
-			printf("      <div class=\"date-item\">\n");
-			printf("        <b data=\"no-items\" class=\"no-items\">X</b>\n");
-		}
-		printf("      </div>\n");
-		printf("    </div>\n");
+			printf("<p class='d-sm-none'>No events</p>\n");
+		printf("</div>\n");
+		if((uCount%7)==6)
+			printf("<div class='w-100'></div>\n");
 		uCount++;
 	}
-	printf("  </div>\n");
-	printf("</div></div></div></div>\n");
-	printf("<!-- end of funcCalendar -->\n");//used by get style buttons
-
+	
+	//Next month lead out of current month days
+	unsigned uLastDayOfWeek=(uCount%7);
+	for(uDay=1;uDay<=(7-uLastDayOfWeek);uDay++)
+	//for(uDay=1;uDay<=2;uDay++)
+	{
+		printf("<div class='day col-sm p-2 border border-left-0"
+				" border-top-0 text-truncate d-none d-sm-inline-block bg-light text-muted'>\n");
+		printf("  <h5 class='row align-items-center'>\n");
+		printf("    <span class='date col-1'>%u</span>\n",uDay);
+		printf("    <small class='col d-sm-none text-center text-muted'>%s</small>\n",cWeekDay[(uCount%7)]);
+		printf("    <span class='col-1'></span>\n");
+		printf("  </h5>\n");
+		if(uDayOpenForBids(guYear,guMonth,uDay,guLoginClient))
+			printf("<a class='event d-block p-1 pl-2 pr-2 mb-1 text-truncate small bg-danger text-white'"
+				" title='Test Event 3'>Test Event 3</a>\n");
+		else
+			printf("<p class='d-sm-none'>No events</p>\n");
+		printf("</div>\n");
+		if((uCount%7)==6)
+			printf("<div class='w-100'></div>\n");
+		uCount++;
+	}
+	printf("</div>\n");
+	printf("<!-- end of funcCalendar -->\n");
 
 }//void funcCalendar()

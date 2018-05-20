@@ -11,54 +11,43 @@
     <title>{{gcBrand}} Calendar</title>
 
     <!-- Bootstrap core CSS -->
-    <!-- <link href="/bs/css/bootstrap.min.css" rel="stylesheet"> -->
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+    <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-beta/css/bootstrap.min.css'>
 
-    <!-- Custom styles for this template -->
-    <link href="/bs/css/offcanvas.css" rel="stylesheet">
-    <link href="/bs/css/collapse.css" rel="stylesheet">
-    <link href="/bs/css/calendargrid.css" rel="stylesheet">
+<style>
+@media (max-width:575px) {
+  .display-4 {
+        font-size: 1.5rem;
+  }
+  .day h5 {
+        background-color: #f8f9fa;
+        padding: 3px 5px 5px;
+        margin: -8px -8px 8px -8px;
+  }
+  .date {
+        padding-left: 4px;
+  }
+}
+
+@media (min-width: 576px) {
+  .day {
+        height: 14.2857vw;
+  }
+}
+</style>
 
 
   </head>
 
-  <body>
-    <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-			data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="/{{gcBrand}}App/">{{gcBrand}}</a>
-        </div><!--/navbar-header-->
-        <div id="navbar" class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
-            <li><a title='Job Offers' href="?gcPage=JobOffer"><span class='glyphicon glyphicon-edit'></span></a></li>
-            <li class="active"><a title='Calendar' href="?gcPage=Calendar"><span class='glyphicon glyphicon-calendar'></span></a></li>
-            <li><a title='User Settings'  href="?gcPage=User"><span class='glyphicon glyphicon-user'></span></a></li>
-            <li><a title='Logout' href="?gcFunction=Logout"><span class='glyphicon glyphicon-off'></span></a></li>
-          </ul>
-        </div><!-- /.nav-collapse -->
-      </div><!-- /.container -->
-    </nav><!-- /.navbar -->
+  <body translate='no'>
 
 {{funcCalendar}}
 
 
       <hr>
 
-      <footer>
+      <footer class="center">
         <p>{{gcCopyright}}</p>
       </footer>
 
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
   </body>
 </html>

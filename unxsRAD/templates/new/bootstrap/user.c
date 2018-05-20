@@ -19,6 +19,9 @@ static char cPasswd2[32]={""};
 static char *gcFiveIn="out";
 
 unsigned uYear=0;
+unsigned uSize=0;
+unsigned uMaxBid=0;
+unsigned uBrand=0;
 char cBrand[32]={""};
 char cModel[32]={""};
 char dStart[32]={""};
@@ -80,10 +83,17 @@ void ProcessJobOfferVars(pentry entries[], int x)
 		
 		if(!strcmp(entries[i].name,"uYear"))
 			sscanf(entries[i].val,"%u",&uYear);
-		if(!strcmp(entries[i].name,"uJobOffer"))
+		else if(!strcmp(entries[i].name,"uSize"))
+			sscanf(entries[i].val,"%u",&uSize);
+		else if(!strcmp(entries[i].name,"uMaxBid"))
+			sscanf(entries[i].val,"%u",&uMaxBid);
+		else if(!strcmp(entries[i].name,"uJobOffer"))
 			sscanf(entries[i].val,"%u",&guJobOffer);
 		else if(!strcmp(entries[i].name,"uBrand"))
+		{
 			sprintf(cBrand,"%.31s",entries[i].val);
+			sscanf(entries[i].val,"%u",&uBrand);
+		}
 		else if(!strcmp(entries[i].name,"cModel"))
 			sprintf(cModel,"%.31s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cDescription"))
@@ -193,6 +203,12 @@ void UserGetHook(entry gentries[],int x)
 
 void JobOfferGetHook(entry gentries[],int x)
 {
+	register int i;
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"uJobOffer"))
+			sscanf(gentries[i].val,"%u",&guJobOffer);
+	}
 	htmlJobOffer();
 
 }//void JobOfferGetHook(entry gentries[],int x)
@@ -295,6 +311,8 @@ void UserCommands(pentry entries[], int x)
 		{
 			if(!uYear)
 				gcMessage="Must provide year";
+			else if(!uYear)
+				gcMessage="Must provide size";
 			else if(!cBrand[0])
 				gcMessage="Must provide brand";
 			else if(!cModel[0])
@@ -332,11 +350,13 @@ void UserCommands(pentry entries[], int x)
 			sprintf(gcQuery,"INSERT INTO tJobOffer SET"
 				" cLabel='%s %s %u',"
 				"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
+				"uSize=%u,uMaxBid=%u,"
 				"cDescription='%s',"
 				"dStart='%s',dEnd='%s',"
 				"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
 							cBrand,TextAreaSave(cModel),uYear,
 							cBrand,TextAreaSave(cModel),uYear,
+							uSize,uMaxBid,
 							TextAreaSave(cDescription),
 							dStart,dEnd,
 							guLoginClient,guLoginClient);
@@ -351,6 +371,16 @@ void UserCommands(pentry entries[], int x)
 			}
 	
 			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",uJobOffer);
+
+			//Remove all existing for same job
+			sprintf(gcQuery,"DELETE FROM tCalendar WHERE uVendor=%u AND uJobOffer=%u",
+							guLoginClient,uJobOffer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Unexpected error (22) try again later!";
+				htmlJobOffer();
+			}
 
 			//Add job offer as available for range of days to calendar	
 			sprintf(gcQuery,"SELECT ADDDATE('%u-%u-%u', INTERVAL @i:=@i+1 DAY) AS DAY FROM"
@@ -382,44 +412,19 @@ void UserCommands(pentry entries[], int x)
 			res=mysql_store_result(&gMysql);
 			if(mysql_num_rows(res)>0)
 			{
-			while((field=mysql_fetch_row(res)))
-			{
-				MYSQL_RES *res2;
-				MYSQL_ROW field2;
-				sprintf(gcQuery,"SELECT uCalendar FROM tCalendar"
-					" WHERE (uVendor=%u OR uVendor=%u) AND dDate='%s' AND uJobOffer=%u",
-							guLoginClient,guOrg,field[0],uJobOffer);
-				mysql_query(&gMysql,gcQuery);
-				if(mysql_errno(&gMysql))
-				{
-					gcMessage="Unexpected error1 try again later!";
-					htmlJobOffer();
-				}
-				res2=mysql_store_result(&gMysql);
-				if((field2=mysql_fetch_row(res2)))
-				{
-					sprintf(gcQuery,"DELETE FROM tCalendar WHERE uCalendar=%s",field2[0]);
-					mysql_query(&gMysql,gcQuery);
-					if(mysql_errno(&gMysql))
-					{
-						gcMessage="Unexpected error2 try again later!";
-						htmlJobOffer();
-					}
-				}
-				else
+				while((field=mysql_fetch_row(res)))
 				{
 					sprintf(gcQuery,"INSERT INTO tCalendar"
 					" SET uJobOffer=%u,uVendor=%u,uOwner=%u,dDate='%s',"
-					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",uJobOffer,guLoginClient,guOrg,field[0],guLoginClient);
+					"uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
+						uJobOffer,guLoginClient,guOrg,field[0],guLoginClient);
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
 						gcMessage="Unexpected error3 try again later!";
 						htmlJobOffer();
 					}
-				}
-				mysql_free_result(res2);
-			}//while
+				}//while
 			}//if rows
 			else
 			{
@@ -852,9 +857,38 @@ void htmlLostPassword(void)
 
 }//void htmlLostPassword(void)
 
+void LoadJobOfferData(unsigned uJobOffer);
+void LoadJobOfferData(unsigned uJobOffer)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT cDescription,uBrand,cModel,uSize,uYear,uMaxBid,"
+				"DATE_FORMAT(dStart,'%%Y-%%m-%%d'),DATE_FORMAT(dEnd,'%%Y-%%m-%%d')"
+				" FROM tJobOffer WHERE uJobOffer=%u AND uOwner=%u",uJobOffer,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		cDescription=field[0];
+		sscanf(field[1],"%u",&uBrand);
+		sprintf(cModel,"%s",field[2]);
+		sscanf(field[3],"%u",&uSize);
+		sscanf(field[4],"%u",&uYear);
+		sscanf(field[5],"%u",&uMaxBid);
+		sprintf(dStart,"%s",field[6]);
+		sprintf(dEnd,"%s",field[7]);
+	}
+}//void LoadJobOfferData(uJobOffer)
+
 
 void htmlJobOffer(void)
 {
+	if(guJobOffer!=(-1) && guJobOffer!=0)
+	{
+		LoadJobOfferData(guJobOffer);
+	}
 	htmlHeader("JobOffer","Default.Header");
 	htmlUserPage("JobOffer","JobOffer.Body");
 	htmlFooter("Default.Footer");
@@ -933,7 +967,37 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[11]="gcEmailCode";
 			template.cpValue[11]=gcEmailCode;
 
-			template.cpName[12]="";
+			template.cpName[12]="cModel";
+			template.cpValue[12]=cModel;
+
+			template.cpName[13]="uYear";
+			char cuYear[16]={""};
+			if(uYear)
+				sprintf(cuYear,"%u",uYear);
+			template.cpValue[13]=cuYear;
+
+			template.cpName[14]="uSize";
+			char cuSize[16]={""};
+			if(uSize)
+				sprintf(cuSize,"%u",uSize);
+			template.cpValue[14]=cuSize;
+
+			template.cpName[15]="uMaxBid";
+			char cuMaxBid[16]={""};
+			if(uMaxBid)
+				sprintf(cuMaxBid,"%u",uMaxBid);
+			template.cpValue[15]=cuMaxBid;
+
+			template.cpName[16]="dStart";
+			template.cpValue[16]=dStart;
+
+			template.cpName[17]="dEnd";
+			template.cpValue[17]=dEnd;
+
+			template.cpName[18]="cDescription";
+			template.cpValue[18]=cDescription;
+
+			template.cpName[19]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");

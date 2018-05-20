@@ -118,6 +118,13 @@
          </div>
           <div class="row">
             <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="Size">Size m2</label>
+              <input type=text class="form-control" name = "uSize" placeholder="12" value="{{uSize}}"
+				id="Size" required=true  </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
               <label for="Year">Year</label>
               <input type=text class="form-control" name = "uYear" placeholder="2014" value="{{uYear}}"
 				id="Year" required=true  </input>
@@ -125,9 +132,16 @@
          </div>
           <div class="row">
             <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="MaxBid">Max Bid $</label>
+              <input type=text class="form-control" name = "uMaxBid" placeholder="0" value="{{uMaxBid}}"
+				id="MaxBid" </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
               <label for="DesciptionTextarea">Job Description</label>
-              <textarea class="form-control" name = "cDescription" required=true value="{{cDescription}}"
-				id="DesciptionTextarea" rows="3" placeholder="Describe in detail the work you need done. If the brand is other please provide brand name here or explain further."></textarea>
+              <textarea class="form-control" name = "cDescription" required=true 
+				id="DesciptionTextarea" rows="3" placeholder="Describe in detail the work you need done. If the brand is other please provide brand name here or explain further.">{{cDescription}}</textarea>
            </div>
          </div>
          <input type=hidden name="gcPage" value="JobOffer">
