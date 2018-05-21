@@ -43,6 +43,7 @@ void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned 
 {
         MYSQL_RES *res;
 	MYSQL_ROW field;
+	char cBg[6][16]={"bg-info","bg-success","bg-warning","bg-danger","bg-dark","bg-secondary"};
 	if(uYear && uMonth && uDay && uVendor)
 	{
 		sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tCalendar,tJobOffer"
@@ -57,10 +58,11 @@ void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned 
 			return;
 		}
 		res=mysql_store_result(&gMysql);
+		unsigned uCount=0;
 		while((field=mysql_fetch_row(res)))
 			printf("<a href='?gcPage=JobOffer&uJobOffer=%s'"
-				" class='event d-block p-1 pl-2 pr-2 mb-1 text-truncate small bg-info text-white'"
-				" title='%s'>%s</a>\n",field[0],field[1],field[1]);
+				" class='event d-block p-1 pl-2 pr-2 mb-1 text-truncate %s text-white'"
+				" title='%s'>%s</a>\n",field[0],cBg[(uCount++)%6],field[1],field[1]);
 		mysql_free_result(res);
 		printf("</font>");
 	}
@@ -150,8 +152,14 @@ void funcCalendar(FILE *fp)
 				guYear,guMonth,uPrevMonthLastDay,uMonthFirstDayWeek);
 	printf("<div class='container-fluid'>\n");
 	printf("<header>\n");
-	printf("  <h4 class='display-4 mb-4 text-center'>%s %u</h4>\n",cMonth,guYear);
-	printf("  <div class='row d-none d-sm-flex p-1 bg-dark text-white'>\n");
+	//printf("  <h4 class='display-4 mb-4 text-center'>"
+	//		"<a href='?gcPage=Calendar&uMonth=%u&uYear=%u'><font size='-1'>%s</font></a>"
+	//		" %s %u "
+	//		"<a href='?gcPage=Calendar&uMonth=%u&uYear=%u'><font size='-1'>%s</font></a></h4>\n",
+	//			uPrevMonth,uPrevYear,cPrevMonth,
+	//			cMonth,guYear,
+	//			uNextMonth,uNextYear,cNextMonth);
+	printf("  <h4 class='display-4 mb-4 text-center'>&nbsp;</h4><div class='row d-none d-sm-flex p-1 bg-dark text-white'>\n");
 	printf("    <h5 class='col-sm p-1 text-center'>Sunday</h5>\n");
 	printf("    <h5 class='col-sm p-1 text-center'>Monday</h5>\n");
 	printf("    <h5 class='col-sm p-1 text-center'>Tuesday</h5>\n");
