@@ -61,7 +61,7 @@ void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned 
 		unsigned uCount=0;
 		while((field=mysql_fetch_row(res)))
 			printf("<a href='?gcPage=JobOffer&uJobOffer=%s'"
-				" class='event d-block p-1 pl-2 pr-2 mb-1 text-truncate %s text-white'"
+				" class='event d-block p-1 pl-2 pr-2 mb-1 rounded text-truncate %s text-white'"
 				" title='%s'>%s</a>\n",field[0],cBg[(uCount++)%6],field[1],field[1]);
 		mysql_free_result(res);
 		printf("</font>");
@@ -145,11 +145,37 @@ void funcCalendar(FILE *fp)
 	mysql_free_result(res);
 	uMonthFirstDayWeek++;
 
+	//Start debug info
+	printf("<!-- funcCalendar() guYear=%u guMonth=%u uPrevMonthLastDay=%u uMonthFirstDayWeek=%u -->\n",
+				guYear,guMonth,uPrevMonthLastDay,uMonthFirstDayWeek);
+	//Menu: We need this here so we can keep current month and prev/next buttons on top.
+
+	printf("<nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>");
+
+	printf("    <a class='navbar-brand' href='/%sApp/'>%s</a>",gcBrand,gcBrand);
+	printf("    <span class='navbar-brand'> %s %u</span>",cMonth,guYear);
+	printf("    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >");
+	printf("        <span class='navbar-toggler-icon'></span>");
+	printf("    </button>");
+
+	printf("    <div class='collapse navbar-collapse' id='navbarsCalendar'>");
+	printf("      <ul class='navbar-nav mr-auto'>");
+	printf("        <li class='nav-item'>");
+	printf("          <a class='nav-link' href='/%sApp/?gcPage=JobOffer'>Jobs</a>",gcBrand);
+	printf("        </li>");
+	printf("        <li class='nav-item active'>");
+	printf("          <a class='nav-link' href='/%sApp/?gcPage=Calendar'>Calendar</a>",gcBrand);
+	printf("        </li>");
+	printf("        <li class='nav-item'>");
+	printf("          <a class='nav-link' href='/%sApp/?gcPage=User'>User</a>",gcBrand);
+	printf("        </li>");
+	printf("      </ul>");
+	printf("    </div>");
+
+	printf("</nav>");
 
 	//Header
 	//BS 4: Html page must have <meta name='viewport' content='width=device-width, initial-scale=1'>
-	printf("<!-- funcCalendar() guYear=%u guMonth=%u uPrevMonthLastDay=%u uMonthFirstDayWeek=%u -->\n",
-				guYear,guMonth,uPrevMonthLastDay,uMonthFirstDayWeek);
 	printf("<div class='container-fluid'>\n");
 	printf("<header>\n");
 	//printf("  <h4 class='display-4 mb-4 text-center'>"

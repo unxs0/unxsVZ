@@ -956,7 +956,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpValue[7]=gcMessage;
 
 			template.cpName[8]="gcBrand";
-			template.cpValue[8]=INTERFACE_HEADER_TITLE;
+			template.cpValue[8]=gcBrand;
 
 			template.cpName[9]="gcCopyright";
 			template.cpValue[9]=INTERFACE_COPYRIGHT;

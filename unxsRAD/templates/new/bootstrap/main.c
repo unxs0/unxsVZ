@@ -51,6 +51,7 @@ char gcName[100]={""};
 char gcOrgName[100]={""};
 char gcHost[100]={""};
 char gcHostname[100]={""};
+char *gcBrand=INTERFACE_HEADER_TITLE;
 
 char gcFunction[100]={""};
 char gcPage[100]={""};
@@ -291,7 +292,7 @@ void htmlLoginPage(char *cTitle, char *cTemplateName)
 			template.cpValue[2]=gcMessage;
 
 			template.cpName[3]="gcBrand";
-			template.cpValue[3]=INTERFACE_HEADER_TITLE;
+			template.cpValue[3]=gcBrand;
 
 			template.cpName[4]="gcLogin";
 			if(!gcLogin[0]) sprintf(gcLogin,"Login id");

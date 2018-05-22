@@ -87,6 +87,7 @@ extern char gcUser[];
 extern char gcName[];
 extern char gcOrgName[];
 extern char gcHost[];
+extern char *gcBrand;
 extern unsigned guBrowserFirefox;
 extern unsigned guYear;
 extern unsigned guMonth;
