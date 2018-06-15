@@ -153,7 +153,6 @@ void funcCalendar(FILE *fp)
 	printf("<nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>");
 
 	printf("    <a class='navbar-brand' href='/%sApp/'>%s</a>",gcBrand,gcBrand);
-	printf("    <span class='navbar-brand'> %s %u</span>",cMonth,guYear);
 	printf("    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >");
 	printf("        <span class='navbar-toggler-icon'></span>");
 	printf("    </button>");
@@ -168,6 +167,15 @@ void funcCalendar(FILE *fp)
 	printf("        </li>");
 	printf("        <li class='nav-item'>");
 	printf("          <a class='nav-link' href='/%sApp/?gcPage=User'>User</a>",gcBrand);
+	printf("        </li>");
+	printf("        <li class='nav-item'>");
+	printf("          <a class='nav-link' href='/%sApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>-</a>",gcBrand,uPrevMonth,uPrevYear);
+	printf("        </li>");
+	printf("        <li class='nav-item'>");
+	printf("          <a class='nav-link'>%s %u</a>",cMonth,guYear);
+	printf("        </li>");
+	printf("        <li class='nav-item'>");
+	printf("          <a class='nav-link' href='/%sApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>+</a>",gcBrand,uNextMonth,uNextYear);
 	printf("        </li>");
 	printf("      </ul>");
 	printf("    </div>");
@@ -185,7 +193,8 @@ void funcCalendar(FILE *fp)
 	//			uPrevMonth,uPrevYear,cPrevMonth,
 	//			cMonth,guYear,
 	//			uNextMonth,uNextYear,cNextMonth);
-	printf("  <h4 class='display-4 mb-4 text-center'>&nbsp;</h4><div class='row d-none d-sm-flex p-1 bg-dark text-white'>\n");
+	printf("<h4 class='display-4 mb-4 text-center'>&nbsp;</h4>");
+	printf("<div class='row d-none d-sm-flex p-1 bg-dark text-white'>\n");
 	printf("    <h5 class='col-sm p-1 text-center'>Sunday</h5>\n");
 	printf("    <h5 class='col-sm p-1 text-center'>Monday</h5>\n");
 	printf("    <h5 class='col-sm p-1 text-center'>Tuesday</h5>\n");
@@ -211,7 +220,7 @@ void funcCalendar(FILE *fp)
 				" border-top-0 text-truncate d-none d-sm-inline-block bg-light text-muted'>\n");
 		printf("  <h5 class='row align-items-center'>\n");
 		printf("    <span class='date col-1'>%u</span>\n",uDay);
-		printf("    <small class='col d-sm-none text-center text-muted'>%s</small>\n",cWeekDay[(uCount%7)]);
+		printf("    <small class='col d-sm-none text-center text-muted'>%s %s %u</small>\n",cWeekDay[(uCount%7)],cMonth,guYear);
 		printf("    <span class='col-1'></span>\n");
 		printf("  </h5>\n");
 		if(uDayOpenForBids(guYear,guMonth,uDay,guLoginClient))
@@ -235,7 +244,7 @@ void funcCalendar(FILE *fp)
 			printf("<div class='day col-sm p-2 border border-left-0 border-top-0 text-truncate'>\n");
 		printf("  <h5 class='row align-items-center'>\n");
 		printf("    <span class='date col-1'>%u</span>\n",uDay);
-		printf("    <small class='col d-sm-none text-center text-muted'>%s</small>\n",cWeekDay[(uCount%7)]);
+		printf("    <small class='col d-sm-none text-right text-muted'>%s %s %u</small>\n",cWeekDay[(uCount%7)],cMonth,guYear);
 		printf("    <span class='col-1'></span>\n");
 		printf("  </h5>\n");
 		if(uDayOpenForBids(guYear,guMonth,uDay,guLoginClient))
@@ -257,7 +266,7 @@ void funcCalendar(FILE *fp)
 				" border-top-0 text-truncate d-none d-sm-inline-block bg-light text-muted'>\n");
 		printf("  <h5 class='row align-items-center'>\n");
 		printf("    <span class='date col-1'>%u</span>\n",uDay);
-		printf("    <small class='col d-sm-none text-center text-muted'>%s</small>\n",cWeekDay[(uCount%7)]);
+		printf("    <small class='col d-sm-none text-center text-muted'>%s %s %u</small>\n",cWeekDay[(uCount%7)],cMonth,guYear);
 		printf("    <span class='col-1'></span>\n");
 		printf("  </h5>\n");
 		if(uDayOpenForBids(guYear,guMonth,uDay,guLoginClient))

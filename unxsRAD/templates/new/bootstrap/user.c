@@ -619,7 +619,7 @@ void htmlSignUpStep1(void)
 		}
 		if(uNoUpper(cPasswd) || uNoLower(cPasswd) || uNoDigit(cPasswd))
 		{
-			gcMessage="Password have upper and lower case letters and at least one number";
+			gcMessage="Passwords must have upper and lower case letters and at least one number";
 			htmlHeader("Sign Up","Default.Header");
 			htmlUserPage("Sign Up","SignUp.Body");
 			htmlFooter("Default.Footer");//Footer exits
@@ -762,7 +762,7 @@ void htmlLostPasswordDone(void)
 		}
 		if(uNoUpper(gcPasswd) || uNoLower(gcPasswd) || uNoDigit(gcPasswd))
 		{
-			gcMessage="Password must have upper and lower case letters and at least one number";
+			gcMessage="Passwords must have upper and lower case letters and at least one number";
 			htmlHeader("Lost Password","Default.Header");
 			htmlUserPage("Lost Password","LostPasswordDone.Body");
 			htmlFooter("Default.Footer");//Footer exits
