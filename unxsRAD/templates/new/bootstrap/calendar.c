@@ -184,6 +184,7 @@ void funcCalendar(FILE *fp)
 
 	//Header
 	//BS 4: Html page must have <meta name='viewport' content='width=device-width, initial-scale=1'>
+	printf("<main role='main' class='container'>\n");
 	printf("<div class='container-fluid'>\n");
 	printf("<header>\n");
 	//printf("  <h4 class='display-4 mb-4 text-center'>"
@@ -280,6 +281,7 @@ void funcCalendar(FILE *fp)
 		uCount++;
 	}
 	printf("</div>\n");
+	printf("</main>\n");
 	printf("<!-- end of funcCalendar -->\n");
 
 }//void funcCalendar()

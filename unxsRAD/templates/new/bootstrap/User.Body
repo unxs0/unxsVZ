@@ -11,62 +11,94 @@
     <title>{{gcBrand}} Settings</title>
 
     <!-- Bootstrap core CSS -->
-    <!-- <link href="/bs/css/bootstrap.min.css" rel="stylesheet"> -->
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Custom styles for this template -->
-    <link href="/bs/css/offcanvas.css" rel="stylesheet">
-    <link href="/bs/css/collapse.css" rel="stylesheet">
-    <link href="/bs/css/calendargrid.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
 
 
+<style>
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 60px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 60px;
+  line-height: 60px; /* Vertically center the text there */
+  background-color: #f5f5f5;
+}
+
+/* Custom page CSS
+-------------------------------------------------- */
+/* Not required for template or sticky footer method. */
+
+body > .container {
+  padding: 60px 15px 0;
+}
+
+.footer > .container {
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+code {
+  font-size: 80%;
+}
+</style>
   </head>
   <body>
-    <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-				data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="/{{gcBrand}}App/">{{gcBrand}}</a>
-        </div><!--/navbar-header-->
-        <div id="navbar" class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
-            <li><a title='Job Offers' href="?gcPage=JobOffer"><span class='glyphicon glyphicon-edit'></span></a></li>
-            <li><a title='Calendar' href="?gcPage=Calendar"><span class='glyphicon glyphicon-calendar'></span></a></li>
-            <li class="active"><a title='User Settings'  href="?gcPage=User"><span class='glyphicon glyphicon-user'></span></a></li>
-            <li><a title='Logout' href="?gcFunction=Logout"><span class='glyphicon glyphicon-off'></span></a></li>
-          </ul>
-        </div><!-- /.nav-collapse -->
-      </div><!-- /.container -->
-    </nav><!-- /.navbar -->
 
-<!-- start collapse area -->
-<div class="container">
+  <header>
+  <nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>
+    <a class='navbar-brand' href='/unxsAKApp/'>unxsAK</a>
+    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >
+      <span class='navbar-toggler-icon'></span>
+    </button>
 
-<!-- <div class="row row-offcanvas row-offcanvas-right"> -->
-<div class="row">
+    <div class='collapse navbar-collapse' id='navbarsCalendar'>
+    <ul class='navbar-nav mr-auto'>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=JobOffer'>Jobs</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar'>Calendar</a>
+      </li>
+      <li class='nav-item active'>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=User'>User</a>
+      </li>
+    </ul>
+    </div>
 
-<div class="col-xs-12 col-sm-9">
+  </nav>
+  </header>
 
-<!-- start jquery collapse Change Passwd -->
-<div class="panel panel-default" id="panel5">
-	<div class="panel-heading">
-		<h4 class="form-signin-heading">
-			<a data-toggle="collapse" data-target="#collapseFive" href="#collapseFive" class="collapsed">Change Your Password</a>
-		</h4>
-	</div><!-- "panel-heading" -->
-	<div id="collapseFive" class="panel-collapse collapse {{gcFiveIn}}">
-	<div class="panel-body">
+  <main role="main" class="container">
 
-          <div class="list-group">
-        	<input disabled maxlength="31" title='Message'
-			type="login" id="gcMessage" class="form-control" placeholder="{{gcMessage}}" name="gcMessage" >
-		<br>
+  <h4 class='mt-5'>User Settings</h4>
+
+  <div class="accordion" id="accordionOne">
+
+  <!-- Change Password Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingPassword">
+  <h5 class="mb-0">
+  <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapsePassword">
+         Change Password 
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse" id="collapsePassword">
+  <div class="card-body">
       		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
 		<input type=hidden name="gcPage" value="User">
 		<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
@@ -91,32 +123,57 @@
 
 		<button class="btn btn-lg btn-primary btn-block" title="This will change your password and you will need to login again." type="submit" name=gcFunction value='Change Password'>Change Password</button>
 		</form>
-	  </div><!--/list-group-->
+  </div><!--card-body-->
+  </div><!--collapsePassword-->
+  </div><!--card-->
+  <!-- End Change Password Card -->
+
+  <!-- Email Settings -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingEmail">
+  <h5 class="mb-0">
+  <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseEmail">
+         Change email settings
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse" id="collapseEmail">
+  <div class="card-body">
+      		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
+		<input type=hidden name="gcPage" value="User">
+		<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
+		<input type=hidden name="guContainer" value="{{guContainer}}">
+
+        	<label for="inputEmail2" class="sr-only">Login</label>
+        	<input disabled maxlength="31" title='Your login'
+			type="login" id="inputEmail2" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" >
+		<input type=hidden name=cLogin value='{{gcLogin}}'>
+
+		<button class="btn btn-lg btn-primary btn-block" title="This will change your email settings." type="submit" name=gcFunction value='Change Password'>Change Password</button>
+		</form>
+  </div><!--card-body-->
+  </div><!--collapseEmail-->
+  </div><!--card-->
+  <!-- End Change Email Card -->
+
+  </div><!--accordianOne-->
+  </main>
 
 
-	</div><!-- "panel-body" -->
-	</div><!-- "collapseFive" -->
-</div><!-- "panel panel-default" -->
-<!-- end jquery collapse -->
 
-        </div><!--/.col-xs-12.col-sm-9-->
-
-        </div><!--/row-->
-      </div><!--/container-->
-
-
-
-
-      <hr>
-
-      <footer>
-        <p>{{gcCopyright}}</p>
+      <footer class='footer text-center'>
+        <span class='text-muted'>{{gcCopyright}}</span>
       </footer>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+  </body>
   </body>
 </html>
