@@ -97,7 +97,7 @@ code {
   </h5>
   </div><!--card header-->
 
-  <div class="collapse" id="collapsePassword">
+  <div class="collapse" id="collapsePassword" data-parent="#accordionOne">
   <div class="card-body">
       		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
 		<input type=hidden name="gcPage" value="User">
@@ -135,12 +135,12 @@ code {
   <div class="card-header" id="headingEmail">
   <h5 class="mb-0">
   <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseEmail">
-         Change email settings
+         Change Email Settings
   </button>
   </h5>
   </div><!--card header-->
 
-  <div class="collapse" id="collapseEmail">
+  <div class="collapse" id="collapseEmail" data-parent="#accordionOne">
   <div class="card-body">
       		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
 		<input type=hidden name="gcPage" value="User">
@@ -152,7 +152,7 @@ code {
 			type="login" id="inputEmail2" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" >
 		<input type=hidden name=cLogin value='{{gcLogin}}'>
 
-		<button class="btn btn-lg btn-primary btn-block" title="This will change your email settings." type="submit" name=gcFunction value='Change Password'>Change Password</button>
+		<button class="btn btn-lg btn-primary btn-block" title="This will change your email settings." type="submit" name=gcFunction value='Change Email'>Change Email</button>
 		</form>
   </div><!--card-body-->
   </div><!--collapseEmail-->
