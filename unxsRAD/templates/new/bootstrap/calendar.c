@@ -169,14 +169,17 @@ void funcCalendar(FILE *fp)
 	printf("          <a class='nav-link' href='/%sApp/?gcPage=User'>User</a>\n",gcBrand);
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/%sApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>%s %u</a>\n",
+	printf("          <a class='nav-link' href='/%sApp/?gcFunction=Logout'>Logout</a>\n",gcBrand);
+	printf("        </li>\n");
+	printf("        <li class='nav-item'>\n");
+	printf("          <a class='nav-link' href='/%sApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>[ %s %u</a>\n",
 					gcBrand,uPrevMonth,uPrevYear,cPrevMonth,uPrevYear);
 	printf("        </li>");
 	printf("        <li class='nav-item'>\n");
 	printf("          <a class='nav-link active'>%s %u</a>\n",cMonth,guYear);
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/%sApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>%s %u</a>\n",
+	printf("          <a class='nav-link' href='/%sApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>%s %u ]</a>\n",
 					gcBrand,uNextMonth,uNextYear,cNextMonth,uNextYear);
 	printf("        </li>\n");
 	printf("      </ul>\n");

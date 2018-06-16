@@ -4,53 +4,86 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{gcBrand}} Job offer tab">
+    <meta name="description" content="{{gcBrand}} Job offers">
     <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
     <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
 
-    <title>{{gcBrand}} Calendar</title>
+    <title>{{gcBrand}} Job Offers </title>
 
     <!-- Bootstrap core CSS -->
-    <!-- <link href="/bs/css/bootstrap.min.css" rel="stylesheet"> -->
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Custom styles for this template -->
-    <link href="/bs/css/offcanvas.css" rel="stylesheet">
-    <link href="/bs/css/collapse.css" rel="stylesheet">
-    <link href="/bs/css/calendargrid.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
 
 
-  </head>
+<style>
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 40px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 40px;
+  line-height: 40px; /* Vertically center the text there */
+  background-color: #f5f5f5;
+}
 
-  <body>
-    <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-			data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="/{{gcBrand}}App/">{{gcBrand}}</a>
-        </div><!--/navbar-header-->
-        <div id="navbar" class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
-            <li class="active"><a title='Job Offers' href="?gcPage=JobOffer"><span class='glyphicon glyphicon-edit'></span></a></li>
-            <li><a title='Calendar' href="?gcPage=Calendar"><span class='glyphicon glyphicon-calendar'></span></a></li>
-            <li><a title='User Settings'  href="?gcPage=User"><span class='glyphicon glyphicon-user'></span></a></li>
-            <li><a title='Logout' href="?gcFunction=Logout"><span class='glyphicon glyphicon-off'></span></a></li>
-          </ul>
-        </div><!-- /.nav-collapse -->
-      </div><!-- /.container -->
-    </nav><!-- /.navbar -->
+body > .container {
+  padding: 40px 15px 0;
+}
 
-<!-- Select Job Offers -->
-<div class="container">
+.footer > .container {
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+code {
+  font-size: 80%;
+}
+</style>
+</head>
+
+<body>
+  <header>
+  <nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>
+    <a class='navbar-brand' href='/unxsAKApp/'>unxsAK</a>
+    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >
+      <span class='navbar-toggler-icon'></span>
+    </button>
+
+    <div class='collapse navbar-collapse' id='navbarsCalendar'>
+    <ul class='navbar-nav mr-auto'>
+      <li class='nav-item'>
+        <a class='nav-link active' href='/unxsAKApp/?gcPage=JobOffer'>Jobs</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar'>Calendar</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=User'>User</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcFunction=Logout'>Logout</a>
+      </li>
+    </ul>
+    </div>
+
+  </nav>
+  </header>
+
+  <main role="main" class="container">
+  <h4 class='mt-5'>Job Offers</h4>
+
+<!-- Select Job Offers Panel -->
+<div class="well">
   <div class="row">
     <div class="col-sm-9 col-xs-12">
-      <h2>Job Offers {{gcMessage}}</h2>
+      <h4>{{gcMessage}}</h4>
       <p class="big-para">Use the currently selected job offer, select another or create a new one.</p>
     </div>
   </div>
@@ -70,11 +103,24 @@
    </div>
   </div>
 </div> 
-<!-- End Select Job Form -->
+<!-- End Select Job Offres Panel-->
 
+  <div class="accordion" id="accordionOne">
 
-<!-- Start Upload Job Details Form -->
-<div class="container">
+  <!-- Details Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingDetails">
+  <h5 class="mb-0">
+  <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseDetails">
+         Job Details 
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse" id="collapseDetails" data-parent="#accordionOne">
+  <div class="card-body">
   <div class="row">
     <div class="col-sm-9 col-xs-12">
       <h2>Dates, Brand, Model and Year Information</h2>
@@ -152,10 +198,25 @@
      </div>
    </div>
   </div>
-</div> 
-<!-- End Upload Job Images Form -->
+  </div><!--card-body-->
+  </div><!--collapseDetails-->
+  </div><!--card-->
+  <!-- End Change Details Card -->
 
+  <!-- Job Images Card -->
+  <div class="card">
 
+  <!-- card header -->
+  <div class="card-header" id="headingImages">
+  <h5 class="mb-0">
+  <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseImages">
+         Job Images 
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse" id="collapseImages" data-parent="#accordionOne">
+  <div class="card-body">
 <!-- Start Upload Job Images Form -->
 <div class="container">
   <div class="row">
@@ -193,17 +254,26 @@
   </div>
 </div> 
 <!-- End Upload Job Images Form -->
+  </div><!--card-body-->
+  </div><!--collapseImages-->
+  </div><!--card-->
+  <!-- End Job Images Card -->
 
-      <hr>
+  </div><!--accordianOne-->
+  </main>
 
-      <footer>
-        <p>{{gcCopyright}}</p>
+
+
+      <footer class='footer text-center'>
+        <span class='text-muted'>{{gcCopyright}}</span>
       </footer>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+  </body>
   </body>
 </html>

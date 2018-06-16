@@ -15,32 +15,26 @@
 
 
 <style>
-/* Sticky footer styles
--------------------------------------------------- */
 html {
   position: relative;
   min-height: 100%;
 }
 body {
   /* Margin bottom by footer height */
-  margin-bottom: 60px;
+  margin-bottom: 40px;
 }
 .footer {
   position: absolute;
   bottom: 0;
   width: 100%;
   /* Set the fixed height of the footer here */
-  height: 60px;
-  line-height: 60px; /* Vertically center the text there */
+  height: 40px;
+  line-height: 40px; /* Vertically center the text there */
   background-color: #f5f5f5;
 }
 
-/* Custom page CSS
--------------------------------------------------- */
-/* Not required for template or sticky footer method. */
-
 body > .container {
-  padding: 60px 15px 0;
+  padding: 40px 15px 0;
 }
 
 .footer > .container {
@@ -52,9 +46,9 @@ code {
   font-size: 80%;
 }
 </style>
-  </head>
-  <body>
+</head>
 
+<body>
   <header>
   <nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>
     <a class='navbar-brand' href='/unxsAKApp/'>unxsAK</a>
@@ -72,6 +66,9 @@ code {
       </li>
       <li class='nav-item active'>
         <a class='nav-link' href='/unxsAKApp/?gcPage=User'>User</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcFunction=Logout'>Logout</a>
       </li>
     </ul>
     </div>
@@ -99,30 +96,29 @@ code {
 
   <div class="collapse" id="collapsePassword" data-parent="#accordionOne">
   <div class="card-body">
-      		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
-		<input type=hidden name="gcPage" value="User">
-		<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
-		<input type=hidden name="guContainer" value="{{guContainer}}">
+    <form class="form-signin" role="form" method="post" action="{{cCGI}}">
+    <input type=hidden name="gcPage" value="User">
 
-        	<label for="inputEmail" class="sr-only">Login</label>
-        	<input disabled maxlength="31" title='Your login'
-			type="login" id="inputEmail" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" >
-		<input type=hidden name=cLogin value='{{gcLogin}}'>
+   <label for="inputEmail" class="sr-only">Login</label>
+   <input disabled maxlength="31" title='Your login'
+	type="login" id="inputEmail" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" >
+    <input type=hidden name=cLogin value='{{gcLogin}}'>
 
-       		<label for="inputPassword" class="sr-only">Current Password</label>
-       		<input maxlength="31" title='Input your current password'
-			type="password" id="inputPassword1" class="form-control" placeholder="Current Password" name="cCurPasswd" required>
+    <label for="inputPassword" class="sr-only">Current Password</label>
+    <input maxlength="31" title='Input your current password'
+	type="password" id="inputPassword1" class="form-control" placeholder="Current Password" name="cCurPasswd" required>
 
-       		<label for="inputPassword" class="sr-only">New Password</label>
-       		<input maxlength="31" title='Input your new password. Must be at least 6 characters long'
-			type="password" id="inputPassword2" class="form-control" placeholder="New Password" name="cPasswd" required>
+    <label for="inputPassword" class="sr-only">New Password</label>
+    <input maxlength="31" title='Input your new password. Must be at least 6 characters long'
+	type="password" id="inputPassword2" class="form-control" placeholder="New Password" name="cPasswd" required>
 
-       		<label for="inputPassword" class="sr-only">New Password Again</label>
-       		<input maxlength="31" title='Input your new password again please.'
-			type="password" id="inputPassword3" class="form-control" placeholder="New Password Again" name="cPasswd2" required>
+    <label for="inputPassword" class="sr-only">New Password Again</label>
+    <input maxlength="31" title='Input your new password again please.'
+	type="password" id="inputPassword3" class="form-control" placeholder="New Password Again" name="cPasswd2" required>
 
-		<button class="btn btn-lg btn-primary btn-block" title="This will change your password and you will need to login again." type="submit" name=gcFunction value='Change Password'>Change Password</button>
-		</form>
+    <button class="btn btn-lg btn-primary btn-block" title="This will change your password and you will need to login again."
+	type="submit" name=gcFunction value='Change Password'>Change Password</button>
+    </form>
   </div><!--card-body-->
   </div><!--collapsePassword-->
   </div><!--card-->
@@ -142,18 +138,17 @@ code {
 
   <div class="collapse" id="collapseEmail" data-parent="#accordionOne">
   <div class="card-body">
-      		<form class="form-signin" role="form" method="post" action="{{cCGI}}">
-		<input type=hidden name="gcPage" value="User">
-		<input type=hidden name="gcCtHostname" value="{{gcCtHostname}}">
-		<input type=hidden name="guContainer" value="{{guContainer}}">
+  <form class="form-signin" role="form" method="post" action="{{cCGI}}">
+    <input type=hidden name="gcPage" value="User">
 
-        	<label for="inputEmail2" class="sr-only">Login</label>
-        	<input disabled maxlength="31" title='Your login'
-			type="login" id="inputEmail2" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" >
-		<input type=hidden name=cLogin value='{{gcLogin}}'>
+    <label for="inputEmail2" class="sr-only">Login</label>
+    <input disabled maxlength="31" title='Your login'
+	type="login" id="inputEmail2" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" >
+    <input type=hidden name=cLogin value='{{gcLogin}}'>
 
-		<button class="btn btn-lg btn-primary btn-block" title="This will change your email settings." type="submit" name=gcFunction value='Change Email'>Change Email</button>
-		</form>
+    <button class="btn btn-lg btn-primary btn-block" title="This will change your email settings."
+	type="submit" name=gcFunction value='Change Email'>Change Email</button>
+  </form>
   </div><!--card-body-->
   </div><!--collapseEmail-->
   </div><!--card-->
