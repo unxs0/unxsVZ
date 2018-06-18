@@ -1,0 +1,54 @@
+<!-- unxsRAD.Template2 -->
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ArregloKites Crear Cuenta">
+    <meta name="author" content="Unixservice, LLC.">
+    <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
+
+    <title>Crear Cuenta ArregloKites</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
+  <style>
+	body {
+	  padding-top: 40px;
+	  padding-bottom: 40px;
+	  background-color: #eee;
+	}
+	.form-signin {
+	  max-width: 500px;
+	  padding: 0px;
+	  margin: 0 auto;
+	  padding-bottom: 0px;
+	}
+  </style>
+
+  </head>
+
+  <body>
+
+    <div class="container">
+
+      <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
+        <h4 class="form-signin-heading">ArregloKites Crear Cuenta: Ingrese el c&oacute;digo enviado</h4>
+        <label for="inputEmail" class="sr-only">Email Address</label>
+        <input disabled maxlength="31" title='El email usado para crear la cuenta'
+		type="email" id="inputEmail" class="form-control" placeholder="tuemail@ejemplo.algo"
+		value="{{gcLogin}}" name="gcLogin" required>
+	<input hidden value="{{gcLogin}}" name="gcLogin">
+        <label for="inputCode" class="sr-only">Codigo Alphanumerico Envisado al Email</label>
+        <input maxlength="31" title='Ingrese el codigo alphanumerico enviado.'
+			type="login" id="inputCode" class="form-control" 
+			name="gcEmailCode" required autofocus>
+        <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='SignUpDone'>Continuar</button>
+        <h5 class="form-signin-heading text-muted">{{gcMessage}}</h5>
+      </form>
+
+
+    </div> <!-- /container -->
+  </body>
+</html>

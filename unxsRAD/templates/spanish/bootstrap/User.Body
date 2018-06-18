@@ -1,0 +1,174 @@
+<!-- unxsRAD.Template2 -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{gcBrand}} User settings">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
+    <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
+
+    <title>{{gcBrand}} Settings</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
+
+<style>
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 40px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 40px;
+  line-height: 40px; /* Vertically center the text there */
+  background-color: #f5f5f5;
+}
+
+body > .container {
+  padding: 40px 15px 0;
+}
+
+.footer > .container {
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+code {
+  font-size: 80%;
+}
+</style>
+</head>
+
+<body>
+  <header>
+  <nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>
+    <a class='navbar-brand' href='/unxsAKApp/'>unxsAK</a>
+    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >
+      <span class='navbar-toggler-icon'></span>
+    </button>
+
+    <div class='collapse navbar-collapse' id='navbarsCalendar'>
+    <ul class='navbar-nav mr-auto'>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=JobOffer'>Jobs</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar'>Calendar</a>
+      </li>
+      <li class='nav-item active'>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=User'>User</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcFunction=Logout'>Logout</a>
+      </li>
+    </ul>
+    </div>
+
+  </nav>
+  </header>
+
+  <main role="main" class="container">
+
+  <h4 class='mt-5'>User Settings</h4>
+
+  <div class="accordion" id="accordionOne">
+
+  <!-- Change Password Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingPassword">
+  <h5 class="mb-0">
+  <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapsePassword">
+         Change Password 
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse" id="collapsePassword" data-parent="#accordionOne">
+  <div class="card-body">
+    <form class="form-signin" role="form" method="post" action="{{cCGI}}">
+    <input type=hidden name="gcPage" value="User">
+
+   <label for="inputEmail" class="sr-only">Login</label>
+   <input disabled maxlength="31" title='Your login'
+	type="login" id="inputEmail" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" >
+    <input type=hidden name=cLogin value='{{gcLogin}}'>
+
+    <label for="inputPassword" class="sr-only">Current Password</label>
+    <input maxlength="31" title='Input your current password'
+	type="password" id="inputPassword1" class="form-control" placeholder="Current Password" name="cCurPasswd" required>
+
+    <label for="inputPassword" class="sr-only">New Password</label>
+    <input maxlength="31" title='Input your new password. Must be at least 6 characters long'
+	type="password" id="inputPassword2" class="form-control" placeholder="New Password" name="cPasswd" required>
+
+    <label for="inputPassword" class="sr-only">New Password Again</label>
+    <input maxlength="31" title='Input your new password again please.'
+	type="password" id="inputPassword3" class="form-control" placeholder="New Password Again" name="cPasswd2" required>
+
+    <button class="btn btn-lg btn-primary btn-block" title="This will change your password and you will need to login again."
+	type="submit" name=gcFunction value='Change Password'>Change Password</button>
+    </form>
+  </div><!--card-body-->
+  </div><!--collapsePassword-->
+  </div><!--card-->
+  <!-- End Change Password Card -->
+
+  <!-- Email Settings -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingEmail">
+  <h5 class="mb-0">
+  <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseEmail">
+         Change Email Settings
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse" id="collapseEmail" data-parent="#accordionOne">
+  <div class="card-body">
+  <form class="form-signin" role="form" method="post" action="{{cCGI}}">
+    <input type=hidden name="gcPage" value="User">
+
+    <label for="inputEmail2" class="sr-only">Login</label>
+    <input disabled maxlength="31" title='Your login'
+	type="login" id="inputEmail2" class="form-control" placeholder="{{gcLogin}}" name="gcLogin" >
+    <input type=hidden name=cLogin value='{{gcLogin}}'>
+
+    <button class="btn btn-lg btn-primary btn-block" title="This will change your email settings."
+	type="submit" name=gcFunction value='Change Email'>Change Email</button>
+  </form>
+  </div><!--card-body-->
+  </div><!--collapseEmail-->
+  </div><!--card-->
+  <!-- End Change Email Card -->
+
+  </div><!--accordianOne-->
+  </main>
+
+
+
+      <footer class='footer text-center'>
+        <span class='text-muted'>{{gcCopyright}}</span>
+      </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+  </body>
+  </body>
+</html>
