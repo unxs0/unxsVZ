@@ -587,7 +587,7 @@ void htmlSignUpStep1(void)
 	if(uAuthorize && uPerm)
 	{
 		sleep(3);
-		gcMessage="That user is already signed up and active.";
+		gcMessage="El email usado ya esta registrado y activo.";
 		htmlHeader("Sign Up","Default.Header");
 		htmlUserPage("Sign Up","SignUp.Body");
 		htmlFooter("Default.Footer");
@@ -597,7 +597,7 @@ void htmlSignUpStep1(void)
 		//sleep(3);
 		NewCodeAndEmail(uAuthorize,TextAreaSave(gcLogin));
 		htmlHeader("Sign Up","Default.Header");
-		gcMessage="Login email is waiting code confirmation, another email with new code was sent.";
+		gcMessage="Este email ya esta esperando activacion, otro mail con un nuevo codido ha sido enviado.";
 		htmlUserPage("Sign Up","SignUpStep1.Body");
 		htmlFooter("Default.Footer");
 	}
@@ -605,21 +605,21 @@ void htmlSignUpStep1(void)
 	{
 		if(!cPasswd[0] || !cPasswd2[0] || strcmp(cPasswd,cPasswd2))
 		{
-			gcMessage="Both passwords must match";
+			gcMessage="Las contrase&ntilde;as deben ser iguales.";
 			htmlHeader("Sign Up","Default.Header");
 			htmlUserPage("Sign Up","SignUp.Body");
 			htmlFooter("Default.Footer");//Footer exits
 		}
 		if(strlen(cPasswd)<8)
 		{
-			gcMessage="Password must be at least 8 characters long";
+			gcMessage="La contrase&ntilde;a debe tener minimo de 8 caracteres de largo.";
 			htmlHeader("Sign Up","Default.Header");
 			htmlUserPage("Sign Up","SignUp.Body");
 			htmlFooter("Default.Footer");//Footer exits
 		}
 		if(uNoUpper(cPasswd) || uNoLower(cPasswd) || uNoDigit(cPasswd))
 		{
-			gcMessage="Passwords must have upper and lower case letters and at least one number";
+			gcMessage="La contrase&ntilde;a debe tener una mayuscula y un numero.";
 			htmlHeader("Sign Up","Default.Header");
 			htmlUserPage("Sign Up","SignUp.Body");
 			htmlFooter("Default.Footer");//Footer exits
@@ -850,7 +850,7 @@ void htmlLostPasswordDone(void)
 
 void htmlLostPassword(void)
 {
-	gcMessage="Enter your login email.";
+	gcMessage="Ingrese el email de su cuenta.";
 	htmlHeader("Lost Password","Default.Header");
 	htmlUserPage("Lost Password","LostPassword.Body");
 	htmlFooter("Default.Footer");

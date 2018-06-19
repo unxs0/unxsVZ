@@ -1,20 +1,21 @@
 <!-- unxsRAD.Template2 -->
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{gcBrand}} Job offers">
+    <meta name="description" content="ArregloKites.Com Trabajos">
     <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
     <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
 
-    <title>{{gcBrand}} Job Offers </title>
+    <title>ArregloKites.Com Trabajos</title>
 
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
 
 
 <style>
+
 html {
   position: relative;
   min-height: 100%;
@@ -45,13 +46,18 @@ body > .container {
 code {
   font-size: 80%;
 }
+
+a.btn-link {
+  text-decoration: none;
+}
+
 </style>
 </head>
 
 <body>
   <header>
   <nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>
-    <a class='navbar-brand' href='/unxsAKApp/'>unxsAK</a>
+    <a class='navbar-brand' href='/unxsAKApp/'>Portal AK</a>
     <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >
       <span class='navbar-toggler-icon'></span>
     </button>
@@ -59,16 +65,16 @@ code {
     <div class='collapse navbar-collapse' id='navbarsCalendar'>
     <ul class='navbar-nav mr-auto'>
       <li class='nav-item'>
-        <a class='nav-link active' href='/unxsAKApp/?gcPage=JobOffer'>Jobs</a>
+        <a class='nav-link active' href='/unxsAKApp/?gcPage=JobOffer'>Trabajos</a>
       </li>
       <li class='nav-item'>
-        <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar'>Calendar</a>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar' title='Ver agenda de trabajos'>Agenda</a>
       </li>
       <li class='nav-item'>
-        <a class='nav-link' href='/unxsAKApp/?gcPage=User'>User</a>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=User' title='Ajustes de su cuenta''>Mi Cuenta</a>
       </li>
       <li class='nav-item'>
-        <a class='nav-link' href='/unxsAKApp/?gcFunction=Logout'>Logout</a>
+        <a class='nav-link' href='/unxsAKApp/?gcFunction=Logout' title='Salir o deslogearse del sistema.'>Logout</a>
       </li>
     </ul>
     </div>
@@ -77,14 +83,14 @@ code {
   </header>
 
   <main role="main" class="container">
-  <h4 class='mt-5'>Job Offers</h4>
+  <h4 class='mt-5'>Trabajos</h4>
 
 <!-- Select Job Offers Panel -->
 <div class="well">
   <div class="row">
     <div class="col-sm-9 col-xs-12">
       <h4>{{gcMessage}}</h4>
-      <p class="big-para">Use the currently selected job offer, select another or create a new one.</p>
+      <p class="big-para">Elija un trabajo existente o crear uno nuevo.</p>
     </div>
   </div>
   <div class="row">
@@ -92,7 +98,7 @@ code {
       <div class="contact-form">
         <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/">
           <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+            <div class="col-sm-12 form-group">
 
               {{funcJobOffer}}
 
@@ -113,8 +119,8 @@ code {
   <!-- card header -->
   <div class="card-header" id="headingDetails">
   <h5 class="mb-0">
-  <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseDetails">
-         Job Details 
+  <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseDetails">
+      <h4>Detalles</h4>
   </button>
   </h5>
   </div><!--card header-->
@@ -123,12 +129,7 @@ code {
   <div class="card-body">
   <div class="row">
     <div class="col-sm-9 col-xs-12">
-      <h2>Dates, Brand, Model and Year Information</h2>
-      <p class="big-para">Select the start date when you will first have the item available for repair and the end date
-		that would be the maximum date that you can wait for the job to be completed and delivered to you by. Please note that
-		bidders may select a start date later than yours and an end date before your last available day.
-		Select the brand, enter the model and year of the item you wish repaired. If the brand is not listed explain in the 
-		job description.</p>
+      <p class="big-para">Elija el primer dia que tiene disponible para entregar el kite para su arreglo, y el ultimo dia que desea que le entregen el trabajo terminado. Si no figura su marca o modelo escribalo en el area de notas.</p>
     </div>
   </div>
   <div class="row">
@@ -136,64 +137,64 @@ code {
       <div class="contact-form">
         <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/" >
           <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="StartDate">First day you have available to start work on job</label>
+            <div class="col-sm-12 form-group" >
+              <label for="StartDate">Primer dia disponible para comenzar trabajo</label>
               <input type=date class="form-control" name = "dStart" value="{{dStart}}"
 				id="StartDate" required </input>
            </div>
          </div>
           <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="EndDate">Last day you have available to get the job delivered</label>
+            <div class="col-sm-12 form-group" >
+              <label for="EndDate">Ultimo dia para la entrega del trabajo terminado</label>
               <input type=date class="form-control" name = "dEnd" value="{{dEnd}}"
 				id="EndDate" required </input>
            </div>
          </div>
           <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="Brand">Brand</label>
+            <div class="col-sm-12 form-group" >
+              <label for="Brand">Marca</label>
 		{{funcSelect(tBrand)}}
            </div>
          </div>
           <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="Model">Model</label>
+            <div class="col-sm-12 form-group">
+              <label for="Model">Modelo</label>
               <input type=text class="form-control" name = "cModel" placeholder="Vegas" value="{{cModel}}"
 				id="Model" required=true </input>
            </div>
          </div>
           <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="Size">Size m2</label>
+            <div class="col-sm-12 form-group">
+              <label for="Size">Tama&ntilde;o en m2</label>
               <input type=text class="form-control" name = "uSize" placeholder="12" value="{{uSize}}"
 				id="Size" required=true  </input>
            </div>
          </div>
           <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+            <div class="col-sm-12 form-group">
               <label for="Year">Year</label>
               <input type=text class="form-control" name = "uYear" placeholder="2014" value="{{uYear}}"
 				id="Year" required=true  </input>
            </div>
          </div>
           <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="MaxBid">Max Bid $</label>
+            <div class="col-sm-12 form-group" >
+              <label for="MaxBid">Costo Maximo Acceptable (Confidencial)</label>
               <input type=text class="form-control" name = "uMaxBid" placeholder="0" value="{{uMaxBid}}"
 				id="MaxBid" </input>
            </div>
          </div>
           <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="DesciptionTextarea">Job Description</label>
+            <div class="col-sm-12 form-group">
+              <label for="DesciptionTextarea">Descripcion del Trabajo</label>
               <textarea class="form-control" name = "cDescription" required=true 
-				id="DesciptionTextarea" rows="3" placeholder="Describe in detail the work you need done. If the brand is other please provide brand name here or explain further.">{{cDescription}}</textarea>
+				id="DesciptionTextarea" rows="3" placeholder="Describa en detalle lo que necesita que se haga. Si la marca y/o modelos son otro explique aqui. Si aplica: En que color(es) de la tela esta roto?">{{cDescription}}</textarea>
            </div>
          </div>
          <input type=hidden name="gcPage" value="JobOffer">
-         <button class="btn btn-success btn-lg btn-block wow fadeInDown"
-					data-wow-delay="1200ms" data-wow-duration="1000ms" name="gcFunction" value="AMJobOffer"
-					type="submit" id="submitbutton">Submit Job Information</button>
+         <button class="btn btn-success btn-lg btn-block "
+					name="gcFunction" value="AMJobOffer"
+					type="submit" id="submitbutton">Guardar Detalles del Arreglo</button>
        </form>
      </div>
    </div>
@@ -209,8 +210,8 @@ code {
   <!-- card header -->
   <div class="card-header" id="headingImages">
   <h5 class="mb-0">
-  <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseImages">
-         Job Images 
+  <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseImages">
+      <h4>Suba Im&aacute;genes</h4>
   </button>
   </h5>
   </div><!--card header-->
@@ -221,10 +222,7 @@ code {
 <div class="container">
   <div class="row">
     <div class="col-sm-9 col-xs-12">
-      <h2>Upload Job Images</h2>
-      <p class="big-para">Upload up to three images that show job areas. The images will be used
-		by bidders to quote you price and delivery times.
-		Use the image details text area to further explain or provide more information.</p>
+      <p class="big-para">Puede subir hasta tres im&aacutelgenes de cada trabajo.</p>
     </div>
   </div>
   <div class="row">
@@ -232,22 +230,22 @@ code {
       <div class="contact-form">
         <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/">
           <div class="row">
-            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
-              <label for="exampleTextarea">Image details/explanation</label>
+            <div class="col-sm-12 form-group">
+              <label for="exampleTextarea">Explicaci&oacute;n Opcional</label>
               <textarea class="form-control" name = "Image details"
-				id="exampleTextarea" rows="3" placeholder="Image details and futher explaination."></textarea>
+				id="exampleTextarea" rows="3" placeholder="Explicaciones y notas sobre imagen."></textarea>
            </div>
          </div>
          <div class="row">
            <div class="col-sm-12 form-group">
-             <label for="exampleInputFile">Choose an image</label>
+             <label for="exampleInputFile">Selecione un imagen</label>
              <input type="file" name="file_source" class="form-control-file"
 						id="exampleInputFile" aria-describedby="fileHelp" required>
-             <small id="fileHelp" class="form-text text-muted">Choose an image from your phone or computer.</small>
+             <small id="fileHelp" class="form-text text-muted">Elija una imagen de su telefono o computadora.</small>
            </div>
          </div>
-         <button class="btn btn-success btn-lg btn-block wow fadeInDown" name="gcFunction" value="AddJobOfferImage"
-					data-wow-delay="1200ms" data-wow-duration="1000ms" type="submit" id="submitbutton">Upload Image</button>
+         <button class="btn btn-success btn-lg btn-block" name="gcFunction" value="AddJobOfferImage"
+					type="submit" id="submitbutton">Guardar Imagen</button>
        </form>
      </div>
    </div>

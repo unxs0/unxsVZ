@@ -34,7 +34,7 @@ void htmlJobOfferSelect(FILE *fp)
 	fprintf(fp,"\t\t<input type=hidden name=gcPage value=JobOffer >\n");
 	fprintf(fp,"\t\t<input type=hidden name=gcFunction value=SetJobOffer >\n");
 	fprintf(fp,"\t\t<select onchange=\"this.form.submit()\" class=\"form-control\" id=\"uJobOffer\" name=\"uJobOffer\">\n");
-	fprintf(fp,"\t\t\t<option value='0'>Create new job offer</option>\n");
+	fprintf(fp,"\t\t\t<option value='0'>Crear nuevo trabajo</option>\n");
 	unsigned uJobOffer=0;
 	unsigned uFirst=1;
 	while((field=mysql_fetch_row(res)))
