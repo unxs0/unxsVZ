@@ -466,13 +466,16 @@ void free_form_data(struct form_data * form_data)
     }
 }
 
-int upload(int argc, const char * argv[])
+int upload(int argc, const char * argv[],char *cFilename,char *cName,char *cMessage)
 {
+
+    unsigned uRetVal=0;
 
     // We want a post method
     if (!check_request_method("POST"))
     {
         //print_confirm_page(NULL, "Incorrect HTTP request method");
+        uRetVal=1;
         goto fail_request;
     }
 
@@ -480,6 +483,7 @@ int upload(int argc, const char * argv[])
     if (!check_content_type("multipart/form-data"))
     {
         //print_confirm_page(NULL, "Incorrect mime-type (Picture format not supported)");
+        uRetVal=2;
         goto fail_content;
     }
 
@@ -488,6 +492,7 @@ int upload(int argc, const char * argv[])
     if (boundary == NULL)
     {
         //print_confirm_page(NULL, "Could not parse multipart boundary");
+        uRetVal=3;
         goto fail_boundary;
     }
 
@@ -496,6 +501,7 @@ int upload(int argc, const char * argv[])
     if (length == 0)
     {
         //print_confirm_page(NULL, "Invalid content length");
+        uRetVal=4;
         goto fail_length;
     }
 
@@ -504,14 +510,17 @@ int upload(int argc, const char * argv[])
     if (input == NULL)
     {
         //print_confirm_page(NULL, "Memory error");
+        uRetVal=5;
         goto fail_input;
     }
 
     // Read in POST content data from STDIN
+    rewind(stdin);
     size_t read_bytes = fread(input, 1, length, stdin);
     if (read_bytes < length)
     {
         //print_confirm_page(NULL, "Post data does not match content length");
+        uRetVal=6;
         goto fail_read;
     }
 
@@ -519,8 +528,9 @@ int upload(int argc, const char * argv[])
     struct form_data form_data;
     init_form_data(&form_data);
 
-    //printf("Content-Type: text/plain\r\n\r\n<pre>");
+    //printf("Content-Type: text/plain\n\n<pre>");
     //printf("%s", input);
+    //exit(0);
 
     // Setup multipart parser callbacks
     multipart_parser_settings callbacks;
@@ -536,9 +546,10 @@ int upload(int argc, const char * argv[])
 
     // Make sure everything went okay
     if (form_data.status == NOT_OK ||
-        form_data.chunk_data[PICTURE_DATA].mime == TEXT_PLAIN)
+        (form_data.chunk_data[PICTURE_DATA].mime != IMG_PNG && form_data.chunk_data[PICTURE_DATA].mime != IMG_JPG) )
     {
         //print_confirm_page(NULL, "You probably forgot to attach a picture!");
+        uRetVal=7;
         goto fail_parse;
     }
 
@@ -567,9 +578,9 @@ int upload(int argc, const char * argv[])
     if (out == NULL)
     {
         //print_confirm_page(NULL, "Error writing picture to disk");
+        uRetVal=8;
         goto fail_open_file;
     }
-    free(file_path);
 
     // Write out data into file and free data
     size_t out_bytes = fwrite(form_data.chunk_data[PICTURE_DATA].data, 1,
@@ -577,14 +588,17 @@ int upload(int argc, const char * argv[])
     if (out_bytes != form_data.chunk_data[PICTURE_DATA].len)
     {
         //print_confirm_page(NULL, "Error writing picture to disk");
+        uRetVal=9;
         goto fail_write_out;
     }
     fclose(out);
 
+
+    sprintf(cFilename,"%.99s",filename);
+    sprintf(cName,"%.99s",form_data.chunk_data[NAME].data);
+    sprintf(cMessage,"%.511s",form_data.chunk_data[MESSAGE].data);
+    free(file_path);
     free_form_data(&form_data);
-
-    //print_confirm_page("Success! :D", "Thanks for the picture!");
-
     return 0; // Success
 
     // Exit points
@@ -601,5 +615,5 @@ fail_boundary:
     if (boundary != NULL) free(boundary);
 fail_content:
 fail_request:
-    return 1;
+    return uRetVal;
 }//upload()

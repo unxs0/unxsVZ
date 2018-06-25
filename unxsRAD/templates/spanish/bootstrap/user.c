@@ -10,6 +10,7 @@ PURPOSE
 */
 
 #include "interface.h"
+#include "/usr/include/openisp/upload.h"
 
 extern unsigned guBrowserFirefox;//main.c
 extern char gcCtHostname[];
@@ -997,7 +998,17 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[18]="cDescription";
 			template.cpValue[18]=cDescription;
 
-			template.cpName[19]="";
+			template.cpName[19]="gcImagesShow";
+			template.cpValue[19]=gcImagesShow;
+
+			template.cpName[20]="cLastImage";
+			char cImageSrc[256]={""};
+			if(gcFilename[0])
+				sprintf(cImageSrc,"<a href=/images/%s title='%s' ><img class='img-fluid' src='/images/%s'></a>",
+							gcFilename,gcImageMessage,gcFilename);
+			template.cpValue[20]=cImageSrc;
+
+			template.cpName[21]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");

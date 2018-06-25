@@ -216,23 +216,24 @@ a.btn-link {
   </h5>
   </div><!--card header-->
 
-  <div class="collapse" id="collapseImages" data-parent="#accordionOne">
+  <div class="collapse {{gcImagesShow}}" id="collapseImages" data-parent="#accordionOne">
   <div class="card-body">
 <!-- Start Upload Job Images Form -->
 <div class="container">
   <div class="row">
     <div class="col-sm-9 col-xs-12">
-      <p class="big-para">Puede subir hasta tres im&aacutelgenes de cada trabajo.</p>
+      {{cLastImage}}
+      {{funcJobImages}}
     </div>
   </div>
   <div class="row">
     <div class="col-sm-9 col-xs-12">
       <div class="contact-form">
-        <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/">
+        <form class="clearfix" accept-charset="utf-8" method="post" enctype="multipart/form-data" action="/{{gcBrand}}App/">
           <div class="row">
             <div class="col-sm-12 form-group">
               <label for="exampleTextarea">Explicaci&oacute;n Opcional</label>
-              <textarea class="form-control" name = "Image details"
+              <textarea class="form-control" name = "message"
 				id="exampleTextarea" rows="3" placeholder="Explicaciones y notas sobre imagen."></textarea>
            </div>
          </div>
@@ -244,6 +245,7 @@ a.btn-link {
              <small id="fileHelp" class="form-text text-muted">Elija una imagen de su telefono o computadora.</small>
            </div>
          </div>
+         <input type=hidden name="gcPage" value="JobOffer">
          <button class="btn btn-success btn-lg btn-block" name="gcFunction" value="AddJobOfferImage"
 					type="submit" id="submitbutton">Guardar Imagen</button>
        </form>

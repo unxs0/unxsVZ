@@ -14,7 +14,7 @@ GIT_VERSION := $(shell git describe --dirty --always --tags)
 CGINAME=mobile.cgi
 
 CFLAGS= -Wall -DdsGitVersion=\"$(GIT_VERSION)\"
-LIBS=-L/usr/lib64/mysql -L/usr/lib/openisp -L/usr/lib/oath -L/usr/lib64 -lmysqlclient -ltemplate -lz -lcrypt -lm -lssl -loath
+LIBS=-L/usr/lib64/mysql -L/usr/lib/openisp -L/usr/lib/oath -L/usr/lib64 -lmysqlclient -ltemplate -lupload -lz -lcrypt -lm -lssl -loath
 
 help:
 	@echo "These are the main make options available"

@@ -58,6 +58,9 @@ char gcPage[100]={""};
 unsigned guBrowserFirefox=0;
 unsigned guYear=0;
 unsigned guMonth=0;
+char *gcImagesShow="";//show or empty
+char gcFilename[100]={""};	
+char gcImageMessage[512]={""};	
 
 //
 //Local only
@@ -75,7 +78,6 @@ char *cEndAtSpace(char *cBuffer);
 
 static char *sgcBuildInfo=dsGitVersion;
 
-
 int main(int argc, char *argv[])
 {
 	pentry entries[MAXPOSTVARS];
@@ -83,7 +85,6 @@ int main(int argc, char *argv[])
 	char *gcl;
 	register int x;
 	int cl=0;
-
 
 	InterfaceConnectDb();
 
@@ -95,6 +96,19 @@ int main(int argc, char *argv[])
 	{
 		printf("%s version: %s\n",argv[0],sgcBuildInfo);
 		exit(0);
+	}
+
+#include "/usr/include/openisp/upload.h"
+    	if(check_content_type("multipart/form-data"))
+	{
+		char cName[100]={""};	
+                SSLCookieLogin();
+		if(upload(argc,(const char **) argv,gcFilename,cName,gcImageMessage))
+			gcMessage="Error uploading!";
+		else
+			gcMessage="File uploaded ok";
+		gcImagesShow="show";
+		htmlJobOffer();
 	}
 
 	gethostname(gcHostname,98);
@@ -513,11 +527,6 @@ void SSLCookieLogin(void)
 	char *cP,*cP2;
 
 	//Parse out login and passwd from cookies
-#ifdef SSLONLY
-	if(getenv("HTTPS")==NULL) 
-		htmlPlainTextError("Non SSL access denied");
-#endif
-
 	if(getenv("HTTP_COOKIE")!=NULL)
 		sprintf(gcCookie,"%.1022s",getenv("HTTP_COOKIE"));
 	

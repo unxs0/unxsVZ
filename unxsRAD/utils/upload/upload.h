@@ -94,5 +94,5 @@ void init_form_data(struct form_data * form_data);
 void free_form_data(struct form_data * form_data);
 
 // Main
-int upload(int argc, const char * argv[]);
+int upload(int argc, const char * argv[],char *cFilename,char *cName,char *cMessage);
 

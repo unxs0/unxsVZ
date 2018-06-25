@@ -95,6 +95,9 @@ extern char gcTable[];
 extern unsigned guMode;
 extern int guError;
 extern char gcErrormsg[];
+extern char *gcImagesShow;
+extern char gcFilename[];
+extern char gcImageMessage[];
 
 void unxsRAD(const char *cResult);
 void ConnectDb(MYSQL *spMysql);
