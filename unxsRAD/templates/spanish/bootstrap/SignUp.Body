@@ -48,6 +48,10 @@
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='SignUpStep1'>Crear Cuenta</button>
         <h4 class="form-signin-heading">{{gcMessage}}</h4>
       </form>
+      <form class="form-signin" role="form" method="get" action="/unxsAKApp/">
+      <button title='Cancelar' type="submit" name=gcFunction value='Logout' class="btn btn-link">Cancelar</button>
+      </form>
+
 
 
     </div> <!-- /container -->

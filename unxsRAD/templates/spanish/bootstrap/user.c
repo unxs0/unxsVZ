@@ -801,7 +801,7 @@ void htmlLostPasswordDone(void)
 	}
 	else if(!strcmp(gcFunction,"ChangePassword") && gcLogin[0] && gcEmailCode[0])
 	{
-		gcMessage="Enter new password twice.";
+		gcMessage="";
 		htmlHeader("Lost Password","Default.Header");
 		htmlUserPage("Lost Password","LostPasswordDone.Body");//Almost Done ;)
 		htmlFooter("Default.Footer");
@@ -830,7 +830,7 @@ void htmlLostPasswordDone(void)
 
 	if(uAuthorize && uPerm)
 	{
-		NewCodeAndLinkEmail(uAuthorize,TextAreaSave(gcLogin),"raddev.unxs.io:9333");
+		NewCodeAndLinkEmail(uAuthorize,TextAreaSave(gcLogin),"portal.arreglokites.com");
 		sleep(3);
 		gcMessage="Link sent to your email if it exists.";
 		htmlHeader("Lost Password","Default.Header");
@@ -850,7 +850,7 @@ void htmlLostPasswordDone(void)
 
 void htmlLostPassword(void)
 {
-	gcMessage="Ingrese el email de su cuenta.";
+	gcMessage="";
 	htmlHeader("Lost Password","Default.Header");
 	htmlUserPage("Lost Password","LostPassword.Body");
 	htmlFooter("Default.Footer");

@@ -1,17 +1,37 @@
 #
+#FILE
+#	Makefile
+#AUTHOR/LEGAL
+#	(C) 2018-2019 Gary Wallis for Unixservice, LLC.
+# 	LGPL License applies
+#PURPOSE
+#	Create and install static template library for uploading images
 #
-#
+
 CFLAGS=-Wall
-LIBS=
 
-upload.cgi: upload.o
-	cc upload.o multipart-parser-c/multipart_parser.o -o upload.cgi $(LIBS)
+LIBS= /usr/lib/openisp/libupload.a
 
-upload.o: upload.c
+all: libupload.a
+
+libupload.a: upload.o upload.h
+	ar r libupload.a upload.o
+
+upload.o: upload.c upload.h
+	cc -c upload.c -o upload.o $(CFLAGS)
 
 clean:
-	rm -f *.o
+	rm -f *.o *.a test
 
-install: upload.cgi
-	install -s upload.cgi $(CGIDIR)/upload.cgi
-	rm -f upload.cgi
+install: libupload.a upload.h
+	mkdir -p /usr/lib/openisp
+	mkdir -p /usr/include/openisp
+	install libupload.a /usr/lib/openisp/libupload.a
+	install upload.h /usr/include/openisp/upload.h
+	rm libupload.a
+
+test: test.o
+	cc test.o -o test $(CFLAGS) $(LIBS)
+
+test.o: test.c
+	cc -c test.c -o test.o $(CFLAGS)
