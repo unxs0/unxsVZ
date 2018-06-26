@@ -233,15 +233,30 @@ a.btn-link {
 de tu telefono es muy grande se puede mandar a Whatsapp y luego subir la imagen de ahi.
 	</p>
     </div>
-    <div class="col-sm-9 col-xs-12">
-      {{cLastImage}}
-      {{funcJobImages}}
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage1}}
+    </div>
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage2}}
+    </div>
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage3}}
     </div>
   </div>
   <div class="row">
     <div class="col-sm-9 col-xs-12">
       <div class="contact-form">
         <form class="clearfix" accept-charset="utf-8" method="post" enctype="multipart/form-data" action="/{{gcBrand}}App/">
+          <div class="row">
+            <div class="col-sm-12 form-group">
+              <label for="ImageId">N&uacute;mero de Im&aacute;gen</label>
+              <select class="form-control" name = "uImageNumber" id="ImageId">
+              <option value='1 '>1</option>
+              <option value='2 '>2</option>
+              <option value='3 '>3</option>
+              </select>
+           </div>
+         </div>
           <div class="row">
             <div class="col-sm-12 form-group">
               <label for="exampleText">Titulo del Imagen</label>

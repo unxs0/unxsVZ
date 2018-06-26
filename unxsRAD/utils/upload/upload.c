@@ -401,6 +401,11 @@ int read_header_value(multipart_parser* p, const char *at, size_t length)
        form_data->form_element = TITLE;
        form_data->chunk_data[TITLE].mime = TEXT_PLAIN;
    }
+   else if (sstrstr(at, "name=\"uImageNumber\"", length) != NULL)
+   {
+       form_data->form_element = IMAGENUMBER;
+       form_data->chunk_data[IMAGENUMBER].mime = TEXT_PLAIN;
+   }
    else if (sstrstr(at, "name=\"cDescription\"", length) != NULL)
    {
        form_data->form_element = DESCRIPTION;
@@ -471,6 +476,10 @@ int read_multipart_end(multipart_parser* p)
     {
         form_data->chunk_data[DESCRIPTION].data = calloc(1, 1);
     }
+    if (form_data->chunk_data[IMAGENUMBER].data == NULL)
+    {
+        form_data->chunk_data[IMAGENUMBER].data = calloc(1, 1);
+    }
 
     return 0;
 }//int read_multipart_end(multipart_parser* p)
@@ -487,6 +496,9 @@ void init_form_data(struct form_data * form_data)
     form_data->chunk_data[PICTURE_DATA].data = NULL;
     form_data->chunk_data[PICTURE_DATA].len = 0;
     form_data->chunk_data[PICTURE_DATA].mime = TEXT_PLAIN;
+    form_data->chunk_data[IMAGENUMBER].data = NULL;
+    form_data->chunk_data[IMAGENUMBER].len = 0;
+    form_data->chunk_data[IMAGENUMBER].mime = TEXT_PLAIN;
     form_data->status = OK;
 }
 
@@ -494,7 +506,7 @@ void init_form_data(struct form_data * form_data)
 void free_form_data(struct form_data * form_data)
 {
     register int i=0;
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 4; i++)
     {
         char *data = form_data->chunk_data[i].data;
         if (data != NULL)
@@ -503,7 +515,8 @@ void free_form_data(struct form_data * form_data)
 }
 
 
-int iUpload(int argc, const char * argv[],char *cFilename,char *cTitle,char *cDescription)
+int iUpload(int argc, const char * argv[],char *cFilename,
+		char *cTitle,char *cDescription,unsigned *uptrImageNumber)
 {
 
     unsigned uRetVal=0;
@@ -610,6 +623,7 @@ int iUpload(int argc, const char * argv[],char *cFilename,char *cTitle,char *cDe
 
     sprintf(cFormat,"%%.%lus",form_data.chunk_data[TITLE].len);
     sprintf(cTitle,cFormat,form_data.chunk_data[TITLE].data);
+    sscanf(form_data.chunk_data[IMAGENUMBER].data,"%u ",uptrImageNumber);
 
     if(form_data.chunk_data[DESCRIPTION].len<511)
     	sprintf(cFormat,"%%.%lus",form_data.chunk_data[DESCRIPTION].len);

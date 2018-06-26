@@ -229,8 +229,7 @@ void funcCalendar(FILE *fp)
 		printf("    <span class='col-1'></span>\n");
 		printf("  </h5>\n");
 		if(uDayOpenForBids(guYear,guMonth,uDay,guLoginClient))
-			printf("<a class='event d-block p-1 pl-2 pr-2 mb-1 text-truncate small bg-danger text-white'"
-				" title='Test Event 3'>Test Event 3</a>\n");
+			;
 		else
 			printf("<p class='d-sm-none'>No events</p>\n");
 		printf("</div>\n");
@@ -274,8 +273,7 @@ void funcCalendar(FILE *fp)
 		printf("    <span class='col-1'></span>\n");
 		printf("  </h5>\n");
 		if(uDayOpenForBids(guYear,guMonth,uDay,guLoginClient))
-			printf("<a class='event d-block p-1 pl-2 pr-2 mb-1 text-truncate small bg-danger text-white'"
-				" title='Test Event 3'>Test Event 3</a>\n");
+			;
 		else
 			printf("<p class='d-sm-none'>No events</p>\n");
 		printf("</div>\n");

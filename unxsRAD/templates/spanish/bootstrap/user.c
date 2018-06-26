@@ -30,6 +30,18 @@ char dStart[32]={""};
 char dEnd[32]={""};
 char *cDescription="";
 
+char cLink1[100]={""};
+char cLink1Title[100]={""};
+char *cLink1Desc="";
+
+char cLink2[100]={""};
+char cLink2Title[100]={""};
+char *cLink2Desc="";
+
+char cLink3[100]={""};
+char cLink3Title[100]={""};
+char *cLink3Desc="";
+
 //TOC
 void ProcessUserVars(pentry entries[], int x);
 void UserGetHook(entry gentries[],int x);
@@ -372,7 +384,8 @@ void UserCommands(pentry entries[], int x)
 				" cLabel='%s %s %u',"
 				"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
 				"uSize=%u,uMaxBid=%u,"
-				"cDescription='%s\nColors:%s',"
+				"cDescription='%s',"
+				"cColors='%s',"
 				"dStart='%s',dEnd='%s',"
 				"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
 							cBrand,TextAreaSave(cModel),uYear,
@@ -885,7 +898,10 @@ void LoadJobOfferData(unsigned uJobOffer)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	sprintf(gcQuery,"SELECT cDescription,uBrand,cModel,uSize,uYear,uMaxBid,"
-				"DATE_FORMAT(dStart,'%%Y-%%m-%%d'),DATE_FORMAT(dEnd,'%%Y-%%m-%%d')"
+				"DATE_FORMAT(dStart,'%%Y-%%m-%%d'),DATE_FORMAT(dEnd,'%%Y-%%m-%%d'),cColors"
+				",cLink1,cLink1Title,cLink1Desc"
+				",cLink2,cLink2Title,cLink2Desc"
+				",cLink3,cLink3Title,cLink3Desc"
 				" FROM tJobOffer WHERE uJobOffer=%u AND uOwner=%u",uJobOffer,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -901,6 +917,19 @@ void LoadJobOfferData(unsigned uJobOffer)
 		sscanf(field[5],"%u",&uMaxBid);
 		sprintf(dStart,"%s",field[6]);
 		sprintf(dEnd,"%s",field[7]);
+		sprintf(cColors,"%s",field[8]);
+
+		sprintf(cLink1,"%s",field[9]);
+		sprintf(cLink1Title,"%s",field[10]);
+                cLink1Desc=field[11];
+
+		sprintf(cLink2,"%s",field[12]);
+		sprintf(cLink2Title,"%s",field[13]);
+                cLink2Desc=field[14];
+
+		sprintf(cLink3,"%s",field[15]);
+		sprintf(cLink3Title,"%s",field[16]);
+                cLink3Desc=field[17];
 
 		guValidJobLoaded=1;
 	}
@@ -994,50 +1023,70 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[12]="cModel";
 			template.cpValue[12]=cModel;
 
-			template.cpName[13]="uYear";
+			template.cpName[13]="cColors";
+			template.cpValue[13]=cColors;
+
+			template.cpName[14]="uYear";
 			char cuYear[16]={""};
 			if(uYear)
 				sprintf(cuYear,"%u",uYear);
-			template.cpValue[13]=cuYear;
+			template.cpValue[14]=cuYear;
 
-			template.cpName[14]="uSize";
+			template.cpName[15]="uSize";
 			char cuSize[16]={""};
 			if(uSize)
 				sprintf(cuSize,"%u",uSize);
-			template.cpValue[14]=cuSize;
+			template.cpValue[15]=cuSize;
 
-			template.cpName[15]="uMaxBid";
+			template.cpName[16]="uMaxBid";
 			char cuMaxBid[16]={""};
 			if(uMaxBid)
 				sprintf(cuMaxBid,"%u",uMaxBid);
-			template.cpValue[15]=cuMaxBid;
+			template.cpValue[16]=cuMaxBid;
 
-			template.cpName[16]="dStart";
-			template.cpValue[16]=dStart;
+			template.cpName[17]="dStart";
+			template.cpValue[17]=dStart;
 
-			template.cpName[17]="dEnd";
-			template.cpValue[17]=dEnd;
+			template.cpName[18]="dEnd";
+			template.cpValue[18]=dEnd;
 
-			template.cpName[18]="cDescription";
-			template.cpValue[18]=cDescription;
+			template.cpName[19]="cDescription";
+			template.cpValue[19]=cDescription;
 
-			template.cpName[19]="gcImagesShow";
-			template.cpValue[19]=gcImagesShow;
+			template.cpName[20]="gcImagesShow";
+			template.cpValue[20]=gcImagesShow;
 
-			template.cpName[20]="cLastImage";
-			char cImageSrc[256]={""};
-			if(gcFilename[0])
-				sprintf(cImageSrc,"<a href=/images/%s title='%s' ><img class='img-fluid img-thumbnail width=50%%' src='/images/%s'></a>",
-							gcFilename,gcImageTitle,gcFilename);
-			template.cpValue[20]=cImageSrc;
+			template.cpName[21]="cImage1";
+			char cImage1Src[256]={""};
+			if(cLink1[0])
+				sprintf(cImage1Src,"<a href=/images/%s title='%s' >"
+					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"
+					"<p>%s</p>",cLink1,cLink1Title,cLink1,cLink1Desc);
+			template.cpValue[21]=cImage1Src;
+
+			template.cpName[22]="cImage2";
+			char cImage2Src[256]={""};
+			if(cLink2[0])
+				sprintf(cImage2Src,"<a href=/images/%s title='%s' >"
+					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"
+					"<p>%s</p>",cLink2,cLink2Title,cLink2,cLink2Desc);
+			template.cpValue[22]=cImage2Src;
+
+			template.cpName[23]="cImage3";
+			char cImage3Src[256]={""};
+			if(cLink3[0])
+				sprintf(cImage3Src,"<a href=/images/%s title='%s' >"
+					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"
+					"<p>%s</p>",cLink3,cLink3Title,cLink3,cLink3Desc);
+			template.cpValue[23]=cImage3Src;
 
 			char *cDisabled="disabled";
 			if(guValidJobLoaded)
 				cDisabled="";
-			template.cpName[21]="cDisabled";
-			template.cpValue[21]=cDisabled;
+			template.cpName[24]="cDisabled";
+			template.cpValue[24]=cDisabled;
 
-			template.cpName[22]="";
+			template.cpName[25]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");

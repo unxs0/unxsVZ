@@ -62,6 +62,7 @@ char *gcImagesShow="";//show or empty
 char gcFilename[100]={""};	
 char gcImageDescription[512]={""};	
 char gcImageTitle[100]={""};	
+unsigned guImageNumber=1;
 
 //
 //Local only
@@ -103,11 +104,34 @@ int main(int argc, char *argv[])
     	if(check_content_type("multipart/form-data"))
 	{
                 SSLCookieLogin();
-		if(iUpload(argc,(const char **) argv,gcFilename,gcImageTitle,gcImageDescription))
+		if(iUpload(argc,(const char **) argv,gcFilename,gcImageTitle,gcImageDescription,&guImageNumber))
+		{
 			gcMessage="Error uploading image! Check size and file type.";
+		}
 		else
-			gcMessage="Image uploaded";
-		gcImagesShow="show";
+		{
+			if(guJobOffer && guImageNumber>0 && guImageNumber<4)
+			{
+				sprintf(gcQuery,"UPDATE tJobOffer SET cLink%u='%s',"
+					" cLink%uTitle='%s',cLink%uDesc='%s',"
+					" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+					" WHERE uJobOffer=%u AND uOwner=%u",
+						guImageNumber,gcFilename,
+						guImageNumber,TextAreaSave(gcImageTitle),guImageNumber,TextAreaSave(gcImageDescription),
+						guLoginClient,
+						guJobOffer,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+        			if(mysql_errno(&gMysql))
+				{
+					static char cError[512]={""};
+					sprintf(cError,"%.511s",mysql_error(&gMysql));
+					gcMessage=cError;
+				}
+				else
+					gcMessage="Image uploaded and job offer updated";
+			}
+			gcImagesShow="show";
+		}
 		htmlJobOffer();
 	}
 

@@ -99,6 +99,7 @@ extern char *gcImagesShow;
 extern char gcFilename[];
 extern char gcImageMessage[];
 extern char gcImageTitle[];
+extern unsigned guImageNumber;
 
 void unxsRAD(const char *cResult);
 void ConnectDb(MYSQL *spMysql);

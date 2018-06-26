@@ -73,7 +73,7 @@ struct multipart_chunk_data {
 };
 
 struct form_data {
-    struct multipart_chunk_data chunk_data[3];
+    struct multipart_chunk_data chunk_data[4];
     int form_element;
 
     int status;
@@ -82,7 +82,8 @@ struct form_data {
 enum {
     TITLE,
     DESCRIPTION,
-    PICTURE_DATA
+    PICTURE_DATA,
+    IMAGENUMBER
 };
 
 enum {
@@ -119,5 +120,6 @@ void init_form_data(struct form_data * form_data);
 void free_form_data(struct form_data * form_data);
 
 // Main
-int iUpload(int argc, const char * argv[],char *cFilename,char *cTitle,char *cDescription);
+int iUpload(int argc, const char * argv[],char *cFilename,
+		char *cTitle,char *cDescription,unsigned *uptrImageNumber);
 
