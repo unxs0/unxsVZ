@@ -1004,7 +1004,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[20]="cLastImage";
 			char cImageSrc[256]={""};
 			if(gcFilename[0])
-				sprintf(cImageSrc,"<a href=/images/%s title='%s' ><img class='img-fluid' src='/images/%s'></a>",
+				sprintf(cImageSrc,"<a href=/images/%s title='%s' ><img class='img-fluid img-thumbnail width=50%%' src='/images/%s'></a>",
 							gcFilename,gcImageMessage,gcFilename);
 			template.cpValue[20]=cImageSrc;
 

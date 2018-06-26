@@ -1,3 +1,29 @@
+/*
+FILE
+	upload.h
+PURPOSE
+	Provide upload of png/jpg image file functionality for C cgi's
+BASED ON AND INCLUDES CODE BY
+	Based on node-formidable by Felix Geisendörfer
+	Igor Afonov - afonov@gmail.com - 2012
+	Colin Luoma 2017
+ADDITIONAL AUTHORSHIP
+	Gary Wallis 2018-2019 (C) for Unixservice, LLC.
+LICENSE
+	MIT License - http://www.opensource.org/licenses/mit-license.php
+USAGE
+	As static C library: libupload.a /usr/include/openisp/upload.h
+	form with enc type multipart/form-data
+	cTitle text input
+	cDescription text input
+	file_source upload file input
+	
+	File must be png or jpg. Must be max uMAXIMAGESIZE.
+
+	CGI calls at authorized section: Where argc and argv are the CGI main args.
+	int iUpload(int argc, const char * argv[],char *cFilename,char *cTitle,char *cDescription)
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -8,7 +34,6 @@
 #include <unistd.h>
 #include <ctype.h>
 
-#define PICTURE_FILE_PATH "/var/www/unxs/html/images/"
 
 typedef struct multipart_parser multipart_parser;
 typedef struct multipart_parser_settings multipart_parser_settings;
@@ -55,8 +80,8 @@ struct form_data {
 };
 
 enum {
-    NAME,
-    MESSAGE,
+    TITLE,
+    DESCRIPTION,
     PICTURE_DATA
 };
 
@@ -94,5 +119,5 @@ void init_form_data(struct form_data * form_data);
 void free_form_data(struct form_data * form_data);
 
 // Main
-int upload(int argc, const char * argv[],char *cFilename,char *cName,char *cMessage);
+int iUpload(int argc, const char * argv[],char *cFilename,char *cTitle,char *cDescription);
 

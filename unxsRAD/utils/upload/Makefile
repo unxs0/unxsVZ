@@ -35,3 +35,8 @@ test: test.o
 
 test.o: test.c
 	cc -c test.c -o test.o $(CFLAGS)
+
+install-test: test
+	install -s test /var/www/unxs/html/upload.cgi
+	rm -f test
+	cp test.html  /var/www/unxs/html/

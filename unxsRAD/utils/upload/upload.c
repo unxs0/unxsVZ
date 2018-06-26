@@ -1,16 +1,32 @@
 /*
- FILE
+FILE
 	upload.c
- PURPOSE
-	Provide upload of file functionality for C cgi's
- BASED ON AND INCLUDES CODE BY
+PURPOSE
+	Provide upload of png/jpg image file functionality for C cgi's
+BASED ON AND INCLUDES CODE BY
 	Based on node-formidable by Felix Geisendörfer
 	Igor Afonov - afonov@gmail.com - 2012
- LICENSE
+	Colin Luoma 2017
+ADDITIONAL AUTHORSHIP
+	Gary Wallis 2018-2019 (C) for Unixservice, LLC.
+LICENSE
 	MIT License - http://www.opensource.org/licenses/mit-license.php
+USAGE
+	As static C library: libupload.a /usr/include/openisp/upload.h
+	form with enc type multipart/form-data
+	cTitle text input
+	cDescription text input
+	file_source upload file input
+	
+	File must be png or jpg. Must be max uMAXIMAGESIZE.
+
+	CGI calls at authorized section: Where argc and argv are the CGI main args.
+	int iUpload(int argc, const char * argv[],char *cFilename,char *cTitle,char *cDescription)
 */
 
 
+#define uMAXIMAGESIZE 8000000
+#define PICTURE_FILE_PATH "/var/www/unxs/html/images/"
 #include "upload.h"
 
 
@@ -278,7 +294,7 @@ size_t multipart_parser_execute(multipart_parser* p, const char *buf, size_t len
   }
 
   return len;
-}
+}//size_t multipart_parser_execute(multipart_parser* p, const char *buf, size_t len) {
 
 
 char *sstrstr(const char *haystack, const char *needle, size_t length)
@@ -301,6 +317,7 @@ char *sstrstr(const char *haystack, const char *needle, size_t length)
     return NULL;
 }
 
+
 int check_request_method(const char *method)
 {
     char *r_method = getenv("REQUEST_METHOD");
@@ -310,6 +327,7 @@ int check_request_method(const char *method)
     }
     return 1;
 }
+
 
 int check_content_type(const char *mime)
 {
@@ -326,6 +344,7 @@ int check_content_type(const char *mime)
     return 1;
 }
 
+
 long get_content_length()
 {
     char *env_length = getenv("CONTENT_LENGTH");
@@ -341,6 +360,7 @@ long get_content_length()
     }
     return length;
 }
+
 
 char *get_boundary()
 {
@@ -359,19 +379,20 @@ char *get_boundary()
     return NULL;
 }
 
+
 int read_header_value(multipart_parser* p, const char *at, size_t length)
 {
    struct form_data *form_data = (struct form_data *)multipart_parser_get_data(p);
 
-   if (sstrstr(at, "name=\"name\"", length) != NULL)
+   if (sstrstr(at, "name=\"cTitle\"", length) != NULL)
    {
-       form_data->form_element = NAME;
-       form_data->chunk_data[NAME].mime = TEXT_PLAIN;
+       form_data->form_element = TITLE;
+       form_data->chunk_data[TITLE].mime = TEXT_PLAIN;
    }
-   else if (sstrstr(at, "name=\"message\"", length) != NULL)
+   else if (sstrstr(at, "name=\"cDescription\"", length) != NULL)
    {
-       form_data->form_element = MESSAGE;
-       form_data->chunk_data[MESSAGE].mime = TEXT_PLAIN;
+       form_data->form_element = DESCRIPTION;
+       form_data->chunk_data[DESCRIPTION].mime = TEXT_PLAIN;
    }
    else if (sstrstr(at, "name=\"file_source\"", length) != NULL)
    {
@@ -379,7 +400,6 @@ int read_header_value(multipart_parser* p, const char *at, size_t length)
        form_data->chunk_data[PICTURE_DATA].mime = TEXT_PLAIN;
    }
 
-   // Get MIME type from picture
    if (form_data->form_element == PICTURE_DATA && sstrstr(at, "image/png", length) != NULL)
    {
        form_data->chunk_data[PICTURE_DATA].mime = IMG_PNG;
@@ -390,7 +410,8 @@ int read_header_value(multipart_parser* p, const char *at, size_t length)
    }
 
    return 0;
-}
+}//int read_header_value(multipart_parser* p, const char *at, size_t length)
+
 
 int read_data_part(multipart_parser* p, const char *at, size_t length)
 {
@@ -416,6 +437,7 @@ int read_data_part(multipart_parser* p, const char *at, size_t length)
     return 0;
 }
 
+
 int read_multipart_end(multipart_parser* p)
 {
     struct form_data *form_data = (struct form_data *)multipart_parser_get_data(p);
@@ -429,31 +451,33 @@ int read_multipart_end(multipart_parser* p)
     }
 
     // No message or name data, replace with empty string
-    if (form_data->chunk_data[NAME].data == NULL)
+    if (form_data->chunk_data[TITLE].data == NULL)
     {
-        form_data->chunk_data[NAME].data = calloc(1, 1);
+        form_data->chunk_data[TITLE].data = calloc(1, 1);
     }
-    if (form_data->chunk_data[MESSAGE].data == NULL)
+    if (form_data->chunk_data[DESCRIPTION].data == NULL)
     {
-        form_data->chunk_data[MESSAGE].data = calloc(1, 1);
+        form_data->chunk_data[DESCRIPTION].data = calloc(1, 1);
     }
 
     return 0;
-}
+}//int read_multipart_end(multipart_parser* p)
+
 
 void init_form_data(struct form_data * form_data)
 {
-    form_data->chunk_data[NAME].data = NULL;
-    form_data->chunk_data[NAME].len = 0;
-    form_data->chunk_data[NAME].mime = TEXT_PLAIN;
-    form_data->chunk_data[MESSAGE].data = NULL;
-    form_data->chunk_data[MESSAGE].len = 0;
-    form_data->chunk_data[MESSAGE].mime = TEXT_PLAIN;
+    form_data->chunk_data[TITLE].data = NULL;
+    form_data->chunk_data[TITLE].len = 0;
+    form_data->chunk_data[TITLE].mime = TEXT_PLAIN;
+    form_data->chunk_data[DESCRIPTION].data = NULL;
+    form_data->chunk_data[DESCRIPTION].len = 0;
+    form_data->chunk_data[DESCRIPTION].mime = TEXT_PLAIN;
     form_data->chunk_data[PICTURE_DATA].data = NULL;
     form_data->chunk_data[PICTURE_DATA].len = 0;
     form_data->chunk_data[PICTURE_DATA].mime = TEXT_PLAIN;
     form_data->status = OK;
 }
+
 
 void free_form_data(struct form_data * form_data)
 {
@@ -466,71 +490,55 @@ void free_form_data(struct form_data * form_data)
     }
 }
 
-int upload(int argc, const char * argv[],char *cFilename,char *cName,char *cMessage)
+
+int iUpload(int argc, const char * argv[],char *cFilename,char *cTitle,char *cDescription)
 {
 
     unsigned uRetVal=0;
 
-    // We want a post method
     if (!check_request_method("POST"))
     {
-        //print_confirm_page(NULL, "Incorrect HTTP request method");
-        uRetVal=1;
+        uRetVal=1;//not post
         goto fail_request;
     }
 
-    // Make sure its multipart/form-data
     if (!check_content_type("multipart/form-data"))
     {
-        //print_confirm_page(NULL, "Incorrect mime-type (Picture format not supported)");
-        uRetVal=2;
+        uRetVal=2;//not multipart/form-data
         goto fail_content;
     }
 
-    // Get boundry
     char *boundary = get_boundary();
     if (boundary == NULL)
     {
-        //print_confirm_page(NULL, "Could not parse multipart boundary");
-        uRetVal=3;
+        uRetVal=3;//no boundary
         goto fail_boundary;
     }
 
-    // How many characters should we read in from STDIN?
     long length = get_content_length();
-    if (length == 0)
+    if (length == 0 || length > uMAXIMAGESIZE)
     {
-        //print_confirm_page(NULL, "Invalid content length");
-        uRetVal=4;
+        uRetVal=4;//Too large or no length
         goto fail_length;
     }
 
-    // Allocate space and read in ENV QUERY
     char *input = malloc(length);
     if (input == NULL)
     {
-        //print_confirm_page(NULL, "Memory error");
-        uRetVal=5;
+        uRetVal=5;//malloc error
         goto fail_input;
     }
 
-    // Read in POST content data from STDIN
-    rewind(stdin);
     size_t read_bytes = fread(input, 1, length, stdin);
     if (read_bytes < length)
     {
-        //print_confirm_page(NULL, "Post data does not match content length");
-        uRetVal=6;
+        uRetVal=6;//read error
         goto fail_read;
     }
 
-    // Struct to hold form data
+    // Init struct for form data
     struct form_data form_data;
     init_form_data(&form_data);
-
-    //printf("Content-Type: text/plain\n\n<pre>");
-    //printf("%s", input);
-    //exit(0);
 
     // Setup multipart parser callbacks
     multipart_parser_settings callbacks;
@@ -544,20 +552,17 @@ int upload(int argc, const char * argv[],char *cFilename,char *cName,char *cMess
     multipart_parser_execute(parser, input, length);
     multipart_parser_free(parser);
 
-    // Make sure everything went okay
+    //Ok?
     if (form_data.status == NOT_OK ||
         (form_data.chunk_data[PICTURE_DATA].mime != IMG_PNG && form_data.chunk_data[PICTURE_DATA].mime != IMG_JPG) )
     {
-        //print_confirm_page(NULL, "You probably forgot to attach a picture!");
-        uRetVal=7;
+        uRetVal=7;//not a valid image format
         goto fail_parse;
     }
 
-    // We don't need these anymore
     free(input);
     free(boundary);
 
-    // Set filename for output, filename is just a timestamp
     int epoch = (int)time(NULL);
     char filename[20] = { 0 };
     if (form_data.chunk_data[PICTURE_DATA].mime == IMG_JPG)
@@ -569,39 +574,42 @@ int upload(int argc, const char * argv[],char *cFilename,char *cName,char *cMess
         sprintf(filename, "%d.%s", epoch, "png");
     }
 
-    // Complete file path with file name
     char *file_path = malloc(strlen(PICTURE_FILE_PATH) + strlen(filename) + 1);
     sprintf(file_path, "%s%s", PICTURE_FILE_PATH, filename);
-
-    // Open file using filepath and filename
     FILE *out = fopen(file_path, "wb+");
     if (out == NULL)
     {
-        //print_confirm_page(NULL, "Error writing picture to disk");
-        uRetVal=8;
+        uRetVal=8;//fopen error
         goto fail_open_file;
     }
 
-    // Write out data into file and free data
     size_t out_bytes = fwrite(form_data.chunk_data[PICTURE_DATA].data, 1,
                               form_data.chunk_data[PICTURE_DATA].len, out);
     if (out_bytes != form_data.chunk_data[PICTURE_DATA].len)
     {
-        //print_confirm_page(NULL, "Error writing picture to disk");
-        uRetVal=9;
+        uRetVal=9;//fwrite error
         goto fail_write_out;
     }
     fclose(out);
 
 
+    char cFormat[128];
     sprintf(cFilename,"%.99s",filename);
-    sprintf(cName,"%.99s",form_data.chunk_data[NAME].data);
-    sprintf(cMessage,"%.511s",form_data.chunk_data[MESSAGE].data);
+
+    sprintf(cFormat,"%%.%lus",form_data.chunk_data[TITLE].len);
+    sprintf(cTitle,cFormat,form_data.chunk_data[TITLE].data);
+
+    if(form_data.chunk_data[DESCRIPTION].len<511)
+    	sprintf(cFormat,"%%.%lus",form_data.chunk_data[DESCRIPTION].len);
+    else
+    	sprintf(cFormat,"%%.511s");
+    sprintf(cDescription,cFormat,form_data.chunk_data[DESCRIPTION].data);
+
     free(file_path);
     free_form_data(&form_data);
-    return 0; // Success
+    return 0; //Done ok
 
-    // Exit points
+    //Exit points for non nesting mess
 fail_write_out:
 fail_open_file:
     if (file_path != NULL) free(file_path);
@@ -616,4 +624,5 @@ fail_boundary:
 fail_content:
 fail_request:
     return uRetVal;
-}//upload()
+
+}//iUpload()

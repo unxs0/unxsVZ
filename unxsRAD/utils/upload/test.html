@@ -1,0 +1,59 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Image Uploader</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="/bs/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="shortcut icon" href="/images/favicon.ico">
+    </head>
+    <body>
+        <div id="page" class="page">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-offset-3 col-md-6 col-sm-12 col-xs-12 text-center">
+                        <h2>Test Upload png/jpg image max 8M size</h2>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-offset-3 col-md-6 col-sm-12 col-xs-12 ">
+
+                        <!-- contact form -->
+                        <div class="contact-form">
+
+                            <form class="clearfix" accept-charset="utf-8" method="post" action="/upload.cgi" enctype="multipart/form-data">
+
+                                <div class="row">
+                                    <div class="col-sm-6 form-group">
+                                        <label for="exampleInputEmail1">Name:</label>
+                                        <input type="text" class="form-control" name="cTitle" id="exampleInputEmail1" placeholder="Short title">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-sm-12 form-group" >
+
+                                        <label for="exampleTextarea">Message:</label>
+                                        <textarea class="form-control" name = "cDescription" id="exampleTextarea" rows="3" placeholder="Detailed description"></textarea>
+
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-sm-12 form-group">
+                                        <label for="exampleInputFile">Choose an image</label>
+                                        <input type="file" name="file_source" class="form-control-file" id="exampleInputFile" aria-describedby="fileHelp">
+                                        <small id="fileHelp" class="form-text text-muted">Choose a png/jpg image max 8M.</small>
+                                    </div>
+                                </div>
+                                <!-- submit button -->
+                                <button class="btn btn-success btn-lg btn-block" type="submit" id="submitbutton">Upload Image</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+
