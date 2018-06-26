@@ -22,6 +22,18 @@ USAGE
 
 	CGI calls at authorized section: Where argc and argv are the CGI main args.
 	int iUpload(int argc, const char * argv[],char *cFilename,char *cTitle,char *cDescription)
+
+	iUpload returns not 0 on error:
+	uRetVal=1;//not post
+        uRetVal=2;//not multipart/form-data
+        uRetVal=3;//no boundary
+        uRetVal=4;//Too large or no length
+        uRetVal=5;//malloc error
+        uRetVal=6;//read error
+        uRetVal=7;//not a valid image format
+        uRetVal=8;//fopen error
+        uRetVal=9;//fwrite error
+
 */
 
 

@@ -60,7 +60,8 @@ unsigned guYear=0;
 unsigned guMonth=0;
 char *gcImagesShow="";//show or empty
 char gcFilename[100]={""};	
-char gcImageMessage[512]={""};	
+char gcImageDescription[512]={""};	
+char gcImageTitle[100]={""};	
 
 //
 //Local only
@@ -101,12 +102,11 @@ int main(int argc, char *argv[])
 #include "/usr/include/openisp/upload.h"
     	if(check_content_type("multipart/form-data"))
 	{
-		char cName[100]={""};	
                 SSLCookieLogin();
-		if(upload(argc,(const char **) argv,gcFilename,cName,gcImageMessage))
-			gcMessage="Error uploading!";
+		if(iUpload(argc,(const char **) argv,gcFilename,gcImageTitle,gcImageDescription))
+			gcMessage="Error uploading image! Check size and file type.";
 		else
-			gcMessage="File uploaded ok";
+			gcMessage="Image uploaded";
 		gcImagesShow="show";
 		htmlJobOffer();
 	}

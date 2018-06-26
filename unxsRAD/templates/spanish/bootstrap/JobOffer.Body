@@ -179,9 +179,16 @@ a.btn-link {
          </div>
           <div class="row">
             <div class="col-sm-12 form-group" >
-              <label for="MaxBid">Costo Maximo Acceptable (Confidencial)</label>
+              <label for="MaxBid">Opcional: Costo Maximo Acceptable (Confidencial, no se informa al arreglista)</label>
               <input type=text class="form-control" name = "uMaxBid" placeholder="0" value="{{uMaxBid}}"
 				id="MaxBid" </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group" >
+              <label for="MainColor">Colores Principales del Kite</label>
+              <input type=text class="form-control" name = "cColors" placeholder="Rojo y Amarillo" value="{{cColors}}"
+				id="MainColor" </input>
            </div>
          </div>
           <div class="row">
@@ -222,6 +229,11 @@ a.btn-link {
 <div class="container">
   <div class="row">
     <div class="col-sm-9 col-xs-12">
+	<p> Se puede adjuntar hasta 3 imagnes png or jpg, de maximo 8M cada uno, a un trabajo existente. Ayuda: Si la imagen
+de tu telefono es muy grande se puede mandar a Whatsapp y luego subir la imagen de ahi.
+	</p>
+    </div>
+    <div class="col-sm-9 col-xs-12">
       {{cLastImage}}
       {{funcJobImages}}
     </div>
@@ -232,9 +244,16 @@ a.btn-link {
         <form class="clearfix" accept-charset="utf-8" method="post" enctype="multipart/form-data" action="/{{gcBrand}}App/">
           <div class="row">
             <div class="col-sm-12 form-group">
+              <label for="exampleText">Titulo del Imagen</label>
+              <input type=text class="form-control" name = "cTitle"
+				id="exampleText" placeholder="Titulo corto del imagen">
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group">
               <label for="exampleTextarea">Explicaci&oacute;n Opcional</label>
-              <textarea class="form-control" name = "message"
-				id="exampleTextarea" rows="3" placeholder="Explicaciones y notas sobre imagen."></textarea>
+              <textarea class="form-control" name = "cDescription"
+				id="exampleTextarea" rows="3" placeholder="Detalles, explicaciones y notas sobre imagen."></textarea>
            </div>
          </div>
          <div class="row">
@@ -242,12 +261,12 @@ a.btn-link {
              <label for="exampleInputFile">Selecione un imagen</label>
              <input type="file" name="file_source" class="form-control-file"
 						id="exampleInputFile" aria-describedby="fileHelp" required>
-             <small id="fileHelp" class="form-text text-muted">Elija una imagen de su telefono o computadora.</small>
+             <small id="fileHelp" class="form-text text-muted">Elija una imagen png/jpg de su telefono o computadora. M&aacute;ximo 8M.</small>
            </div>
          </div>
          <input type=hidden name="gcPage" value="JobOffer">
-         <button class="btn btn-success btn-lg btn-block" name="gcFunction" value="AddJobOfferImage"
-					type="submit" id="submitbutton">Guardar Imagen</button>
+         <button {{cDisabled}} title='Solo se puede subir una imagen de trabajo ya creado. Crear el trabajo en detalles por favor primero. Debe ser .png o .jpg. Tama&ntilde;o m&aacute;ximo 8M.' class="btn btn-success btn-lg btn-block" name="gcFunction" value="AddJobOfferImage"
+					type="submit" id="submitbutton">Suba Im&aacute;gen</button>
        </form>
      </div>
    </div>

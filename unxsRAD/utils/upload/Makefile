@@ -22,6 +22,8 @@ upload.o: upload.c upload.h
 
 clean:
 	rm -f *.o *.a test
+	rm -f /var/www/unxs/html/upload.cgi
+	rm -f /var/www/unxs/html/test.html
 
 install: libupload.a upload.h
 	mkdir -p /usr/lib/openisp

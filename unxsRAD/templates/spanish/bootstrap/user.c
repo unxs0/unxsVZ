@@ -25,6 +25,7 @@ unsigned uMaxBid=0;
 unsigned uBrand=0;
 char cBrand[32]={""};
 char cModel[32]={""};
+char cColors[100]={""};
 char dStart[32]={""};
 char dEnd[32]={""};
 char *cDescription="";
@@ -45,6 +46,7 @@ void htmlOperationsInfo(void);
 void htmlLoginInfo(void);
 
 static unsigned uDay=0;
+unsigned guValidJobLoaded=0;
 
 
 void SendEmail(char *cMsg,char *cMailTo,char *cFrom,char *cSubject,char *cBcc)
@@ -97,6 +99,8 @@ void ProcessJobOfferVars(pentry entries[], int x)
 		}
 		else if(!strcmp(entries[i].name,"cModel"))
 			sprintf(cModel,"%.31s",entries[i].val);
+		else if(!strcmp(entries[i].name,"cColors"))
+			sprintf(cColors,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cDescription"))
 			cDescription=entries[i].val;
 		else if(!strcmp(entries[i].name,"dStart"))
@@ -346,19 +350,36 @@ void UserCommands(pentry entries[], int x)
 				htmlJobOffer();
 			}
 
+
+			//Update by deleting selected job offer
+			if(guJobOffer && guLoginClient)
+			{
+				sprintf(gcQuery,"DELETE FROM tJobOffer WHERE uJobOffer=%u AND uOwner=%u",
+							guJobOffer,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					gcMessage="Unexpected error deleting job offer try again later!";
+					//debug only
+					//gcMessage=gcQuery;
+					htmlJobOffer();
+				}
+			}
+
 			//Create new job offer
 			unsigned uJobOffer=0;
 			sprintf(gcQuery,"INSERT INTO tJobOffer SET"
 				" cLabel='%s %s %u',"
 				"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
 				"uSize=%u,uMaxBid=%u,"
-				"cDescription='%s',"
+				"cDescription='%s\nColors:%s',"
 				"dStart='%s',dEnd='%s',"
 				"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
 							cBrand,TextAreaSave(cModel),uYear,
 							cBrand,TextAreaSave(cModel),uYear,
 							uSize,uMaxBid,
 							TextAreaSave(cDescription),
+							TextAreaSave(cColors),
 							dStart,dEnd,
 							guLoginClient,guLoginClient);
 			mysql_query(&gMysql,gcQuery);
@@ -880,6 +901,8 @@ void LoadJobOfferData(unsigned uJobOffer)
 		sscanf(field[5],"%u",&uMaxBid);
 		sprintf(dStart,"%s",field[6]);
 		sprintf(dEnd,"%s",field[7]);
+
+		guValidJobLoaded=1;
 	}
 }//void LoadJobOfferData(uJobOffer)
 
@@ -1005,10 +1028,16 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			char cImageSrc[256]={""};
 			if(gcFilename[0])
 				sprintf(cImageSrc,"<a href=/images/%s title='%s' ><img class='img-fluid img-thumbnail width=50%%' src='/images/%s'></a>",
-							gcFilename,gcImageMessage,gcFilename);
+							gcFilename,gcImageTitle,gcFilename);
 			template.cpValue[20]=cImageSrc;
 
-			template.cpName[21]="";
+			char *cDisabled="disabled";
+			if(guValidJobLoaded)
+				cDisabled="";
+			template.cpName[21]="cDisabled";
+			template.cpValue[21]=cDisabled;
+
+			template.cpName[22]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");
