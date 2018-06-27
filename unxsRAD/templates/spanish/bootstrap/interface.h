@@ -92,6 +92,7 @@ extern unsigned guBrowserFirefox;
 extern unsigned guYear;
 extern unsigned guMonth;
 extern unsigned guJobOffer;
+extern unsigned guValidJobLoaded;
 
 //Cgi form commands and major area function
 extern char gcFunction[];
@@ -129,8 +130,8 @@ void funcMOTD(FILE *fp);
 void funcOperationHistory(FILE *fp);
 void funcLoginHistory(FILE *fp);
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
-
 void logfileLine(const char *cFunction,const char *cLogline);
+void LoadJobOfferData(unsigned uJobOffer);
 
 //calendar.c
 //uses globals guMonth and guYear

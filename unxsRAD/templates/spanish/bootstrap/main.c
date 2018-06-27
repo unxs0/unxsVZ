@@ -238,6 +238,7 @@ int main(int argc, char *argv[])
 			//8 idnsOrg log type, need to globally add 9 for OneLogin
 			printf("Set-Cookie: {{cProject}}SessionId=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: {{cProject}}SessionHash=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: {{cProject}}JobOffer=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=8,uPermLevel=%u,"
 					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -455,13 +456,13 @@ void htmlFooter(char *cTemplateName)
 }//void htmlFooter()
 
 
-void funcSelect(FILE *fp,char *cTable)
+void funcSelect(FILE *fp,char *cTable,unsigned uSelector)
 {
 
 	fprintf(fp,"<!-- funcSelect(%s) -->\n",cTable);
 	MYSQL_RES *res;
 	MYSQL_ROW field;
-	sprintf(gcQuery,"SELECT cLabel FROM %s",cTable);
+	sprintf(gcQuery,"SELECT _rowid,cLabel FROM %s ORDER by cLabel",cTable);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -471,15 +472,22 @@ void funcSelect(FILE *fp,char *cTable)
 
 	fprintf(fp,"\t\t<select class=\"form-control\" id=\"u%1$s\" name=\"u%1$s\">\n",cTable+1);
 	res=mysql_store_result(&gMysql);
+	fprintf(fp,"<option>   </option>\n");
 	while((field=mysql_fetch_row(res)))
 	{
-		fprintf(fp,"\t\t\t<option>%s</option>\n",field[0]);
+		unsigned uRowId=0;
+		sscanf(field[0],"%u",&uRowId);
+		fprintf(fp,"\t\t\t<option ");
+		if(uRowId==uSelector)
+			fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",field[1]);
 	}
 	fprintf(fp,"\t\t</select>\n");
 
-}//void funcSelect(FILE *fp,char *cTable)
+}//void funcSelect()
 
 
+extern unsigned uBrand;
 //libtemplate.a required
 void AppFunctions(FILE *fp,char *cFunction)
 {
@@ -493,11 +501,9 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcCalendar(fp);
 	else if(!strcmp(cFunction,"funcJobOffer"))
 		funcJobOffer(fp);
-	else if(!strncmp(cFunction,"funcSelect(",11))
+	else if(!strncmp(cFunction,"funcSelect(tBrand)",18))
 	{
-		char cTable[32]={""};
-		sscanf(cFunction,"funcSelect(%31[a-zA-Z])",cTable);
-		funcSelect(fp,cTable);
+		funcSelect(fp,"tBrand",uBrand);
 	}
 	
 }//void AppFunctions(FILE *fp,char *cFunction)

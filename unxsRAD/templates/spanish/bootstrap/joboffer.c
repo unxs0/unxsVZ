@@ -57,7 +57,7 @@ void htmlJobOfferSelect(FILE *fp)
 void funcJobOffer(FILE *fp)
 {
 
-	fprintf(fp,"<!-- funcJobOffer()-->\n");
+	fprintf(fp,"<!-- funcJobOffer(d1)-->\n");
 	htmlJobOfferSelect(fp);
 	fprintf(fp,"<!-- End of funcJobOffer()-->\n");
 

@@ -892,11 +892,29 @@ void htmlLostPassword(void)
 
 }//void htmlLostPassword(void)
 
-void LoadJobOfferData(unsigned uJobOffer);
+
 void LoadJobOfferData(unsigned uJobOffer)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+
+	if(uJobOffer==0) return;
+	if(uJobOffer==(-1))
+	{
+		sprintf(gcQuery,"SELECT uJobOffer,cLabel FROM tJobOffer"
+				" WHERE uOwner=%u ORDER BY uModDate DESC, uCreatedDate DESC LIMIT 1",guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+			htmlPlainTextError(mysql_error(&gMysql));
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uJobOffer);
+			guJobOffer=uJobOffer;
+			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
+		}
+	}
+
 	sprintf(gcQuery,"SELECT cDescription,uBrand,cModel,uSize,uYear,uMaxBid,"
 				"DATE_FORMAT(dStart,'%%Y-%%m-%%d'),DATE_FORMAT(dEnd,'%%Y-%%m-%%d'),cColors"
 				",cLink1,cLink1Title,cLink1Desc"
@@ -938,10 +956,7 @@ void LoadJobOfferData(unsigned uJobOffer)
 
 void htmlJobOffer(void)
 {
-	if(guJobOffer!=(-1) && guJobOffer!=0)
-	{
-		LoadJobOfferData(guJobOffer);
-	}
+	LoadJobOfferData(guJobOffer);
 	htmlHeader("JobOffer","Default.Header");
 	htmlUserPage("JobOffer","JobOffer.Body");
 	htmlFooter("Default.Footer");
