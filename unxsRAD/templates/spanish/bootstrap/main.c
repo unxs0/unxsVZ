@@ -59,6 +59,7 @@ unsigned guBrowserFirefox=0;
 unsigned guYear=0;
 unsigned guMonth=0;
 char *gcImagesShow="";//show or empty
+char *gcCPShow="";//show or empty
 char gcFilename[100]={""};	
 char gcImageDescription[512]={""};	
 char gcImageTitle[100]={""};	

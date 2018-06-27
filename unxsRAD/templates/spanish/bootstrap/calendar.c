@@ -108,6 +108,8 @@ void funcCalendar(FILE *fp)
 	}
 
 	//Get last day and month name and next and prev data
+	sprintf(gcQuery,"SET lc_time_names = 'es_ES'");
+	mysql_query(&gMysql,gcQuery);
 	sprintf(gcQuery,"SELECT DAY(LAST_DAY('%1$u-%2$u-10')),"
 				"MONTHNAME('%1$u-%2$u-10'),"
 				"MONTHNAME(DATE_SUB('%1$u-%2$u-10',INTERVAL 1 MONTH)),"
@@ -152,7 +154,7 @@ void funcCalendar(FILE *fp)
 
 	printf("<nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>\n");
 
-	printf("    <a class='navbar-brand' href='/%sApp/'>%s</a>\n",gcBrand,gcBrand);
+	printf("    <a class='navbar-brand' href='/unxsAKApp/'>Portal AK</a>\n");
 	printf("    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >\n");
 	printf("        <span class='navbar-toggler-icon'></span>\n");
 	printf("    </button>\n");
@@ -160,27 +162,27 @@ void funcCalendar(FILE *fp)
 	printf("    <div class='collapse navbar-collapse' id='navbarsCalendar'>\n");
 	printf("      <ul class='navbar-nav mr-auto'>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/%sApp/?gcPage=JobOffer'>Jobs</a>\n",gcBrand);
+	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=JobOffer'>Trabajos</a>\n");
 	printf("        </li>\n");
 	printf("        <li class='nav-item active'>\n");
-	printf("          <a class='nav-link' href='/%sApp/?gcPage=Calendar'>Calendar</a>\n",gcBrand);
+	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar'>Agenda</a>\n");
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/%sApp/?gcPage=User'>User</a>\n",gcBrand);
+	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=User'>Mi Cuenta</a>\n");
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/%sApp/?gcFunction=Logout'>Logout</a>\n",gcBrand);
+	printf("          <a class='nav-link' href='/unxsAKApp/?gcFunction=Logout'>Logout</a>\n");
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/%sApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>[ %s %u</a>\n",
-					gcBrand,uPrevMonth,uPrevYear,cPrevMonth,uPrevYear);
+	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>[ %s %u</a>\n",
+					uPrevMonth,uPrevYear,cPrevMonth,uPrevYear);
 	printf("        </li>");
 	printf("        <li class='nav-item'>\n");
 	printf("          <a class='nav-link active'>%s %u</a>\n",cMonth,guYear);
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/%sApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>%s %u ]</a>\n",
-					gcBrand,uNextMonth,uNextYear,cNextMonth,uNextYear);
+	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>%s %u ]</a>\n",
+					uNextMonth,uNextYear,cNextMonth,uNextYear);
 	printf("        </li>\n");
 	printf("      </ul>\n");
 	printf("    </div>\n");
@@ -201,18 +203,18 @@ void funcCalendar(FILE *fp)
 	//			uNextMonth,uNextYear,cNextMonth);
 	printf("<h4 class='display-4 mb-4 text-center'>&nbsp;</h4>");
 	printf("<div class='row d-none d-sm-flex p-1 bg-dark text-white'>\n");
-	printf("    <h5 class='col-sm p-1 text-center'>Sunday</h5>\n");
-	printf("    <h5 class='col-sm p-1 text-center'>Monday</h5>\n");
-	printf("    <h5 class='col-sm p-1 text-center'>Tuesday</h5>\n");
-	printf("    <h5 class='col-sm p-1 text-center'>Wednesday</h5>\n");
-	printf("    <h5 class='col-sm p-1 text-center'>Thursday</h5>\n");
-	printf("    <h5 class='col-sm p-1 text-center'>Friday</h5>\n");
-	printf("    <h5 class='col-sm p-1 text-center'>Saturday</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Domingo</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Lunes</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Martes</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>M&iacute;ercoles</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Jueves</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>Viernes</h5>\n");
+	printf("    <h5 class='col-sm p-1 text-center'>S&aacute;bado</h5>\n");
 	printf("  </div>\n");
 	printf("</header>\n");
 	printf("<div class='row border border-right-0 border-bottom-0'>\n");
 
-	char cWeekDay[7][4]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+	char cWeekDay[7][4]={"Dom","Lun","Mar","Mie","Jue","Vie","Sab"};
 
 	//uMonthFirstDayWeek=2 e.g. May 1st 2018 is Tue
 	//uPrevMonthLastDay=30 e.g. April 30th 2018  DayWeek is 2-1 = 1 Mon

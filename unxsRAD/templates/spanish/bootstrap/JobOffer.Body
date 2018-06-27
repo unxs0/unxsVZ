@@ -4,54 +4,16 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ArregloKites.Com Trabajos">
+    <meta name="description" content="Arreglo Kites Trabajos">
     <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
     <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
 
-    <title>ArregloKites.Com Trabajos</title>
+    <title>AK Trabajos</title>
 
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
-
-
-<style>
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-body {
-  /* Margin bottom by footer height */
-  margin-bottom: 40px;
-}
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  /* Set the fixed height of the footer here */
-  height: 40px;
-  line-height: 40px; /* Vertically center the text there */
-  background-color: #f5f5f5;
-}
-
-body > .container {
-  padding: 40px 15px 0;
-}
-
-.footer > .container {
-  padding-right: 15px;
-  padding-left: 15px;
-}
-
-code {
-  font-size: 80%;
-}
-
-a.btn-link {
-  text-decoration: none;
-}
-
-</style>
+    <!-- Local AK custom css -->
+    <link rel="stylesheet" href="/bs/css/unxsak.css">
 </head>
 
 <body>
@@ -218,7 +180,7 @@ a.btn-link {
   <div class="card-header" id="headingImages">
   <h5 class="mb-0">
   <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseImages">
-      <h4>Suba Im&aacute;genes</h4>
+      <h4>Im&aacute;genes</h4>
   </button>
   </h5>
   </div><!--card header-->

@@ -475,40 +475,41 @@ void UserCommands(pentry entries[], int x)
 		ProcessUserVars(entries,x);
 		if(!strcmp(gcFunction,"Change Password") || !strcmp(gcFunction,"ChangePassword"))
 		{
+			gcCPShow="show";
 			if(guPermLevel>10)
 			{
 				gcFiveIn="in";
-				gcMessage="Error: Admin users not allowed to change password here";
+				gcMessage="Error: Usuarios administrativos no pueden cambiar su contrase&ntilde;a aqui.";
 				htmlUser();
 			}
 			if(!cCurPasswd[0])
 			{
 				gcFiveIn="in";
-				gcMessage="Error: Must enter 'Current Password'";
+				gcMessage="Error: Debe ingresar su contrase&ntilde;a.";
 				htmlUser();
 			}
 			if(!uValidPasswd(cCurPasswd,guLoginClient))
 			{
 				gcFiveIn="in";
-				gcMessage="Error: Invalid current password entered";
+				gcMessage="Error: Contrase&ntilde;a actual inv&aacute;lida.";
 				htmlUser();
 			}
 			if(!cPasswd[0] || !cPasswd2[0] || strcmp(cPasswd,cPasswd2))
 			{
 				gcFiveIn="in";
-				gcMessage="Error: Must enter new 'Password' twice and they must match";
+				gcMessage="Error: Debe ingresar la misma contrase&ntilde;a dos veces.";
 				htmlUser();
 			}
 			if(!strcmp(cCurPasswd,cPasswd))
 			{
 				gcFiveIn="in";
-				gcMessage="Error: New 'Password' is the same as current password";
+				gcMessage="Error: Contrase&ntilde;a nueva is igual al actual.";
 				htmlUser();
 			}
 			if(strlen(cPasswd)<8)
 			{
 				gcFiveIn="in";
-				gcMessage="Error: New 'Password' must be at least 8 chars long";
+				gcMessage="Error: Su contrase&ntilde;a debe tener al menos 8 caracteres.";
 				htmlUser();
 			}
 			if(strstr(cPasswd,gcLogin) || strstr(gcLogin,cPasswd) ||
@@ -516,23 +517,25 @@ void UserCommands(pentry entries[], int x)
 				strstr(gcOrgName,cPasswd) || strstr(cPasswd,gcOrgName))
 			{
 				gcFiveIn="in";
-				gcMessage="Error: New 'Password' must not be related to your login or company";
+				gcMessage="Error: Su contrase&ntilde;a no debe estar relacionado con su usuario o empresa.";
 				htmlUser();
 			}
 			if(uNoUpper(cPasswd) || uNoLower(cPasswd) || uNoDigit(cPasswd))
 			{
 				gcFiveIn="in";
-				gcMessage="Error: New 'Password' must have some upper and lower case letters,"
-						" and at least one number";
+				gcMessage="Error: Su contrase&ntilde;a debera contener minusculas, mayusculas y un numero.";
 				htmlUser();
 			}
 			if(uChangePassword(cPasswd))
 			{
 				gcFiveIn="in";
-				gcMessage="Error: Password not changed contact system admin";
+				gcMessage="Error: Su contrase&ntilde;a no fue cambiado por favor contactar administrador.";
 				htmlUser();
 			}
-			gcMessage="Password changed you will need to login again";
+			gcCPShow="";
+			gcMessage="Su contrase&ntilde;a fue cambiado. Debera ingresar/logearse de nuevo.";
+			SendEmail("Si usted no cambio su contrasena avisenos de inmediato! Gracias!",
+				gcLogin,"unxsak@unxs.io","Portal AK Cambio de Contrasena","unxsak@unxs.io");
 			htmlUser();
 		}
 	}
@@ -1101,7 +1104,10 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[24]="cDisabled";
 			template.cpValue[24]=cDisabled;
 
-			template.cpName[25]="";
+			template.cpName[25]="gcCPShow";
+			template.cpValue[25]=gcCPShow;
+
+			template.cpName[26]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");

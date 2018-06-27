@@ -93,6 +93,7 @@ extern unsigned guYear;
 extern unsigned guMonth;
 extern unsigned guJobOffer;
 extern unsigned guValidJobLoaded;
+extern char *gcCPShow;
 
 //Cgi form commands and major area function
 extern char gcFunction[];
