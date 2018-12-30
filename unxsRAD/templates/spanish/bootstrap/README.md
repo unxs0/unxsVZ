@@ -87,3 +87,14 @@ These work as follows:
  1. The template has to include a text expansion function e.g. *[[funcBootstrapEditorFields]]*.
  1. The unxsrad.c file has to then have a function declared _void funcBootstrapEditorFields(FILE *fp)_ and that is also included in the _void AppFunctions(FILE *fp,char *cFunction)_ call back hook.
 
+#### Preloaded New Jobs
+
+SQL for adding pre made jobs for use via QR code stickers on kites or bars.
+
+```
+insert into tJobOffer set uJobOffer=11321,uOwner=3,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW());
+insert into tJobOffer set uJobOffer=11322,uOwner=3,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW());
+insert into tJobOffer set uJobOffer=11323,uOwner=3,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW());
+update tJobOffer set cLabel=CONCAT('Preloaded New Job ',uJobOffer) where uOwner=3;
+
+```
