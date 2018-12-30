@@ -225,6 +225,8 @@ void JobOfferGetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"uJobOffer"))
 			sscanf(gentries[i].val,"%u",&guJobOffer);
+		else if(!strcmp(gentries[i].name,"uJob"))
+			sscanf(gentries[i].val,"%u",&guJobOffer);
 	}
 	htmlJobOffer();
 
@@ -362,49 +364,67 @@ void UserCommands(pentry entries[], int x)
 				htmlJobOffer();
 			}
 
+			unsigned uJobOffer=0;
 
-			//Update by deleting selected job offer
+			//Update by deleting selected job offer and then adding with same uK
 			if(guJobOffer && guLoginClient)
 			{
-				sprintf(gcQuery,"DELETE FROM tJobOffer WHERE uJobOffer=%u AND uOwner=%u",
-							guJobOffer,guLoginClient);
+				sprintf(gcQuery,"UPDATE tJobOffer SET "
+					"cLabel='%s %s %u',"
+					"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
+					"uSize=%u,uMaxBid=%u,"
+					"cDescription='%s',"
+					"cColors='%s',"
+					"dStart='%s',dEnd='%s',"
+					"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJobOffer=%u AND uOwner=%u",
+								cBrand,TextAreaSave(cModel),uYear,
+								cBrand,TextAreaSave(cModel),uYear,
+								uSize,uMaxBid,
+								TextAreaSave(cDescription),
+								TextAreaSave(cColors),
+								dStart,dEnd,
+								guLoginClient,guJobOffer,guLoginClient);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					gcMessage="Unexpected error deleting job offer try again later!";
+					gcMessage="Unexpected error updating tJobOffer!";
 					//debug only
 					//gcMessage=gcQuery;
 					htmlJobOffer();
 				}
+				uJobOffer=guJobOffer;
+			}
+			else
+			{
+				//Create new job offer
+				sprintf(gcQuery,"INSERT INTO tJobOffer SET "
+					"cLabel='%s %s %u',"
+					"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
+					"uSize=%u,uMaxBid=%u,"
+					"cDescription='%s',"
+					"cColors='%s',"
+					"dStart='%s',dEnd='%s',"
+					"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
+								cBrand,TextAreaSave(cModel),uYear,
+								cBrand,TextAreaSave(cModel),uYear,
+								uSize,uMaxBid,
+								TextAreaSave(cDescription),
+								TextAreaSave(cColors),
+								dStart,dEnd,
+								guLoginClient,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				uJobOffer=mysql_insert_id(&gMysql);
+				if(mysql_errno(&gMysql) || !uJobOffer)
+				{
+					gcMessage="Unexpected error (i0) try again later!";
+					//debug only
+					//gcMessage=gcQuery;
+					htmlJobOffer();
+				}
+				guJobOffer=uJobOffer;
+				printf("Set-Cookie: unxsAKJobOffer=%u; secure; httponly; samesite=strict;\n",uJobOffer);
 			}
 
-			//Create new job offer
-			unsigned uJobOffer=0;
-			sprintf(gcQuery,"INSERT INTO tJobOffer SET"
-				" cLabel='%s %s %u',"
-				"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
-				"uSize=%u,uMaxBid=%u,"
-				"cDescription='%s',"
-				"cColors='%s',"
-				"dStart='%s',dEnd='%s',"
-				"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
-							cBrand,TextAreaSave(cModel),uYear,
-							cBrand,TextAreaSave(cModel),uYear,
-							uSize,uMaxBid,
-							TextAreaSave(cDescription),
-							TextAreaSave(cColors),
-							dStart,dEnd,
-							guLoginClient,guLoginClient);
-			mysql_query(&gMysql,gcQuery);
-			uJobOffer=mysql_insert_id(&gMysql);
-			if(mysql_errno(&gMysql) || !uJobOffer)
-			{
-				gcMessage="Unexpected error (i0) try again later!";
-				//debug only
-				//gcMessage=gcQuery;
-				htmlJobOffer();
-			}
-	
 			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",uJobOffer);
 
 			//Remove all existing for same job

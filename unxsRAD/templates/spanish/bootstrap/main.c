@@ -180,6 +180,12 @@ int main(int argc, char *argv[])
 			//Need to catch all pages here or else have default
 			htmlJobOffer();
 		}
+		else if(!gcFunction[0])
+		{
+			//Special direct uJobOffer link
+			JobOfferGetHook(gentries,x);
+			htmlJobOffer();
+		}
 	}
 	else
 	{
