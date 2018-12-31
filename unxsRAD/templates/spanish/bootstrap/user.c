@@ -42,6 +42,8 @@ char cLink3[100]={""};
 char cLink3Title[100]={""};
 char *cLink3Desc="";
 
+char cJobOwner[33]={""};
+
 //TOC
 void ProcessUserVars(pentry entries[], int x);
 void UserGetHook(entry gentries[],int x);
@@ -924,7 +926,13 @@ void LoadJobOfferData(unsigned uJobOffer)
 	if(uJobOffer==0) return;
 	if(uJobOffer==(-1))
 	{
-		sprintf(gcQuery,"SELECT uJobOffer,cLabel FROM tJobOffer"
+		if(guPermLevel>=10)
+			sprintf(gcQuery,"SELECT uJobOffer,tJobOffer.cLabel FROM tJobOffer,tClient"
+				" WHERE tJobOffer.uOwner=tClient.uClient"
+				" AND (tJobOffer.uOwner=%u OR tClient.uOwner=%u)"
+				" ORDER BY tJobOffer.uModDate DESC, tJobOffer.uCreatedDate DESC LIMIT 1",guLoginClient,guOrg);
+		else
+			sprintf(gcQuery,"SELECT uJobOffer,cLabel FROM tJobOffer"
 				" WHERE uOwner=%u ORDER BY uModDate DESC, uCreatedDate DESC LIMIT 1",guLoginClient);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
@@ -938,12 +946,24 @@ void LoadJobOfferData(unsigned uJobOffer)
 		}
 	}
 
-	sprintf(gcQuery,"SELECT cDescription,uBrand,cModel,uSize,uYear,uMaxBid,"
+	if(guPermLevel>=10)
+		sprintf(gcQuery,"SELECT tJobOffer.cDescription,tJobOffer.uBrand,tJobOffer.cModel,tJobOffer.uSize,tJobOffer.uYear,"
+				"tJobOffer.uMaxBid,"
+				"DATE_FORMAT(tJobOffer.dStart,'%%Y-%%m-%%d'),DATE_FORMAT(tJobOffer.dEnd,'%%Y-%%m-%%d'),tJobOffer.cColors"
+				",tJobOffer.cLink1,tJobOffer.cLink1Title,tJobOffer.cLink1Desc"
+				",tJobOffer.cLink2,tJobOffer.cLink2Title,tJobOffer.cLink2Desc"
+				",tJobOffer.cLink3,tJobOffer.cLink3Title,tJobOffer.cLink3Desc,tClient.cLabel"
+				" FROM tJobOffer,tClient WHERE tJobOffer.uOwner=tClient.uClient"
+				" AND tJobOffer.uJobOffer=%u"
+				" AND (tJobOffer.uOwner=%u OR tClient.uOwner=%u)",
+					uJobOffer,guLoginClient,guOrg);
+	else
+		sprintf(gcQuery,"SELECT cDescription,uBrand,cModel,uSize,uYear,uMaxBid,"
 				"DATE_FORMAT(dStart,'%%Y-%%m-%%d'),DATE_FORMAT(dEnd,'%%Y-%%m-%%d'),cColors"
 				",cLink1,cLink1Title,cLink1Desc"
 				",cLink2,cLink2Title,cLink2Desc"
-				",cLink3,cLink3Title,cLink3Desc"
-				" FROM tJobOffer WHERE uJobOffer=%u AND uOwner=%u",uJobOffer,guLoginClient);
+				",cLink3,cLink3Title,cLink3Desc,'%s'"
+				" FROM tJobOffer WHERE uJobOffer=%u AND uOwner=%u",gcLogin,uJobOffer,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -972,6 +992,7 @@ void LoadJobOfferData(unsigned uJobOffer)
 		sprintf(cLink3Title,"%s",field[16]);
                 cLink3Desc=field[17];
 
+		sprintf(cJobOwner,"%s",field[18]);
 		guValidJobLoaded=1;
 	}
 }//void LoadJobOfferData(uJobOffer)
@@ -1127,7 +1148,10 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[25]="gcCPShow";
 			template.cpValue[25]=gcCPShow;
 
-			template.cpName[26]="";
+			template.cpName[26]="cJobOwner";
+			template.cpValue[26]=cJobOwner;
+
+			template.cpName[27]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");

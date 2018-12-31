@@ -23,7 +23,7 @@ unsigned uDayOpenForBids(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned
 	if(uYear && uMonth && uDay && uVendor)
 	{
 		sprintf(gcQuery,"SELECT uCalendar FROM tCalendar"
-				" WHERE (uVendor=%u OR uVendor=%u) AND dDate='%u-%u-%u'",uVendor,guOrg,uYear,uMonth,uDay);
+				" WHERE (uVendor=%u OR uOwner=%u) AND dDate='%u-%u-%u'",uVendor,guOrg,uYear,uMonth,uDay);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			return(0);
@@ -46,7 +46,15 @@ void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned 
 	char cBg[6][16]={"bg-info","bg-success","bg-warning","bg-danger","bg-dark","bg-secondary"};
 	if(uYear && uMonth && uDay && uVendor)
 	{
-		sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tCalendar,tJobOffer"
+		if(guPermLevel>=10)
+			sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tCalendar,tJobOffer"
+				" WHERE tCalendar.uJobOffer=tJobOffer.uJobOffer"
+				" AND (tCalendar.uVendor=%u OR tCalendar.uOwner=%u)"
+				" AND tCalendar.dDate='%u-%u-%u'",
+						uVendor,guOrg,
+						uYear,uMonth,uDay);
+		else
+			sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tCalendar,tJobOffer"
 				" WHERE tCalendar.uJobOffer=tJobOffer.uJobOffer"
 				" AND tCalendar.uVendor=%u AND tCalendar.dDate='%u-%u-%u'",uVendor,uYear,uMonth,uDay);
 		mysql_query(&gMysql,gcQuery);
@@ -168,7 +176,7 @@ void funcCalendar(FILE *fp)
 	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar'>Agenda</a>\n");
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=User'>Mi Cuenta</a>\n");
+	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=User'>%s</a>\n",gcLogin);
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
 	printf("          <a class='nav-link' href='/unxsAKApp/?gcFunction=Logout'>Logout</a>\n");

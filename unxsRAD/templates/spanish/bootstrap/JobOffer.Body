@@ -33,7 +33,7 @@
         <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar' title='Ver agenda de trabajos'>Agenda</a>
       </li>
       <li class='nav-item'>
-        <a class='nav-link' href='/unxsAKApp/?gcPage=User' title='Ajustes de su cuenta''>Mi Cuenta</a>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=User' title='Ajustes de su cuenta''>{{gcLogin}}</a>
       </li>
       <li class='nav-item'>
         <a class='nav-link' href='/unxsAKApp/?gcFunction=Logout' title='Salir o deslogearse del sistema.'>Logout</a>
@@ -82,7 +82,7 @@
   <div class="card-header" id="headingDetails">
   <h5 class="mb-0">
   <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseDetails">
-      <h4>Detalles</h4>
+      <h4>Detalles</h4> 
   </button>
   </h5>
   </div><!--card header-->
@@ -100,7 +100,7 @@
         <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/" >
           <div class="row">
             <div class="col-sm-12 form-group" >
-              <label for="StartDate">Primer dia disponible para comenzar trabajo</label>
+              <label for="StartDate">Primer dia disponible para comenzar trabajo. Kite es de {{cJobOwner}}.</label>
               <input type=date class="form-control" name = "dStart" value="{{dStart}}"
 				id="StartDate" required </input>
            </div>
