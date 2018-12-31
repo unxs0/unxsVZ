@@ -371,7 +371,24 @@ void UserCommands(pentry entries[], int x)
 			//Update by deleting selected job offer and then adding with same uK
 			if(guJobOffer && guLoginClient)
 			{
-				sprintf(gcQuery,"UPDATE tJobOffer SET "
+				if(guPermLevel>=10)
+					sprintf(gcQuery,"UPDATE tJobOffer SET "
+					"cLabel='%s %s %u',"
+					"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
+					"uSize=%u,uMaxBid=%u,"
+					"cDescription='%s',"
+					"cColors='%s',"
+					"dStart='%s',dEnd='%s',"
+					"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJobOffer=%u",
+								cBrand,TextAreaSave(cModel),uYear,
+								cBrand,TextAreaSave(cModel),uYear,
+								uSize,uMaxBid,
+								TextAreaSave(cDescription),
+								TextAreaSave(cColors),
+								dStart,dEnd,
+								guLoginClient,guJobOffer);
+				else
+					sprintf(gcQuery,"UPDATE tJobOffer SET "
 					"cLabel='%s %s %u',"
 					"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
 					"uSize=%u,uMaxBid=%u,"
@@ -716,7 +733,7 @@ void htmlSignUpStep1(void)
 			" uCertClient=%u,"
 			" cClrPasswd='%s',"
 			" cPasswd='%s',"
-			" uOwner=4,"//end user
+			" uOwner=2,"//arreglo kites
 			" uCreatedBy=1,"
 			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
 			" cLabel='%s'"
