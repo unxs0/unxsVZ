@@ -112,7 +112,10 @@ int main(int argc, char *argv[])
 		else
 		{
 			if(guJobOffer && guImageNumber>0 && guImageNumber<4)
-			{
+			{	if(gcImageTitle[0] && !gcImageDescription[0])
+					sprintf(gcImageDescription,"%.99s",gcImageTitle);
+				else if(!gcImageTitle[0] && gcImageDescription[0])
+					sprintf(gcImageTitle,"%.99s",gcImageDescription);
 				sprintf(gcQuery,"UPDATE tJobOffer SET cLink%u='%s',"
 					" cLink%uTitle='%s',cLink%uDesc='%s',"
 					" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"

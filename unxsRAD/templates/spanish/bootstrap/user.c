@@ -219,6 +219,46 @@ void UserGetHook(entry gentries[],int x)
 
 }//void UserGetHook(entry gentries[],int x)
 
+void IfJobDoesNotExistCreate(unsigned uJob);
+void IfJobDoesNotExistCreate(unsigned uJob)
+{
+	if(guPermLevel<10)
+		return;
+
+	MYSQL_RES *res;
+	sprintf(gcQuery,"SELECT uJobOffer FROM tJobOffer"
+				" WHERE uJobOffer=%u",uJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		htmlPlainTextError(mysql_error(&gMysql));
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{
+		mysql_free_result(res);
+		return;
+	}
+
+	//Create new job offer
+	sprintf(gcQuery,"INSERT INTO tJobOffer SET "
+				"uJobOffer=%u,"
+				"cLabel='New Job Tag %u',"
+				"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
+							uJob,
+							uJob,
+							guLoginClient,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (i1) try again later!";
+		//debug only
+		//gcMessage=gcQuery;
+		htmlJobOffer();
+	}
+	guJobOffer=uJob;
+	printf("Set-Cookie: unxsAKJobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
+	gcMessage="New job created from scanned tag.";
+}//void IfJobDoesNotExistCreate(unsigned uJob)
+
 
 void JobOfferGetHook(entry gentries[],int x)
 {
@@ -227,8 +267,12 @@ void JobOfferGetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"uJobOffer"))
 			sscanf(gentries[i].val,"%u",&guJobOffer);
+		//Scanned job
 		else if(!strcmp(gentries[i].name,"uJob"))
+		{
 			sscanf(gentries[i].val,"%u",&guJobOffer);
+			IfJobDoesNotExistCreate(guJobOffer);
+		}
 	}
 	htmlJobOffer();
 
@@ -711,7 +755,7 @@ void htmlSignUpStep1(void)
 		EncryptPasswdWithSalt(cBuffer,cSalt);
 
 		sprintf(gcQuery,"INSERT INTO tClient SET"
-			" uOwner=4,"//end user
+			" uOwner=2,"//Arreglo Kites
 			" uCreatedBy=1,"
 			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
 			" cEmail='%1$.31s',"
