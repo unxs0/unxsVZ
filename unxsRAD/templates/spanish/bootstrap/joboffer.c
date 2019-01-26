@@ -22,11 +22,13 @@ void htmlJobOfferSelect(FILE *fp)
 	if(guPermLevel>=10)
 		sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tJobOffer,tClient"
 				" WHERE tClient.uClient=tJobOffer.uOwner"
+				" AND tJobOffer.uStatus!=6"
 				" AND (tJobOffer.uOwner=%u OR tClient.uOwner=%u)"
 				" ORDER BY tJobOffer.uModDate DESC, tJobOffer.uCreatedDate DESC LIMIT 99",
 					guLoginClient,guOrg);
 	else
 		sprintf(gcQuery,"SELECT uJobOffer,cLabel FROM tJobOffer"
+				" AND tJobOffer.uStatus!=6"
 				" WHERE uOwner=%u ORDER BY uModDate DESC, uCreatedDate DESC LIMIT 99",
 					guLoginClient);
 	mysql_query(&gMysql,gcQuery);

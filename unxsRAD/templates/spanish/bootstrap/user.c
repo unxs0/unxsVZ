@@ -43,6 +43,7 @@ char cLink3Title[100]={""};
 char *cLink3Desc="";
 
 char cJobOwner[33]={""};
+char cuStatus[33]={""};
 
 //TOC
 void ProcessUserVars(pentry entries[], int x);
@@ -242,6 +243,7 @@ void IfJobDoesNotExistCreate(unsigned uJob)
 	sprintf(gcQuery,"INSERT INTO tJobOffer SET "
 				"uJobOffer=%u,"
 				"cLabel='New Job Tag %u',"
+				"uStatus=1,"
 				"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
 							uJob,
 							uJob,
@@ -467,6 +469,7 @@ void UserCommands(pentry entries[], int x)
 					"cDescription='%s',"
 					"cColors='%s',"
 					"dStart='%s',dEnd='%s',"
+					"uStatus=1,"
 					"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
 								cBrand,TextAreaSave(cModel),uYear,
 								cBrand,TextAreaSave(cModel),uYear,
@@ -1013,9 +1016,10 @@ void LoadJobOfferData(unsigned uJobOffer)
 				"DATE_FORMAT(tJobOffer.dStart,'%%Y-%%m-%%d'),DATE_FORMAT(tJobOffer.dEnd,'%%Y-%%m-%%d'),tJobOffer.cColors"
 				",tJobOffer.cLink1,tJobOffer.cLink1Title,tJobOffer.cLink1Desc"
 				",tJobOffer.cLink2,tJobOffer.cLink2Title,tJobOffer.cLink2Desc"
-				",tJobOffer.cLink3,tJobOffer.cLink3Title,tJobOffer.cLink3Desc,tClient.cLabel"
-				" FROM tJobOffer,tClient WHERE tJobOffer.uOwner=tClient.uClient"
+				",tJobOffer.cLink3,tJobOffer.cLink3Title,tJobOffer.cLink3Desc,tClient.cLabel,tStatus.cLabel"
+				" FROM tJobOffer,tClient,tStatus WHERE tJobOffer.uOwner=tClient.uClient"
 				" AND tJobOffer.uJobOffer=%u"
+				" AND tJobOffer.uStatus=tStatus.uStatus"
 				" AND (tJobOffer.uOwner=%u OR tClient.uOwner=%u)",
 					uJobOffer,guLoginClient,guOrg);
 	else
@@ -1053,8 +1057,13 @@ void LoadJobOfferData(unsigned uJobOffer)
 		sprintf(cLink3Title,"%s",field[16]);
                 cLink3Desc=field[17];
 
-		sprintf(cJobOwner,"%s",field[18]);
 		guValidJobLoaded=1;
+	
+		if(guPermLevel>=10)
+		{
+			sprintf(cJobOwner,"%.32s",field[18]);
+			sprintf(cuStatus,"%.32s",field[19]);
+		}
 	}
 }//void LoadJobOfferData(uJobOffer)
 
@@ -1212,7 +1221,10 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[26]="cJobOwner";
 			template.cpValue[26]=cJobOwner;
 
-			template.cpName[27]="";
+			template.cpName[27]="cuStatus";
+			template.cpValue[27]=cuStatus;
+
+			template.cpName[28]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");

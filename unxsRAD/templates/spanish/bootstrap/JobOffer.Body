@@ -75,6 +75,39 @@
 
   <div class="accordion" id="accordionOne">
 
+  <!-- Summary Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingSummary">
+  <h5 class="mb-0">
+  <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseSummary">
+      <h4>Summary</h4> 
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse show" id="collapseSummary" data-parent="#accordionOne">
+  <div class="card-body">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <p class="big-para">Estado: {{cuStatus}}. Kite es de {{cJobOwner}}.</p>
+    </div>
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage1}}
+    </div>
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage2}}
+    </div>
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage3}}
+    </div>
+  </div>
+  </div><!--card-body-->
+  </div><!--collapseSummary-->
+  </div><!--card-->
+  <!-- End Summary Card -->
+
   <!-- Details Card -->
   <div class="card">
 
