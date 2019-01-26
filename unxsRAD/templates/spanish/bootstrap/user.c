@@ -255,7 +255,7 @@ void IfJobDoesNotExistCreate(unsigned uJob)
 		htmlJobOffer();
 	}
 	guJobOffer=uJob;
-	printf("Set-Cookie: unxsAKJobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
+	printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
 	gcMessage="New job created from scanned tag.";
 }//void IfJobDoesNotExistCreate(unsigned uJob)
 
@@ -485,7 +485,7 @@ void UserCommands(pentry entries[], int x)
 					htmlJobOffer();
 				}
 				guJobOffer=uJobOffer;
-				printf("Set-Cookie: unxsAKJobOffer=%u; secure; httponly; samesite=strict;\n",uJobOffer);
+				printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",uJobOffer);
 			}
 
 			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",uJobOffer);
@@ -651,7 +651,7 @@ void NewCodeAndLinkEmail(unsigned uAuthorize,char *cEmail,char *cServer)
 	mysql_query(&gMysql,gcQuery);
 
 	sprintf(cMsg,"The link to change your password is:\n"
-		"https://%s/{{cProject}}App/?gcFunction=ChangePassword&gcEmailCode=%.16s&gcLogin=%s\n",
+		"https://%s/{{cProject}}App?gcFunction=ChangePassword&gcEmailCode=%.16s&gcLogin=%s\n",
 				cServer,cEmailCode,cEmail);
 
 	SendEmail(cMsg,cEmail,"unxsak@unxs.io","unxsAK New Account Confirmation","unxsak@unxs.io");

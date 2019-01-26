@@ -33,7 +33,7 @@
 
     <div class="container">
 
-      <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
+      <form class="form-signin" role="form" method="post" action="/unxsAKApp">
         <h3 class="form-signin-heading">Portal ArregloKites.Com</h3>
         <label for="inputEmail" class="sr-only">Login/Email</label>
         <input maxlength="31" title='Ingresar tu email previamente registrado'
@@ -43,7 +43,7 @@
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Ingresar al Portal</button>
         <h4 class="form-signin-heading">{{gcMessage}}</h4>
       </form>
-      <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
+      <form class="form-signin" role="form" method="post" action="/unxsAKApp">
 	<button title='Reg&iacute;strese para una cuenta gratis, es r&aacute;pido y f&aacute;cil!' type="submit" name=gcPage value='SignUp' class="btn btn-link">Crear cuenta</button>
 	<button title='Si perdio su contrase&ntilde;a no se preocupe, siga por aqui.' type="submit" name=gcPage value='LostPassword' class="btn btn-link">Se me olvid&oacute; la contrase&ntilde;a</button>
       </form>

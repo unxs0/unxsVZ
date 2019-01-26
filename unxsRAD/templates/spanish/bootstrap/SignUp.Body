@@ -32,7 +32,7 @@
   <body>
     <div class="container">
 
-      <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
+      <form class="form-signin" role="form" method="post" action="/unxsAKApp">
         <h3 class="form-signin-heading">Crear Cuenta ArregloKites</h3>
         <label for="inputEmail" class="sr-only">Login/Email</label>
         <input maxlength="31" title='Ingrese un email valido donde tengas accesso inmediato.'
@@ -48,7 +48,7 @@
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='SignUpStep1'>Crear Cuenta</button>
         <h4 class="form-signin-heading">{{gcMessage}}</h4>
       </form>
-      <form class="form-signin" role="form" method="get" action="/unxsAKApp/">
+      <form class="form-signin" role="form" method="get" action="/unxsAKApp">
       <button title='Cancelar' type="submit" name=gcFunction value='Logout' class="btn btn-link">Cancelar</button>
       </form>
 

@@ -162,7 +162,7 @@ void funcCalendar(FILE *fp)
 
 	printf("<nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>\n");
 
-	printf("    <a class='navbar-brand' href='/unxsAKApp/'>Portal AK</a>\n");
+	printf("    <a class='navbar-brand' href='/unxsAKApp'>Portal AK</a>\n");
 	printf("    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >\n");
 	printf("        <span class='navbar-toggler-icon'></span>\n");
 	printf("    </button>\n");
@@ -170,26 +170,26 @@ void funcCalendar(FILE *fp)
 	printf("    <div class='collapse navbar-collapse' id='navbarsCalendar'>\n");
 	printf("      <ul class='navbar-nav mr-auto'>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=JobOffer'>Trabajos</a>\n");
+	printf("          <a class='nav-link' href='/unxsAKApp?gcPage=JobOffer'>Trabajos</a>\n");
 	printf("        </li>\n");
 	printf("        <li class='nav-item active'>\n");
-	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar'>Agenda</a>\n");
+	printf("          <a class='nav-link' href='/unxsAKApp?gcPage=Calendar'>Agenda</a>\n");
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=User'>%s</a>\n",gcLogin);
+	printf("          <a class='nav-link' href='/unxsAKApp?gcPage=User'>%s</a>\n",gcLogin);
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/unxsAKApp/?gcFunction=Logout'>Logout</a>\n");
+	printf("          <a class='nav-link' href='/unxsAKApp?gcFunction=Logout'>Logout</a>\n");
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>[ %s %u</a>\n",
+	printf("          <a class='nav-link' href='/unxsAKApp?gcPage=Calendar&uMonth=%u&uYear=%u'>[ %s %u</a>\n",
 					uPrevMonth,uPrevYear,cPrevMonth,uPrevYear);
 	printf("        </li>");
 	printf("        <li class='nav-item'>\n");
 	printf("          <a class='nav-link active'>%s %u</a>\n",cMonth,guYear);
 	printf("        </li>\n");
 	printf("        <li class='nav-item'>\n");
-	printf("          <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar&uMonth=%u&uYear=%u'>%s %u ]</a>\n",
+	printf("          <a class='nav-link' href='/unxsAKApp?gcPage=Calendar&uMonth=%u&uYear=%u'>%s %u ]</a>\n",
 					uNextMonth,uNextYear,cNextMonth,uNextYear);
 	printf("        </li>\n");
 	printf("      </ul>\n");

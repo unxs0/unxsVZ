@@ -33,7 +33,7 @@
 
     <div class="container">
 
-      <form class="form-signin" role="form" method="post" action="/unxsAKApp/">
+      <form class="form-signin" role="form" method="post" action="/unxsAKApp">
         <h3 class="form-signin-heading">ArregloKites Cuenta Creada!</h3>
         <label for="inputEmail" class="sr-only">Login Email</label>
         <input disabled maxlength="31" title='Ingrese tu email'

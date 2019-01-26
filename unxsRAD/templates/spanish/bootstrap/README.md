@@ -27,7 +27,7 @@ aliasing scheme (apache example):
 #backend
 ScriptAlias "/unxsAK/" "/var/www/cgi-bin/unxsAK.cgi"
 #mobile app
-ScriptAlias "/unxsAKApp/" "/var/www/unxs/html/unxsAK/mobile.cgi"
+ScriptAlias "/unxsAKApp" "/var/www/unxs/html/unxsAK/mobile.cgi"
 ```
 
 ### Development Workflow Notes
