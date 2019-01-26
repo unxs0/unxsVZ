@@ -44,6 +44,7 @@ char *cLink3Desc="";
 
 char cJobOwner[33]={""};
 char cuStatus[33]={""};
+unsigned uStatus=0;
 
 //TOC
 void ProcessUserVars(pentry entries[], int x);
@@ -122,6 +123,8 @@ void ProcessJobOfferVars(pentry entries[], int x)
 			sprintf(dStart,"%.31s",entries[i].val);
 		else if(!strcmp(entries[i].name,"dEnd"))
 			sprintf(dEnd,"%.31s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uStatus"))
+			sscanf(entries[i].val,"%u",&uStatus);
 	}
 
 }//void ProcessJobOfferVars(pentry entries[], int x)
@@ -374,6 +377,21 @@ void UserCommands(pentry entries[], int x)
 		{
 			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
 		}
+		else if(!strcmp(gcFunction,"SetStatus") && guPermLevel>=10)
+		{
+			if(!uStatus)
+				gcMessage="Must provide uStatus";
+			else if(!guJobOffer)
+				gcMessage="Must provide uJobOffer";
+			else
+			{
+				sprintf(gcQuery,"UPDATE tJobOffer SET uStatus=%u WHERE uJobOffer=%u",uStatus,guJobOffer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					gcMessage="Unexpected error 3 updating tJobOffer!";
+			}
+			htmlJobOffer();
+		}
 		else if(!strcmp(gcFunction,"AMJobOffer"))
 		{
 			if(!uYear)
@@ -419,14 +437,14 @@ void UserCommands(pentry entries[], int x)
 			{
 				if(guPermLevel>=10)
 					sprintf(gcQuery,"UPDATE tJobOffer SET "
-					"cLabel='%s %s %u',"
+					"cLabel='%s %s %um %u',"
 					"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
 					"uSize=%u,uMaxBid=%u,"
 					"cDescription='%s',"
 					"cColors='%s',"
 					"dStart='%s',dEnd='%s',"
 					"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJobOffer=%u",
-								cBrand,TextAreaSave(cModel),uYear,
+								cBrand,TextAreaSave(cModel),uSize,uYear,
 								cBrand,TextAreaSave(cModel),uYear,
 								uSize,uMaxBid,
 								TextAreaSave(cDescription),
@@ -435,14 +453,14 @@ void UserCommands(pentry entries[], int x)
 								guLoginClient,guJobOffer);
 				else
 					sprintf(gcQuery,"UPDATE tJobOffer SET "
-					"cLabel='%s %s %u',"
+					"cLabel='%s %s %um %u',"
 					"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
 					"uSize=%u,uMaxBid=%u,"
 					"cDescription='%s',"
 					"cColors='%s',"
 					"dStart='%s',dEnd='%s',"
 					"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJobOffer=%u AND uOwner=%u",
-								cBrand,TextAreaSave(cModel),uYear,
+								cBrand,TextAreaSave(cModel),uSize,uYear,
 								cBrand,TextAreaSave(cModel),uYear,
 								uSize,uMaxBid,
 								TextAreaSave(cDescription),
@@ -463,7 +481,7 @@ void UserCommands(pentry entries[], int x)
 			{
 				//Create new job offer
 				sprintf(gcQuery,"INSERT INTO tJobOffer SET "
-					"cLabel='%s %s %u',"
+					"cLabel='%s %s %um %u',"
 					"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
 					"uSize=%u,uMaxBid=%u,"
 					"cDescription='%s',"
@@ -471,7 +489,7 @@ void UserCommands(pentry entries[], int x)
 					"dStart='%s',dEnd='%s',"
 					"uStatus=1,"
 					"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
-								cBrand,TextAreaSave(cModel),uYear,
+								cBrand,TextAreaSave(cModel),uSize,uYear,
 								cBrand,TextAreaSave(cModel),uYear,
 								uSize,uMaxBid,
 								TextAreaSave(cDescription),
@@ -1023,12 +1041,17 @@ void LoadJobOfferData(unsigned uJobOffer)
 				" AND (tJobOffer.uOwner=%u OR tClient.uOwner=%u)",
 					uJobOffer,guLoginClient,guOrg);
 	else
-		sprintf(gcQuery,"SELECT cDescription,uBrand,cModel,uSize,uYear,uMaxBid,"
-				"DATE_FORMAT(dStart,'%%Y-%%m-%%d'),DATE_FORMAT(dEnd,'%%Y-%%m-%%d'),cColors"
-				",cLink1,cLink1Title,cLink1Desc"
-				",cLink2,cLink2Title,cLink2Desc"
-				",cLink3,cLink3Title,cLink3Desc,'%s'"
-				" FROM tJobOffer WHERE uJobOffer=%u AND uOwner=%u",gcLogin,uJobOffer,guLoginClient);
+		sprintf(gcQuery,"SELECT tJobOffer.cDescription,tJobOffer.uBrand,tJobOffer.cModel,tJobOffer.uSize,tJobOffer.uYear,"
+				"tJobOffer.uMaxBid,"
+				"DATE_FORMAT(tJobOffer.dStart,'%%Y-%%m-%%d'),DATE_FORMAT(tJobOffer.dEnd,'%%Y-%%m-%%d'),tJobOffer.cColors"
+				",tJobOffer.cLink1,tJobOffer.cLink1Title,tJobOffer.cLink1Desc"
+				",tJobOffer.cLink2,tJobOffer.cLink2Title,tJobOffer.cLink2Desc"
+				",tJobOffer.cLink3,tJobOffer.cLink3Title,tJobOffer.cLink3Desc,tClient.cLabel,tStatus.cLabel"
+				" FROM tJobOffer,tClient,tStatus WHERE tJobOffer.uOwner=tClient.uClient"
+				" AND tJobOffer.uJobOffer=%u"
+				" AND tJobOffer.uStatus=tStatus.uStatus"
+				" AND tJobOffer.uOwner=%u",
+					uJobOffer,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 		htmlPlainTextError(mysql_error(&gMysql));
@@ -1057,13 +1080,11 @@ void LoadJobOfferData(unsigned uJobOffer)
 		sprintf(cLink3Title,"%s",field[16]);
                 cLink3Desc=field[17];
 
+		sprintf(cJobOwner,"%.32s",field[18]);
+
+		sprintf(cuStatus,"%.32s",field[19]);
+
 		guValidJobLoaded=1;
-	
-		if(guPermLevel>=10)
-		{
-			sprintf(cJobOwner,"%.32s",field[18]);
-			sprintf(cuStatus,"%.32s",field[19]);
-		}
 	}
 }//void LoadJobOfferData(uJobOffer)
 
@@ -1190,7 +1211,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			if(cLink1[0])
 				sprintf(cImage1Src,"<a href=/images/%s title='%s' >"
 					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"
-					"<p>%s</p>",cLink1,cLink1Title,cLink1,cLink1Desc);
+					"<p>Img1. %s</p>",cLink1,cLink1Title,cLink1,cLink1Desc);
 			template.cpValue[21]=cImage1Src;
 
 			template.cpName[22]="cImage2";
@@ -1198,7 +1219,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			if(cLink2[0])
 				sprintf(cImage2Src,"<a href=/images/%s title='%s' >"
 					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"
-					"<p>%s</p>",cLink2,cLink2Title,cLink2,cLink2Desc);
+					"<p>Img2. %s</p>",cLink2,cLink2Title,cLink2,cLink2Desc);
 			template.cpValue[22]=cImage2Src;
 
 			template.cpName[23]="cImage3";
@@ -1206,7 +1227,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			if(cLink3[0])
 				sprintf(cImage3Src,"<a href=/images/%s title='%s' >"
 					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"
-					"<p>%s</p>",cLink3,cLink3Title,cLink3,cLink3Desc);
+					"<p>Img3. %s</p>",cLink3,cLink3Title,cLink3,cLink3Desc);
 			template.cpValue[23]=cImage3Src;
 
 			char *cDisabled="disabled";

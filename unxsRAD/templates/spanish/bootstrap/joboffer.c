@@ -14,6 +14,8 @@ REQUIRES
 //TOC
 void htmlJobOfferSelect(FILE *fp);
 void funcJobOffer(FILE *fp);
+void htmlStatusSelect(FILE *fp);
+void funcStatusSelect(FILE *fp);
 
 unsigned guJobOffer= -1;
 
@@ -23,13 +25,15 @@ void htmlJobOfferSelect(FILE *fp)
 		sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tJobOffer,tClient"
 				" WHERE tClient.uClient=tJobOffer.uOwner"
 				" AND tJobOffer.uStatus!=6"
+				" AND tJobOffer.uStatus!=7"
 				" AND (tJobOffer.uOwner=%u OR tClient.uOwner=%u)"
 				" ORDER BY tJobOffer.uModDate DESC, tJobOffer.uCreatedDate DESC LIMIT 99",
 					guLoginClient,guOrg);
 	else
 		sprintf(gcQuery,"SELECT uJobOffer,cLabel FROM tJobOffer"
-				" AND tJobOffer.uStatus!=6"
-				" WHERE uOwner=%u ORDER BY uModDate DESC, uCreatedDate DESC LIMIT 99",
+				" WHERE tJobOffer.uStatus!=6"
+				" AND tJobOffer.uStatus!=7"
+				" AND uOwner=%u ORDER BY uModDate DESC, uCreatedDate DESC LIMIT 99",
 					guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -73,3 +77,57 @@ void funcJobOffer(FILE *fp)
 
 
 }//void funcJobOffer()
+
+static unsigned guStatus=0;
+extern unsigned uStatus;
+
+void htmlStatusSelect(FILE *fp)
+{
+	sprintf(gcQuery,"SELECT uStatus,cLabel FROM tStatus");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s8) try again later!";
+		htmlJobOffer();
+	}
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	res=mysql_store_result(&gMysql);
+
+fprintf(fp,"  <div class=\"col-sm-9 col-xs-12\">\n");
+fprintf(fp,"    <p class=\"big-para\"><button type=\"button\" data-toggle=\"collapse\" data-target=\"#collapseStatus\" >Cambiar Estado</button></p>\n");
+fprintf(fp,"  </div>\n");
+fprintf(fp,"  <div class=\"collapse col-sm-9 col-xs-12\" id=\"collapseStatus\">\n");
+fprintf(fp,"    <div class=\"card card-body\">\n");
+fprintf(fp,"      <form class=\"clearfix\" accept-charset=\"utf-8\" method=\"post\" action=\"/unxsAKApp\">\n");
+
+	fprintf(fp,"\t\t<input type=hidden name=gcPage value=JobOffer >\n");
+	fprintf(fp,"\t\t<input type=hidden name=gcFunction value=SetStatus >\n");
+	fprintf(fp,"\t\t<select onchange=\"this.form.submit()\" class=\"form-control\" id=\"uStatus\" name=\"uStatus\">\n");
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&guStatus);
+		fprintf(fp,"\t\t\t<option ");
+		if(uStatus==guStatus)
+			fprintf(fp,"selected ");
+		fprintf(fp," value='%s'>%s</option>\n",field[0],field[1]);
+	}
+	fprintf(fp,"\t\t</select>\n");
+
+fprintf(fp,"      </form>\n");
+fprintf(fp,"    </div>\n");
+fprintf(fp,"  </div>\n");
+}//void htmlStatusSelect(FILE *fp)
+
+
+void funcStatusSelect(FILE *fp)
+{
+
+	if(guPermLevel>=10)
+	{
+		fprintf(fp,"<!-- funcStatusSelect()-->\n");
+		htmlStatusSelect(fp);
+		fprintf(fp,"<!-- End of funcStatusSelect()-->\n");
+	}
+
+}//void funcStatusSelect()

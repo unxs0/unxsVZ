@@ -511,6 +511,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcCalendar(fp);
 	else if(!strcmp(cFunction,"funcJobOffer"))
 		funcJobOffer(fp);
+	else if(!strcmp(cFunction,"funcStatusSelect"))
+		funcStatusSelect(fp);
 	else if(!strncmp(cFunction,"funcSelect(tBrand)",18))
 	{
 		funcSelect(fp,"tBrand",uBrand);
