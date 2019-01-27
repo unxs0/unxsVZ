@@ -95,11 +95,12 @@ void htmlStatusSelect(FILE *fp)
 	res=mysql_store_result(&gMysql);
 
 fprintf(fp,"  <div class=\"col-sm-9 col-xs-12\">\n");
-fprintf(fp,"    <p class=\"big-para\"><button type=\"button\" data-toggle=\"collapse\" data-target=\"#collapseStatus\" >Cambiar Estado</button></p>\n");
+fprintf(fp,"    <p class=\"big-para\"><button type=\"button\" data-toggle=\"collapse\" data-target=\"#collapseStatus\" >+</button></p>\n");
 fprintf(fp,"  </div>\n");
 fprintf(fp,"  <div class=\"collapse col-sm-9 col-xs-12\" id=\"collapseStatus\">\n");
 fprintf(fp,"    <div class=\"card card-body\">\n");
 fprintf(fp,"      <form class=\"clearfix\" accept-charset=\"utf-8\" method=\"post\" action=\"/unxsAKApp\">\n");
+fprintf(fp,"      Cambiar Estado\n");
 
 	fprintf(fp,"\t\t<input type=hidden name=gcPage value=JobOffer >\n");
 	fprintf(fp,"\t\t<input type=hidden name=gcFunction value=SetStatus >\n");

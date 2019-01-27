@@ -116,7 +116,17 @@ int main(int argc, char *argv[])
 					sprintf(gcImageDescription,"%.99s",gcImageTitle);
 				else if(!gcImageTitle[0] && gcImageDescription[0])
 					sprintf(gcImageTitle,"%.99s",gcImageDescription);
-				sprintf(gcQuery,"UPDATE tJobOffer SET cLink%u='%s',"
+				if(guPermLevel>=10)
+					sprintf(gcQuery,"UPDATE tJobOffer SET cLink%u='%s',"
+					" cLink%uTitle='%s',cLink%uDesc='%s',"
+					" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+					" WHERE uJobOffer=%u",
+						guImageNumber,gcFilename,
+						guImageNumber,TextAreaSave(gcImageTitle),guImageNumber,TextAreaSave(gcImageDescription),
+						guLoginClient,
+						guJobOffer);
+				else
+					sprintf(gcQuery,"UPDATE tJobOffer SET cLink%u='%s',"
 					" cLink%uTitle='%s',cLink%uDesc='%s',"
 					" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
 					" WHERE uJobOffer=%u AND uOwner=%u",
@@ -132,7 +142,11 @@ int main(int argc, char *argv[])
 					gcMessage=cError;
 				}
 				else
-					gcMessage="Image uploaded and job offer updated";
+				{
+					char cMessage[100]={"Image uploaded and job offer updated"};
+					sprintf(cMessage,"Uploaded image %u %.64s Ok.",guImageNumber,gcFilename);
+					gcMessage=cMessage;
+				}
 			}
 			gcImagesShow="show";
 		}

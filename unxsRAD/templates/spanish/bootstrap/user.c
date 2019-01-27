@@ -1034,7 +1034,7 @@ void LoadJobOfferData(unsigned uJobOffer)
 				"DATE_FORMAT(tJobOffer.dStart,'%%Y-%%m-%%d'),DATE_FORMAT(tJobOffer.dEnd,'%%Y-%%m-%%d'),tJobOffer.cColors"
 				",tJobOffer.cLink1,tJobOffer.cLink1Title,tJobOffer.cLink1Desc"
 				",tJobOffer.cLink2,tJobOffer.cLink2Title,tJobOffer.cLink2Desc"
-				",tJobOffer.cLink3,tJobOffer.cLink3Title,tJobOffer.cLink3Desc,tClient.cLabel,tStatus.cLabel"
+				",tJobOffer.cLink3,tJobOffer.cLink3Title,tJobOffer.cLink3Desc,tClient.cLabel,tStatus.cLabel,tJobOffer.uStatus"
 				" FROM tJobOffer,tClient,tStatus WHERE tJobOffer.uOwner=tClient.uClient"
 				" AND tJobOffer.uJobOffer=%u"
 				" AND tJobOffer.uStatus=tStatus.uStatus"
@@ -1046,7 +1046,7 @@ void LoadJobOfferData(unsigned uJobOffer)
 				"DATE_FORMAT(tJobOffer.dStart,'%%Y-%%m-%%d'),DATE_FORMAT(tJobOffer.dEnd,'%%Y-%%m-%%d'),tJobOffer.cColors"
 				",tJobOffer.cLink1,tJobOffer.cLink1Title,tJobOffer.cLink1Desc"
 				",tJobOffer.cLink2,tJobOffer.cLink2Title,tJobOffer.cLink2Desc"
-				",tJobOffer.cLink3,tJobOffer.cLink3Title,tJobOffer.cLink3Desc,tClient.cLabel,tStatus.cLabel"
+				",tJobOffer.cLink3,tJobOffer.cLink3Title,tJobOffer.cLink3Desc,tClient.cLabel,tStatus.cLabel,tJobOffer.uStatus"
 				" FROM tJobOffer,tClient,tStatus WHERE tJobOffer.uOwner=tClient.uClient"
 				" AND tJobOffer.uJobOffer=%u"
 				" AND tJobOffer.uStatus=tStatus.uStatus"
@@ -1083,6 +1083,7 @@ void LoadJobOfferData(unsigned uJobOffer)
 		sprintf(cJobOwner,"%.32s",field[18]);
 
 		sprintf(cuStatus,"%.32s",field[19]);
+		sscanf(field[20],"%u",&uStatus);
 
 		guValidJobLoaded=1;
 	}
