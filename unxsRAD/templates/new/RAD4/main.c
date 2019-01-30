@@ -1198,6 +1198,10 @@ char *cMoneyInput(char *cInput)
 	if(uCountPeriods>1)
 		cMoneyInput(cInput);
 
+	float fTemp=0.00;
+	sscanf(cInput,"%f",&fTemp);
+	sprintf(cInput,"%2.2f",fTemp);
+
 	return(cInput);
 
 }//char *cMoneyInput(char *cInput)

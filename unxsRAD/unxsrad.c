@@ -1672,6 +1672,7 @@ void funcModuleUpdateQuery(FILE *fp)
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_CHAR:
 			case COLTYPE_TEXT:
+			case COLTYPE_MONEY:
 				fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 			break;
 
@@ -1859,6 +1860,7 @@ void funcModuleInsertQuery(FILE *fp)
 			break;
 
 			case COLTYPE_CHAR:
+			case COLTYPE_MONEY:
 			case COLTYPE_TIMESTAMP:
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
@@ -1944,6 +1946,7 @@ void funcModuleInsertQuery(FILE *fp)
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_TEXT:
+			case COLTYPE_MONEY:
 				if((cp1=strstr(field[2],"CONCAT:")) && uTemplateType==uTEMPLATETYPE_BOOTSTRAP)
 				{
 					char cConcatField1[64]={""};
@@ -2031,6 +2034,7 @@ void funcModuleCreateQuery(FILE *fp)
 				fprintf(fp,"\t\t\"%s INT UNSIGNED %s",field[0],field[1]);
 			break;
 			case(COLTYPE_VARCHAR):
+			case(COLTYPE_MONEY):
 				fprintf(fp,"\t\t\"%s VARCHAR(%s) %s",field[0],field[3],field[1]);
 			break;
 			case(COLTYPE_TEXT):
@@ -3714,7 +3718,6 @@ void funcBootstrapColsReport(FILE *fp)
 			case COLTYPE_INTUNSIGNED:
 			case COLTYPE_BIGINT:
 			case COLTYPE_DECIMAL:
-			case COLTYPE_MONEY:
 				cDataType="number";
 			break;
 
