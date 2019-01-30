@@ -193,6 +193,35 @@ void ToggleAvailableDay(unsigned uYear,unsigned uMonth,unsigned uDay)
 }//
 
 
+void DelImage(void)
+{
+	if(!guJobOffer)
+	{
+		gcMessage="No guJobOffer!";
+		htmlJobOffer();
+	}
+	unsigned uImage=0;
+	sscanf(gcFunction,"DelImage%u",&uImage);
+	if(!uImage)
+	{
+		gcMessage="No uImage!";
+		htmlJobOffer();
+	}
+	if(guPermLevel>=10)
+		sprintf(gcQuery,"UPDATE tJobOffer SET cLink%u='',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJobOffer=%u",
+			uImage,guLoginClient,guJobOffer);
+	else
+		sprintf(gcQuery,"UPDATE tJobOffer SET cLink%u='',uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uJobOffer=%u AND uOwner=%u",
+			uImage,guLoginClient,
+			guJobOffer,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		gcMessage="Update image error!";
+
+}//void DelImage(void)
+
+
 void CalendarGetHook(entry gentries[],int x)
 {
 	register int i;
@@ -217,8 +246,6 @@ void CalendarGetHook(entry gentries[],int x)
 
 void UserGetHook(entry gentries[],int x)
 {
-	if(!strcmp(gcFunction,"LoginInfo"))
-		htmlLoginInfo();
 	if(!strcmp(gcFunction,"LoginInfo"))
 		htmlLoginInfo();
 
@@ -283,6 +310,9 @@ void JobOfferGetHook(entry gentries[],int x)
 			IfJobDoesNotExistCreate(guJobOffer);
 		}
 	}
+	
+	if(!strncmp(gcFunction,"DelImage",8))
+		DelImage();
 	htmlJobOffer();
 
 }//void JobOfferGetHook(entry gentries[],int x)
@@ -437,7 +467,20 @@ void UserCommands(pentry entries[], int x)
 						guJobOffer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
+				{
 					gcMessage="Error inesperado u3 pruebe mas tarde!";
+					htmlJobOffer();
+				}
+				LoadJobOfferData(guJobOffer);
+				if(cJobOwner[0] && strcmp(gcLogin,cJobOwner))
+				{
+					sprintf(gcQuery,"El estado de tu trabajo ha cambiado.\n"
+						"%s %s %um %u: %s.\n"
+					"Ver: https://portal.arreglokites.com/unxsAKApp?uJobOffer=%u",
+						cForeignKey("tBrand","cLabel",uBrand),cModel,uSize,uYear,cuStatus,
+						guJobOffer);
+					SendEmail(gcQuery,cJobOwner,"unxsak@unxs.io","ArregloKites Cambio de Estado","unxsak@unxs.io");
+				}
 			}
 			htmlJobOffer();
 		}
@@ -1282,7 +1325,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			if(cLink1[0])
 				sprintf(cImage1Src,"<a href=/images/%s title='%s' >"
 					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"
-					"<p>Img1. %s</p>",cLink1,cLink1Title,cLink1,cLink1Desc);
+					"<p>Img1. %s <a title='eliminar imagen' href='?gcPage=JobOffer&gcFunction=DelImage1'>[-]</a> </p>",cLink1,cLink1Title,cLink1,cLink1Desc);
 			template.cpValue[21]=cImage1Src;
 
 			template.cpName[22]="cImage2";
@@ -1290,7 +1333,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			if(cLink2[0])
 				sprintf(cImage2Src,"<a href=/images/%s title='%s' >"
 					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"
-					"<p>Img2. %s</p>",cLink2,cLink2Title,cLink2,cLink2Desc);
+					"<p>Img2. %s <a title='eliminar imagen' href='?gcPage=JobOffer&gcFunction=DelImage2'>[-]</a> </p>",cLink2,cLink2Title,cLink2,cLink2Desc);
 			template.cpValue[22]=cImage2Src;
 
 			template.cpName[23]="cImage3";
@@ -1298,7 +1341,7 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			if(cLink3[0])
 				sprintf(cImage3Src,"<a href=/images/%s title='%s' >"
 					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"
-					"<p>Img3. %s</p>",cLink3,cLink3Title,cLink3,cLink3Desc);
+					"<p>Img3. %s <a title='eliminar imagen' href='?gcPage=JobOffer&gcFunction=DelImage3'>[-]</a> </p>",cLink3,cLink3Title,cLink3,cLink3Desc);
 			template.cpValue[23]=cImage3Src;
 
 			char *cDisabled="disabled";
