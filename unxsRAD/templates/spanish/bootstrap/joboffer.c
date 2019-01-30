@@ -81,6 +81,7 @@ void funcJobOffer(FILE *fp)
 static unsigned guStatus=0;
 extern unsigned uStatus;
 
+
 void htmlStatusSelect(FILE *fp)
 {
 	sprintf(gcQuery,"SELECT uStatus,cLabel FROM tStatus");
@@ -94,30 +95,42 @@ void htmlStatusSelect(FILE *fp)
 	MYSQL_ROW field;
 	res=mysql_store_result(&gMysql);
 
-fprintf(fp,"  <div class=\"col-sm-9 col-xs-12\">\n");
-fprintf(fp,"    <p class=\"big-para\"><button type=\"button\" data-toggle=\"collapse\" data-target=\"#collapseStatus\" >+</button></p>\n");
-fprintf(fp,"  </div>\n");
-fprintf(fp,"  <div class=\"collapse col-sm-9 col-xs-12\" id=\"collapseStatus\">\n");
-fprintf(fp,"    <div class=\"card card-body\">\n");
-fprintf(fp,"      <form class=\"clearfix\" accept-charset=\"utf-8\" method=\"post\" action=\"/unxsAKApp\">\n");
-fprintf(fp,"      Cambiar Estado\n");
+	fprintf(fp,"  <div class=\"col-sm-9 col-xs-12\">\n");
+	fprintf(fp,"    <p class=\"big-para\"><button type=\"button\" data-toggle=\"collapse\""
+			" data-target=\"#collapseStatus\" >+</button></p>\n");
+	fprintf(fp,"  </div>\n");
+	fprintf(fp,"  <div class=\"collapse col-sm-9 col-xs-12\" id=\"collapseStatus\">\n");
+	fprintf(fp,"      <div class=\"card card-body\">\n");
+	fprintf(fp,"      <form class=\"clearfix\" accept-charset=\"utf-8\" method=\"post\" action=\"/unxsAKApp\">\n");
+	fprintf(fp,"      <input type=hidden name=gcPage value=JobOffer >\n");
+	fprintf(fp,"      <input type=hidden name=gcFunction value=SetStatus >\n");
+	fprintf(fp,"      Cambiar Estado\n");
 
-	fprintf(fp,"\t\t<input type=hidden name=gcPage value=JobOffer >\n");
-	fprintf(fp,"\t\t<input type=hidden name=gcFunction value=SetStatus >\n");
-	fprintf(fp,"\t\t<select onchange=\"this.form.submit()\" class=\"form-control\" id=\"uStatus\" name=\"uStatus\">\n");
+	fprintf(fp,"      <select onchange=\"this.form.submit()\" class=\"form-control\" id=\"uStatus\" name=\"uStatus\">\n");
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&guStatus);
-		fprintf(fp,"\t\t\t<option ");
+		fprintf(fp,"      <option ");
 		if(uStatus==guStatus)
 			fprintf(fp,"selected ");
 		fprintf(fp," value='%s'>%s</option>\n",field[0],field[1]);
 	}
-	fprintf(fp,"\t\t</select>\n");
+	fprintf(fp,"      </select>\n");
+	fprintf(fp,"      </form>\n");
+	fprintf(fp,"      </div>\n");
 
-fprintf(fp,"      </form>\n");
-fprintf(fp,"    </div>\n");
-fprintf(fp,"  </div>\n");
+	fprintf(fp,"      <div class=\"card card-body\">\n");
+	fprintf(fp,"      <form class=\"clearfix\" accept-charset=\"utf-8\" method=\"post\" action=\"/unxsAKApp\">\n");
+	fprintf(fp,"      <input type=hidden name=gcPage value=JobOffer >\n");
+	fprintf(fp,"      <input type=hidden name=gcFunction value=ChangeOwner>\n");
+	fprintf(fp,"      Cambiar Due&ntilde;o\n");
+	fprintf(fp,"      <input title=\"Email del nuevo due&ntilde;o. E.g. someemail@somemail.com\" type=text onchange=\"this.form.submit()\" "
+			"class=\"form-control\" id=\"cNewOwner\" name=\"cNewOwner\">\n");
+	fprintf(fp,"      </form>\n");
+	fprintf(fp,"      </div>\n");
+
+	fprintf(fp,"    </form>\n");
+	fprintf(fp,"  </div>\n");
 }//void htmlStatusSelect(FILE *fp)
 
 
@@ -132,3 +145,5 @@ void funcStatusSelect(FILE *fp)
 	}
 
 }//void funcStatusSelect()
+
+

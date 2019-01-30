@@ -47,16 +47,17 @@ void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned 
 	if(uYear && uMonth && uDay && uVendor)
 	{
 		if(guPermLevel>=10)
-			sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tCalendar,tJobOffer"
+			sprintf(gcQuery,"SELECT DISTINCT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tCalendar,tJobOffer"
 				" WHERE tCalendar.uJobOffer=tJobOffer.uJobOffer"
 				" AND (tCalendar.uVendor=%u OR tCalendar.uOwner=%u)"
-				" AND tCalendar.dDate='%u-%u-%u'",
+				" AND tCalendar.dDate='%u-%u-%u' ORDER BY tJobOffer.uCreatedDate",
 						uVendor,guOrg,
 						uYear,uMonth,uDay);
 		else
-			sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tCalendar,tJobOffer"
+			sprintf(gcQuery,"SELECT DISTINCT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tCalendar,tJobOffer"
 				" WHERE tCalendar.uJobOffer=tJobOffer.uJobOffer"
-				" AND tCalendar.uVendor=%u AND tCalendar.dDate='%u-%u-%u'",uVendor,uYear,uMonth,uDay);
+				" AND tCalendar.uVendor=%u AND tCalendar.dDate='%u-%u-%u' ORDER BY tJobOffer.uCreatedDate",
+						uVendor,uYear,uMonth,uDay);
 		mysql_query(&gMysql,gcQuery);
 		printf("<font size=-2>");
 		if(mysql_errno(&gMysql))

@@ -45,6 +45,7 @@ char *cLink3Desc="";
 char cJobOwner[33]={""};
 char cuStatus[33]={""};
 unsigned uStatus=0;
+char cNewOwner[100]={""};
 
 //TOC
 void ProcessUserVars(pentry entries[], int x);
@@ -110,8 +111,8 @@ void ProcessJobOfferVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&guJobOffer);
 		else if(!strcmp(entries[i].name,"uBrand"))
 		{
-			sprintf(cBrand,"%.31s",entries[i].val);
 			sscanf(entries[i].val,"%u",&uBrand);
+			sprintf(cBrand,"%.31s",cForeignKey("tBrand","cLabel",uBrand));
 		}
 		else if(!strcmp(entries[i].name,"cModel"))
 			sprintf(cModel,"%.31s",entries[i].val);
@@ -125,6 +126,8 @@ void ProcessJobOfferVars(pentry entries[], int x)
 			sprintf(dEnd,"%.31s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uStatus"))
 			sscanf(entries[i].val,"%u",&uStatus);
+		else if(!strcmp(entries[i].name,"cNewOwner"))
+			sprintf(cNewOwner,"%.99s",entries[i].val);
 	}
 
 }//void ProcessJobOfferVars(pentry entries[], int x)
@@ -247,21 +250,22 @@ void IfJobDoesNotExistCreate(unsigned uJob)
 				"uJobOffer=%u,"
 				"cLabel='New Job Tag %u',"
 				"uStatus=1,"
-				"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
-							uJob,
+				"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u,"
+				"cDescription=CONCAT(NOW(),': ',(SELECT cLabel FROM tStatus WHERE uStatus=1))"
+							,uJob,
 							uJob,
 							guLoginClient,guLoginClient);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
-		gcMessage="Unexpected error (i1) try again later!";
+		gcMessage="Error i1 pruebe mas tarde!";
 		//debug only
 		//gcMessage=gcQuery;
 		htmlJobOffer();
 	}
 	guJobOffer=uJob;
 	printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
-	gcMessage="New job created from scanned tag.";
+	gcMessage="Trabajo nuevo creado";
 }//void IfJobDoesNotExistCreate(unsigned uJob)
 
 
@@ -377,37 +381,85 @@ void UserCommands(pentry entries[], int x)
 		{
 			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
 		}
+		else if(!strcmp(gcFunction,"ChangeOwner") && guPermLevel>=10)
+		{
+			if(!cNewOwner[0])
+				gcMessage="Debe proveer nuevo due&ntilde;o";
+			if(!guJobOffer)
+				gcMessage="No hay numero de trabajo";
+			if(gcMessage[0])
+				htmlJobOffer();
+				
+
+			sprintf(gcQuery,"SELECT uCertClient FROM tAuthorize WHERE cLabel='%.32s'",cNewOwner);
+			mysql_query(&gMysql,gcQuery);
+			MYSQL_RES *res;
+			MYSQL_ROW field;
+			unsigned uNewOwner=0;
+			res=mysql_store_result(&gMysql);
+			if(mysql_num_rows(res)==1)
+			{
+				field=mysql_fetch_row(res);
+				sscanf(field[0],"%u",&uNewOwner);
+			}
+			else
+			{
+				gcMessage="No hay tal persona!";
+				htmlJobOffer();
+			}
+
+			if(uNewOwner)
+			{
+				sprintf(gcQuery,"UPDATE tJobOffer SET uOwner=%u WHERE uJobOffer=%u",uNewOwner,guJobOffer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					gcMessage="Error inesperado pruebe mas tarde";
+			}
+			else
+			{
+				gcMessage="Error inesperado u1 pruebe mas tarde";
+			}
+			htmlJobOffer();
+		}
 		else if(!strcmp(gcFunction,"SetStatus") && guPermLevel>=10)
 		{
 			if(!uStatus)
-				gcMessage="Must provide uStatus";
+				gcMessage="No hay estado nuevo";
 			else if(!guJobOffer)
-				gcMessage="Must provide uJobOffer";
+				gcMessage="No hay numero de trabajo";
 			else
 			{
-				sprintf(gcQuery,"UPDATE tJobOffer SET uStatus=%u WHERE uJobOffer=%u",uStatus,guJobOffer);
+				sprintf(gcQuery,"UPDATE tJobOffer SET uStatus=%u,"
+					"cDescription=CONCAT(cDescription,'\n',NOW(),': ',(SELECT cLabel FROM tStatus WHERE uStatus=%u))"
+					" WHERE uJobOffer=%u",
+						uStatus,
+						uStatus,
+						guJobOffer);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
-					gcMessage="Unexpected error 3 updating tJobOffer!";
+					gcMessage="Error inesperado u3 pruebe mas tarde!";
 			}
 			htmlJobOffer();
 		}
 		else if(!strcmp(gcFunction,"AMJobOffer"))
 		{
+			gcMessage="";
 			if(!uYear)
-				gcMessage="Must provide year";
-			else if(!uYear)
-				gcMessage="Must provide size";
-			else if(!cBrand[0])
-				gcMessage="Must provide brand";
+				gcMessage="Falta a&ntilde;o";
+			else if(!uSize)
+				gcMessage="Falta tama&ntilde;o";
+			else if(!cBrand[0] || !uBrand)
+				gcMessage="Falta marca";
 			else if(!cModel[0])
-				gcMessage="Must provide model";
+				gcMessage="Falta modelo";
 			else if(!cDescription[0])
-				gcMessage="Must provide cDescription";
+				gcMessage="Falta descripci&oacute;n";
 			else if(!dStart[0])
-				gcMessage="Must provide first day";
+				gcMessage="Falta fecha inicial";
 			else if(!dEnd[0])
-				gcMessage="Must provide last day";
+				gcMessage="Falta fecha final";
+			if(gcMessage[0])
+				htmlJobOffer();
 			unsigned uStartMonth=0,uStartDay=0,uStartYear=0;
 			unsigned uEndMonth=0,uEndDay=0,uEndYear=0;
 			sscanf(dStart,"%u-%u-%u",&uStartYear,&uStartMonth,&uStartDay);
@@ -415,7 +467,7 @@ void UserCommands(pentry entries[], int x)
 			if(!uStartMonth || !uStartDay || !uStartYear ||
 				!uEndMonth || !uEndDay || !uEndYear)
 			{
-				gcMessage="Start and/or end date format error";
+				gcMessage="Error de formato de fecha";
 				htmlJobOffer();
 			}
 			char cStart[32],cEnd[32];
@@ -426,26 +478,28 @@ void UserCommands(pentry entries[], int x)
 			sscanf(cEnd,"%u",&uEnd);
 			if(uEnd<=uStart)
 			{
-				gcMessage="End date must be larger than start date!";
+				gcMessage="Fecha de inicio debe ser anterior a la fecha final";
 				htmlJobOffer();
 			}
 
 			unsigned uJobOffer=0;
 
 			//Update by deleting selected job offer and then adding with same uK
-			if(guJobOffer && guLoginClient)
+			//This -1 thing has to be fixed... see joboffer.c
+			if(guJobOffer && guJobOffer!= (-1))
 			{
+
 				if(guPermLevel>=10)
 					sprintf(gcQuery,"UPDATE tJobOffer SET "
 					"cLabel='%s %s %um %u',"
-					"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
+					"uBrand=%u,cModel='%s',uYear=%u,"
 					"uSize=%u,uMaxBid=%u,"
 					"cDescription='%s',"
 					"cColors='%s',"
 					"dStart='%s',dEnd='%s',"
 					"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJobOffer=%u",
 								cBrand,TextAreaSave(cModel),uSize,uYear,
-								cBrand,TextAreaSave(cModel),uYear,
+								uBrand,TextAreaSave(cModel),uYear,
 								uSize,uMaxBid,
 								TextAreaSave(cDescription),
 								TextAreaSave(cColors),
@@ -454,14 +508,14 @@ void UserCommands(pentry entries[], int x)
 				else
 					sprintf(gcQuery,"UPDATE tJobOffer SET "
 					"cLabel='%s %s %um %u',"
-					"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
+					"uBrand=%u,cModel='%s',uYear=%u,"
 					"uSize=%u,uMaxBid=%u,"
 					"cDescription='%s',"
 					"cColors='%s',"
 					"dStart='%s',dEnd='%s',"
 					"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uJobOffer=%u AND uOwner=%u",
 								cBrand,TextAreaSave(cModel),uSize,uYear,
-								cBrand,TextAreaSave(cModel),uYear,
+								uBrand,TextAreaSave(cModel),uYear,
 								uSize,uMaxBid,
 								TextAreaSave(cDescription),
 								TextAreaSave(cColors),
@@ -470,27 +524,34 @@ void UserCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
-					gcMessage="Unexpected error updating tJobOffer!";
+					gcMessage="Error u4 prueba mas tarde!";
 					//debug only
 					//gcMessage=gcQuery;
 					htmlJobOffer();
 				}
 				uJobOffer=guJobOffer;
+				if(mysql_affected_rows(&gMysql)!=1)
+				{
+					gcMessage="Error inesperado pruebe de nuevo por favor";
+					guJobOffer=0;
+					printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
+					htmlJobOffer();
+				}
 			}
 			else
 			{
 				//Create new job offer
 				sprintf(gcQuery,"INSERT INTO tJobOffer SET "
 					"cLabel='%s %s %um %u',"
-					"uBrand=(SELECT uBrand FROM tBrand WHERE cLabel='%s'),cModel='%s',uYear=%u,"
+					"uBrand=%u,cModel='%s',uYear=%u,"
 					"uSize=%u,uMaxBid=%u,"
-					"cDescription='%s',"
+					"cDescription=CONCAT(NOW(),': ',(SELECT cLabel FROM tStatus WHERE uStatus=1),'\n','%s'),"
 					"cColors='%s',"
 					"dStart='%s',dEnd='%s',"
 					"uStatus=1,"
 					"uOwner=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u",
 								cBrand,TextAreaSave(cModel),uSize,uYear,
-								cBrand,TextAreaSave(cModel),uYear,
+								uBrand,TextAreaSave(cModel),uYear,
 								uSize,uMaxBid,
 								TextAreaSave(cDescription),
 								TextAreaSave(cColors),
@@ -500,24 +561,33 @@ void UserCommands(pentry entries[], int x)
 				uJobOffer=mysql_insert_id(&gMysql);
 				if(mysql_errno(&gMysql) || !uJobOffer)
 				{
-					gcMessage="Unexpected error (i0) try again later!";
+					gcMessage="Error inesperado (i0) pruebe mas tarde!";
 					//debug only
-					//gcMessage=gcQuery;
+					//gcMessage="D5";
+					htmlJobOffer();
+				}
+				if(!uJobOffer)
+				{
+					gcMessage="Error inesperado (i01) pruebe mas tarde!";
 					htmlJobOffer();
 				}
 				guJobOffer=uJobOffer;
-				printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",uJobOffer);
 			}
 
 			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",uJobOffer);
 
 			//Remove all existing for same job
+			if(!uJobOffer)
+			{
+				gcMessage="Error inesperado (ui0) pruebe mas tarde!";
+				htmlJobOffer();
+			}
 			sprintf(gcQuery,"DELETE FROM tCalendar WHERE uVendor=%u AND uJobOffer=%u",
 							guLoginClient,uJobOffer);
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				gcMessage="Unexpected error (22) try again later!";
+				gcMessage="Error inesperado (22) pruebe mas tarde!";
 				htmlJobOffer();
 			}
 
@@ -543,7 +613,7 @@ void UserCommands(pentry entries[], int x)
 			mysql_query(&gMysql,gcQuery);
 			if(mysql_errno(&gMysql))
 			{
-				gcMessage="Unexpected error try again later!";
+				gcMessage="Error inesperado (23) pruebe mas tarde!";
 				htmlJobOffer();
 			}
 			MYSQL_RES *res;
@@ -560,14 +630,14 @@ void UserCommands(pentry entries[], int x)
 					mysql_query(&gMysql,gcQuery);
 					if(mysql_errno(&gMysql))
 					{
-						gcMessage="Unexpected error3 try again later!";
+						gcMessage="Error inesperado (i30) pruebe mas tarde!";
 						htmlJobOffer();
 					}
 				}//while
 			}//if rows
 			else
 			{
-				gcMessage="Unexpected error0 try again later!";
+				gcMessage="Error inesperado (i31) pruebe mas tarde!";
 				htmlJobOffer();
 			}
 			mysql_free_result(res);

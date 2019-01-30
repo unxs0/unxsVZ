@@ -52,7 +52,7 @@
   <div class="row">
     <div class="col-sm-9 col-xs-12">
       <h4>{{gcMessage}}</h4>
-      <p class="big-para">Elija un trabajo existente o crear uno nuevo.</p>
+      <!-- <p class="big-para">Elija un trabajo existente o crear uno nuevo.</p> -->
     </div>
   </div>
   <div class="row">
@@ -92,7 +92,7 @@
   <div class="row">
 
     <div class="col-sm-9 col-xs-12">
-      <p class="big-para">{{cDescription}}.</p>
+      <p class="big-para"><pre style="font-family: verdana,arial">{{cDescription}}</pre></p>
     </div>
     <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
       {{cImage1}}
@@ -128,7 +128,7 @@
   <div class="card-body">
   <div class="row">
     <div class="col-sm-9 col-xs-12">
-      <p class="big-para">Elija el primer dia que tiene disponible para entregar el kite para su arreglo, y el ultimo dia que desea que le entregen el trabajo terminado. Si no figura su marca o modelo escribalo en el area de notas.</p>
+      <p class="big-para">Si no figura su marca o modelo use otro/other y escr&iacute;balo en la descripci&oacute;n del trabajo.</p>
     </div>
   </div>
   <div class="row">
@@ -183,6 +183,7 @@
 				id="Year" required=true  </input>
            </div>
          </div>
+<!--
           <div class="row">
             <div class="col-sm-12 form-group" >
               <label for="MaxBid">Opcional: Costo Maximo Acceptable (Confidencial, no se informa al arreglista)</label>
@@ -190,6 +191,7 @@
 				id="MaxBid" </input>
            </div>
          </div>
+-->
           <div class="row">
             <div class="col-sm-12 form-group" >
               <label for="MainColor">Colores Principales del Kite</label>
@@ -314,6 +316,13 @@ de tu telefono es muy grande se puede mandar a Whatsapp y luego subir la imagen 
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
-  </body>
+
+
+<script>
+	$('#collapseSummary').on('shown.bs.collapse', function () {
+		window.location.reload(true);
+	});
+</script>
+
   </body>
 </html>

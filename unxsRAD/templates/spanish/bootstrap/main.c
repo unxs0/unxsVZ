@@ -496,12 +496,12 @@ void funcSelect(FILE *fp,char *cTable,unsigned uSelector)
 
 	fprintf(fp,"\t\t<select class=\"form-control\" id=\"u%1$s\" name=\"u%1$s\">\n",cTable+1);
 	res=mysql_store_result(&gMysql);
-	fprintf(fp,"<option>   </option>\n");
+	//fprintf(fp,"<option>  </option>\n");
 	while((field=mysql_fetch_row(res)))
 	{
 		unsigned uRowId=0;
 		sscanf(field[0],"%u",&uRowId);
-		fprintf(fp,"\t\t\t<option ");
+		fprintf(fp,"\t\t\t<option value='%u'",uRowId);
 		if(uRowId==uSelector)
 			fprintf(fp,"selected");
 		fprintf(fp,">%s</option>\n",field[1]);
