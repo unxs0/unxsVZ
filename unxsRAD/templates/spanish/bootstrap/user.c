@@ -64,6 +64,10 @@ void htmlLoginInfo(void);
 
 static unsigned uDay=0;
 unsigned guValidJobLoaded=0;
+unsigned guItemJob=0;
+unsigned guItem=0;
+
+extern char *gcInvoiceShow;
 
 
 void SendEmail(char *cMsg,char *cMailTo,char *cFrom,char *cSubject,char *cBcc)
@@ -128,6 +132,8 @@ void ProcessJobOfferVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uStatus);
 		else if(!strcmp(entries[i].name,"cNewOwner"))
 			sprintf(cNewOwner,"%.99s",entries[i].val);
+		else if(!strcmp(entries[i].name,"uItem"))
+			sscanf(entries[i].val,"%u",&guItem);
 	}
 
 }//void ProcessJobOfferVars(pentry entries[], int x)
@@ -296,6 +302,9 @@ void IfJobDoesNotExistCreate(unsigned uJob)
 }//void IfJobDoesNotExistCreate(unsigned uJob)
 
 
+void ItemJob(int iAdd);
+void DeleteItemJob(void);
+
 void JobOfferGetHook(entry gentries[],int x)
 {
 	register int i;
@@ -303,6 +312,8 @@ void JobOfferGetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"uJobOffer"))
 			sscanf(gentries[i].val,"%u",&guJobOffer);
+		else if(!strcmp(gentries[i].name,"uItemJob"))
+			sscanf(gentries[i].val,"%u",&guItemJob);
 		//Scanned job
 		else if(!strcmp(gentries[i].name,"uJob"))
 		{
@@ -313,6 +324,12 @@ void JobOfferGetHook(entry gentries[],int x)
 	
 	if(!strncmp(gcFunction,"DelImage",8))
 		DelImage();
+	else if(!strncmp(gcFunction,"AddItemJob",10))
+		ItemJob(1);
+	else if(!strncmp(gcFunction,"DelItemJob",10))
+		ItemJob((-1));
+	else if(!strncmp(gcFunction,"DeleteItem",10))
+		DeleteItemJob();
 	htmlJobOffer();
 
 }//void JobOfferGetHook(entry gentries[],int x)
@@ -449,6 +466,49 @@ void UserCommands(pentry entries[], int x)
 			{
 				gcMessage="Error inesperado u1 pruebe mas tarde";
 			}
+			htmlJobOffer();
+		}
+		else if(!strcmp(gcFunction,"AddItem") && guPermLevel>=10)
+		{
+			gcMessage="";
+			if(!guItem)
+				gcMessage="No hay guItem";
+			if(!guJobOffer)
+				gcMessage="No hay guJobOffer";
+			if(gcMessage[0])
+				htmlJobOffer();
+			sprintf(gcQuery,"SELECT uItemJob FROM tItemJob WHERE uItem=%u AND uJobOffer=%u",guItem,guJobOffer);
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Error inesperado s31 pruebe mas tarde!";
+				htmlJobOffer();
+			}
+			MYSQL_RES *res;
+			MYSQL_ROW field;
+			res=mysql_store_result(&gMysql);
+			unsigned uItem=0;
+			if((field=mysql_fetch_row(res)))
+			{
+				sscanf(field[0],"%u",&uItem);
+				sprintf(gcQuery,"UPDATE tItemJob SET uQuantity=uQuantity+1,"
+						"uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW()) WHERE uItemJob=%u",
+						guLoginClient,uItem);
+			}
+			else
+			{
+				sprintf(gcQuery,"INSERT INTO tItemJob SET uItem=%u,uJobOffer=%u,uQuantity=1,"
+						"uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())",
+						guItem,guJobOffer,
+						guLoginClient);
+			}
+			mysql_query(&gMysql,gcQuery);
+			if(mysql_errno(&gMysql))
+			{
+				gcMessage="Error inesperado i31 pruebe mas tarde!";
+				htmlJobOffer();
+			}
+			gcInvoiceShow="show";
 			htmlJobOffer();
 		}
 		else if(!strcmp(gcFunction,"SetStatus") && guPermLevel>=10)
@@ -1359,7 +1419,10 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[27]="cuStatus";
 			template.cpValue[27]=cuStatus;
 
-			template.cpName[28]="";
+			template.cpName[28]="gcInvoiceShow";
+			template.cpValue[28]=gcInvoiceShow;
+
+			template.cpName[29]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");
@@ -1550,3 +1613,52 @@ void htmlLoginInfo(void)
 	exit(0);
 
 }//void htmlLoginInfo(void)
+
+
+void ItemJob(int iAdd)
+{
+	if(guPermLevel<10)
+		htmlJobOffer();
+	if(iAdd>1 || iAdd< -1)
+		htmlJobOffer();
+	if(!guItemJob)
+	{
+		gcMessage="No guItemJob!";
+		htmlJobOffer();
+	}
+	if(iAdd>0)
+		sprintf(gcQuery,"UPDATE tItemJob SET uQuantity=uQuantity+%d,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uItemJob=%u",
+			iAdd,guLoginClient,
+				guItemJob);
+	else
+		sprintf(gcQuery,"UPDATE tItemJob SET uQuantity=uQuantity+%d,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uQuantity>0 AND uItemJob=%u",
+			iAdd,guLoginClient,
+				guItemJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		gcMessage="ItemJob error!";
+	else
+		gcInvoiceShow="show";
+
+}//void ItemJob(unsigned uAdd)
+
+
+void DeleteItemJob(void)
+{
+	if(guPermLevel<10)
+		htmlJobOffer();
+	if(!guItemJob)
+	{
+		gcMessage="No guItemJob!";
+		htmlJobOffer();
+	}
+		sprintf(gcQuery,"DELETE FROM tItemJob WHERE uItemJob=%u",guItemJob);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		gcMessage="DeleteItemJob error!";
+	else
+		gcInvoiceShow="show";
+
+}//void DeleteItemJob(void)

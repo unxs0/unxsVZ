@@ -112,6 +112,7 @@
   </div><!--card-->
   <!-- End Summary Card -->
 
+
   <!-- Details Card -->
   <div class="card">
 
@@ -290,6 +291,7 @@ de tu telefono es muy grande se puede mandar a Whatsapp y luego subir la imagen 
          <input type=hidden name="gcPage" value="JobOffer">
          <button {{cDisabled}} title='Solo se puede subir una imagen de trabajo ya creado. Crear el trabajo en detalles por favor primero. Debe ser .png o .jpg. Tama&ntilde;o m&aacute;ximo 8M.' class="btn btn-success btn-lg btn-block" name="gcFunction" value="AddJobOfferImage"
 					type="submit" id="submitbutton">Suba Im&aacute;gen</button>
+     </form>
      </div>
    </div>
   </div>
@@ -300,6 +302,29 @@ de tu telefono es muy grande se puede mandar a Whatsapp y luego subir la imagen 
   </div><!--card-->
   <!-- End Job Images Card -->
 
+  <!-- Invoice Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingInvoice">
+  <h5 class="mb-0">
+  <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseInvoice">
+      <h4>Factura</h4> {{cuJobOffer}} 
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse {{gcInvoiceShow}}" id="collapseInvoice" data-parent="#accordionOne">
+  <div class="card-body">
+  <div class="row">
+
+{{funcInvoice}}
+
+  </div><!--row-->
+  </div><!--card-body-->
+  </div><!--collapseInvoice-->
+  </div><!--card-->
+  <!-- End Invoice Card -->
   </div><!--accordianOne-->
   </main>
 

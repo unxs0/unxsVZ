@@ -18,6 +18,7 @@ void htmlStatusSelect(FILE *fp);
 void funcStatusSelect(FILE *fp);
 
 unsigned guJobOffer= -1;
+extern unsigned guItem;
 
 void htmlJobOfferSelect(FILE *fp)
 {
@@ -119,6 +120,7 @@ void htmlStatusSelect(FILE *fp)
 	fprintf(fp,"      </form>\n");
 	fprintf(fp,"      </div>\n");
 
+	//Cambiar dueno
 	fprintf(fp,"      <div class=\"card card-body\">\n");
 	fprintf(fp,"      <form class=\"clearfix\" accept-charset=\"utf-8\" method=\"post\" action=\"/unxsAKApp\">\n");
 	fprintf(fp,"      <input type=hidden name=gcPage value=JobOffer >\n");
@@ -129,8 +131,6 @@ void htmlStatusSelect(FILE *fp)
 	fprintf(fp,"      </form>\n");
 	fprintf(fp,"      </div>\n");
 
-	fprintf(fp,"    </form>\n");
-	fprintf(fp,"  </div>\n");
 }//void htmlStatusSelect(FILE *fp)
 
 
@@ -143,6 +143,143 @@ void funcStatusSelect(FILE *fp)
 		htmlStatusSelect(fp);
 		fprintf(fp,"<!-- End of funcStatusSelect()-->\n");
 	}
+
+}//void funcStatusSelect()
+
+
+void htmlInvoiceInteractive(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	//Costos y facturacion
+	fprintf(fp,"<font size=-1><pre>\n");
+	fprintf(fp,"Costos y Facturaci&oacute;n (%u)\n",guJobOffer);
+	//Items
+	sprintf(gcQuery,"SELECT tItem.cLabel,tItemJob.uQuantity,tItem.mValue,"
+				"FORMAT(tItemJob.uQuantity*tItem.mValue,2),"
+				"tItemJob.uItemJob"
+				" FROM tItemJob,tItem"
+				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s9) try again later!";
+		htmlJobOffer();
+	}
+	res=mysql_store_result(&gMysql);
+	unsigned uCount=1;
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"%u) %s %s@$%s $%s"
+				" <a href=\"?gcPage=JobOffer&uItemJob=%s&gcFunction=AddItemJob\">[+]</a>"
+				" <a href=\"?gcPage=JobOffer&uItemJob=%s&gcFunction=DelItemJob\">[-]</a>"
+				" <a href=\"?gcPage=JobOffer&uItemJob=%s&gcFunction=DeleteItem\">[x]</a>\n",
+				uCount++,field[0],field[1],field[2],field[3],
+					field[4],
+					field[4],
+					field[4]);
+	}
+	//Total
+	sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2) FROM tItemJob,tItem"
+				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"Total $%s\n",field[0]);
+	}
+
+	//Costos
+	sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue-tItemJob.uQuantity*tItem.mCost),2) FROM tItemJob,tItem"
+				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"Profit $%s\n",field[0]);
+	}
+
+	fprintf(fp,"</pre>\n");
+	fprintf(fp,"      <form class=\"clearfix\" accept-charset=\"utf-8\" method=\"post\" action=\"/unxsAKApp\">\n");
+	fprintf(fp,"      <input type=hidden name=gcPage value=JobOffer >\n");
+	fprintf(fp,"      <input type=hidden name=gcFunction value=AddItem >\n");
+	fprintf(fp,"      Agregar Item\n");
+
+	sprintf(gcQuery,"SELECT uItem,cLabel,mValue FROM tItem ORDER BY cLabel");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s82) try again later!";
+		htmlJobOffer();
+	}
+	res=mysql_store_result(&gMysql);
+
+	fprintf(fp,"      <select onchange=\"this.form.submit()\" class=\"form-control\" id=\"uItem\" name=\"uItem\">\n");
+	unsigned uItem=0;
+	fprintf(fp,"      <option> </option> ");//empty option for invoice with nothing
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uItem);
+		fprintf(fp,"      <option ");
+		fprintf(fp," value='%s'>%s %s</option>\n",field[0],field[1],field[2]);
+	}
+	fprintf(fp,"      </select>\n");
+	fprintf(fp,"      </form>\n");
+
+}//void htmlInvoiceInteractive(FILE *fp)
+
+
+void htmlInvoiceViewOnly(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	//Facturacion
+	fprintf(fp,"<font size=-1><pre>\n");
+	fprintf(fp,"Facturaci&oacute;n (%u)\n",guJobOffer);
+	//Items
+	sprintf(gcQuery,"SELECT tItem.cLabel,tItemJob.uQuantity,tItem.mValue,"
+				"FORMAT(tItemJob.uQuantity*tItem.mValue,2)"
+				" FROM tItemJob,tItem"
+				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s9) try again later!";
+		htmlJobOffer();
+	}
+	res=mysql_store_result(&gMysql);
+	unsigned uCount=1;
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"%u) %s %s@$%s $%s\n",
+				uCount++,field[0],field[1],field[2],field[3]);
+	}
+	//Total
+	sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2) FROM tItemJob,tItem"
+				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"Total $%s\n",field[0]);
+	}
+
+	fprintf(fp,"</pre>\n");
+
+}//void htmlInvoiceViewOnly(FILE *fp)
+
+
+void funcInvoice(FILE *fp)
+{
+
+	fprintf(fp,"<!-- funcInvoice()-->\n");
+	if(guPermLevel>=10)
+		htmlInvoiceInteractive(fp);
+	else
+		htmlInvoiceViewOnly(fp);
+	fprintf(fp,"<!-- End of funcInvoice()-->\n");
 
 }//void funcStatusSelect()
 

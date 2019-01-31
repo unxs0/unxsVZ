@@ -141,3 +141,4 @@ void funcCalendar(FILE *fp);
 //joboffers.c
 void funcJobOffer(FILE *fp);
 void funcStatusSelect(FILE *fp);
+void funcInvoice(FILE *fp);

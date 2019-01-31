@@ -59,6 +59,7 @@ unsigned guBrowserFirefox=0;
 unsigned guYear=0;
 unsigned guMonth=0;
 char *gcImagesShow="";//show or empty
+char *gcInvoiceShow="";//show or empty
 char *gcCPShow="";//show or empty
 char gcFilename[100]={""};	
 char gcImageDescription[512]={""};	
@@ -527,6 +528,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcJobOffer(fp);
 	else if(!strcmp(cFunction,"funcStatusSelect"))
 		funcStatusSelect(fp);
+	else if(!strcmp(cFunction,"funcInvoice"))
+		funcInvoice(fp);
 	else if(!strncmp(cFunction,"funcSelect(tBrand)",18))
 	{
 		funcSelect(fp,"tBrand",uBrand);
