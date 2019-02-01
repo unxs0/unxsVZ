@@ -68,6 +68,7 @@ unsigned guItemJob=0;
 unsigned guItem=0;
 
 extern char *gcInvoiceShow;
+extern char *gcSummaryShow;
 
 
 void SendEmail(char *cMsg,char *cMailTo,char *cFrom,char *cSubject,char *cBcc)
@@ -509,6 +510,7 @@ void UserCommands(pentry entries[], int x)
 				htmlJobOffer();
 			}
 			gcInvoiceShow="show";
+			gcSummaryShow="";
 			htmlJobOffer();
 		}
 		else if(!strcmp(gcFunction,"SetStatus") && guPermLevel>=10)
@@ -1422,7 +1424,10 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[28]="gcInvoiceShow";
 			template.cpValue[28]=gcInvoiceShow;
 
-			template.cpName[29]="";
+			template.cpName[29]="gcSummaryShow";
+			template.cpValue[29]=gcSummaryShow;
+
+			template.cpName[30]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");
@@ -1640,7 +1645,10 @@ void ItemJob(int iAdd)
 	if(mysql_errno(&gMysql))
 		gcMessage="ItemJob error!";
 	else
+	{
 		gcInvoiceShow="show";
+		gcSummaryShow="";
+	}
 
 }//void ItemJob(unsigned uAdd)
 
@@ -1659,6 +1667,9 @@ void DeleteItemJob(void)
 	if(mysql_errno(&gMysql))
 		gcMessage="DeleteItemJob error!";
 	else
+	{
 		gcInvoiceShow="show";
+		gcSummaryShow="";
+	}
 
 }//void DeleteItemJob(void)

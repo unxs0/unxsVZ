@@ -60,6 +60,7 @@ unsigned guYear=0;
 unsigned guMonth=0;
 char *gcImagesShow="";//show or empty
 char *gcInvoiceShow="";//show or empty
+char *gcSummaryShow="show";//show or empty. Special default show
 char *gcCPShow="";//show or empty
 char gcFilename[100]={""};	
 char gcImageDescription[512]={""};	
@@ -150,6 +151,7 @@ int main(int argc, char *argv[])
 				}
 			}
 			gcImagesShow="show";
+			gcSummaryShow="";
 		}
 		htmlJobOffer();
 	}

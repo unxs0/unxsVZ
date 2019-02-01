@@ -87,7 +87,7 @@
   </h5>
   </div><!--card header-->
 
-  <div class="collapse show" id="collapseSummary" data-parent="#accordionOne">
+  <div class="collapse {{gcSummaryShow}}" id="collapseSummary" data-parent="#accordionOne">
   <div class="card-body">
   <div class="row">
 
@@ -204,7 +204,7 @@
             <div class="col-sm-12 form-group">
               <label for="DesciptionTextarea">Descripcion del Trabajo</label>
               <textarea class="form-control" name = "cDescription" required=true 
-				id="DesciptionTextarea" rows="3" placeholder="Describa en detalle lo que necesita que se haga. Si la marca y/o modelos son otro explique aqui. Si aplica: En que color(es) de la tela esta roto?">{{cDescription}}</textarea>
+				id="DesciptionTextarea" rows="7" placeholder="Describa en detalle lo que necesita que se haga. Si la marca y/o modelos son otro explique aqui. Si aplica: En que color(es) de la tela esta roto?">{{cDescription}}</textarea>
            </div>
          </div>
          <input type=hidden name="gcPage" value="JobOffer">

@@ -168,36 +168,44 @@ void htmlInvoiceInteractive(FILE *fp)
 		htmlJobOffer();
 	}
 	res=mysql_store_result(&gMysql);
-	unsigned uCount=1;
+	unsigned uCount=0;
 	while((field=mysql_fetch_row(res)))
 	{
 		fprintf(fp,"%u) %s %s@$%s $%s"
 				" <a href=\"?gcPage=JobOffer&uItemJob=%s&gcFunction=AddItemJob\">[+]</a>"
 				" <a href=\"?gcPage=JobOffer&uItemJob=%s&gcFunction=DelItemJob\">[-]</a>"
 				" <a href=\"?gcPage=JobOffer&uItemJob=%s&gcFunction=DeleteItem\">[x]</a>\n",
-				uCount++,field[0],field[1],field[2],field[3],
+				++uCount,field[0],field[1],field[2],field[3],
 					field[4],
 					field[4],
 					field[4]);
 	}
-	//Total
-	sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2) FROM tItemJob,tItem"
-				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		fprintf(fp,"Total $%s\n",field[0]);
-	}
 
-	//Costos
-	sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue-tItemJob.uQuantity*tItem.mCost),2) FROM tItemJob,tItem"
-				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
+	if(uCount)
 	{
-		fprintf(fp,"Profit $%s\n",field[0]);
+		//Total
+		sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2) FROM tItemJob,tItem"
+				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			fprintf(fp,"Total $%s\n",field[0]);
+		}
+
+		//Costos
+		sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue-tItemJob.uQuantity*tItem.mCost),2) FROM tItemJob,tItem"
+					" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			fprintf(fp,"Profit $%s\n",field[0]);
+		}
+	}
+	else
+	{
+		fprintf(fp,"No existe factura. Crear agregando un item.\n");
 	}
 
 	fprintf(fp,"</pre>\n");
@@ -250,20 +258,28 @@ void htmlInvoiceViewOnly(FILE *fp)
 		htmlJobOffer();
 	}
 	res=mysql_store_result(&gMysql);
-	unsigned uCount=1;
+	unsigned uCount=0;
 	while((field=mysql_fetch_row(res)))
 	{
 		fprintf(fp,"%u) %s %s@$%s $%s\n",
-				uCount++,field[0],field[1],field[2],field[3]);
+				++uCount,field[0],field[1],field[2],field[3]);
 	}
-	//Total
-	sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2) FROM tItemJob,tItem"
-				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
-	mysql_query(&gMysql,gcQuery);
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
+
+	if(uCount)
 	{
-		fprintf(fp,"Total $%s\n",field[0]);
+		//Total
+		sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2) FROM tItemJob,tItem"
+				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			fprintf(fp,"Total $%s\n",field[0]);
+		}
+	}
+	else
+	{
+		fprintf(fp,"No hay factura disponible.\n");
 	}
 
 	fprintf(fp,"</pre>\n");
