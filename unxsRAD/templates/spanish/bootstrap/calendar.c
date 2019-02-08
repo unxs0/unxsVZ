@@ -49,6 +49,10 @@ void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned 
 		if(guPermLevel>=10)
 			sprintf(gcQuery,"SELECT DISTINCT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tCalendar,tJobOffer"
 				" WHERE tCalendar.uJobOffer=tJobOffer.uJobOffer"
+				" AND tJobOffer.uStatus!=10"
+				" AND tJobOffer.uStatus!=11"
+				" AND tJobOffer.uStatus!=14"
+				" AND tJobOffer.uStatus!=15"
 				" AND (tCalendar.uVendor=%u OR tCalendar.uOwner=%u)"
 				" AND tCalendar.dDate='%u-%u-%u' ORDER BY tJobOffer.uCreatedDate",
 						uVendor,guOrg,
@@ -56,6 +60,9 @@ void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned 
 		else
 			sprintf(gcQuery,"SELECT DISTINCT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tCalendar,tJobOffer"
 				" WHERE tCalendar.uJobOffer=tJobOffer.uJobOffer"
+				" AND tJobOffer.uStatus!=11"
+				" AND tJobOffer.uStatus!=14"
+				" AND tJobOffer.uStatus!=15"
 				" AND tCalendar.uVendor=%u AND tCalendar.dDate='%u-%u-%u' ORDER BY tJobOffer.uCreatedDate",
 						uVendor,uYear,uMonth,uDay);
 		mysql_query(&gMysql,gcQuery);

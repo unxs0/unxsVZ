@@ -13,6 +13,7 @@ PURPOSE
 #include "/usr/include/openisp/upload.h"
 
 extern unsigned guBrowserFirefox;//main.c
+extern unsigned guStatusFilter;//joboffer.c
 extern char gcCtHostname[];
 static char cCurPasswd[32]={""};
 static char cPasswd[32]={""};
@@ -66,6 +67,7 @@ static unsigned uDay=0;
 unsigned guValidJobLoaded=0;
 unsigned guItemJob=0;
 unsigned guItem=0;
+unsigned uJobToAssign=0;
 
 extern char *gcInvoiceShow;
 extern char *gcSummaryShow;
@@ -135,6 +137,8 @@ void ProcessJobOfferVars(pentry entries[], int x)
 			sprintf(cNewOwner,"%.99s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uItem"))
 			sscanf(entries[i].val,"%u",&guItem);
+		else if(!strcmp(entries[i].name,"uJobToAssign"))
+			sscanf(entries[i].val,"%u",&uJobToAssign);
 	}
 
 }//void ProcessJobOfferVars(pentry entries[], int x)
@@ -276,7 +280,8 @@ void IfJobDoesNotExistCreate(unsigned uJob)
 	if(mysql_num_rows(res)>0)
 	{
 		mysql_free_result(res);
-		return;
+		printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
+		htmlJobOffer();
 	}
 
 	//Create new job offer
@@ -297,14 +302,14 @@ void IfJobDoesNotExistCreate(unsigned uJob)
 		//gcMessage=gcQuery;
 		htmlJobOffer();
 	}
-	guJobOffer=uJob;
-	printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
 	gcMessage="Trabajo nuevo creado";
+	htmlJobOffer();
 }//void IfJobDoesNotExistCreate(unsigned uJob)
 
 
 void ItemJob(int iAdd);
 void DeleteItemJob(void);
+
 
 void JobOfferGetHook(entry gentries[],int x)
 {
@@ -315,6 +320,10 @@ void JobOfferGetHook(entry gentries[],int x)
 			sscanf(gentries[i].val,"%u",&guJobOffer);
 		else if(!strcmp(gentries[i].name,"uItemJob"))
 			sscanf(gentries[i].val,"%u",&guItemJob);
+		else if(!strcmp(gentries[i].name,"guStatusFilter"))
+		{
+			sscanf(gentries[i].val,"%u",&guStatusFilter);
+		}
 		//Scanned job
 		else if(!strcmp(gentries[i].name,"uJob"))
 		{
@@ -331,6 +340,26 @@ void JobOfferGetHook(entry gentries[],int x)
 		ItemJob((-1));
 	else if(!strncmp(gcFunction,"DeleteItem",10))
 		DeleteItemJob();
+
+	else if(!strcmp(gcFunction,"IncSF"))
+	{
+		if(guStatusFilter<16)
+			guStatusFilter++;
+		else
+			guStatusFilter=0;
+	}
+	else if(!strcmp(gcFunction,"DecSF"))
+	{
+		if(guStatusFilter>0)
+			guStatusFilter--;
+	}
+	else if(!strcmp(gcFunction,"DelSF"))
+	{
+		guStatusFilter=0;
+	}
+	printf("Set-Cookie: guStatusFilter=%u; secure; httponly; samesite=strict;\n",guStatusFilter);
+		
+
 	htmlJobOffer();
 
 }//void JobOfferGetHook(entry gentries[],int x)
@@ -409,6 +438,59 @@ unsigned uChangePassword(const char *cPasswd)
 }//unsigned uChangePassword(const char *cPasswd)
 
 
+void ChangeJobOffer(unsigned uJobOffer,unsigned uJobToAssign);
+void ChangeJobOffer(unsigned uJobOffer ,unsigned uJobToAssign)
+{
+	if(guPermLevel<10)
+		return;
+
+	//Change
+	sprintf(gcQuery,"UPDATE tJobOffer SET uJobOffer=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uJobOffer=%u",
+					uJobToAssign,guLoginClient,
+						uJobOffer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error NJO!";
+		return;
+	}
+
+	if(mysql_affected_rows(&gMysql)!=1)
+	{
+		gcMessage="uJobOffer not found!";
+		return;
+	}
+
+
+	//Fix Calendar
+	sprintf(gcQuery,"UPDATE tCalendar SET uJobOffer=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uJobOffer=%u",
+					uJobToAssign,guLoginClient,
+						uJobOffer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error UC-NJO!";
+		return;
+	}
+
+	//Fix Invoice
+	sprintf(gcQuery,"UPDATE tItemJob SET uJobOffer=%u,uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+				" WHERE uJobOffer=%u",
+					uJobToAssign,guLoginClient,
+						uJobOffer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error UIJ-NJO!";
+		return;
+	}
+	gcMessage="Nuevo numero de trabajo asignado";
+
+}//void ChangeJobOffer(unsigned uItemJob)
+
+
 //CalendarCommands
 void UserCommands(pentry entries[], int x)
 {
@@ -428,6 +510,19 @@ void UserCommands(pentry entries[], int x)
 		if(!strcmp(gcFunction,"SetJobOffer"))
 		{
 			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
+		}
+		else if(!strcmp(gcFunction,"ChangeJobOffer"))
+		{
+			if(!guJobOffer)
+				gcMessage="No hay numero de trabajo";
+			if(!uJobToAssign)
+				gcMessage="No hay numero a asignar";
+			if(guPermLevel<10)
+				gcMessage="No permitido";
+			if(gcMessage[0])
+				htmlJobOffer();
+			ChangeJobOffer(guJobOffer,uJobToAssign);
+			htmlJobOffer();
 		}
 		else if(!strcmp(gcFunction,"ChangeOwner") && guPermLevel>=10)
 		{
@@ -1183,14 +1278,45 @@ void LoadJobOfferData(unsigned uJobOffer)
 	if(uJobOffer==0) return;
 	if(uJobOffer==(-1))
 	{
+		if(guStatusFilter)
+		{
 		if(guPermLevel>=10)
-			sprintf(gcQuery,"SELECT uJobOffer,tJobOffer.cLabel FROM tJobOffer,tClient"
-				" WHERE tJobOffer.uOwner=tClient.uClient"
+			sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tJobOffer,tClient"
+				" WHERE tClient.uClient=tJobOffer.uOwner"
+				" AND tJobOffer.uStatus=%u"
 				" AND (tJobOffer.uOwner=%u OR tClient.uOwner=%u)"
-				" ORDER BY tJobOffer.uModDate DESC, tJobOffer.uCreatedDate DESC LIMIT 1",guLoginClient,guOrg);
+				" ORDER BY tJobOffer.uModDate DESC, tJobOffer.uCreatedDate DESC LIMIT 99",
+					guStatusFilter,guLoginClient,guOrg);
 		else
 			sprintf(gcQuery,"SELECT uJobOffer,cLabel FROM tJobOffer"
-				" WHERE uOwner=%u ORDER BY uModDate DESC, uCreatedDate DESC LIMIT 1",guLoginClient);
+				" WHERE tJobOffer.uStatus=%u"
+				" AND uOwner=%u ORDER BY uModDate DESC, uCreatedDate DESC LIMIT 99",
+					guStatusFilter,guLoginClient);
+		}
+		else
+		{
+		if(guPermLevel>=10)
+			//Work In Progress
+			sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tJobOffer,tClient"
+				" WHERE tClient.uClient=tJobOffer.uOwner"
+				" AND tJobOffer.uStatus!=15"//Archivado
+				" AND tJobOffer.uStatus!=14"//Cancelado
+				" AND tJobOffer.uStatus!=11"//Entregado
+				" AND tJobOffer.uStatus!=13"//Trabajo Postergado
+				" AND tJobOffer.uStatus!=10"//Listo Para Entrega
+				" AND tJobOffer.uStatus!=1"//Trabajo Nuevo
+				" AND tJobOffer.uStatus!=2"//Trabajo Aceptado
+				" AND (tJobOffer.uOwner=%u OR tClient.uOwner=%u)"
+				" ORDER BY tJobOffer.uModDate DESC, tJobOffer.uCreatedDate DESC LIMIT 99",
+					guLoginClient,guOrg);
+		else
+			sprintf(gcQuery,"SELECT uJobOffer,cLabel FROM tJobOffer"
+				" WHERE tJobOffer.uStatus!=15"//Arch
+				" AND tJobOffer.uStatus!=14"//Cancelado
+				" AND tJobOffer.uStatus!=11"//Entregado
+				" AND uOwner=%u ORDER BY uModDate DESC, uCreatedDate DESC LIMIT 99",
+					guLoginClient);
+		}
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 			htmlPlainTextError(mysql_error(&gMysql));

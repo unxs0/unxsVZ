@@ -19,23 +19,73 @@ void funcStatusSelect(FILE *fp);
 
 unsigned guJobOffer= -1;
 extern unsigned guItem;
+unsigned guStatusFilter=0;
+
+
+char *cStatusLabel(unsigned uStatus)
+{
+	static char cLabel[32]={"En Tramite"};
+
+	if(!uStatus)
+		return(cLabel);
+
+	sprintf(gcQuery,"SELECT cLabel FROM tStatus WHERE uStatus=%u",uStatus);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		return("error");
+	}
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cLabel,"%.31s",field[0]);
+	return(cLabel);
+
+}//char *cStatusLabel(unsigned uStatus)
+
 
 void htmlJobOfferSelect(FILE *fp)
 {
-	if(guPermLevel>=10)
-		sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tJobOffer,tClient"
+	if(guStatusFilter)
+	{
+		if(guPermLevel>=10)
+			sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tJobOffer,tClient"
 				" WHERE tClient.uClient=tJobOffer.uOwner"
-				" AND tJobOffer.uStatus!=6"
-				" AND tJobOffer.uStatus!=7"
+				" AND tJobOffer.uStatus=%u"
+				" AND (tJobOffer.uOwner=%u OR tClient.uOwner=%u)"
+				" ORDER BY tJobOffer.uModDate DESC, tJobOffer.uCreatedDate DESC LIMIT 99",
+					guStatusFilter,guLoginClient,guOrg);
+		else
+			sprintf(gcQuery,"SELECT uJobOffer,cLabel FROM tJobOffer"
+				" WHERE tJobOffer.uStatus=%u"
+				" AND uOwner=%u ORDER BY uModDate DESC, uCreatedDate DESC LIMIT 99",
+					guStatusFilter,guLoginClient);
+	}
+	else
+	{
+		if(guPermLevel>=10)
+			//Work In Progress
+			sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tJobOffer,tClient"
+				" WHERE tClient.uClient=tJobOffer.uOwner"
+				" AND tJobOffer.uStatus!=15"//Archivado
+				" AND tJobOffer.uStatus!=14"//Cancelado
+				" AND tJobOffer.uStatus!=11"//Entregado
+				" AND tJobOffer.uStatus!=13"//Trabajo Postergado
+				" AND tJobOffer.uStatus!=10"//Listo Para Entrega
+				" AND tJobOffer.uStatus!=1"//Trabajo Nuevo
+				" AND tJobOffer.uStatus!=2"//Trabajo Aceptado
 				" AND (tJobOffer.uOwner=%u OR tClient.uOwner=%u)"
 				" ORDER BY tJobOffer.uModDate DESC, tJobOffer.uCreatedDate DESC LIMIT 99",
 					guLoginClient,guOrg);
-	else
-		sprintf(gcQuery,"SELECT uJobOffer,cLabel FROM tJobOffer"
-				" WHERE tJobOffer.uStatus!=6"
-				" AND tJobOffer.uStatus!=7"
+		else
+			sprintf(gcQuery,"SELECT uJobOffer,cLabel FROM tJobOffer"
+				" WHERE tJobOffer.uStatus!=15"//Arch
+				" AND tJobOffer.uStatus!=14"//Cancelado
+				" AND tJobOffer.uStatus!=11"//Entregado
 				" AND uOwner=%u ORDER BY uModDate DESC, uCreatedDate DESC LIMIT 99",
 					guLoginClient);
+	}
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -45,19 +95,34 @@ void htmlJobOfferSelect(FILE *fp)
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	res=mysql_store_result(&gMysql);
+	unsigned uCount=0;
+	uCount=mysql_num_rows(res);
 
+	if(guPermLevel>=10)
+		fprintf(fp,"<a href=\"?gcPage=JobOffer&gcFunction=IncSF&guStatusFilter=%u\">[+]</a>"
+			" <a href=\"?gcPage=JobOffer&gcFunction=DecSF&guStatusFilter=%u\">[-]</a>"
+			" <a href=\"?gcPage=JobOffer&gcFunction=DelSF\">[x]</a>"
+			" <a href=\"?gcPage=JobOffer&gcFunction=IncSF&guStatusFilter=%u\">%s(%u)</a><br>",
+				guStatusFilter,
+				guStatusFilter,
+				guStatusFilter,cStatusLabel(guStatusFilter),uCount);
+	else
+		fprintf(fp,"<a href=\"?gcPage=JobOffer&guStatusFilter=11\">[+]</a>\n"
+			" <a href=\"?gcPage=JobOffer&guStatusFilter=0\">[-]</a>\n"
+			" <a href=\"?gcPage=JobOffer&guStatusFilter=%u\">%s(%u)</a><br>",
+				guStatusFilter,cStatusLabel(guStatusFilter),uCount);
 	fprintf(fp,"\t\t<input type=hidden name=gcPage value=JobOffer >\n");
 	fprintf(fp,"\t\t<input type=hidden name=gcFunction value=SetJobOffer >\n");
 	fprintf(fp,"\t\t<select onchange=\"this.form.submit()\" class=\"form-control\" id=\"uJobOffer\" name=\"uJobOffer\">\n");
-	fprintf(fp,"\t\t\t<option value='0'>Crear nuevo trabajo</option>\n");
 	unsigned uJobOffer=0;
 	unsigned uFirst=1;
+	fprintf(fp,"\t\t\t<option value='0'>Crear nuevo trabajo</option>\n");
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uJobOffer);
-		if(uFirst && guJobOffer== -1)
+		if(uFirst && guJobOffer== -1)//guJobOffer = -1 is when no cookies exist.
 		{
-			guJobOffer=uJobOffer;
+			guJobOffer=uJobOffer;//This is creating issues with filter
 			uFirst=0;
 		}
 		fprintf(fp,"\t\t\t<option ");
@@ -130,6 +195,18 @@ void htmlStatusSelect(FILE *fp)
 			"class=\"form-control\" id=\"cNewOwner\" name=\"cNewOwner\">\n");
 	fprintf(fp,"      </form>\n");
 	fprintf(fp,"      </div>\n");
+
+	//Assign new jobnumber
+	fprintf(fp,"      <div class=\"card card-body\">\n");
+	fprintf(fp,"      <form class=\"clearfix\" accept-charset=\"utf-8\" method=\"post\" action=\"/unxsAKApp\">\n");
+	fprintf(fp,"      <input type=hidden name=gcPage value=JobOffer >\n");
+	fprintf(fp,"      <input type=hidden name=gcFunction value=ChangeJobOffer>\n");
+	fprintf(fp,"      Cambiar Numero de Trabajo\n");
+	fprintf(fp,"      <input title=\"New uJobOffer integer\" type=number onchange=\"this.form.submit()\" "
+			"class=\"form-control\" id=\"uJobToAssign\" name=\"uJobToAssign\">\n");
+	fprintf(fp,"      </form>\n");
+	fprintf(fp,"      </div>\n");
+
 
 }//void htmlStatusSelect(FILE *fp)
 

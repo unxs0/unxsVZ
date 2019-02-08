@@ -107,6 +107,9 @@ extern unsigned guRequireOTPLogin;
 extern char gcOTPSecret[];
 extern char gcOTPInfo[];
 
+//Other
+extern unsigned guStatusFilter;//joboffer.c
+
 //Menu
 //
 

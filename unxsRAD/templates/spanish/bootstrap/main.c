@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 		}
 		else if(!gcFunction[0])
 		{
-			//Special direct uJobOffer link
+			//Special direct uJob link
 			JobOfferGetHook(gentries,x);
 			htmlJobOffer();
 		}
@@ -266,6 +266,7 @@ int main(int argc, char *argv[])
 			printf("Set-Cookie: {{cProject}}SessionId=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: {{cProject}}SessionHash=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: {{cProject}}JobOffer=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: guStatusFilter=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=8,uPermLevel=%u,"
 					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -625,6 +626,11 @@ void SSLCookieLogin(void)
 		{
 			cP+=strlen("{{cProject}}JobOffer=");
 			sscanf(cP,"%u",&guJobOffer);
+		}
+		if((cP=strstr(gcCookie,"guStatusFilter=")))
+		{
+			cP+=strlen("guStatusFilter=");
+			sscanf(cP,"%u",&guStatusFilter);
 		}
 	}//if gcCookie[0] time saver
 
