@@ -1,0 +1,61 @@
+-- MySQL dump 10.13  Distrib 5.1.73, for redhat-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: unxsak
+-- ------------------------------------------------------
+-- Server version	5.1.73
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `tItem`
+--
+
+DROP TABLE IF EXISTS `tItem`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tItem` (
+  `uItem` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `cLabel` varchar(32) NOT NULL DEFAULT '',
+  `cSKU` varchar(32) NOT NULL DEFAULT '',
+  `cDescription` text NOT NULL,
+  `mCost` varchar(32) NOT NULL DEFAULT '0.00',
+  `mValue` varchar(32) NOT NULL DEFAULT '0.00',
+  `uVendor` int(10) unsigned NOT NULL DEFAULT '0',
+  `uOwner` int(10) unsigned NOT NULL DEFAULT '0',
+  `uCreatedBy` int(10) unsigned NOT NULL DEFAULT '0',
+  `uCreatedDate` int(10) unsigned NOT NULL DEFAULT '0',
+  `uModBy` int(10) unsigned NOT NULL DEFAULT '0',
+  `uModDate` int(10) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`uItem`)
+) ENGINE=MyISAM AUTO_INCREMENT=7786 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tItem`
+--
+
+LOCK TABLES `tItem` WRITE;
+/*!40000 ALTER TABLE `tItem` DISABLE KEYS */;
+INSERT INTO `tItem` VALUES (1001,'Self-Stick-Valve Slingshot','PKS SSV-Slingshot','Tear Aid A self stick Slingshot valve for \nstruts.','5.95','15.00',32,1,1,1548879192,1,1548882889),(1,'Normal Labor','AK 10001','Normal labor per hour.','0.00','10.00',2,1,1,1548879358,1,1548967144),(2,'Rush Labor','AK 10002','Rush labor per hour.','0.00','20.00',2,1,1,1548879454,1,1548887970),(3,'Emergency Labor','AK 10001','Normal labor per hour.','0.00','30.00',2,1,1,1548882169,1,1548887985),(7778,'Self-Stick-Valve Cabrinha','PKS SSV-Cabrinha','Tear Aid A self stick Cabrinha valve for \nstruts.','5.95','15.00',32,1,1,1549029107,0,0),(7779,'Self-Stick-Valve Ozone','PKS SSV-Ozone','Tear Aid A self stick Ozone valve for \nstruts.','5.95','15.00',32,1,1,1549029131,0,0),(7780,'Self-Stick-Valve Kit','AK SSV-Kit','Tear Aid A self stick valve kit. Includes \nAcquaSeal HR and round large patch.','4','10.00',2,1,1,1549029251,0,0),(7781,'Tear-Aid 1Inchx3Inch','AK TearAid1Inch','Tear Aid A part.','0.25','0.50',2,1,1,1549029348,1,1549029443),(7783,'Tear-Aid 5Inchx3Inch','AK TearAid5Inch','Tear Aid A self stick part.','1.00','2.00',2,1,1,1549029505,0,0),(7782,'Tear-Aid 2Inchx3Inch','AK TearAid2Inch','Tear Aid A self stick part.','0.50','1.00',2,1,1,1549029426,1,1549029520),(7784,'RipStop Tape 1ftx2Inch','PKS NylonRipstopTape','Tear Aid A self stick part.','1.00','2.00',2,1,1,1549029622,0,0),(7785,'Linea North/DT Metro','AK 10003','Linea North/DuoTone 2mm por metro.','0.50','1.00',2,1,1,1549382376,1,1549382511);
+/*!40000 ALTER TABLE `tItem` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2019-02-08  0:01:03
