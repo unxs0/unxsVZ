@@ -557,6 +557,11 @@ void UserCommands(pentry entries[], int x)
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 					gcMessage="Error inesperado pruebe mas tarde";
+				//Update Calendar also
+				sprintf(gcQuery,"UPDATE tCalendar SET uVendor=%u WHERE uJobOffer=%u",uNewOwner,guJobOffer);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+					gcMessage="Error inesperado tCalendar pruebe mas tarde";
 			}
 			else
 			{
@@ -1508,8 +1513,11 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpName[20]="gcImagesShow";
 			template.cpValue[20]=gcImagesShow;
 
+char cImage1Src[512]={""};
+char cImage2Src[512]={""};
+char cImage3Src[512]={""};
+
 			template.cpName[21]="cImage1";
-			char cImage1Src[256]={""};
 			if(cLink1[0])
 				sprintf(cImage1Src,"<a href=/images/%s title='%s' >"
 					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"
@@ -1517,7 +1525,6 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpValue[21]=cImage1Src;
 
 			template.cpName[22]="cImage2";
-			char cImage2Src[256]={""};
 			if(cLink2[0])
 				sprintf(cImage2Src,"<a href=/images/%s title='%s' >"
 					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"
@@ -1525,7 +1532,6 @@ void htmlUserPage(char *cTitle, char *cTemplateName)
 			template.cpValue[22]=cImage2Src;
 
 			template.cpName[23]="cImage3";
-			char cImage3Src[256]={""};
 			if(cLink3[0])
 				sprintf(cImage3Src,"<a href=/images/%s title='%s' >"
 					"<img class='img-fluid img-thumbnail width=25%%' src='/images/%s'></a>"

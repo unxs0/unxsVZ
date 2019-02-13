@@ -107,10 +107,14 @@ void htmlJobOfferSelect(FILE *fp)
 				guStatusFilter,
 				guStatusFilter,cStatusLabel(guStatusFilter),uCount);
 	else
-		fprintf(fp,"<a href=\"?gcPage=JobOffer&guStatusFilter=11\">[+]</a>\n"
-			" <a href=\"?gcPage=JobOffer&guStatusFilter=0\">[-]</a>\n"
-			" <a href=\"?gcPage=JobOffer&guStatusFilter=%u\">%s(%u)</a><br>",
-				guStatusFilter,cStatusLabel(guStatusFilter),uCount);
+		if(guStatusFilter==11)
+			fprintf(fp,"<a href=\"?gcPage=JobOffer&guStatusFilter=0\">[&#177;]</a>\n"
+			" <a href=\"?gcPage=JobOffer&guStatusFilter=11\">%s(%u)</a><br>",
+				cStatusLabel(guStatusFilter),uCount);
+		else
+			fprintf(fp,"<a href=\"?gcPage=JobOffer&guStatusFilter=11\">[&#177;]</a>\n"
+			" <a href=\"?gcPage=JobOffer&guStatusFilter=0\">%s(%u)</a><br>",
+				cStatusLabel(guStatusFilter),uCount);
 	fprintf(fp,"\t\t<input type=hidden name=gcPage value=JobOffer >\n");
 	fprintf(fp,"\t\t<input type=hidden name=gcFunction value=SetJobOffer >\n");
 	fprintf(fp,"\t\t<select onchange=\"this.form.submit()\" class=\"form-control\" id=\"uJobOffer\" name=\"uJobOffer\">\n");
