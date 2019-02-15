@@ -421,15 +421,15 @@ void tLogInput(unsigned uMode)
 	}
 //cMessage
 	OpenRow(LANG_FL_tLog_cMessage,"black");
-	printf("<input title='%s' type=text name=cMessage value=\"%s\" size=40 maxlength=255 "
-,LANG_FT_tLog_cMessage,EncodeDoubleQuotes(cMessage));
+	printf("<textarea title='%s' cols=64 wrap=hard rows=5 name=cMessage "
+,LANG_FT_tLog_cMessage);
 	if(guPermLevel>=7 && uMode)
 	{
-		printf("></td></tr>\n");
+		printf(">%s</textarea></td></tr>\n",cMessage);
 	}
 	else
 	{
-		printf("disabled></td></tr>\n");
+		printf("disabled>%s</textarea></td></tr>\n",cMessage);
 		printf("<input type=hidden name=cMessage value=\"%s\">\n",EncodeDoubleQuotes(cMessage));
 	}
 //cServer
@@ -683,9 +683,25 @@ void tLogList(void)
 	printf("</table>\n");
 
 	printf("<table bgcolor=#9BC1B3 border=0 width=100%%>\n");
-	printf("<tr bgcolor=black><td><font face=arial,helvetica color=white>uLog<td><font face=arial,helvetica color=white>cLabel<td><font face=arial,helvetica color=white>uLogType<td><font face=arial,helvetica color=white>cHash<td><font face=arial,helvetica color=white>uPermLevel<td><font face=arial,helvetica color=white>uLoginClient<td><font face=arial,helvetica color=white>cLogin<td><font face=arial,helvetica color=white>cHost<td><font face=arial,helvetica color=white>uTablePK<td><font face=arial,helvetica color=white>cTableName<td><font face=arial,helvetica color=white>cMessage<td><font face=arial,helvetica color=white>cServer<td><font face=arial,helvetica color=white>uOwner<td><font face=arial,helvetica color=white>uCreatedBy<td><font face=arial,helvetica color=white>uCreatedDate<td><font face=arial,helvetica color=white>uModBy<td><font face=arial,helvetica color=white>uModDate</tr>");
-
-
+	printf("<tr bgcolor=black>"
+			"<td><font face=arial,helvetica color=white>uLog"
+			"<td><font face=arial,helvetica color=white>cLabel"
+			"<td><font face=arial,helvetica color=white>uLogType"
+			"<td><font face=arial,helvetica color=white>cHash<td>"
+			"<font face=arial,helvetica color=white>uPermLevel"
+			"<td><font face=arial,helvetica color=white>uLoginClient"
+			"<td><font face=arial,helvetica color=white>cLogin"
+			"<td><font face=arial,helvetica color=white>cHost"
+			"<td><font face=arial,helvetica color=white>uTablePK"
+			"<td><font face=arial,helvetica color=white>cTableName"
+			"<td><font face=arial,helvetica color=white>cMessage"
+			"<td><font face=arial,helvetica color=white>cServer"
+			"<td><font face=arial,helvetica color=white>uOwner"
+			"<td><font face=arial,helvetica color=white>uCreatedBy"
+			"<td><font face=arial,helvetica color=white>uCreatedDate"
+			"<td><font face=arial,helvetica color=white>uModBy"
+			"<td><font face=arial,helvetica color=white>uModDate"
+		"</tr>");
 
 	mysql_data_seek(res,guStart-1);
 
@@ -713,9 +729,24 @@ void tLogList(void)
 			ctime_r(&luTime16,cBuf16);
 		else
 			sprintf(cBuf16,"---");
-		printf("<td><input type=submit name=ED%s value=Edit> %s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s<td>%s</tr>"
-			,field[0]
-			,field[0]
+		printf("<td><a class=darkLink href=?gcFunction=tLog&uLog=%s>%s</a>"//0
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%.64s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s"
+			"<td>%s</tr>"
+			,field[0],field[0]
 			,field[1]
 			,ForeignKey("tLogType","cLabel",strtoul(field[2],NULL,10))
 			,field[3]
@@ -744,7 +775,24 @@ void tLogList(void)
 
 void CreatetLog(void)
 {
-	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tLog ( uTablePK VARCHAR(32) NOT NULL DEFAULT '', cHost VARCHAR(32) NOT NULL DEFAULT '', uLoginClient INT UNSIGNED NOT NULL DEFAULT 0, cLogin VARCHAR(32) NOT NULL DEFAULT '', uPermLevel INT UNSIGNED NOT NULL DEFAULT 0, cTableName VARCHAR(32) NOT NULL DEFAULT '', uLog INT UNSIGNED PRIMARY KEY AUTO_INCREMENT, cLabel VARCHAR(64) NOT NULL DEFAULT '', uOwner INT UNSIGNED NOT NULL DEFAULT 0,index (uOwner), uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0, uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0, uModBy INT UNSIGNED NOT NULL DEFAULT 0, uModDate INT UNSIGNED NOT NULL DEFAULT 0, cHash VARCHAR(32) NOT NULL DEFAULT '', uLogType INT UNSIGNED NOT NULL DEFAULT 0,index (uLogType), cMessage VARCHAR(255) NOT NULL DEFAULT '', cServer VARCHAR(64) NOT NULL DEFAULT '' )");
+	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tLog ("
+			" uTablePK VARCHAR(32) NOT NULL DEFAULT '',"
+			" cHost VARCHAR(32) NOT NULL DEFAULT '',"
+			" uLoginClient INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cLogin VARCHAR(32) NOT NULL DEFAULT '',"
+			" uPermLevel INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cTableName VARCHAR(32) NOT NULL DEFAULT '',"
+			" uLog INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
+			" cLabel VARCHAR(64) NOT NULL DEFAULT '',"
+			" uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
+			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModBy INT UNSIGNED NOT NULL DEFAULT 0,"
+			" uModDate INT UNSIGNED NOT NULL DEFAULT 0,"
+			" cHash VARCHAR(32) NOT NULL DEFAULT '',"
+			" uLogType INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uLogType),"
+			" cMessage VARCHAR(255) NOT NULL DEFAULT '',"
+			" cServer VARCHAR(64) NOT NULL DEFAULT '' )");
 	macro_mySQLQueryHTMLError;
 
 }//CreatetLog()

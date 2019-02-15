@@ -172,7 +172,7 @@
          </div>
           <div class="row">
             <div class="col-sm-12 form-group">
-              <label for="Size">Tama&ntilde;o en m2</label>
+              <label for="Size">Tama&ntilde;o en m2 si kite o m si es barra o bladder</label>
               <input type=text class="form-control" name = "uSize" placeholder="12" value="{{uSize}}"
 				id="Size" required=true  </input>
            </div>
@@ -195,7 +195,7 @@
 -->
           <div class="row">
             <div class="col-sm-12 form-group" >
-              <label for="MainColor">Colores Principales del Kite</label>
+              <label for="MainColor">Colores Principales</label>
               <input type=text class="form-control" name = "cColors" placeholder="Rojo y Amarillo" value="{{cColors}}"
 				id="MainColor" </input>
            </div>
