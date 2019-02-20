@@ -45,6 +45,40 @@ char *cStatusLabel(unsigned uStatus)
 }//char *cStatusLabel(unsigned uStatus)
 
 
+void htmlJobOfferFilterSelect(FILE *fp)
+{
+	sprintf(gcQuery,"SELECT DISTINCT tStatus.uStatus,tStatus.cLabel"
+			" FROM tJobOffer,tStatus"
+			" WHERE tJobOffer.uStatus=tStatus.uStatus"
+			" ORDER BY tStatus.uStatus");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s91) try again later!";
+		htmlJobOffer();
+	}
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uStatus=0;
+	res=mysql_store_result(&gMysql);
+	fprintf(fp,"\t\t<form class=\"clearfix\" accept-charset=\"utf-8\" method=\"post\" action=\"/unxsAKApp\">\n");
+	fprintf(fp,"\t\t<input type=hidden name=gcPage value=JobOffer >\n");
+	fprintf(fp,"\t\t<input type=hidden name=gcFunction value=SetStatusFilter >\n");
+	fprintf(fp,"\t\t<select onchange=\"this.form.submit()\" class=\"form-control\" id=\"uStatusFilter\" name=\"uStatusFilter\">\n");
+	fprintf(fp,"\t\t\t<option value='0'>En Tramite</option>\n");
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uStatus);
+		fprintf(fp,"\t\t\t<option ");
+		if(uStatus==guStatusFilter)
+			fprintf(fp,"selected ");
+		fprintf(fp," value='%s'>%s</option>\n",field[0],field[1]);
+	}
+	fprintf(fp,"\t\t</select>\n");
+	fprintf(fp,"\t\t</form>\n");
+}//void htmlJobOfferFilterSelect(FILE *fp)
+
+
 void htmlJobOfferSelect(FILE *fp)
 {
 	if(guStatusFilter)
@@ -65,16 +99,13 @@ void htmlJobOfferSelect(FILE *fp)
 	else
 	{
 		if(guPermLevel>=10)
-			//Work In Progress
+			//Work In Progress...fix the constants
 			sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel FROM tJobOffer,tClient"
 				" WHERE tClient.uClient=tJobOffer.uOwner"
-				" AND tJobOffer.uStatus!=15"//Archivado
+				" AND tJobOffer.uStatus!=15"//Arch
 				" AND tJobOffer.uStatus!=14"//Cancelado
+				" AND tJobOffer.uStatus!=10"//Listo para entrega
 				" AND tJobOffer.uStatus!=11"//Entregado
-				" AND tJobOffer.uStatus!=13"//Trabajo Postergado
-				" AND tJobOffer.uStatus!=10"//Listo Para Entrega
-				" AND tJobOffer.uStatus!=1"//Trabajo Nuevo
-				" AND tJobOffer.uStatus!=2"//Trabajo Aceptado
 				" AND (tJobOffer.uOwner=%u OR tClient.uOwner=%u)"
 				" ORDER BY tJobOffer.uModDate DESC, tJobOffer.uCreatedDate DESC LIMIT 99",
 					guLoginClient,guOrg);
@@ -98,14 +129,9 @@ void htmlJobOfferSelect(FILE *fp)
 	unsigned uCount=0;
 	uCount=mysql_num_rows(res);
 
+	//Filter
 	if(guPermLevel>=10)
-		fprintf(fp,"<a href=\"?gcPage=JobOffer&gcFunction=IncSF&guStatusFilter=%u\">[+]</a>"
-			" <a href=\"?gcPage=JobOffer&gcFunction=DecSF&guStatusFilter=%u\">[-]</a>"
-			" <a href=\"?gcPage=JobOffer&gcFunction=DelSF\">[x]</a>"
-			" <a href=\"?gcPage=JobOffer&gcFunction=IncSF&guStatusFilter=%u\">%s(%u)</a><br>",
-				guStatusFilter,
-				guStatusFilter,
-				guStatusFilter,cStatusLabel(guStatusFilter),uCount);
+		htmlJobOfferFilterSelect(fp);
 	else
 		if(guStatusFilter==11)
 			fprintf(fp,"<a href=\"?gcPage=JobOffer&guStatusFilter=0\">[&#177;]</a>\n"
@@ -115,6 +141,7 @@ void htmlJobOfferSelect(FILE *fp)
 			fprintf(fp,"<a href=\"?gcPage=JobOffer&guStatusFilter=11\">[&#177;]</a>\n"
 			" <a href=\"?gcPage=JobOffer&guStatusFilter=0\">%s(%u)</a><br>",
 				cStatusLabel(guStatusFilter),uCount);
+	fprintf(fp,"\t\t<form class=\"clearfix\" accept-charset=\"utf-8\" method=\"post\" action=\"/unxsAKApp\">\n");
 	fprintf(fp,"\t\t<input type=hidden name=gcPage value=JobOffer >\n");
 	fprintf(fp,"\t\t<input type=hidden name=gcFunction value=SetJobOffer >\n");
 	fprintf(fp,"\t\t<select onchange=\"this.form.submit()\" class=\"form-control\" id=\"uJobOffer\" name=\"uJobOffer\">\n");
@@ -135,6 +162,7 @@ void htmlJobOfferSelect(FILE *fp)
 		fprintf(fp," value='%s'>%s</option>\n",field[0],field[1]);
 	}
 	fprintf(fp,"\t\t</select>\n");
+	fprintf(fp,"\t\t</form>\n");
 }//void htmlJobOfferSelect(FILE *fp)
 
 

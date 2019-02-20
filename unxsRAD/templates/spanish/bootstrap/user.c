@@ -14,6 +14,7 @@ PURPOSE
 
 extern unsigned guBrowserFirefox;//main.c
 extern unsigned guStatusFilter;//joboffer.c
+unsigned uStatusFilter=0;
 extern char gcCtHostname[];
 static char cCurPasswd[32]={""};
 static char cPasswd[32]={""};
@@ -116,6 +117,8 @@ void ProcessJobOfferVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uMaxBid);
 		else if(!strcmp(entries[i].name,"uJobOffer"))
 			sscanf(entries[i].val,"%u",&guJobOffer);
+		else if(!strcmp(entries[i].name,"uStatusFilter"))
+			sscanf(entries[i].val,"%u",&uStatusFilter);
 		else if(!strcmp(entries[i].name,"uBrand"))
 		{
 			sscanf(entries[i].val,"%u",&uBrand);
@@ -510,6 +513,17 @@ void UserCommands(pentry entries[], int x)
 		if(!strcmp(gcFunction,"SetJobOffer"))
 		{
 			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
+			//sscanf(cForeignKey("tStatus","uStatus",guJobOffer),"%u",&uStatusFilter);
+			//if(uStatusFilter)
+			//{
+			//	guStatusFilter=uStatusFilter;
+			//	printf("Set-Cookie: guStatusFilter=%u; secure; httponly; samesite=strict;\n",guStatusFilter);
+			//}
+		}
+		else if(!strcmp(gcFunction,"SetStatusFilter"))
+		{
+			guStatusFilter=uStatusFilter;
+			printf("Set-Cookie: guStatusFilter=%u; secure; httponly; samesite=strict;\n",guStatusFilter);
 		}
 		else if(!strcmp(gcFunction,"ChangeJobOffer"))
 		{

@@ -58,7 +58,6 @@
   <div class="row">
     <div class="col-sm-9 col-xs-12">
       <div class="contact-form">
-        <form class="clearfix" accept-charset="utf-8" method="post" action="/unxsAKApp">
           <div class="row">
             <div class="col-sm-12 form-group">
 
@@ -66,7 +65,6 @@
 
            </div>
          </div>
-       </form>
      </div>
    </div>
   </div>
