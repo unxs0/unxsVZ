@@ -195,6 +195,8 @@ int main(int argc, char *argv[])
 				UserGetHook(gentries,x);
 			else if(!strcmp(gcPage,"Calendar"))
 				CalendarGetHook(gentries,x);
+			else if(!strcmp(gcPage,"Admin"))
+				AdminGetHook(gentries,x);
 			else if(!strcmp(gcPage,"JobOffer"))
 				JobOfferGetHook(gentries,x);
 			//Need to catch all pages here or else have default
@@ -314,6 +316,8 @@ int main(int argc, char *argv[])
 			htmlUser();
 		else if(!strcmp(gcPage,"Calendar"))
 			htmlCalendar();
+		else if(!strcmp(gcPage,"Admin"))
+			htmlAdmin();
 		else if(!strcmp(gcPage,"JobOffer"))
 			htmlJobOffer();
 	}
@@ -533,6 +537,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcStatusSelect(fp);
 	else if(!strcmp(cFunction,"funcInvoice"))
 		funcInvoice(fp);
+	else if(!strcmp(cFunction,"funcRemindPickup"))
+		funcRemindPickup(fp);
 	else if(!strncmp(cFunction,"funcSelect(tBrand)",18))
 	{
 		funcSelect(fp,"tBrand",uBrand);

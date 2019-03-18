@@ -118,6 +118,7 @@ extern unsigned guStatusFilter;//joboffer.c
 //user.c
 void ProcessUserVars(pentry entries[], int x);
 void UserGetHook(entry gentries[],int x);
+void AdminGetHook(entry gentries[],int x);
 void CalendarGetHook(entry gentries[],int x);
 void JobOfferGetHook(entry gentries[],int x);
 void UserCommands(pentry entries[], int x);
@@ -129,6 +130,7 @@ void htmlSignUpDone(void);
 void htmlLostPasswordDone(void);
 void htmlJobOffer(void);
 void htmlCalendar(void);
+void htmlAdmin(void);
 void htmlUserPage(char *cTitle, char *cTemplateName);
 void funcMOTD(FILE *fp);
 void funcOperationHistory(FILE *fp);
@@ -145,3 +147,4 @@ void funcCalendar(FILE *fp);
 void funcJobOffer(FILE *fp);
 void funcStatusSelect(FILE *fp);
 void funcInvoice(FILE *fp);
+void funcRemindPickup(FILE *fp);

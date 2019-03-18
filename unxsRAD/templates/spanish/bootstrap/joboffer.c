@@ -45,6 +45,36 @@ char *cStatusLabel(unsigned uStatus)
 }//char *cStatusLabel(unsigned uStatus)
 
 
+void htmlRemindPickup(FILE *fp)
+{
+	fprintf(fp,"<form method=post action=/unxsAKApp >\n");
+	fprintf(fp,"<font size=-1><pre>\n");
+	fprintf(fp,"Remind to pickup finished job\n\n");
+	sprintf(gcQuery,"SELECT tJobOffer.cLabel,tJobOffer.uJobOffer,tClient.cEmail FROM tJobOffer,tClient"
+			" WHERE tJobOffer.uOwner=tClient.uClient AND uStatus=10");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s101) try again later!";
+		htmlJobOffer();
+	}
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"%s (%s) %s\n",field[0],field[1],field[2]);
+	}
+	fprintf(fp,"</font></pre>\n");
+
+
+	fprintf(fp,"<input type=hidden name=gcPage value=Admin>");
+	fprintf(fp,"<button name=gcFunction value=Remind class='btn btn-success btn-lg btn-block' type=submit id=submitbutton >Remind</button>\n");
+	fprintf(fp,"</form>\n");
+
+}//void htmlRemindPickup(FILE *fp)
+
+
 void htmlJobOfferFilterSelect(FILE *fp)
 {
 	sprintf(gcQuery,"SELECT DISTINCT tStatus.uStatus,tStatus.cLabel"
@@ -164,6 +194,15 @@ void htmlJobOfferSelect(FILE *fp)
 	fprintf(fp,"\t\t</select>\n");
 	fprintf(fp,"\t\t</form>\n");
 }//void htmlJobOfferSelect(FILE *fp)
+
+
+void funcRemindPickup(FILE *fp)
+{
+
+	fprintf(fp,"<!-- funcRemindPickup()-->\n");
+	htmlRemindPickup(fp);
+	fprintf(fp,"<!-- End of funcRemindPickup()-->\n");
+}//void funcRemindPickup(FILE *fp)
 
 
 void funcJobOffer(FILE *fp)

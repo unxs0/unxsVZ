@@ -177,6 +177,12 @@ void funcCalendar(FILE *fp)
 
 	printf("    <div class='collapse navbar-collapse' id='navbarsCalendar'>\n");
 	printf("      <ul class='navbar-nav mr-auto'>\n");
+	if(guPermLevel>=10)
+	{
+		printf("        <li class='nav-item'>\n");
+		printf("          <a class='nav-link' href='/unxsAKApp?gcPage=Admin'>Admin</a>\n");
+		printf("        </li>\n");
+	}
 	printf("        <li class='nav-item'>\n");
 	printf("          <a class='nav-link' href='/unxsAKApp?gcPage=JobOffer'>Trabajos</a>\n");
 	printf("        </li>\n");
@@ -189,6 +195,8 @@ void funcCalendar(FILE *fp)
 	printf("        <li class='nav-item'>\n");
 	printf("          <a class='nav-link' href='/unxsAKApp?gcFunction=Logout'>Logout</a>\n");
 	printf("        </li>\n");
+	if(!strcmp(gcPage,"Calendar"))
+	{
 	printf("        <li class='nav-item'>\n");
 	printf("          <a class='nav-link' href='/unxsAKApp?gcPage=Calendar&uMonth=%u&uYear=%u'>[ %s %u</a>\n",
 					uPrevMonth,uPrevYear,cPrevMonth,uPrevYear);
@@ -200,10 +208,21 @@ void funcCalendar(FILE *fp)
 	printf("          <a class='nav-link' href='/unxsAKApp?gcPage=Calendar&uMonth=%u&uYear=%u'>%s %u ]</a>\n",
 					uNextMonth,uNextYear,cNextMonth,uNextYear);
 	printf("        </li>\n");
+	}
 	printf("      </ul>\n");
 	printf("    </div>\n");
 
 	printf("</nav>\n");
+
+	if(strcmp(gcPage,"Calendar") && guPermLevel>=10)
+	{
+		printf("<!-- end of funcCalendar(Admin) -->\n");
+		return;
+	}
+	else
+	{
+
+	
 
 	//Header
 	//BS 4: Html page must have <meta name='viewport' content='width=device-width, initial-scale=1'>
@@ -299,6 +318,10 @@ void funcCalendar(FILE *fp)
 			printf("<div class='w-100'></div>\n");
 		uCount++;
 	}
+
+
+	}//Cal or Admin
+
 	printf("</div>\n");
 	printf("</main>\n");
 	printf("<!-- end of funcCalendar -->\n");

@@ -236,6 +236,20 @@ void DelImage(void)
 }//void DelImage(void)
 
 
+void AdminGetHook(entry gentries[],int x)
+{
+	//register int i;
+	//for(i=0;i<x;i++)
+	//{
+	//	if(!strcmp(gentries[i].name,"uDay"))
+	//		sscanf(gentries[i].val,"%u",&uDay);
+	//}
+
+	htmlAdmin();
+
+}//void UserGetHook(entry gentries[],int x)
+
+
 void CalendarGetHook(entry gentries[],int x)
 {
 	register int i;
@@ -255,7 +269,7 @@ void CalendarGetHook(entry gentries[],int x)
 
 	htmlCalendar();
 
-}//void UserGetHook(entry gentries[],int x)
+}//void CalendarGetHook(entry gentries[],int x)
 
 
 void UserGetHook(entry gentries[],int x)
@@ -505,6 +519,14 @@ void UserCommands(pentry entries[], int x)
 			if(guYear && guMonth && uDay);
 			ToggleAvailableDay(guYear,guMonth,uDay);
 			htmlCalendar();
+		}
+	}
+	else if(!strcmp(gcPage,"Admin"))
+	{
+		if(!strcmp(gcFunction,"Remind"))
+		{
+			gcMessage="RemindD0";
+			htmlAdmin();
 		}
 	}
 	else if(!strcmp(gcPage,"JobOffer"))
@@ -1418,6 +1440,15 @@ void htmlJobOffer(void)
 	htmlFooter("Default.Footer");
 
 }//void htmlJobOffer(void)
+
+
+void htmlAdmin(void)
+{
+	htmlHeader("Admin","Default.Header");
+	htmlUserPage("Admin","Admin.Body");
+	htmlFooter("Default.Footer");
+
+}//void htmlAdmin(void)
 
 
 void htmlCalendar(void)
