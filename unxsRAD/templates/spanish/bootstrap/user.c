@@ -99,6 +99,8 @@ void SendEmail(char *cMsg,char *cMailTo,char *cFrom,char *cSubject,char *cBcc)
 
 	pclose(pp);
 
+	exit(0);
+
 }//void SendEmail()
 
 
@@ -236,14 +238,51 @@ void DelImage(void)
 }//void DelImage(void)
 
 
+void htmlReport(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	fprintf(fp,"<font size=-1><pre>\n");
+	fprintf(fp,"Item Report\n");
+	sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2),tItem.cLabel,SUM(tItemJob.uQuantity) FROM tItemJob,tItem"
+				" WHERE tItemJob.uItem=tItem.uItem GROUP BY tItem.uItem");
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	float fSubtotal=0.0;
+	float fTotal=0.0;
+	unsigned uCount=1;
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"  %u) %s %s $%s\n",uCount++,field[2],field[1],field[0]);
+		sscanf(field[0],"%f",&fSubtotal);
+		fTotal+=fSubtotal;
+	}
+
+	fprintf(fp,"Total: $%2.2f</pre>\n",fTotal);
+
+}//void htmlReport(FILE *fp)
+
+
 void AdminGetHook(entry gentries[],int x)
 {
-	//register int i;
-	//for(i=0;i<x;i++)
-	//{
-	//	if(!strcmp(gentries[i].name,"uDay"))
-	//		sscanf(gentries[i].val,"%u",&uDay);
-	//}
+	register int i;
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"gcFunction"))
+			sprintf(gcFunction,"%.32s",gentries[i].val);
+	}
+
+	if(!strcmp(gcFunction,"Report"))
+	{
+		printf("Content-type: text/html\n\n");
+  		printf("<div class=\"card-body\">\n");
+  		printf("<div class=\"row\">\n");
+		htmlReport(stdout);
+  		printf("</div>\n");
+  		printf("</div>\n");
+		exit(0);
+	}
 
 	htmlAdmin();
 
@@ -508,6 +547,30 @@ void ChangeJobOffer(unsigned uJobOffer ,unsigned uJobToAssign)
 }//void ChangeJobOffer(unsigned uItemJob)
 
 
+void SendRemindEmail(void)
+{
+	sprintf(gcQuery,"SELECT tJobOffer.cLabel,tClient.cEmail FROM tJobOffer,tClient"
+			" WHERE tJobOffer.uOwner=tClient.uClient AND uStatus=10");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s101) try again later!";
+		htmlJobOffer();
+	}
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"%s tu trabajo %s esta listo para retirar.\n"
+				"Importante: Debe retirar trabajos terminados dentro de los 15 dias. Pasado"
+				" este lapso, le sera cobrado U$A 5.00/Semana por servicio de guarda.",field[1],field[0]);
+		//void SendEmail(char *cMsg,char *cMailTo,char *cFrom,char *cSubject,char *cBcc)
+		SendEmail(gcQuery,field[1],"unxsak@unxs.io","ArregloKites: Tu Trabajo Esta Listo!","unxsak@unxs.io");
+	}
+
+}//void SendRemindEmail(void)
+
 //CalendarCommands
 void UserCommands(pentry entries[], int x)
 {
@@ -525,7 +588,8 @@ void UserCommands(pentry entries[], int x)
 	{
 		if(!strcmp(gcFunction,"Remind"))
 		{
-			gcMessage="RemindD0";
+			gcMessage=": Remind email sent.";
+			SendRemindEmail();
 			htmlAdmin();
 		}
 	}

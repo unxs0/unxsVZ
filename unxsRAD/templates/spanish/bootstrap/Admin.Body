@@ -23,7 +23,9 @@
 
   <main role="main" class="container">
   <h4 class='mt-5'>Admin {{gcMessage}}</h4>
-  <!-- Remind Card -->
+
+<div class="accordion" id="accordionOne">
+<!-- Remind Card -->
   <div class="card">
 
   <!-- card header -->
@@ -45,7 +47,25 @@
   </div><!--card-body-->
   </div><!--collapseRemind-->
   </div><!--card-->
-  <!-- End Remind Card -->
+<!-- End Remind Card -->
+
+<!-- Report Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingReport">
+  <h5 class="mb-0">
+  <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseReport">
+      <h4>Reports</h4>
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse {{gcReportShow}}" id="collapseReport" data-parent="#accordionOne">
+  </div><!--collapseReport-->
+  </div><!--card-->
+<!-- End Report Card -->
+</div><!--accordianOne-->
 
   </main>
   <footer class='footer text-center'>
@@ -55,8 +75,17 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+    <script>
+	$.ajaxSetup ({
+    // Disable caching of AJAX responses
+    cache: false
+});
+	$('#collapseReport').on('shown.bs.collapse', function () {
+		$('#collapseReport').load("?gcPage=Admin&gcFunction=Report");
+	});
+    </script>
   </body>
 </html>
