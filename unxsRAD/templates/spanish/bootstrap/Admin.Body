@@ -17,9 +17,35 @@
   </head>
 
   <body translate='no'>
+  <header>
+  <nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>
+    <a class='navbar-brand' href='/unxsAKApp'>Portal AK</a>
+    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >
+      <span class='navbar-toggler-icon'></span>
+    </button>
 
-  {{funcCalendar}}
+    <div class='collapse navbar-collapse' id='navbarsCalendar'>
+    <ul class='navbar-nav mr-auto'>
+      <li class='nav-item'>
+        <a class='nav-link active' href='/unxsAKApp?gcPage=Admin'>Admin</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp?gcPage=JobOffer'>Trabajos</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp?gcPage=Calendar' title='Ver agenda de trabajos'>Agenda</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp?gcPage=User' title='Ajustes de su cuenta''>{{gcLogin}}</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp?gcFunction=Logout' title='Salir o deslogearse del sistema.'>Logout</a>
+      </li>
+    </ul>
+    </div>
 
+  </nav>
+  </header>
 
   <main role="main" class="container">
   <h4 class='mt-5'>Admin {{gcMessage}}</h4>

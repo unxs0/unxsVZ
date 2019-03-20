@@ -21,6 +21,7 @@ unsigned guJobOffer= -1;
 extern unsigned guItem;
 unsigned guStatusFilter=0;
 
+float fGetDiscount(unsigned uJobOffer);
 
 char *cStatusLabel(unsigned uStatus)
 {
@@ -331,24 +332,47 @@ void htmlInvoiceInteractive(FILE *fp)
 
 	if(uCount)
 	{
+		float fDiscount=20.0;
+		fDiscount=fGetDiscount(guJobOffer);
+
 		//Total
+		float fTotal=0.0;
+		float fDiscountTotal=0.0;
 		sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2) FROM tItemJob,tItem"
 				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
 		mysql_query(&gMysql,gcQuery);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
+			sscanf(field[0],"%f",&fTotal);
 			fprintf(fp,"Total $%s\n",field[0]);
+			if(fDiscount>0.0)
+			{
+				float fDiscountAmount=fTotal*fDiscount/100.0;
+				fDiscountTotal=fTotal-fDiscountAmount;
+				fprintf(fp,"Total w/%2.0f%% discount of %2.2f: $%2.2f\n",fDiscount,
+						fDiscountAmount,fDiscountTotal);
+			}
+			
 		}
 
 		//Costos
-		sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue-tItemJob.uQuantity*tItem.mCost),2) FROM tItemJob,tItem"
+		sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mCost),2) FROM tItemJob,tItem"
 					" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
 		mysql_query(&gMysql,gcQuery);
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
-			fprintf(fp,"Profit $%s\n",field[0]);
+			float fCost=0.0;
+			sscanf(field[0],"%f",&fCost);
+			if(fDiscountTotal>0.0)
+			{
+				fprintf(fp,"Profit w/discount: $%2.2f\n",fDiscountTotal-fCost);
+			}
+			else
+			{
+				fprintf(fp,"Profit $%2.2f\n",fTotal-fCost);
+			}
 		}
 	}
 	else
@@ -357,6 +381,8 @@ void htmlInvoiceInteractive(FILE *fp)
 	}
 
 	fprintf(fp,"</pre>\n");
+	if(uStatus!=11)
+	{
 	fprintf(fp,"      <form class=\"clearfix\" accept-charset=\"utf-8\" method=\"post\" action=\"/unxsAKApp\">\n");
 	fprintf(fp,"      <input type=hidden name=gcPage value=JobOffer >\n");
 	fprintf(fp,"      <input type=hidden name=gcFunction value=AddItem >\n");
@@ -382,8 +408,30 @@ void htmlInvoiceInteractive(FILE *fp)
 	}
 	fprintf(fp,"      </select>\n");
 	fprintf(fp,"      </form>\n");
+	}
 
 }//void htmlInvoiceInteractive(FILE *fp)
+
+
+float fGetDiscount(unsigned uJobOffer)
+{
+	float fGetDiscount=0.0;
+	sprintf(gcQuery,"SELECT tClient.cInfo FROM tClient,tJobOffer"
+			" WHERE tJobOffer.uOwner=tClient.uClient AND tJobOffer.uJobOffer=%u LIMIT 1",uJobOffer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+		return(1.0);
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		unsigned uDiscount=0;
+		sscanf(field[0],"cuDiscount=%u;",&uDiscount);
+		fGetDiscount=(float)uDiscount;
+	}
+	return(fGetDiscount);
+}//float fGetDiscount(unsigned uJobOffer)
 
 
 void htmlInvoiceViewOnly(FILE *fp)
@@ -413,8 +461,13 @@ void htmlInvoiceViewOnly(FILE *fp)
 				++uCount,field[0],field[1],field[2],field[3]);
 	}
 
+
+
 	if(uCount)
 	{
+		float fDiscount=0.0;
+		fDiscount=fGetDiscount(guJobOffer);
+
 		//Total
 		sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2) FROM tItemJob,tItem"
 				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
@@ -422,7 +475,16 @@ void htmlInvoiceViewOnly(FILE *fp)
 		res=mysql_store_result(&gMysql);
 		if((field=mysql_fetch_row(res)))
 		{
+			float fTotal=0.0;
+			sscanf(field[0],"%f",&fTotal);
 			fprintf(fp,"Total $%s\n",field[0]);
+			if(fDiscount>0.0)
+			{
+				float fDiscountAmount=fTotal*fDiscount/100.0;
+				float fDiscountTotal=fTotal-fDiscountAmount;
+				fprintf(fp,"Total w/%2.0f%% discount of %2.2f: $%2.2f\n",fDiscount,
+						fDiscountAmount,fDiscountTotal);
+			}
 		}
 	}
 	else
