@@ -1,4 +1,0 @@
-1	did search set	1	1	1218391714	0	0
-2	pbx search set	1	1	1344631272	0	0
-3	rule search set	1	1	1344631272	0	0
-4	reserved	1	1	1218391744	0	0
