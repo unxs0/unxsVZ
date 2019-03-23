@@ -1,5 +1,11 @@
 #!/bin/bash
 
+git status | head -n 1 | grep "branch master" > /dev/null;
+if [ "$?" != "0" ];then
+	echo "not allowed for non master branch";
+	exit 0;
+fi
+
 cwd=`pwd`
 ./utils/importTemplatesOnlyNew.sh spanish;
 /usr/sbin/unxsRAD ProcessJobQueue;
