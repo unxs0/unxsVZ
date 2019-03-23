@@ -14,7 +14,7 @@
 #	Jonathan Petersson
 #
 
-cTemplateSet="default";
+cTemplateSet="dev";
 if [ -d "$CGIDIR" ];then
 	cCGIDIR=${CGIDIR};
 	echo $cCGIDIR;

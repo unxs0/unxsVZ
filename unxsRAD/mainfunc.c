@@ -404,6 +404,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
         	sscanf(mysqlField[0],"%u",&uTemplate);
 	mysql_free_result(mysqlRes);
 
+	printf("Updating for type %s and set %s\n",cTemplateType,cTemplateSet);
 	if(uTemplate)
 	{
 		printf("Updating tTemplate for %s\n",cTemplate);
