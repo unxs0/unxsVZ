@@ -170,7 +170,7 @@ void funcCalendar(FILE *fp)
 
 	printf("<nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>\n");
 
-	printf("    <a class='navbar-brand' href='/unxsAKApp'>Portal AK</a>\n");
+	printf("    <a class='navbar-brand' href='/unxsAKApp'>Portal AK/Dev</a>\n");
 	printf("    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >\n");
 	printf("        <span class='navbar-toggler-icon'></span>\n");
 	printf("    </button>\n");
