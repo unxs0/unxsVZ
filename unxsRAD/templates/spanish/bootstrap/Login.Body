@@ -38,8 +38,13 @@
         <label for="inputEmail" class="sr-only">Login/Email</label>
         <input maxlength="31" title='Ingresar tu email previamente registrado'
 		type="email" id="inputEmail" class="form-control" placeholder="tuemail@ejemplo.algo" name="gcLogin" required autofocus>
+	<div class="input-group">
         <label title='Ingrese su contrase&ntilde;a' for="inputPassword" class="sr-only">Contrase&ntilde;a</label>
         <input title='Ingresar tu contrase&ntilde;a' maxlength="31" type="password" id="inputPassword" class="form-control" placeholder="Contrase&ntilde;a" name="gcPasswd" required>
+	<span class="input-group-btn">
+		<button class="btn form-control" type="button" onclick="myFunction()"><image src=images/eye.png></i></button>
+	</span>
+	</div><!-- /input-group -->
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Ingresar al Portal</button>
         <h4 class="form-signin-heading">{{gcMessage}}</h4>
       </form>
@@ -49,5 +54,17 @@
       </form>
 
     </div> <!-- /container -->
+
+<script>
+function myFunction() {
+  var x = document.getElementById("inputPassword");
+  if (x.type === "password") {
+    x.type = "text";
+  } else {
+    x.type = "password";
+  }
+}
+</script>
+
   </body>
 </html>
