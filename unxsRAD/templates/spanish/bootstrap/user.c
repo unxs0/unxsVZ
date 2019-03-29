@@ -7,6 +7,9 @@ AUTHOR/LEGAL
 	GPLv2 license applies. See included LICENSE file.
 PURPOSE
 	bootstrap user default home page code
+NOTES
+	We can scrape this for json the current peso/dolar
+	https://mercados.ambito.com//dolar/oficial/variacion
 */
 
 #include "interface.h"

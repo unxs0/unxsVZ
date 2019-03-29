@@ -42,7 +42,7 @@
         <label title='Ingrese su contrase&ntilde;a' for="inputPassword" class="sr-only">Contrase&ntilde;a</label>
         <input title='Ingresar tu contrase&ntilde;a' maxlength="31" type="password" id="inputPassword" class="form-control" placeholder="Contrase&ntilde;a" name="gcPasswd" required>
 	<span class="input-group-btn">
-		<button class="btn form-control" type="button" onclick="myFunction()"><image src=images/eye.png></i></button>
+		<button title="Ver y esconder contrase&ntilde;a. Cuidado! Solo si estas en un lugar privado." class="btn form-control" type="button" style="text-decoration: none;" onclick="myFunction()"><image src=images/eye.png></i></button>
 	</span>
 	</div><!-- /input-group -->
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Ingresar al Portal</button>
