@@ -33,9 +33,9 @@
     <div class="container">
 
       <form class="form-signin" role="form" method="post" action="/unxsAKApp">
-        <h3 class="form-signin-heading">Crear Cuenta ArregloKites</h3>
+        <h3 class="form-signin-heading">Crear Cuenta Con 10% De Descuento!</h3>
         <label for="inputEmail" class="sr-only">Login/Email</label>
-        <input maxlength="31" title='Ingrese un email valido donde tengas accesso inmediato.'
+        <input maxlength="31" title='Ingrese un email v&aacute;lido donde tengas acceso inmediato.'
 		type="email" id="inputEmail" class="form-control" placeholder="tuemail@ejemplo.algo" name="gcLogin" value="{{gcLogin}}" required autofocus>
        	<label for="inputPassword" class="sr-only">Ingrese Contrase&ntilde;a</label>
        	<input maxlength="31"
@@ -50,6 +50,7 @@
       </form>
       <form class="form-signin" role="form" method="get" action="/unxsAKApp">
       <button title='Cancelar' type="submit" name=gcFunction value='Logout' class="btn btn-link">Cancelar</button>
+        <h5 class="form-signin-heading">Para crear una cuenta vas a necesitar un email v&aacute;lido y que puedas leer ahora, ya que vas a recibir un email con un codigo de confirmacion que tendras que entrar en el siguiente paso. No lo recibiste? Fijate en tu carpeta de correo no deseado (spam). El email viene de unxsak@unxs.io.</h5>
       </form>
 
 

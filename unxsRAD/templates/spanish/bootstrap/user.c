@@ -144,6 +144,8 @@ void ProcessJobOfferVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&guItem);
 		else if(!strcmp(entries[i].name,"uJobToAssign"))
 			sscanf(entries[i].val,"%u",&uJobToAssign);
+		else if(!strcmp(entries[i].name,"cJobOwner"))
+			sprintf(cJobOwner,"%.32s",entries[i].val);
 	}
 
 }//void ProcessJobOfferVars(pentry entries[], int x)
@@ -842,6 +844,15 @@ void UserCommands(pentry entries[], int x)
 					printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
 					htmlJobOffer();
 				}
+				if(strcmp(gcLogin,cJobOwner) && cJobOwner[0])
+				{
+					sprintf(gcQuery,"Hay algo nuevo con tu trabajo.\n"
+						"%s %s %um %u: %s.\n"
+					"Ver: https://portal.arreglokites.com/unxsAKApp?uJobOffer=%u",
+						cForeignKey("tBrand","cLabel",uBrand),cModel,uSize,uYear,cuStatus,
+						guJobOffer);
+					SendEmail(gcQuery,cJobOwner,"unxsak@unxs.io","ArregloKites Novedades","unxsak@unxs.io");
+				}
 			}
 			else
 			{
@@ -877,6 +888,13 @@ void UserCommands(pentry entries[], int x)
 					htmlJobOffer();
 				}
 				guJobOffer=uJobOffer;
+				//Internal email
+				sprintf(gcQuery,"New Job\n"
+						"%s %s %um %u: %s.\n"
+						"Ver: https://portal.arreglokites.com/unxsAKApp?uJobOffer=%u",
+							cForeignKey("tBrand","cLabel",uBrand),cModel,uSize,uYear,cuStatus,
+							guJobOffer);
+				SendEmail(gcQuery,"unxsak@unxs.io","unxsak@unxs.io","ArregloKites New Job","unxsak@unxs.io");
 			}
 
 			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",uJobOffer);
@@ -1150,12 +1168,14 @@ void htmlSignUpStep1(void)
 		sprintf(cBuffer,"%.99s",cPasswd);
 		EncryptPasswdWithSalt(cBuffer,cSalt);
 
+		//cuDiscount=10;//must be first line
 		sprintf(gcQuery,"INSERT INTO tClient SET"
 			" uOwner=2,"//Arreglo Kites
 			" uCreatedBy=1,"
 			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
 			" cEmail='%1$.31s',"
-			" cLabel='%1$.31s'"
+			" cLabel='%1$.31s',"
+			" cInfo='cuDiscount=10;//must be first line'"
 				,TextAreaSave(gcLogin));
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))

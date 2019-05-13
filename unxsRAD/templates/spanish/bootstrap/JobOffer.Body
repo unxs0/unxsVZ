@@ -36,6 +36,9 @@
         <a class='nav-link' href='/unxsAKApp?gcPage=User' title='Ajustes de su cuenta''>{{gcLogin}}</a>
       </li>
       <li class='nav-item'>
+        <a class='nav-link' href='/help.html' title='Como usar el portal'>Ayuda</a>
+      </li>
+      <li class='nav-item'>
         <a class='nav-link' href='/unxsAKApp?gcFunction=Logout' title='Salir o deslogearse del sistema.'>Logout</a>
       </li>
     </ul>
