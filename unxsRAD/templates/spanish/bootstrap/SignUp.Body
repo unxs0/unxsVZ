@@ -18,6 +18,10 @@
 	  padding-top: 40px;
 	  padding-bottom: 40px;
 	  background-color: #eee;
+	  background-image: url("images/rasa2.jpg");
+	  background-repeat: no-repeat;
+	  background-position: center; /* Center the image */
+	  background-size: 1600px;
 	}
 	.form-signin {
 	  max-width: 500px;
@@ -50,7 +54,7 @@
       </form>
       <form class="form-signin" role="form" method="get" action="/unxsAKApp">
       <button title='Cancelar' type="submit" name=gcFunction value='Logout' class="btn btn-link">Cancelar</button>
-        <h5 class="form-signin-heading">Para crear una cuenta vas a necesitar un email v&aacute;lido y que puedas leer ahora, ya que vas a recibir un email con un codigo de confirmacion que tendras que entrar en el siguiente paso. No lo recibiste? Fijate en tu carpeta de correo no deseado (spam). El email viene de unxsak@unxs.io.</h5>
+        <h6 class="form-signin-heading"><font color=red>Para crear una cuenta vas a necesitar un email v&aacute;lido y que puedas leer ahora, ya que vas a recibir un email con un codigo de confirmacion que tendras que entrar en el siguiente paso. No lo recibiste? Fijate en tu carpeta de correo no deseado (spam). El email viene de unxsak@unxs.io.</h5>
       </form>
 
 

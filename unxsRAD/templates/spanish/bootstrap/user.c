@@ -573,6 +573,33 @@ void SendRemindEmail(void)
 
 }//void SendRemindEmail(void)
 
+
+void ActivityNotice(char *cCategory)
+{
+	if(strcmp(gcLogin,cJobOwner) && cJobOwner[0])
+	{
+		sprintf(gcQuery,"Hay algo nuevo con tu trabajo (%s).\n"
+			"%s %s %um %u: %s.\n"
+			"Ver: https://portal.arreglokites.com/unxsAKApp?uJobOffer=%u",
+				cCategory,
+				cForeignKey("tBrand","cLabel",uBrand),cModel,uSize,uYear,cuStatus,
+				guJobOffer);
+		SendEmail(gcQuery,cJobOwner,"unxsak@unxs.io","ArregloKites Novedades","unxsak@unxs.io");
+	}
+	else
+	{
+		sprintf(gcQuery,"Hay algo nuevo con un trabajo de un usuario %s (%s).\n"
+				"%s %s %um %u: %s.\n"
+				"Ver: https://portal.arreglokites.com/unxsAKApp?uJobOffer=%u",
+				cJobOwner,
+				cCategory,
+					cForeignKey("tBrand","cLabel",uBrand),cModel,uSize,uYear,cuStatus,
+					guJobOffer);
+		SendEmail(gcQuery,"unxsak@unxs.io","unxsak@unxs.io","ArregloKites Novedad Usuario","");
+	}
+}//void ActivityNotice(char *cCategory)
+
+
 //CalendarCommands
 void UserCommands(pentry entries[], int x)
 {
@@ -844,15 +871,7 @@ void UserCommands(pentry entries[], int x)
 					printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
 					htmlJobOffer();
 				}
-				if(strcmp(gcLogin,cJobOwner) && cJobOwner[0])
-				{
-					sprintf(gcQuery,"Hay algo nuevo con tu trabajo.\n"
-						"%s %s %um %u: %s.\n"
-					"Ver: https://portal.arreglokites.com/unxsAKApp?uJobOffer=%u",
-						cForeignKey("tBrand","cLabel",uBrand),cModel,uSize,uYear,cuStatus,
-						guJobOffer);
-					SendEmail(gcQuery,cJobOwner,"unxsak@unxs.io","ArregloKites Novedades","unxsak@unxs.io");
-				}
+				ActivityNotice("Update");
 			}
 			else
 			{
@@ -1519,6 +1538,8 @@ void LoadJobOfferData(unsigned uJobOffer)
 void htmlJobOffer(void)
 {
 	LoadJobOfferData(guJobOffer);
+	if(strstr(gcMessage,"Uploaded image"))
+		ActivityNotice("Image");
 	htmlHeader("JobOffer","Default.Header");
 	htmlUserPage("JobOffer","JobOffer.Body");
 	htmlFooter("Default.Footer");
@@ -1677,7 +1698,10 @@ char cImage3Src[512]={""};
 			template.cpValue[25]=gcCPShow;
 
 			template.cpName[26]="cJobOwner";
-			template.cpValue[26]=cJobOwner;
+			if(cJobOwner[0])
+				template.cpValue[26]=cJobOwner;
+			else
+				template.cpValue[26]=gcLogin;
 
 			template.cpName[27]="cuStatus";
 			template.cpValue[27]=cuStatus;

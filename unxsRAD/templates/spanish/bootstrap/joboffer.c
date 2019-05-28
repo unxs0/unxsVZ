@@ -300,6 +300,18 @@ void htmlInvoiceInteractive(FILE *fp)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	float fVarPesos=0.0;
+
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='cVarPesos'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s9a1) try again later!";
+		htmlJobOffer();
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%f",&fVarPesos);
 
 	//Costos y facturacion
 	fprintf(fp,"<font size=-1><pre>\n");
@@ -346,12 +358,14 @@ void htmlInvoiceInteractive(FILE *fp)
 		{
 			sscanf(field[0],"%f",&fTotal);
 			fprintf(fp,"Total $%s\n",field[0]);
+			fprintf(fp,"Total pesos (Ambito %2.2f) $%2.2f\n",fVarPesos,fTotal*fVarPesos);
 			if(fDiscount>0.0)
 			{
 				float fDiscountAmount=fTotal*fDiscount/100.0;
 				fDiscountTotal=fTotal-fDiscountAmount;
 				fprintf(fp,"Total w/%2.0f%% discount of %2.2f: $%2.2f\n",fDiscount,
 						fDiscountAmount,fDiscountTotal);
+				fprintf(fp,"Total pesos $%2.2f\n",fDiscountTotal*fVarPesos);
 			}
 			
 		}
@@ -438,6 +452,18 @@ void htmlInvoiceViewOnly(FILE *fp)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	float fVarPesos=0.0;
+
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='cVarPesos'");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s9a1) try again later!";
+		htmlJobOffer();
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%f",&fVarPesos);
 
 	//Facturacion
 	fprintf(fp,"<font size=-1><pre>\n");
@@ -478,12 +504,14 @@ void htmlInvoiceViewOnly(FILE *fp)
 			float fTotal=0.0;
 			sscanf(field[0],"%f",&fTotal);
 			fprintf(fp,"Total $%s\n",field[0]);
+			fprintf(fp,"Total pesos (Ambito %2.2f) $%2.2f\n",fVarPesos,fTotal*fVarPesos);
 			if(fDiscount>0.0)
 			{
 				float fDiscountAmount=fTotal*fDiscount/100.0;
 				float fDiscountTotal=fTotal-fDiscountAmount;
 				fprintf(fp,"Total w/%2.0f%% discount of %2.2f: $%2.2f\n",fDiscount,
 						fDiscountAmount,fDiscountTotal);
+				fprintf(fp,"Total pesos $%2.2f\n",fDiscountTotal*fVarPesos);
 			}
 		}
 	}

@@ -18,6 +18,10 @@
 	  padding-top: 40px;
 	  padding-bottom: 40px;
 	  background-color: #eee;
+	  background-image: url("images/rasa2.jpg");
+	  background-repeat: no-repeat;
+	  background-position: center; /* Center the image */
+	  background-size: 1600px;
 	}
 	.form-signin {
 	  max-width: 500px;
