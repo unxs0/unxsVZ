@@ -537,6 +537,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcStatusSelect(fp);
 	else if(!strcmp(cFunction,"funcInvoice"))
 		funcInvoice(fp);
+	else if(!strcmp(cFunction,"funcUserInvoices"))
+		funcUserInvoices(fp);
 	else if(!strcmp(cFunction,"funcRemindPickup"))
 		funcRemindPickup(fp);
 	else if(!strncmp(cFunction,"funcSelect(tBrand)",18))

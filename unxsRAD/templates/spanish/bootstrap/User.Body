@@ -142,6 +142,26 @@
   </div><!--card-->
   <!-- End Change Email Card -->
 
+  <!-- User Invoices Card. Same user as current unxsAKJobOffer -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingInvoices">
+  <h5 class="mb-0">
+  <button id="spbtn" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseInvoices">
+         <h4>User Invoices</h4>
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse" id="collapseInvoices" data-parent="#accordionOne">
+  <div class="card-body">
+	{{funcUserInvoices}}
+  </div><!--card-body-->
+  </div><!--collapseInvoices-->
+  </div><!--card-->
+  <!-- End User Invoices Card -->
+
   </div><!--accordianOne-->
   </main>
 

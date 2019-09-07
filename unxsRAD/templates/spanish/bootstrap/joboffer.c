@@ -177,7 +177,7 @@ void htmlJobOfferSelect(FILE *fp)
 	fprintf(fp,"\t\t<input type=hidden name=gcFunction value=SetJobOffer >\n");
 	fprintf(fp,"\t\t<select onchange=\"this.form.submit()\" class=\"form-control\" id=\"uJobOffer\" name=\"uJobOffer\">\n");
 	unsigned uJobOffer=0;
-	unsigned uFirst=1;
+	//unsigned uFirst=1;
 	fprintf(fp,"\t\t\t<option value='0'>Crear nuevo trabajo</option>\n");
 	while((field=mysql_fetch_row(res)))
 	{
@@ -539,6 +539,141 @@ void funcInvoice(FILE *fp)
 		htmlInvoiceViewOnly(fp);
 	fprintf(fp,"<!-- End of funcInvoice()-->\n");
 
-}//void funcStatusSelect()
+}//void funcInvoice()
 
+
+void htmlUserInvoice(FILE *fp);
+
+void funcUserInvoices(FILE *fp)
+{
+
+	unsigned uSaveJobOffer=guJobOffer;
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cJobOwner[64]={""};
+
+	if(guPermLevel>=10)
+	{
+		sprintf(gcQuery,"SELECT tClient.cLabel FROM tClient,tJobOffer"
+			" WHERE tClient.uClient=tJobOffer.uOwner AND tJobOffer.uJobOffer=%u",guJobOffer);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			gcMessage="Unexpected error (s9a1) try again later!";
+			htmlJobOffer();
+		}
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+			sprintf(cJobOwner,"Cliente: %.31s",field[0]);
+
+		fprintf(fp,"<!-- funcUserInvoices()-->\n");
+		sprintf(gcQuery,"SELECT tJobOffer.uJobOffer"
+			" FROM tJobOffer,tJobOffer AS tJobOffer2"
+			" WHERE tJobOffer2.uJobOffer=%u AND tJobOffer2.uOwner=tJobOffer.uOwner ORDER BY tJobOffer.uModDate DESC",guJobOffer);
+	}
+	else
+	{
+		sprintf(gcQuery,"SELECT tJobOffer.uJobOffer"
+			" FROM tJobOffer"
+			" WHERE tJobOffer.uOwner=%u ORDER BY tJobOffer.uModDate DESC",guLoginClient);
+	}
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s200) try again later!";
+		htmlJobOffer();
+	}
+	res=mysql_store_result(&gMysql);
+	fprintf(fp,"<font size=-1><pre>\n");
+	if(guPermLevel>=10)
+		fprintf(fp,"%s\n",cJobOwner);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&guJobOffer);
+		if(guJobOffer)
+			htmlUserInvoice(fp);
+	}
+	fprintf(fp,"</pre>\n");
+	fprintf(fp,"<!-- End of funcUserInvoices()-->\n");
+
+	guJobOffer=uSaveJobOffer;
+
+}//void funcUserInvoices()
+
+
+void htmlUserInvoice(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cLabel[100]={""};
+	char cDate[100]={""};
+
+	//Facturacion
+	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uModDate,'%%d/%%m/%%Y') FROM tJobOffer WHERE uJobOffer=%u",guJobOffer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s9a1) try again later!";
+		htmlJobOffer();
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cLabel,"%.99s",field[0]);
+		sprintf(cDate,"%.31s",field[1]);
+	}
+
+	fprintf(fp,"\nFacturaci&oacute;n \"%s\" %s (%u)\n",cLabel,cDate,guJobOffer);
+	//Items
+	sprintf(gcQuery,"SELECT tItem.cLabel,tItemJob.uQuantity,tItem.mValue,"
+				"FORMAT(tItemJob.uQuantity*tItem.mValue,2)"
+				" FROM tItemJob,tItem"
+				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="Unexpected error (s9) try again later!";
+		htmlJobOffer();
+	}
+	res=mysql_store_result(&gMysql);
+	unsigned uCount=0;
+	while((field=mysql_fetch_row(res)))
+	{
+		fprintf(fp,"%u) %s %s@$%s $%s\n",
+				++uCount,field[0],field[1],field[2],field[3]);
+	}
+
+
+
+	if(uCount)
+	{
+		float fDiscount=0.0;
+		fDiscount=fGetDiscount(guJobOffer);
+
+		//Total
+		sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2) FROM tItemJob,tItem"
+				" WHERE tItemJob.uJobOffer=%u AND tItemJob.uItem=tItem.uItem",guJobOffer);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if((field=mysql_fetch_row(res)))
+		{
+			float fTotal=0.0;
+			sscanf(field[0],"%f",&fTotal);
+			fprintf(fp,"Total $%s\n",field[0]);
+			if(fDiscount>0.0)
+			{
+				float fDiscountAmount=fTotal*fDiscount/100.0;
+				float fDiscountTotal=fTotal-fDiscountAmount;
+				fprintf(fp,"Total w/%2.0f%% discount of %2.2f: $%2.2f\n",fDiscount,
+						fDiscountAmount,fDiscountTotal);
+			}
+		}
+	}
+	else
+	{
+		fprintf(fp,"No hay factura disponible.\n");
+	}
+
+
+}//void htmlUserInvoice(FILE *fp)
 

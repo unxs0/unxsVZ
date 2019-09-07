@@ -147,4 +147,5 @@ void funcCalendar(FILE *fp);
 void funcJobOffer(FILE *fp);
 void funcStatusSelect(FILE *fp);
 void funcInvoice(FILE *fp);
+void funcUserInvoices(FILE *fp);
 void funcRemindPickup(FILE *fp);

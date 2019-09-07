@@ -247,7 +247,8 @@ void htmlReport(FILE *fp)
 
 	fprintf(fp,"<font size=-1><pre>\n");
 	fprintf(fp,"Item Report\n");
-	sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2),tItem.cLabel,SUM(tItemJob.uQuantity) FROM tItemJob,tItem"
+	//sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2),tItem.cLabel,SUM(tItemJob.uQuantity) FROM tItemJob,tItem"
+	sprintf(gcQuery,"SELECT SUM(tItemJob.uQuantity*tItem.mValue),tItem.cLabel,SUM(tItemJob.uQuantity) FROM tItemJob,tItem"
 				" WHERE tItemJob.uItem=tItem.uItem GROUP BY tItem.uItem");
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
