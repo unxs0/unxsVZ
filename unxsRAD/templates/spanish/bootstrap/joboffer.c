@@ -182,14 +182,18 @@ void htmlJobOfferSelect(FILE *fp)
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uJobOffer);
+/*
 		if(uFirst && guJobOffer== -1)//guJobOffer = -1 is when no cookies exist.
 		{
 			guJobOffer=uJobOffer;//This is creating issues with filter
 			uFirst=0;
 		}
+*/
 		fprintf(fp,"\t\t\t<option ");
 		if(uJobOffer==guJobOffer)
+		{
 			fprintf(fp,"selected ");
+		}
 		fprintf(fp," value='%s'>%s</option>\n",field[0],field[1]);
 	}
 	fprintf(fp,"\t\t</select>\n");
@@ -209,7 +213,7 @@ void funcRemindPickup(FILE *fp)
 void funcJobOffer(FILE *fp)
 {
 
-	fprintf(fp,"<!-- funcJobOffer(d1)-->\n");
+	fprintf(fp,"<!-- funcJobOffer(Sep7)-->\n");
 	htmlJobOfferSelect(fp);
 	fprintf(fp,"<!-- End of funcJobOffer()-->\n");
 

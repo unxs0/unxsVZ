@@ -415,7 +415,8 @@ void JobOfferGetHook(entry gentries[],int x)
 	{
 		guStatusFilter=0;
 	}
-	printf("Set-Cookie: guStatusFilter=%u; secure; httponly; samesite=strict;\n",guStatusFilter);
+	if(guStatusFilter)
+		printf("Set-Cookie: guStatusFilter=%u; secure; httponly; samesite=strict;\n",guStatusFilter);
 		
 
 	htmlJobOffer();
