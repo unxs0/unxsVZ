@@ -807,8 +807,8 @@ void UserCommands(pentry entries[], int x)
 				htmlJobOffer();
 			}
 			char cStart[32],cEnd[32];
-			sprintf(cStart,"%u%u%u",uStartYear,uStartMonth,uStartDay);
-			sprintf(cEnd,"%u%u%u",uEndYear,uEndMonth,uEndDay);
+			sprintf(cStart,"%u%02u%02u",uStartYear,uStartMonth,uStartDay);
+			sprintf(cEnd,"%u%02u%02u",uEndYear,uEndMonth,uEndDay);
 			unsigned uStart=0,uEnd=0;
 			sscanf(cStart,"%u",&uStart);
 			sscanf(cEnd,"%u",&uEnd);
