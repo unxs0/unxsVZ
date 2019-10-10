@@ -180,6 +180,8 @@ void ProcessUserVars(pentry entries[], int x)
 			sprintf(cPasswd,"%.32s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cPasswd2"))
 			sprintf(cPasswd2,"%.32s",entries[i].val);
+		else if(!strcmp(entries[i].name,"gcName"))
+			sprintf(gcName,"%.63s",entries[i].val);
 	}
 
 }//void ProcessUserVars(pentry entries[], int x)
@@ -1196,8 +1198,8 @@ void htmlSignUpStep1(void)
 			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
 			" cEmail='%1$.31s',"
 			" cLabel='%1$.31s',"
-			" cInfo='cuDiscount=10;//must be first line'"
-				,TextAreaSave(gcLogin));
+			" cInfo='cuDiscount=10;//must be first line\ngcName=\"%2$.63s\"'"
+				,TextAreaSave(gcLogin),TextAreaSave(gcName));
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
@@ -1286,7 +1288,7 @@ void htmlSignUpDone(void)
 		htmlFooter("Default.Footer");
 	}
 
-	gcMessage="You can login now.";
+	gcMessage="Tu cuenta esta lista!";
 	htmlHeader("Sign Up","Default.Header");
 	htmlUserPage("Sign Up","SignUpDone.Body");
 	htmlFooter("Default.Footer");

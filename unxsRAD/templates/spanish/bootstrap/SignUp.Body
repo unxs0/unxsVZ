@@ -37,10 +37,17 @@
     <div class="container">
 
       <form class="form-signin" role="form" method="post" action="/unxsAKApp">
+
         <h3 class="form-signin-heading">Crear Cuenta Con 10% De Descuento!</h3>
+
         <label for="inputEmail" class="sr-only">Login/Email</label>
         <input maxlength="31" title='Ingrese un email v&aacute;lido donde tengas acceso inmediato.'
 		type="email" id="inputEmail" class="form-control" placeholder="tuemail@ejemplo.algo" name="gcLogin" value="{{gcLogin}}" required autofocus>
+
+        <label for="inputName" class="sr-only">Nombre y Apellido</label>
+        <input maxlength="63" title='Ingrese nombre y apellido.'
+		type="name" id="inputName" class="form-control" placeholder="John Doe" name="gcName" value="{{gcName}}" required>
+
        	<label for="inputPassword" class="sr-only">Ingrese Contrase&ntilde;a</label>
        	<input maxlength="31"
 		title='Ingrese una contrase&ntilde;a que tenga 8 caracteres de largo y por lo menos una may&uacute;scula y un numero.'

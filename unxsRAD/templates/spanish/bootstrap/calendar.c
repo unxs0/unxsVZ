@@ -37,7 +37,9 @@ unsigned uDayOpenForBids(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned
 
 }//unsigned uDayOpenForBids(unsigned uYear,unsigned uMonth, unsigned uDay)
 
-
+//TODO
+//Make cBG colors sticky. First time a job is displayed set the bg color. If displayed in same month
+//again, use the same color.
 void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned uVendor);
 void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned uVendor)
 {
@@ -75,10 +77,17 @@ void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned 
 		}
 		res=mysql_store_result(&gMysql);
 		unsigned uCount=0;
+		unsigned uBgCount=0;
 		while((field=mysql_fetch_row(res)))
-			printf("<a href='?gcPage=JobOffer&uJobOffer=%s'"
+		{
+			unsigned uJobOffer=0;
+			sscanf(field[0],"%u",&uJobOffer);
+			uBgCount=uJobOffer%6;
+			printf("<a href='?gcPage=JobOffer&uJobOffer=%u'"
 				" class='event d-block p-1 pl-2 pr-2 mb-1 rounded text-truncate %s text-white'"
-				" title='%s'>%s</a>\n",field[0],cBg[(uCount++)%6],field[1],field[1]);
+				" title='%s'>%s</a>\n",uJobOffer,cBg[uBgCount],field[1],field[1]);
+			uCount++;
+		}
 		mysql_free_result(res);
 		printf("</font>");
 	}
@@ -278,13 +287,13 @@ void funcCalendar(FILE *fp)
 	//Current month
 	for(uDay=1;uDay<=uLastDay;uDay++)
 	{
+		printf("<div class='day col-sm p-2 border border-left-0 border-top-0 text-truncate'>\n");
+		printf("  <h5 class='row align-items-center'>\n");
 		//today
 		if(uThisYear==guYear && uThisMonth==guMonth && uThisDay==uDay)
-			printf("<div class='day col-sm p-2 border border-left-0 border-top-0 text-truncate'>\n");
+			printf("    <span class='date col-1'>[%u]</span>\n",uDay);
 		else
-			printf("<div class='day col-sm p-2 border border-left-0 border-top-0 text-truncate'>\n");
-		printf("  <h5 class='row align-items-center'>\n");
-		printf("    <span class='date col-1'>%u</span>\n",uDay);
+			printf("    <span class='date col-1'>%u</span>\n",uDay);
 		printf("    <small class='col d-sm-none text-center text-muted'>%s %s %u %u</small>\n",cWeekDay[(uCount%7)],cMonth,uDay,guYear);
 		printf("    <span class='col-1'></span>\n");
 		printf("  </h5>\n");
