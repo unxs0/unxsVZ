@@ -54,6 +54,7 @@ void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned 
 				" AND tJobOffer.uStatus!=10"
 				" AND tJobOffer.uStatus!=11"
 				" AND tJobOffer.uStatus!=14"
+				" AND tJobOffer.uStatus!=13"
 				" AND tJobOffer.uStatus!=15"
 				" AND (tCalendar.uVendor=%u OR tCalendar.uOwner=%u)"
 				" AND tCalendar.dDate='%u-%u-%u' ORDER BY tJobOffer.uCreatedDate",
@@ -64,6 +65,7 @@ void htmlPrintJobOffers(unsigned uYear,unsigned uMonth, unsigned uDay, unsigned 
 				" WHERE tCalendar.uJobOffer=tJobOffer.uJobOffer"
 				" AND tJobOffer.uStatus!=11"
 				" AND tJobOffer.uStatus!=14"
+				" AND tJobOffer.uStatus!=13"
 				" AND tJobOffer.uStatus!=15"
 				" AND tCalendar.uVendor=%u AND tCalendar.dDate='%u-%u-%u' ORDER BY tJobOffer.uCreatedDate",
 						uVendor,uYear,uMonth,uDay);
@@ -287,7 +289,10 @@ void funcCalendar(FILE *fp)
 	//Current month
 	for(uDay=1;uDay<=uLastDay;uDay++)
 	{
-		printf("<div class='day col-sm p-2 border border-left-0 border-top-0 text-truncate'>\n");
+		if(uThisYear==guYear && uThisMonth==guMonth && uThisDay==uDay)
+			printf("<div class='day col-sm p-2 bg-secondary border border-left-0 border-top-0 text-truncate'>\n");
+		else
+			printf("<div class='day col-sm p-2 border border-left-0 border-top-0 text-truncate'>\n");
 		printf("  <h5 class='row align-items-center'>\n");
 		//today
 		if(uThisYear==guYear && uThisMonth==guMonth && uThisDay==uDay)
