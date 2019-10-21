@@ -246,25 +246,47 @@ void htmlReport(FILE *fp)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	float fSubtotal=0.0;
+	float fTotal=0.0;
+	unsigned uCount=1;
 
 	fprintf(fp,"<font size=-1><pre>\n");
-	fprintf(fp,"Item Report\n");
+	fprintf(fp,"Para Entregar\n");
+	sprintf(gcQuery,"SELECT SUM(tItemJob.uQuantity*tItem.mValue),tJobOffer.cLabel"
+				" FROM tJobOffer,tItemJob,tItem"
+				" WHERE tItemJob.uItem=tItem.uItem "
+				" AND tItemJob.uJobOffer=tJobOffer.uJobOffer"
+				" AND tJobOffer.uStatus=10"//tStatus constant Listo Para Entrega
+				" GROUP BY tItemJob.uJobOffer");
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%f",&fSubtotal);
+		fprintf(fp," %u) %s $%2.2f\n",uCount++,field[1],fSubtotal);
+		fTotal+=fSubtotal;
+	}
+	fprintf(fp,"Total: $%2.2f\n",fTotal);
+
+
+	fprintf(fp,"\nItem Report\n");
 	//sprintf(gcQuery,"SELECT FORMAT(SUM(tItemJob.uQuantity*tItem.mValue),2),tItem.cLabel,SUM(tItemJob.uQuantity) FROM tItemJob,tItem"
 	sprintf(gcQuery,"SELECT SUM(tItemJob.uQuantity*tItem.mValue),tItem.cLabel,SUM(tItemJob.uQuantity) FROM tItemJob,tItem"
 				" WHERE tItemJob.uItem=tItem.uItem GROUP BY tItem.uItem");
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
-	float fSubtotal=0.0;
-	float fTotal=0.0;
-	unsigned uCount=1;
+	fSubtotal=0.0;
+	fTotal=0.0;
+	uCount=1;
 	while((field=mysql_fetch_row(res)))
 	{
-		fprintf(fp,"  %u) %s %s $%s\n",uCount++,field[2],field[1],field[0]);
 		sscanf(field[0],"%f",&fSubtotal);
+		fprintf(fp,"  %u) %s %s $%2.2f\n",uCount++,field[2],field[1],fSubtotal);
 		fTotal+=fSubtotal;
 	}
 
 	fprintf(fp,"Total: $%2.2f</pre>\n",fTotal);
+	fprintf(fp,"<font size=-1>\n");
 
 }//void htmlReport(FILE *fp)
 
