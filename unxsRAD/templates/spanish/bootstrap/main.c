@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 			else if(!strcmp(gentries[x].name,"gcEmailCode"))
 				sprintf(gcEmailCode,"%.31s",gentries[x].val);
 			else if(!strcmp(gentries[x].name,"gcLogin"))
-				sprintf(gcLogin,"%.99s",gentries[x].val);
+				sprintf(gcLogin,"%.99s",WordToLower(gentries[x].val));
 		}
 		//Prelogin
 		if(gcFunction[0])
@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
 			else if(!strcmp(entries[x].name,"gcPage"))
 				sprintf(gcPage,"%.99s",entries[x].val);
 			else if(!strcmp(entries[x].name,"gcLogin"))
-				sprintf(gcLogin,"%.99s",entries[x].val);
+				sprintf(gcLogin,"%.99s",WordToLower(entries[x].val));
 			else if(!strcmp(entries[x].name,"gcEmailCode"))
 				sprintf(gcEmailCode,"%.31s",entries[x].val);
 			else if(!strcmp(entries[x].name,"gcPasswd"))
@@ -1313,4 +1313,22 @@ char *cEndAtSpace(char *cBuffer)
 	return(cReturn);
 
 }//char *cEndAtSpace(char *cBuffer)
+
+
+char *WordToLower(char *cInput)
+{
+	register int i;
+
+	for(i=0;cInput[i];i++)
+	{
+	
+		if(!isalnum(cInput[i]) && cInput[i]!='_' && cInput[i]!='-'
+				&& cInput[i]!='@' && cInput[i]!='.' ) break;
+		if(isupper(cInput[i])) cInput[i]=tolower(cInput[i]);
+	}
+	cInput[i]=0;
+
+	return(cInput);
+
+}//char *WordToLower(char *cInput)
 

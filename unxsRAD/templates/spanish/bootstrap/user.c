@@ -1218,8 +1218,8 @@ void htmlSignUpStep1(void)
 			" uOwner=2,"//Arreglo Kites
 			" uCreatedBy=1,"
 			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
-			" cEmail='%1$.31s',"
-			" cLabel='%1$.31s',"
+			" cEmail=LOWER('%1$.31s'),"
+			" cLabel=LOWER('%1$.31s'),"
 			" cInfo='cuDiscount=10;//must be first line\ngcName=\"%2$.63s\"'"
 				,TextAreaSave(gcLogin),TextAreaSave(gcName));
 		mysql_query(&gMysql,gcQuery);
@@ -1241,7 +1241,7 @@ void htmlSignUpStep1(void)
 			" uOwner=2,"//arreglo kites
 			" uCreatedBy=1,"
 			" uCreatedDate=UNIX_TIMESTAMP(NOW()),"
-			" cLabel='%s'"
+			" cLabel=LOWER('%s')"
 				,uClient
 				,cPasswd
 				,cBuffer
