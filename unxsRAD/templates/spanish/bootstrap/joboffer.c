@@ -458,6 +458,8 @@ void htmlInvoiceViewOnly(FILE *fp)
 	MYSQL_ROW field;
 	float fVarPesos=0.0;
 
+	if(!guJobOffer || guJobOffer==(-1)) return;
+
 	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE cLabel='cVarPesos'");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -607,6 +609,8 @@ void htmlUserInvoice(FILE *fp)
 	MYSQL_ROW field;
 	char cLabel[100]={""};
 	char cDate[100]={""};
+
+	if(!guJobOffer || guJobOffer==(-1)) return;
 
 	//Facturacion
 	sprintf(gcQuery,"SELECT cLabel,FROM_UNIXTIME(uModDate,'%%d/%%m/%%Y') FROM tJobOffer WHERE uJobOffer=%u",guJobOffer);

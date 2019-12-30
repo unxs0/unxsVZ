@@ -400,7 +400,10 @@ void JobOfferGetHook(entry gentries[],int x)
 	for(i=0;i<x;i++)
 	{
 		if(!strcmp(gentries[i].name,"uJobOffer"))
+		{
 			sscanf(gentries[i].val,"%u",&guJobOffer);
+			printf("Set-Cookie: {{cProject}}JobOffer=%u; secure; httponly; samesite=strict;\n",guJobOffer);
+		}
 		else if(!strcmp(gentries[i].name,"uItemJob"))
 			sscanf(gentries[i].val,"%u",&guItemJob);
 		else if(!strcmp(gentries[i].name,"guStatusFilter"))
