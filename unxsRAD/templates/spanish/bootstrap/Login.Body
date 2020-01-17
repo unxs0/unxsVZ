@@ -40,7 +40,7 @@
       <form class="form-signin" role="form" method="post" action="/unxsAKApp">
         <h3 class="form-signin-heading">Portal ArregloKites.Com</h3>
         <label for="inputEmail" class="sr-only">Login/Email</label>
-        <input maxlength="31" title='Ingresar tu email previamente registrado'
+        <input maxlength="99" title='Ingresar tu email previamente registrado'
 		type="email" id="inputEmail" class="form-control" placeholder="tuemail@ejemplo.algo" name="gcLogin" required autofocus>
         <label title='Ingrese su contrase&ntilde;a' for="inputPassword" class="sr-only">Contrase&ntilde;a</label>
         <input title='Ingresar tu contrase&ntilde;a' maxlength="31" type="password" id="inputPassword" class="form-control" placeholder="Contrase&ntilde;a" name="gcPasswd" required>

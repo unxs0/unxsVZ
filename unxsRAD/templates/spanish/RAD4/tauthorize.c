@@ -16,7 +16,7 @@ PURPOSE
 //uAuthorize: Primary Key
 static unsigned uAuthorize=0;
 //cLabel: Short label
-static char cLabel[33]={""};
+static char cLabel[101]={""};
 //cIpMask: Allow user from this IP
 static char cIpMask[21]={"0.0.0.0/0"};
 //uPerm: User permission level
@@ -73,7 +73,7 @@ void ProcesstAuthorizeVars(pentry entries[], int x)
 		if(!strcmp(entries[i].name,"uAuthorize"))
 			sscanf(entries[i].val,"%u",&uAuthorize);
 		else if(!strcmp(entries[i].name,"cLabel"))
-			sprintf(cLabel,"%.32s",entries[i].val);
+			sprintf(cLabel,"%.100s",entries[i].val);
 		else if(!strcmp(entries[i].name,"cIpMask"))
 			sprintf(cIpMask,"%.20s",entries[i].val);
 		else if(!strcmp(entries[i].name,"uPerm"))
@@ -192,7 +192,7 @@ void tAuthorize(const char *cResult)
 			if(!guMode) mysql_data_seek(res,gluRowid-1);
 			field=mysql_fetch_row(res);
 		sscanf(field[0],"%u",&uAuthorize);
-		sprintf(cLabel,"%.32s",field[1]);
+		sprintf(cLabel,"%.100s",field[1]);
 		sprintf(cIpMask,"%.20s",field[2]);
 		sscanf(field[3],"%u",&uPerm);
 		sscanf(field[4],"%u",&uCertClient);
@@ -279,7 +279,7 @@ void tAuthorizeInput(unsigned uMode)
 	}
 //cLabel
 	OpenRow(LANG_FL_tAuthorize_cLabel,"black");
-	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=32 "
+	printf("<input title='%s' type=text name=cLabel value=\"%s\" size=40 maxlength=100 "
 ,LANG_FT_tAuthorize_cLabel,EncodeDoubleQuotes(cLabel));
 	if(guPermLevel>=0 && uMode)
 	{
@@ -648,7 +648,7 @@ void CreatetAuthorize(void)
 {
 	sprintf(gcQuery,"CREATE TABLE IF NOT EXISTS tAuthorize ("
 			" uAuthorize INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,"
-			" cLabel VARCHAR(32) NOT NULL DEFAULT '',UNIQUE (cLabel,uOwner),"
+			" cLabel VARCHAR(100) NOT NULL DEFAULT '',UNIQUE (cLabel,uOwner),"
 			" uOwner INT UNSIGNED NOT NULL DEFAULT 0,INDEX (uOwner),"
 			" uCreatedBy INT UNSIGNED NOT NULL DEFAULT 0,"
 			" uCreatedDate INT UNSIGNED NOT NULL DEFAULT 0,"
