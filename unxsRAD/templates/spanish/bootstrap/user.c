@@ -44,7 +44,7 @@ char cLink3[100]={""};
 char cLink3Title[100]={""};
 char *cLink3Desc="";
 
-char cJobOwner[33]={""};
+char cJobOwner[101]={""};
 char cuStatus[33]={""};
 unsigned uStatus=0;
 char cNewOwner[100]={""};
@@ -145,7 +145,7 @@ void ProcessJobOfferVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"uJobToAssign"))
 			sscanf(entries[i].val,"%u",&uJobToAssign);
 		else if(!strcmp(entries[i].name,"cJobOwner"))
-			sprintf(cJobOwner,"%.32s",entries[i].val);
+			sprintf(cJobOwner,"%.100s",entries[i].val);
 	}
 
 }//void ProcessJobOfferVars(pentry entries[], int x)
@@ -1554,7 +1554,7 @@ void LoadJobOfferData(unsigned uJobOffer)
 		sprintf(cLink3Title,"%s",field[16]);
                 cLink3Desc=field[17];
 
-		sprintf(cJobOwner,"%.32s",field[18]);
+		sprintf(cJobOwner,"%.100s",field[18]);
 
 		sprintf(cuStatus,"%.32s",field[19]);
 		sscanf(field[20],"%u",&uStatus);
