@@ -447,8 +447,8 @@ void ExttClientSelect(void)
 						VAR_LIST_tClient,cSearch,guLoginClient,
 						uContactParentCompany,guReseller,guLoginClient);
 		else if(uOnlyOrgs && !cSearch[0])
-			sprintf(gcQuery,"SELECT %s FROM tClient WHERE (uOwner=%u OR uOwner=%u OR uOwner=%u"
-					" OR uCreatedBy=%u) AND uOwner=1 AND uClient!=1 ORDER BY cLabel",
+			sprintf(gcQuery,"SELECT %s FROM tClient WHERE uOwner=%u OR uOwner=%u OR uOwner=%u"
+					" OR uCreatedBy=%u AND uOwner=1 AND uClient!=1 ORDER BY cLabel",
 						VAR_LIST_tClient,guLoginClient,
 						uContactParentCompany,guReseller,guLoginClient);
 		else if(cSearch[0])
@@ -457,7 +457,7 @@ void ExttClientSelect(void)
 						VAR_LIST_tClient,cSearch,guLoginClient,
 						uContactParentCompany,guReseller,guLoginClient);
 		else if(1)
-			sprintf(gcQuery,"SELECT %s FROM tClientWHERE (uOwner=%u OR uOwner=%u OR uOwner=%u"
+			sprintf(gcQuery,"SELECT %s FROM tClient WHERE (uOwner=%u OR uOwner=%u OR uOwner=%u"
 					" OR uCreatedBy=%u) ORDER BY uClient",
 					VAR_LIST_tClient,guLoginClient,
 					uContactParentCompany,guReseller,guLoginClient);

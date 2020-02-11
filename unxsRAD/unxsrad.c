@@ -1606,13 +1606,13 @@ void funcModuleVarList(FILE *fp)
 			sprintf(gcuJs,"1");
 		if(uRADType==COLTYPE_DATEEUR)
 		{
-			//fprintf(fp,"DATE_FORMAT(%s.%s,'%%d/%%m/%%Y %%H:%%i:%%s')",gcTableName,field[0]);
-			fprintf(fp,"DATE_FORMAT(%s.%s,'%%d/%%m/%%Y')",gcTableName,field[0]);
+			fprintf(fp,"DATE_FORMAT(%s.%s,'%%d/%%m/%%Y %%H:%%i:%%s')",gcTableName,field[0]);
+			//fprintf(fp,"DATE_FORMAT(%s.%s,'%%d/%%m/%%Y')",gcTableName,field[0]);
 		}	
 		else if(uRADType==COLTYPE_DATETIME)
 		{
-			//fprintf(fp,"DATE_FORMAT(%s.%s,'%%m/%%d/%%Y %%H:%%i:%%s')",gcTableName,field[0]);
-			fprintf(fp,"DATE_FORMAT(%s.%s,'%%m/%%d/%%Y')",gcTableName,field[0]);
+			fprintf(fp,"DATE_FORMAT(%s.%s,'%%m/%%d/%%Y %%H:%%i:%%s')",gcTableName,field[0]);
+			//fprintf(fp,"DATE_FORMAT(%s.%s,'%%m/%%d/%%Y')",gcTableName,field[0]);
 		}	
 		else
 		{
@@ -1727,14 +1727,14 @@ void funcModuleUpdateQuery(FILE *fp)
 
 			case COLTYPE_DATETIME:
 				//STR_TO_DATE('12/15/2011','%d/%m/%Y')
-				//fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
-				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y')",field[0]);
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
+				//fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y')",field[0]);
 			break;
 
 			case COLTYPE_DATEEUR:
 				//STR_TO_DATE('20/2/2011','%d/%m/%Y')
-				//fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
-				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y')",field[0]);
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
+				//fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y')",field[0]);
 			break;
 		}
 		uFirst=1;
