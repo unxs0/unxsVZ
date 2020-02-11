@@ -1,0 +1,57 @@
+@media (max-width:575px) {
+  .display-4 {
+        font-size: 1.5rem;
+  }
+  .day h5 {
+        background-color: #f8f9fa;
+        padding: 3px 5px 5px;
+        margin: -8px -8px 8px -8px;
+  } 
+  .date {
+        padding-left: 4px;
+  } 
+}     
+
+@media (min-width: 576px) {
+  .day {
+        height: 14.2857vw;
+  }   
+}     
+
+/* Sticky footer styles
+ * -------------------------------------------------- */
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 40px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 40px;
+  line-height: 40px; /* Vertically center the text there */
+  background-color: #f5f5f5;
+}
+
+/* Custom page CSS
+ * -------------------------------------------------- */
+/* Not required for template or sticky footer method. */
+  
+body > .container {
+  padding: 40px 15px 0;
+}
+  
+.footer > .container {
+  padding-right: 15px;
+  padding-left: 15px;
+} 
+  
+code {
+  font-size: 80%;
+} 
+

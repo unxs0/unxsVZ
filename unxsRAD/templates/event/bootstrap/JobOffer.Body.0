@@ -1,0 +1,361 @@
+<!-- unxsRAD.Template2 -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{gcBrand}} Job offer tab">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
+    <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
+
+    <title>{{gcBrand}} Calendar</title>
+
+    <!-- Bootstrap core CSS -->
+    <!-- <link href="/bs/css/bootstrap.min.css" rel="stylesheet"> -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="/bs/css/offcanvas.css" rel="stylesheet">
+    <link href="/bs/css/collapse.css" rel="stylesheet">
+    <link href="/bs/css/calendargrid.css" rel="stylesheet">
+
+
+  </head>
+
+  <body>
+    <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+			data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/{{gcBrand}}App/">{{gcBrand}}</a>
+        </div><!--/navbar-header-->
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a title='Job Offers' href="?gcPage=JobOffer"><span class='glyphicon glyphicon-edit'></span></a></li>
+            <li><a title='Calendar' href="?gcPage=Calendar"><span class='glyphicon glyphicon-calendar'></span></a></li>
+            <li><a title='User Settings'  href="?gcPage=User"><span class='glyphicon glyphicon-user'></span></a></li>
+            <li><a title='Logout' href="?gcFunction=Logout"><span class='glyphicon glyphicon-off'></span></a></li>
+          </ul>
+        </div><!-- /.nav-collapse -->
+      </div><!-- /.container -->
+    </nav><!-- /.navbar -->
+
+<!-- Select Job Offers -->
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <h2>Job Offers {{gcMessage}}</h2>
+      <p class="big-para">Use the currently selected job offer, select another or create a new one.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <div class="contact-form">
+        <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/">
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+
+              {{funcJobOffer}}
+
+           </div>
+         </div>
+       </form>
+     </div>
+   </div>
+  </div>
+</div> 
+<!-- End Select Job Form -->
+
+
+<!-- Start Upload Job Details Form -->
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <h2>Dates, Brand, Model and Year Information</h2>
+      <p class="big-para">Select the start date when you will first have the item available for repair and the end date
+		that would be the maximum date that you can wait for the job to be completed and delivered to you by. Please note that
+		bidders may select a start date later than yours and an end date before your last available day.
+		Select the brand, enter the model and year of the item you wish repaired. If the brand is not listed explain in the 
+		job description.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <div class="contact-form">
+        <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/" >
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="StartDate">First day you have available to start work on job</label>
+              <input type=date class="form-control" name = "dStart" value="{{dStart}}"
+				id="StartDate" required </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="EndDate">Last day you have available to get the job delivered</label>
+              <input type=date class="form-control" name = "dEnd" value="{{dEnd}}"
+				id="EndDate" required </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="Brand">Brand</label>
+		{{funcSelect(tBrand)}}
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="Model">Model</label>
+              <input type=text class="form-control" name = "cModel" placeholder="Vegas" value="{{cModel}}"
+				id="Model" required=true </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="Size">Size m2</label>
+              <input type=text class="form-control" name = "uSize" placeholder="12" value="{{uSize}}"
+				id="Size" required=true  </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="Year">Year</label>
+              <input type=text class="form-control" name = "uYear" placeholder="2014" value="{{uYear}}"
+				id="Year" required=true  </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="MaxBid">Max Bid $</label>
+              <input type=text class="form-control" name = "uMaxBid" placeholder="0" value="{{uMaxBid}}"
+				id="MaxBid" </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="DesciptionTextarea">Job Description</label>
+              <textarea class="form-control" name = "cDescription" required=true 
+				id="DesciptionTextarea" rows="3" placeholder="Describe in detail the work you need done. If the brand is other please provide brand name here or explain further.">{{cDescription}}</textarea>
+           </div>
+         </div>
+         <input type=hidden name="gcPage" value="JobOffer">
+         <button class="btn btn-success btn-lg btn-block wow fadeInDown"
+					data-wow-delay="1200ms" data-wow-duration="1000ms" name="gcFunction" value="AMJobOffer"
+					type="submit" id="submitbutton">Submit Job Information</button>
+       </form>
+     </div>
+   </div>
+  </div>
+</div> 
+<!-- End Upload Job Images Form -->
+
+
+<!-- Start Upload Job Images Form -->
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <h2>Upload Job Images</h2>
+      <p class="big-para">Upload up to three images that show job areas. The images will be used
+		by bidders to quote you price and delivery times.
+		Use the image details text area to further explain or provide more information.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <div class="contact-form">
+        <form class="clearfix" accept-charset="utf-8" method="post" action="/{{gcBrand}}App/">
+          <div class="row">
+            <div class="col-sm-12 form-group wow fadeInDown" data-wow-delay="1000ms" data-wow-duration="1000ms">
+              <label for="exampleTextarea">Image details/explanation</label>
+              <textarea class="form-control" name = "Image details"
+				id="exampleTextarea" rows="3" placeholder="Image details and futher explaination."></textarea>
+           </div>
+         </div>
+         <div class="row">
+           <div class="col-sm-12 form-group">
+             <label for="exampleInputFile">Choose an image</label>
+             <input type="file" name="file_source" class="form-control-file"
+						id="exampleInputFile" aria-describedby="fileHelp" required>
+             <small id="fileHelp" class="form-text text-muted">Choose an image from your phone or computer.</small>
+           </div>
+         </div>
+         <button class="btn btn-success btn-lg btn-block wow fadeInDown" name="gcFunction" value="AddJobOfferImage"
+					data-wow-delay="1200ms" data-wow-duration="1000ms" type="submit" id="submitbutton">Upload Image</button>
+       </form>
+     </div>
+   </div>
+  </div>
+</div> 
+<!-- End Upload Job Images Form -->
+
+      <hr>
+
+      <footer>
+        <p>{{gcCopyright}}</p>
+      </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+  </body>
+</html>
+
+
+
+
+<!-- unxsRAD.Template2 -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{gcBrand}} Job offers">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
+    <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
+
+    <title>{{gcBrand}} Job Offers </title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
+
+<style>
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 40px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 40px;
+  line-height: 40px; /* Vertically center the text there */
+  background-color: #f5f5f5;
+}
+
+body > .container {
+  padding: 40px 15px 0;
+}
+
+.footer > .container {
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+code {
+  font-size: 80%;
+}
+</style>
+</head>
+
+<body>
+  <header>
+  <nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>
+    <a class='navbar-brand' href='/unxsAKApp/'>unxsAK</a>
+    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >
+      <span class='navbar-toggler-icon'></span>
+    </button>
+
+    <div class='collapse navbar-collapse' id='navbarsCalendar'>
+    <ul class='navbar-nav mr-auto'>
+      <li class='nav-item'>
+        <a class='nav-link active' href='/unxsAKApp/?gcPage=JobOffer'>Jobs</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=Calendar'>Calendar</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcPage=User'>User</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp/?gcFunction=Logout'>Logout</a>
+      </li>
+    </ul>
+    </div>
+
+  </nav>
+  </header>
+
+  <main role="main" class="container">
+
+  <h4 class='mt-5'>Job Offers</h4>
+
+  <div class="accordion" id="accordionOne">
+
+  <!-- Info Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingInfo">
+  <h5 class="mb-0">
+  <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseInfo">
+         Job Details 
+  </button>
+  </h5>
+  </div><!--card header-->
+
+    <input type=hidden name="gcPage" value="JobOffer">
+    <button class="btn btn-lg btn-primary btn-block" title="Add or Modify Job Detials/Info"
+	type="submit" name=gcFunction value='AMJobOffer'>Submit Job Information</button>
+    </form>
+  </div><!--card-body-->
+  </div><!--collapseDetails-->
+  </div><!--card-->
+  <!-- End Change Details Card -->
+
+  <!-- Job Images Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingImages">
+  <h5 class="mb-0">
+  <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseImages">
+         Upload/Update Job Images 
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse" id="collapseImages" data-parent="#accordionOne">
+  <div class="card-body">
+  <form class="form-signin" role="form" method="post" action="{{cCGI}}">
+    <input type=hidden name="gcPage" value="JobOffer">
+
+    <button class="btn btn-lg btn-primary btn-block" title="Update already uploaded images"
+	type="submit" name=gcFunction value='Update Images'>Update Images</button>
+  </form>
+  </div><!--card-body-->
+  </div><!--collapseImages-->
+  </div><!--card-->
+  <!-- End Job Images Card -->
+
+  </div><!--accordianOne-->
+  </main>
+
+
+
+      <footer class='footer text-center'>
+        <span class='text-muted'>{{gcCopyright}}</span>
+      </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+  </body>
+  </body>
+</html>

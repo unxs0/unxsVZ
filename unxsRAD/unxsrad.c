@@ -993,6 +993,8 @@ void funcModuleLoadVars(FILE *fp)
 					,cField,i);
 			break;
 
+			case COLTYPE_DECIMAL:
+				if(!uSQLSize) uSQLSize=15;
 			default:
 				fprintf(fp,"\t\tsprintf(%s,\"%%.%us\",field[%d]);\n"
 					,cField,uSQLSize,i);
@@ -1240,6 +1242,8 @@ void funcModuleInput(FILE *fp)
 			break;
 
 			case(COLTYPE_DECIMAL):
+				if(!uHtmlXSize) uHtmlXSize=10;
+				if(!uHtmlMax) uHtmlMax=15;
                         case(COLTYPE_MONEY):
                         case(COLTYPE_CHAR):
                         case(COLTYPE_VARCHARUKEY):
@@ -1673,6 +1677,7 @@ void funcModuleUpdateQuery(FILE *fp)
 			case COLTYPE_CHAR:
 			case COLTYPE_TEXT:
 			case COLTYPE_MONEY:
+			case COLTYPE_DECIMAL:
 				fprintf(fp,"\t\t\"%s='%%s'",field[0]);
 			break;
 
@@ -1865,6 +1870,7 @@ void funcModuleInsertQuery(FILE *fp)
 			case COLTYPE_VARCHAR:
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_TEXT:
+			case COLTYPE_DECIMAL:
 				if((cp1=strstr(field[2],"CONCAT:")) && uTemplateType==uTEMPLATETYPE_BOOTSTRAP)
 				{
 					char cConcatField1[64]={""};
@@ -1947,6 +1953,7 @@ void funcModuleInsertQuery(FILE *fp)
 			case COLTYPE_VARCHARUKEY:
 			case COLTYPE_TEXT:
 			case COLTYPE_MONEY:
+			case COLTYPE_DECIMAL:
 				if((cp1=strstr(field[2],"CONCAT:")) && uTemplateType==uTEMPLATETYPE_BOOTSTRAP)
 				{
 					char cConcatField1[64]={""};

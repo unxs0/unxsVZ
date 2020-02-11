@@ -1,0 +1,354 @@
+<!-- unxsRAD.Template2 -->
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Arreglo Kites Trabajos">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
+    <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
+
+    <title>AK Trabajos</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <!-- Local AK custom css -->
+    <link rel="stylesheet" href="/bs/css/unxsak.css">
+</head>
+
+<body>
+  <header>
+  <nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>
+    <a class='navbar-brand' href='/unxsAKApp'>Portal AK</a>
+    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >
+      <span class='navbar-toggler-icon'></span>
+    </button>
+
+    <div class='collapse navbar-collapse' id='navbarsCalendar'>
+    <ul class='navbar-nav mr-auto'>
+      <li class='nav-item'>
+        <a class='nav-link active' href='/unxsAKApp?gcPage=JobOffer'>Trabajos</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp?gcPage=Calendar' title='Ver agenda de trabajos'>Agenda</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp?gcPage=User' title='Ajustes de su cuenta''>{{gcLogin}}</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/help.html' title='Como usar el portal'>Ayuda</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsAKApp?gcFunction=Logout' title='Salir o deslogearse del sistema.'>Logout</a>
+      </li>
+    </ul>
+    </div>
+
+  </nav>
+  </header>
+
+  <main role="main" class="container">
+  <h4 class='mt-5'>Trabajos</h4>
+
+<!-- Select Job Offers Panel -->
+<div class="well">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <h4>{{gcMessage}}</h4>
+      <!-- <p class="big-para">Elija un trabajo existente o crear uno nuevo.</p> -->
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <div class="contact-form">
+          <div class="row">
+            <div class="col-sm-12 form-group">
+
+              {{funcJobOffer}}
+
+           </div>
+         </div>
+     </div>
+   </div>
+  </div>
+</div> 
+<!-- End Select Job Offres Panel-->
+
+  <div class="accordion" id="accordionOne">
+
+  <!-- Summary Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingSummary">
+  <h5 class="mb-0">
+  <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseSummary">
+      <h4>{{cuStatus}}</h4> {{cJobOwner}} 
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse {{gcSummaryShow}}" id="collapseSummary" data-parent="#accordionOne">
+  <div class="card-body">
+  <div class="row">
+
+    <div class="col-sm-9 col-xs-12">
+      <p class="big-para"><pre style="font-family: verdana,arial">{{cDescription}}</pre></p>
+    </div>
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage1}}
+    </div>
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage2}}
+    </div>
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage3}}
+    </div>
+
+{{funcStatusSelect}}
+
+  </div><!--row-->
+  </div><!--card-body-->
+  </div><!--collapseSummary-->
+  </div><!--card-->
+  <!-- End Summary Card -->
+
+
+  <!-- Details Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingDetails">
+  <h5 class="mb-0">
+  <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseDetails">
+      <h4>Detalles</h4> 
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse" id="collapseDetails" data-parent="#accordionOne">
+  <div class="card-body">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <p class="big-para">Si no figura su marca o modelo use otro/other y escr&iacute;balo en la descripci&oacute;n del trabajo.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <div class="contact-form">
+        <form class="clearfix" accept-charset="utf-8" method="post" action="/unxsAKApp" >
+          <div class="row">
+            <div class="col-sm-12 form-group" >
+              <label for="Owner">Due&ntilde;o</label>
+              <input readonly title="De quien es el trabajo. Inmutable" type="text" class="form-control" name="cJobOwner" value="{{cJobOwner}}"
+				id="Owner" </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group" >
+              <label for="StartDate">Primer dia disponible para comenzar trabajo</label>
+              <input type=date class="form-control" name = "dStart" value="{{dStart}}"
+				id="StartDate" required </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group" >
+              <label for="EndDate">Ultimo dia para la entrega del trabajo terminado</label>
+              <input type=date class="form-control" name = "dEnd" value="{{dEnd}}"
+				id="EndDate" required </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group" >
+              <label for="Brand">Marca</label>
+		{{funcSelect(tBrand)}}
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group">
+              <label for="Model">Modelo</label>
+              <input type=text class="form-control" name = "cModel" placeholder="Vegas" value="{{cModel}}"
+				id="Model" required=true </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group">
+              <label for="Size">Tama&ntilde;o en m2 si kite o m si es barra o bladder</label>
+              <input type=text class="form-control" name = "uSize" placeholder="12" value="{{uSize}}"
+				id="Size" required=true  </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group">
+              <label for="Year">Year</label>
+              <input type=text class="form-control" name = "uYear" placeholder="2014" value="{{uYear}}"
+				id="Year" required=true  </input>
+           </div>
+         </div>
+<!--
+          <div class="row">
+            <div class="col-sm-12 form-group" >
+              <label for="MaxBid">Opcional: Costo Maximo Acceptable (Confidencial, no se informa al arreglista)</label>
+              <input type=text class="form-control" name = "uMaxBid" placeholder="0" value="{{uMaxBid}}"
+				id="MaxBid" </input>
+           </div>
+         </div>
+-->
+          <div class="row">
+            <div class="col-sm-12 form-group" >
+              <label for="MainColor">Colores Principales</label>
+              <input type=text class="form-control" name = "cColors" placeholder="Rojo y Amarillo" value="{{cColors}}"
+				id="MainColor" </input>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group">
+              <label for="DesciptionTextarea">Descripcion del Trabajo</label>
+              <textarea class="form-control" name = "cDescription" required=true 
+				id="DesciptionTextarea" rows="7" placeholder="Describa en detalle lo que necesita que se haga. Si la marca y/o modelos son otro explique aqui. Si aplica: En que color(es) de la tela esta roto?">{{cDescription}}</textarea>
+           </div>
+         </div>
+         <input type=hidden name="gcPage" value="JobOffer">
+         <button class="btn btn-success btn-lg btn-block "
+					name="gcFunction" value="AMJobOffer"
+					type="submit" id="submitbutton">Guardar Detalles del Arreglo</button>
+       </form>
+     </div>
+   </div>
+  </div>
+  </div><!--card-body-->
+  </div><!--collapseDetails-->
+  </div><!--card-->
+  <!-- End Change Details Card -->
+
+  <!-- Job Images Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingImages">
+  <h5 class="mb-0">
+  <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseImages">
+      <h4>Im&aacute;genes</h4>
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse {{gcImagesShow}}" id="collapseImages" data-parent="#accordionOne">
+  <div class="card-body">
+<!-- Start Upload Job Images Form -->
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+	<p> Se puede adjuntar hasta 3 imagnes png or jpg, de maximo 8M cada uno, a un trabajo existente. Ayuda: Si la imagen
+de tu telefono es muy grande se puede mandar a Whatsapp y luego subir la imagen de ahi.
+	</p>
+    </div>
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage1}}
+    </div>
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage2}}
+    </div>
+    <div class="col-lg-4 col-md-6 col-sm-9 col-xs-12">
+      {{cImage3}}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <div class="contact-form">
+        <form class="clearfix" accept-charset="utf-8" method="post" enctype="multipart/form-data" action="/unxsAKApp">
+          <div class="row">
+            <div class="col-sm-12 form-group">
+              <label for="ImageId">N&uacute;mero de Im&aacute;gen</label>
+              <select class="form-control" name = "uImageNumber" id="ImageId">
+              <option value='1 '>1</option>
+              <option value='2 '>2</option>
+              <option value='3 '>3</option>
+              </select>
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group">
+              <label for="exampleText">Titulo del Imagen</label>
+              <input type=text class="form-control" name = "cTitle"
+				id="exampleText" placeholder="Titulo corto del imagen">
+           </div>
+         </div>
+          <div class="row">
+            <div class="col-sm-12 form-group">
+              <label for="exampleTextarea">Explicaci&oacute;n Opcional</label>
+              <textarea class="form-control" name = "cDescription"
+				id="exampleTextarea" rows="3" placeholder="Detalles, explicaciones y notas sobre imagen."></textarea>
+           </div>
+         </div>
+         <div class="row">
+           <div class="col-sm-12 form-group">
+             <label for="exampleInputFile">Selecione un imagen</label>
+             <input type="file" name="file_source" class="form-control-file"
+						id="exampleInputFile" aria-describedby="fileHelp" required>
+             <small id="fileHelp" class="form-text text-muted">Elija una imagen png/jpg de su telefono o computadora. M&aacute;ximo 8M.</small>
+           </div>
+         </div>
+         <input type=hidden name="gcPage" value="JobOffer">
+         <button {{cDisabled}} title='Solo se puede subir una imagen de trabajo ya creado. Crear el trabajo en detalles por favor primero. Debe ser .png o .jpg. Tama&ntilde;o m&aacute;ximo 8M.' class="btn btn-success btn-lg btn-block" name="gcFunction" value="AddJobOfferImage"
+					type="submit" id="submitbutton">Suba Im&aacute;gen</button>
+     </form>
+     </div>
+   </div>
+  </div>
+</div> 
+<!-- End Upload Job Images Form -->
+  </div><!--card-body-->
+  </div><!--collapseImages-->
+  </div><!--card-->
+  <!-- End Job Images Card -->
+
+  <!-- Invoice Card -->
+  <div class="card">
+
+  <!-- card header -->
+  <div class="card-header" id="headingInvoice">
+  <h5 class="mb-0">
+  <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseInvoice">
+      <h4>Factura</h4> {{cuJobOffer}} 
+  </button>
+  </h5>
+  </div><!--card header-->
+
+  <div class="collapse {{gcInvoiceShow}}" id="collapseInvoice" data-parent="#accordionOne">
+  <div class="card-body">
+  <div class="row">
+
+{{funcInvoice}}
+
+  </div><!--row-->
+  </div><!--card-body-->
+  </div><!--collapseInvoice-->
+  </div><!--card-->
+  <!-- End Invoice Card -->
+  </div><!--accordianOne-->
+  </main>
+
+
+
+      <footer class='footer text-center'>
+        <span class='text-muted'>{{gcCopyright}}</span>
+      </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+
+<!--
+<script>
+	$('#collapseSummary').on('shown.bs.collapse', function () {
+		window.location.reload(true);
+	});
+</script>
+-->
+
+  </body>
+</html>
