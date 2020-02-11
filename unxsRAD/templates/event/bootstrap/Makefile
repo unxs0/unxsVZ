@@ -3,7 +3,7 @@
 #	unxsRAD/interfaces/bootstrap/Makefile
 #	templates/new
 #AUTHOR/LEGAL
-#	(C) 2017-2018 Gary Wallis for Unixservice, LLC.
+#	(C) 2017-2020 Gary Wallis for Unixservice, LLC.
 #	GPLv2 license applies. See included LICENSE file.
 #PURPOSE
 #	General purpose RAD4 bootstrap interface Makefile
@@ -23,22 +23,16 @@ help:
 	@echo "make install-test"
 	@echo "make install-bootstrap"
 
-interface.cgi: {{funcMakefileObjects}} joboffer.o calendar.o user.o main.o cgi.o mysqlconnect.o
-	cc {{funcMakefileObjects}} joboffer.o calendar.o user.o main.o cgi.o mysqlconnect.o -o interface.cgi $(LIBS)
+interface.cgi: {{funcMakefileObjects}} judge.o main.o cgi.o mysqlconnect.o
+	cc {{funcMakefileObjects}} judge.o main.o cgi.o mysqlconnect.o -o interface.cgi $(LIBS)
 
 {{funcMakefileRules}}
 
 main.o: main.c interface.h local.h ../mysqlrad.h
 	cc -c main.c -o main.o $(CFLAGS) 
 
-user.o: user.c interface.h local.h ../mysqlrad.h
-	cc -c user.c -o user.o $(CFLAGS)
-
-calendar.o: calendar.c interface.h local.h ../mysqlrad.h
-	cc -c calendar.c -o calendar.o $(CFLAGS)
-
-joboffer.o: joboffer.c interface.h local.h ../mysqlrad.h
-	cc -c joboffer.c -o joboffer.o $(CFLAGS)
+judge.o: judge.c interface.h local.h ../mysqlrad.h
+	cc -c judge.c -o judge.o $(CFLAGS)
 
 mysqlconnect.o: mysqlconnect.c  local.h interface.h
 	cc -o mysqlconnect.o -c mysqlconnect.c $(CFLAGS)

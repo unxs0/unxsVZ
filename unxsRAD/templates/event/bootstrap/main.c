@@ -3,7 +3,7 @@ FILE
 	{{cProject}}/interfaces/bootstrap/main.c
 	template unxsRAD/templates/new/bootstrap/main.c
 AUTHOR/LEGAL
-	(C) 2010-2018 Gary Wallis for Unixservice, LLC.
+	(C) 2010-2020 Gary Wallis for Unixservice, LLC.
 	GPLv2 license applies. See included LICENSE file.
 PURPOSE
 	Bootstrap interface program file
@@ -27,6 +27,9 @@ char gcNewStep[32]={""};
 char gcDelStep[32]={""};
 unsigned guZone=0;
 unsigned guView=0;
+
+//APP VARS
+unsigned guHeat=0;
 
 //SSLLoginCookie()
 char gcCookie[1024]={""};
@@ -55,17 +58,6 @@ char *gcBrand=INTERFACE_HEADER_TITLE;
 
 char gcFunction[100]={""};
 char gcPage[100]={""};
-unsigned guBrowserFirefox=0;
-unsigned guYear=0;
-unsigned guMonth=0;
-char *gcImagesShow="";//show or empty
-char *gcInvoiceShow="";//show or empty
-char *gcSummaryShow="show";//show or empty. Special default show
-char *gcCPShow="";//show or empty
-char gcFilename[100]={""};	
-char gcImageDescription[512]={""};	
-char gcImageTitle[100]={""};	
-unsigned guImageNumber=1;
 
 //
 //Local only
@@ -103,59 +95,6 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-#include "/usr/include/openisp/upload.h"
-    	if(check_content_type("multipart/form-data"))
-	{
-                SSLCookieLogin();
-		if(iUpload(argc,(const char **) argv,gcFilename,gcImageTitle,gcImageDescription,&guImageNumber))
-		{
-			gcMessage="Error uploading image! Check size and file type.";
-		}
-		else
-		{
-			if(guJobOffer && guImageNumber>0 && guImageNumber<4)
-			{	if(gcImageTitle[0] && !gcImageDescription[0])
-					sprintf(gcImageDescription,"%.99s",gcImageTitle);
-				else if(!gcImageTitle[0] && gcImageDescription[0])
-					sprintf(gcImageTitle,"%.99s",gcImageDescription);
-				if(guPermLevel>=10)
-					sprintf(gcQuery,"UPDATE tJobOffer SET cLink%u='%s',"
-					" cLink%uTitle='%s',cLink%uDesc='%s',"
-					" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
-					" WHERE uJobOffer=%u",
-						guImageNumber,gcFilename,
-						guImageNumber,TextAreaSave(gcImageTitle),guImageNumber,TextAreaSave(gcImageDescription),
-						guLoginClient,
-						guJobOffer);
-				else
-					sprintf(gcQuery,"UPDATE tJobOffer SET cLink%u='%s',"
-					" cLink%uTitle='%s',cLink%uDesc='%s',"
-					" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
-					" WHERE uJobOffer=%u AND uOwner=%u",
-						guImageNumber,gcFilename,
-						guImageNumber,TextAreaSave(gcImageTitle),guImageNumber,TextAreaSave(gcImageDescription),
-						guLoginClient,
-						guJobOffer,guLoginClient);
-				mysql_query(&gMysql,gcQuery);
-        			if(mysql_errno(&gMysql))
-				{
-					static char cError[512]={""};
-					sprintf(cError,"%.511s",mysql_error(&gMysql));
-					gcMessage=cError;
-				}
-				else
-				{
-					char cMessage[100]={"Image uploaded and job offer updated"};
-					sprintf(cMessage,"Uploaded image %u %.64s Ok.",guImageNumber,gcFilename);
-					gcMessage=cMessage;
-				}
-			}
-			gcImagesShow="show";
-			gcSummaryShow="";
-		}
-		htmlJobOffer();
-	}
-
 	gethostname(gcHostname,98);
 
 	char cTable[100]={""};
@@ -177,36 +116,20 @@ int main(int argc, char *argv[])
 				sprintf(gcPage,"%.99s",gentries[x].val);
                 	else if(!strcmp(gentries[x].name,"cTable"))
 				sprintf(cTable,"%.99s",gentries[x].val);
-			else if(!strcmp(gentries[x].name,"gcEmailCode"))
-				sprintf(gcEmailCode,"%.31s",gentries[x].val);
 			else if(!strcmp(gentries[x].name,"gcLogin"))
 				sprintf(gcLogin,"%.99s",WordToLower(gentries[x].val));
-		}
-		//Prelogin
-		if(gcFunction[0])
-		{
-			if(!strcmp(gcFunction,"ChangePassword") && gcEmailCode[0] && gcLogin[0])
-				htmlLostPasswordDone();
 		}
 		SSLCookieLogin();
 		if(gcPage[0])
 		{
-			if(!strcmp(gcPage,"User"))
-				UserGetHook(gentries,x);
-			else if(!strcmp(gcPage,"Calendar"))
-				CalendarGetHook(gentries,x);
-			else if(!strcmp(gcPage,"Admin"))
-				AdminGetHook(gentries,x);
-			else if(!strcmp(gcPage,"JobOffer"))
-				JobOfferGetHook(gentries,x);
+			if(!strcmp(gcPage,"Judge"))
+				JudgeGetHook(gentries,x);
 			//Need to catch all pages here or else have default
-			htmlJobOffer();
+			htmlJudge();
 		}
 		else if(!gcFunction[0])
 		{
-			//Special direct uJob link
-			JobOfferGetHook(gentries,x);
-			htmlJobOffer();
+			htmlJudge();
 		}
 	}
 	else
@@ -253,13 +176,9 @@ int main(int argc, char *argv[])
 	}
 
 	//Not required to be logged in sections
-	if(gcPage[0])
-	{
-		if(!strcmp(gcPage,"LostPassword"))
-			htmlLostPassword();
-		else if(!strcmp(gcPage,"SignUp"))
-			htmlSignUp();
-	}
+	//if(gcPage[0])
+	//{
+	//}
 	if(gcFunction[0])
 	{
 		if(!strncmp(gcFunction,"Logout",5))
@@ -267,7 +186,7 @@ int main(int argc, char *argv[])
 			//8 idnsOrg log type, need to globally add 9 for OneLogin
 			printf("Set-Cookie: {{cProject}}SessionId=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: {{cProject}}SessionHash=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-			printf("Set-Cookie: {{cProject}}JobOffer=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: {{cProject}}Heat=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: guStatusFilter=\"deleted\"; discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=8,uPermLevel=%u,"
 					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
@@ -286,17 +205,6 @@ int main(int argc, char *argv[])
 		}
         	else if(!strcmp(gcFunction,"Login")) 
 			SetLogin();
-		else if(!strcmp(gcFunction,"SignUpStep1"))
-		{
-			ProcessUserVars(entries,x);
-			htmlSignUpStep1();
-		}
-		else if(!strcmp(gcFunction,"SignUpDone") && gcEmailCode[0])
-			htmlSignUpDone();
-		else if(!strcmp(gcFunction,"LostPassword") && gcLogin[0])
-			htmlLostPasswordDone();
-		else if(!strcmp(gcFunction,"ChangePassword") && gcLogin[0] && gcEmailCode[0] && gcPasswd[0] && gcPasswd2[0])
-			htmlLostPasswordDone();
 	}
 
         if(!guPermLevel || !gcUser[0] || !guLoginClient)
@@ -304,25 +212,19 @@ int main(int argc, char *argv[])
 
 	//First page after valid login
 	if(!strcmp(gcFunction,"Login"))
-		htmlJobOffer();
+		htmlJudge();
 
 	//Per page command tree
-	UserCommands(entries,x);
+	JudgeCommands(entries,x);
 	//Main Post Menu
 	
 	if(gcPage[0])
 	{
-		if(!strcmp(gcPage,"User"))
-			htmlUser();
-		else if(!strcmp(gcPage,"Calendar"))
-			htmlCalendar();
-		else if(!strcmp(gcPage,"Admin"))
-			htmlAdmin();
-		else if(!strcmp(gcPage,"JobOffer"))
-			htmlJobOffer();
+		if(!strcmp(gcPage,"Judge"))
+			htmlJudge();
 	}
 	//default logged in page
-	htmlJobOffer();
+	htmlJudge();
 	return(0);
 
 }//end of main()
@@ -523,29 +425,6 @@ extern unsigned uBrand;
 //libtemplate.a required
 void AppFunctions(FILE *fp,char *cFunction)
 {
-	if(!strcmp(cFunction,"funcMOTD"))
-		funcMOTD(fp);
-	else if(!strcmp(cFunction,"funcOperationHistory"))
-		funcOperationHistory(fp);
-	else if(!strcmp(cFunction,"funcLoginHistory"))
-		funcLoginHistory(fp);
-	else if(!strcmp(cFunction,"funcCalendar"))
-		funcCalendar(fp);
-	else if(!strcmp(cFunction,"funcJobOffer"))
-		funcJobOffer(fp);
-	else if(!strcmp(cFunction,"funcStatusSelect"))
-		funcStatusSelect(fp);
-	else if(!strcmp(cFunction,"funcInvoice"))
-		funcInvoice(fp);
-	else if(!strcmp(cFunction,"funcUserInvoices"))
-		funcUserInvoices(fp);
-	else if(!strcmp(cFunction,"funcRemindPickup"))
-		funcRemindPickup(fp);
-	else if(!strncmp(cFunction,"funcSelect(tBrand)",18))
-	{
-		funcSelect(fp,"tBrand",uBrand);
-	}
-	
 }//void AppFunctions(FILE *fp,char *cFunction)
 
 
@@ -630,15 +509,10 @@ void SSLCookieLogin(void)
 				sprintf(gcPasswd,"%.99s",cP);
 			}
 		}
-		if((cP=strstr(gcCookie,"{{cProject}}JobOffer=")))
+		if((cP=strstr(gcCookie,"{{cProject}}Heat=")))
 		{
-			cP+=strlen("{{cProject}}JobOffer=");
-			sscanf(cP,"%u",&guJobOffer);
-		}
-		if((cP=strstr(gcCookie,"guStatusFilter=")))
-		{
-			cP+=strlen("guStatusFilter=");
-			sscanf(cP,"%u",&guStatusFilter);
+			cP+=strlen("{{cProject}}Heat=");
+			sscanf(cP,"%u",&guHeat);
 		}
 	}//if gcCookie[0] time saver
 

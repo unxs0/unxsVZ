@@ -27,6 +27,8 @@ fi
 #create interface app
 # import interface templates into backend app db
 ./utils/importTemplates.sh;
+cd interface;
+make install;
 cd $cwd;
 ###
 

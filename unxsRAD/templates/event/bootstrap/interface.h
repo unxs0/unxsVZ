@@ -42,7 +42,7 @@ AUTHOR
 #define uDEFAULT	1
 //and tTemplateType:
 #define uRAD4		1	
-#define uBOOTSTRAP	2
+#define uBOOTSTRAP	14
 
 void InterfaceConnectDb(void);
 
@@ -91,7 +91,7 @@ extern char *gcBrand;
 extern unsigned guBrowserFirefox;
 extern unsigned guYear;
 extern unsigned guMonth;
-extern unsigned guJobOffer;
+extern unsigned guHeat;
 extern unsigned guValidJobLoaded;
 extern char *gcCPShow;
 
@@ -107,45 +107,14 @@ extern unsigned guRequireOTPLogin;
 extern char gcOTPSecret[];
 extern char gcOTPInfo[];
 
-//Other
-extern unsigned guStatusFilter;//joboffer.c
-
 //Menu
 //
 
 {{funcBootstrapModulePrototypes}}
 
-//user.c
-void ProcessUserVars(pentry entries[], int x);
-void UserGetHook(entry gentries[],int x);
-void AdminGetHook(entry gentries[],int x);
-void CalendarGetHook(entry gentries[],int x);
-void JobOfferGetHook(entry gentries[],int x);
-void UserCommands(pentry entries[], int x);
-void htmlUser(void);
-void htmlSignUp(void);
-void htmlLostPassword(void);
-void htmlSignUpStep1(void);
-void htmlSignUpDone(void);
-void htmlLostPasswordDone(void);
-void htmlJobOffer(void);
-void htmlCalendar(void);
-void htmlAdmin(void);
-void htmlUserPage(char *cTitle, char *cTemplateName);
-void funcMOTD(FILE *fp);
-void funcOperationHistory(FILE *fp);
-void funcLoginHistory(FILE *fp);
-void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
-void logfileLine(const char *cFunction,const char *cLogline);
-void LoadJobOfferData(unsigned uJobOffer);
-
-//calendar.c
-//uses globals guMonth and guYear
-void funcCalendar(FILE *fp);
-
-//joboffers.c
-void funcJobOffer(FILE *fp);
-void funcStatusSelect(FILE *fp);
-void funcInvoice(FILE *fp);
-void funcUserInvoices(FILE *fp);
-void funcRemindPickup(FILE *fp);
+//judge.c
+void ProcessJudgeVars(pentry entries[], int x);
+void JudgeGetHook(entry gentries[],int x);
+void JudgeCommands(pentry entries[], int x);
+void htmlJudge(void);
+void htmlJudgePage(char *cTitle, char *cTemplateName);

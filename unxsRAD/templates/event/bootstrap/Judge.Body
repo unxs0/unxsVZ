@@ -1,25 +1,55 @@
 <!-- unxsRAD.Template2 -->
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Arreglo Kites Agenda">
+    <meta name="description" content="KiteEvent Judging">
     <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
     <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
 
-    <title>AK Agenda</title>
+    <title>KiteEvent Judging</title>
 
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
-    <!-- Local AK custom css -->
-    <link rel="stylesheet" href="/bs/css/unxsakcal.css">
-  </head>
+    <!-- Local EV custom css -->
+    <link rel="stylesheet" href="/bs/css/unxsak.css">
+</head>
 
-  <body translate='no'>
+<body>
+  <header>
+  <nav class='navbar navbar-expand-md navbar-dark fixed-top bg-dark'>
+    <a class='navbar-brand' href='/unxsEVApp/'>Portal KiteEvent</a>
+    <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarsCalendar' >
+      <span class='navbar-toggler-icon'></span>
+    </button>
 
-  <!-- navbar moved into func for programatic test/dev content-->
-  {{funcCalendar}}
+    <div class='collapse navbar-collapse' id='navbarsCalendar'>
+    <ul class='navbar-nav mr-auto'>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsEVApp/?gcFunction=Logout'>Logout</a>
+      </li>
+    </ul>
+    </div>
+
+  </nav>
+  </header>
+
+  <main role="main" class="container">
+
+  <h4 class='mt-5'>Judging</h4>
+<!-- Select Job Offers Panel -->
+<div class="well">
+  <div class="row">
+    <div class="col-sm-9 col-xs-12">
+      <h4>{{gcMessage}}</h4>
+      <p class="big-para">Display current event, round, current or next heat and the heat status. If the heat status is active we can select the rider, trick, score number and set a score.</p>
+    </div>
+  </div>
+</div>
+
+  </main>
+
 
 
       <footer class='footer text-center'>

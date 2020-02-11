@@ -4,11 +4,11 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ArregloKites Login">
+    <meta name="description" content="KiteEvent Login">
     <meta name="author" content="Unixservice, LLC.">
     <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
 
-    <title>Portal ArregloKites.Com</title>
+    <title>Portal KiteEvent</title>
 
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
@@ -37,20 +37,15 @@
 
     <div class="container">
 
-      <form class="form-signin" role="form" method="post" action="/unxsAKApp">
-        <h3 class="form-signin-heading">Portal ArregloKites.Com</h3>
+      <form class="form-signin" role="form" method="post" action="/unxsEVApp/">
+        <h3 class="form-signin-heading">Portal KiteEvent</h3>
         <label for="inputEmail" class="sr-only">Login/Email</label>
-        <input maxlength="99" title='Ingresar tu email previamente registrado'
-		type="email" id="inputEmail" class="form-control" placeholder="tuemail@ejemplo.algo" name="gcLogin" required autofocus>
+        <input maxlength="99" title='Ingresar tu login/usuario'
+		type="text" id="inputEmail" class="form-control" placeholder="usuario/login" name="gcLogin" required autofocus>
         <label title='Ingrese su contrase&ntilde;a' for="inputPassword" class="sr-only">Contrase&ntilde;a</label>
         <input title='Ingresar tu contrase&ntilde;a' maxlength="31" type="password" id="inputPassword" class="form-control" placeholder="Contrase&ntilde;a" name="gcPasswd" required>
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Ingresar al Portal</button>
         <h4 class="form-signin-heading">{{gcMessage}}</h4>
-      </form>
-      <form class="form-signin" role="form" method="post" action="/unxsAKApp">
-	<button title='Reg&iacute;strese para una cuenta gratis, es r&aacute;pido y f&aacute;cil!' type="submit" name=gcPage value='SignUp' class="btn btn-link">Crear cuenta</button>
-	<button title='Si perdio su contrase&ntilde;a no se preocupe, siga por aqui.' type="submit" name=gcPage value='LostPassword' class="btn btn-link">Se me olvid&oacute; la contrase&ntilde;a</button>
-	<button title='Nuevos Precios: Arreglo m&iacute;nimo es U$A 20.00' type="submit" name=gcPage value='NuevosPrecios' class="btn btn-link">Minimo $20.00</button>
       </form>
 
     </div> <!-- /container -->
