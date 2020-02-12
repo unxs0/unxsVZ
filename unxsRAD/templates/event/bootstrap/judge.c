@@ -79,11 +79,13 @@ void htmlJudgePage(char *cTitle, char *cTemplateName)
 			template.cpName[3]="gcBrand";
 			template.cpValue[3]=gcBrand;
 
-			template.cpName[4]="gcLogin";
-			if(!gcLogin[0]) sprintf(gcLogin,"Login id");
-			template.cpValue[4]=gcLogin;
+			template.cpName[4]="gcName";
+			template.cpValue[4]=gcName;
 
-			template.cpName[5]="";
+			template.cpName[5]="gcOrgName";
+			template.cpValue[5]=gcOrgName;
+
+			template.cpName[6]="";
 
 			printf("\n<!-- Start htmlLoginPage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -99,3 +101,42 @@ void htmlJudgePage(char *cTitle, char *cTemplateName)
 
 
 }//htmlJudgePage()
+
+
+void funcHeatScoreTable(FILE *fp)
+{
+	fprintf(fp,"<div class=\"sTable\">");
+
+	fprintf(fp,"<div class=\"sTableRow\">");
+	fprintf(fp,"<div class=\"sTableCellGreen\">To End: 0:00</div>");
+	fprintf(fp,"<div class=\"sTableCellBlack\">Ronda 1</div>");
+	fprintf(fp,"<div class=\"sTableCellBlack\">Heat 1</div>");
+	fprintf(fp,"</div>");
+
+	fprintf(fp,"</div>");
+
+	fprintf(fp,"<br><div class=\"sTable\">");
+
+	fprintf(fp,"<div class=\"sTableRow\">");
+	fprintf(fp,"<div class=\"sTableCell\">1</div>");
+	fprintf(fp,"<div class=\"sTableCellBlack\">K. LANGEREE</div>");
+	fprintf(fp,"<div class=\"sTableCellBlackBold\">0.00</div>");
+	fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
+	fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
+	fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
+	fprintf(fp,"<div class=\"sTableCellBlue\">Needs 0.00</div>");
+	fprintf(fp,"</div>");
+
+	fprintf(fp,"<div class=\"sTableRow\">");
+	fprintf(fp,"<div class=\"sTableCell\">2</div>");
+	fprintf(fp,"<div class=\"sTableCellBlack\">A. HADLOW</div>");
+	fprintf(fp,"<div class=\"sTableCellBlackBold\">0.00</div>");
+	fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
+	fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
+	fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
+	fprintf(fp,"<div class=\"sTableCellBlue\">Needs 0.00</div>");
+	fprintf(fp,"</div>");
+
+	fprintf(fp,"</div>");
+
+}//void funcHeatScoreTable(FILE *fp)

@@ -1,0 +1,53 @@
+.sTable {
+   display: table;
+   width: 100%;
+}
+.sTableRow {
+   display: table-row;
+}
+.sTableCell {
+   display: table-cell;
+   padding: 3px 10px;
+   border: 1px solid #999999;
+}
+.sTableCellBlue {
+   display: table-cell;
+   padding: 3px 10px;
+   border: 1px solid #999999;
+   background-color: #00d;
+   color: #fff;
+}
+.sTableCellGreen {
+   display: table-cell;
+   padding: 3px 10px;
+   border: 1px solid #999999;
+   background-color: #0d0;
+}
+.sTableCellBlack {
+   display: table-cell;
+   padding: 3px 10px;
+   border: 1px solid #999999;
+   background-color: #000;
+   color: #fff;
+}
+.sTableCellBlackBold {
+   display: table-cell;
+   padding: 3px 10px;
+   border: 1px solid #999999;
+   background-color: #000;
+   color: #fff;
+   font-weight: bold;
+}
+.sTableHeading {
+   display: table-header-group;
+   background-color: #ddd;
+   font-weight: bold;
+}
+.sTableFoot {
+   display: table-footer-group;
+   font-weight: bold;
+   background-color: #ddd;
+}
+.sTableBody {
+   display: table-row-group;
+}

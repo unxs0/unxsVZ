@@ -188,13 +188,10 @@ void Ext{{cTableName}}Select(void)
 		sprintf(gcQuery,"SELECT %s FROM {{cTableName}} ORDER BY"
 				" {{cTableKey}}",
 				VAR_LIST_{{cTableName}});
-	else //If you own it, the company you work for owns the company that owns it,
-		//you created it, or your company owns it you can at least read access it
-		//select tTemplateSet.cLabel from tTemplateSet,tClient where tTemplateSet.uOwner=tClient.uClient and tClient.uOwner in (select uClient from tClient where uOwner=81 or uClient=51);
-	sprintf(gcQuery,"SELECT %s FROM {{cTableName}},tClient WHERE {{cTableName}}.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
+	else 
+		sprintf(gcQuery,"SELECT %s FROM {{cTableName}} WHERE (uOwner=%u OR uOwner=%u)"
 				" ORDER BY {{cTableKey}}",
-					VAR_LIST_{{cTableName}},uContactParentCompany,uContactParentCompany);
+					VAR_LIST_{{cTableName}},guLoginClient,uContactParentCompany);
 					
 
 }//void Ext{{cTableName}}Select(void)
@@ -210,12 +207,11 @@ void Ext{{cTableName}}SelectRow(void)
                 sprintf(gcQuery,"SELECT %s FROM {{cTableName}} WHERE {{cTableKey}}=%u",
 			VAR_LIST_{{cTableName}},{{cTableKey}});
 	else
-                sprintf(gcQuery,"SELECT %s FROM {{cTableName}},tClient"
-                                " WHERE {{cTableName}}.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)"
-				" AND {{cTableName}}.{{cTableKey}}=%u",
+                sprintf(gcQuery,"SELECT %s FROM {{cTableName}}"
+                                " WHERE (uOwner=%u OR uOwner=%u)"
+				" AND {{cTableKey}}=%u",
                         		VAR_LIST_{{cTableName}}
-					,uContactParentCompany,uContactParentCompany
+					,guLoginClient,uContactParentCompany
 					,{{cTableKey}});
 
 }//void Ext{{cTableName}}SelectRow(void)
@@ -232,11 +228,10 @@ void Ext{{cTableName}}ListSelect(void)
 		sprintf(gcQuery,"SELECT %s FROM {{cTableName}}",
 				VAR_LIST_{{cTableName}});
 	else
-		sprintf(gcQuery,"SELECT %s FROM {{cTableName}},tClient"
-				" WHERE {{cTableName}}.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
+		sprintf(gcQuery,"SELECT %s FROM {{cTableName}}"
+				" WHERE (uOwner=%u OR uOwner=%u)",
 				VAR_LIST_{{cTableName}}
-				,uContactParentCompany
+				,guLoginClient
 				,uContactParentCompany);
 
 	//Changes here must be reflected below in Ext{{cTableName}}ListFilter()
@@ -318,12 +313,10 @@ void {{cTableName}}NavList(void)
 	if(guLoginClient==1 && guPermLevel>11)//Root can read access all
 		sprintf(gcQuery,"SELECT {{cTableKey}},cLabel FROM {{cTableName}} ORDER BY cLabel");
 	else
-		sprintf(gcQuery,"SELECT {{cTableName}}.{{cTableKey}},"
-				" {{cTableName}}.cLabel"
-				" FROM {{cTableName}},tClient"
-				" WHERE {{cTableName}}.uOwner=tClient.uClient"
-				" AND tClient.uOwner IN (SELECT uClient FROM tClient WHERE uOwner=%u OR uClient=%u)",
-				uContactParentCompany
+		sprintf(gcQuery,"SELECT {{cTableKey}},cLabel"
+				" FROM {{cTableName}}"
+				" WHERE (uOwner=%u OR uOwner=%u) ORDER BY cLabel",
+				guLoginClient
 				,uContactParentCompany);
         mysql_query(&gMysql,gcQuery);
         if(mysql_errno(&gMysql))

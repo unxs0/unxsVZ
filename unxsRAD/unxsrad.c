@@ -1130,7 +1130,12 @@ void funcModuleProcVars(FILE *fp)
 				fprintf(fp,"\t\t\n\t\t{\n");
 				fprintf(fp,"\t\t\tsscanf(entries[i].val,\"%%u\",&%s);\n",cField);
 				fprintf(fp,"\t\t\tif(!%s)\n",cField);
-				fprintf(fp,"\t\t\t\t%s=ReadPullDown(%s,%s,entries[i].val);\n",cField,cTableName,cFieldName);
+				if(uRADType==COLTYPE_SELECTTABLE_OWNER)
+					fprintf(fp,"\t\t\t\t%s=ReadPullDownOwner(%s,%s,entries[i].val,guLoginClient);\n",
+						cField,cTableName,cFieldName);
+				else
+					fprintf(fp,"\t\t\t\t%s=ReadPullDown(%s,%s,entries[i].val);\n",
+						cField,cTableName,cFieldName);
 				fprintf(fp,"\t\t}\n");
 			break;
 			
@@ -1158,7 +1163,12 @@ void funcModuleProcVars(FILE *fp)
 				}
 				fprintf(fp,"\t\t%sif(!strcmp(entries[i].name,\"c%sPullDown\"))\n\t\t{\n" ,temp ,cField);
 				fprintf(fp,"\t\t\tsprintf(c%sPullDown,\"%%.255s\",entries[i].val);\n",cField);
-				fprintf(fp,"\t\t\t%s=ReadPullDown(%s,%s,c%sPullDown);\n",cField,cTableName,cFieldName,cField);
+				if(uRADType==COLTYPE_SELECTTABLE_OWNER)
+					fprintf(fp,"\t\t\t%s=ReadPullDownOwner(%s,%s,c%sPullDown,guLoginClient);\n",
+						cField,cTableName,cFieldName,cField);
+				else
+					fprintf(fp,"\t\t\t%s=ReadPullDown(%s,%s,c%sPullDown);\n",
+						cField,cTableName,cFieldName,cField);
 				fprintf(fp,"\t\t}\n");
 			break;
 			
@@ -1419,7 +1429,8 @@ void funcModuleInput(FILE *fp)
 				fprintf(fp,"\t\ttTablePullDownOwner(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,0);\n"
 					,cTableName,cField,cFieldName,cFieldName,cField);
 				fprintf(fp,"\telse if(uMode)\n");
-				fprintf(fp,"\t\ttTablePullDown(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,1);\n"
+				//fprintf(fp,"\t\ttTablePullDown(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,1);\n"
+				fprintf(fp,"\t\ttTablePullDownOwner(\"%s;c%sPullDown\",\"%s\",\"%s\",%s,1);\n"
 					,cTableName,cField,cFieldName,cFieldName,cField);
 				//fprintf(fp,"\tprintf(\"<input title='%%s' type=text size=20 maxlength=20 name=%s value='%%u' >\\n\",LANG_FT_%s_%s,%s);\n"
 				//	,cField,gcTableName,cField,cField);
@@ -1428,8 +1439,10 @@ void funcModuleInput(FILE *fp)
 				fprintf(fp,"\telse if(1)\n\t{\n");
 				fprintf(fp,"\t\tprintf(\"<input type=text size=20 value='%%s' disabled>\\n\",ForeignKey(\"%s\",\"%s\",%s));\n"
 					,cTableName,cFieldName,cField);
-				fprintf(fp,"\t\tprintf(\"<input type=hidden size=20 maxlength=20 name=%s value='%%u' >\\n\",%s);\n"
+				fprintf(fp,"\t\tprintf(\"<input type=hidden name=%s value='%%u' >\\n\",%s);\n"
 					,cField,cField);
+				fprintf(fp,"\t\tprintf(\"<input type=hidden name=c%sPullDown value='%%s' >\\n\",ForeignKey(\"%s\",\"%s\",%s));\n"
+					,cField,cTableName,cFieldName,cField);
 				fprintf(fp,"\t}\n");
 			break;
 

@@ -421,10 +421,42 @@ void funcSelect(FILE *fp,char *cTable,unsigned uSelector)
 }//void funcSelect()
 
 
-extern unsigned uBrand;
+void funcSelectOwner(FILE *fp,char *cTable,unsigned uSelector)
+{
+
+	fprintf(fp,"<!-- funcSelectOwner(%s) -->\n",cTable);
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT _rowid,cLabel FROM %s WHERE uOwner=%u ORDER by cLabel",cTable,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"<!-- error: %s -->\n",mysql_error(&gMysql));
+		return;
+	}
+
+	fprintf(fp,"\t\t<select class=\"form-control\" id=\"u%1$s\" name=\"u%1$s\">\n",cTable+1);
+	res=mysql_store_result(&gMysql);
+	//fprintf(fp,"<option>  </option>\n");
+	while((field=mysql_fetch_row(res)))
+	{
+		unsigned uRowId=0;
+		sscanf(field[0],"%u",&uRowId);
+		fprintf(fp,"\t\t\t<option value='%u'",uRowId);
+		if(uRowId==uSelector)
+			fprintf(fp,"selected");
+		fprintf(fp,">%s</option>\n",field[1]);
+	}
+	fprintf(fp,"\t\t</select>\n");
+
+}//void funcSelectOwner()
+
+
 //libtemplate.a required
 void AppFunctions(FILE *fp,char *cFunction)
 {
+	if(!strcmp(cFunction,"funcHeatScoreTable"))
+		funcHeatScoreTable(fp);
 }//void AppFunctions(FILE *fp,char *cFunction)
 
 

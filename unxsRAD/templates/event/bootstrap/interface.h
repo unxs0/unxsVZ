@@ -118,3 +118,4 @@ void JudgeGetHook(entry gentries[],int x);
 void JudgeCommands(pentry entries[], int x);
 void htmlJudge(void);
 void htmlJudgePage(char *cTitle, char *cTemplateName);
+void funcHeatScoreTable(FILE *fp);

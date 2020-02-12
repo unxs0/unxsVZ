@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
     <!-- Local EV custom css -->
     <link rel="stylesheet" href="/bs/css/unxsak.css">
+    <link rel="stylesheet" href="/bs/css/sTable.css">
 </head>
 
 <body>
@@ -37,13 +38,14 @@
 
   <main role="main" class="container">
 
-  <h4 class='mt-5'>Judging</h4>
+  <h4 class='mt-5'>Judge {{gcName}}/{{gcOrgName}}</h4>
 <!-- Select Job Offers Panel -->
 <div class="well">
   <div class="row">
     <div class="col-sm-9 col-xs-12">
       <h4>{{gcMessage}}</h4>
-      <p class="big-para">Display current event, round, current or next heat and the heat status. If the heat status is active we can select the rider, trick, score number and set a score.</p>
+      <p class="big-para"></p>
+      {{funcHeatScoreTable}}
     </div>
   </div>
 </div>
