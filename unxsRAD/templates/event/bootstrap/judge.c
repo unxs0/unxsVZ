@@ -109,8 +109,11 @@ void funcHeatScoreTable(FILE *fp)
 	MYSQL_ROW field;
 	MYSQL_RES *res2;
 	MYSQL_ROW field2;
+	MYSQL_RES *res3;
+	MYSQL_ROW field3;
 	unsigned uEvent=0;
 	unsigned uHeat=0;
+	unsigned uTrickLock=0;
 	unsigned uRound=0;
 	unsigned uNumScores=0;
 	char cHeat[32]={""};
@@ -142,7 +145,7 @@ void funcHeatScoreTable(FILE *fp)
 	}
 
 	sprintf(gcQuery,"SELECT uHeat,cLabel,uRound,"
-			" DATE_FORMAT(dStart,'%%H:%%i:%%s'),DATE_FORMAT(dEnd,'%%H:%%i:%%s')"
+			" DATE_FORMAT(dStart,'%%H:%%i:%%s'),DATE_FORMAT(dEnd,'%%H:%%i:%%s'),uTrickLock"
 			" FROM tHeat WHERE uStatus=1 AND uOwner=%u ORDER BY uHeat DESC LIMIT 1",guOrg);
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
@@ -155,6 +158,7 @@ void funcHeatScoreTable(FILE *fp)
 		sprintf(dStart,"%.31s",field[3]);
 		if(field[4][0])
 		sprintf(dEnd,"%.31s",field[4]);
+		sscanf(field[5],"%u",&uTrickLock);
 	}
 	if(!uHeat || !uRound) 
 	{
@@ -181,7 +185,8 @@ void funcHeatScoreTable(FILE *fp)
 	}
 
 
-	fprintf(fp,"<div class=\"sTableCellGreen\">Start: %s End: %s</div>",dStart,dEnd);
+	fprintf(fp,"<div class=\"sTableCellGreen\">Start: %s</div>",dStart);
+	fprintf(fp,"<div class=\"sTableCellGreen\">End: %s</div>",dEnd);
 	fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cRound);
 	fprintf(fp,"<div class=\"sTableCellBlack\">Heat %s</div>",cHeat);
 	fprintf(fp,"</div>");
@@ -189,22 +194,53 @@ void funcHeatScoreTable(FILE *fp)
 	fprintf(fp,"</div>");
 
 
-	fprintf(fp,"<br>%s<div class=\"sTable\">",gcName);
+      	fprintf(fp,"<form class=\"form-signin\" role=\"form\" method=\"post\" action=\"/unxsEVApp/\">");
+	fprintf(fp,"<br><div class=\"sTable\">");
+	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u GROUP BY uRider ORDER BY SUM(fScore)/%u DESC",
+		uHeat,guOrg,uNumScores);
+	mysql_query(&gMysql,gcQuery);
+	if(*mysql_error(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res3=mysql_store_result(&gMysql);
+	while((field3=mysql_fetch_row(res3)))
+	{
+		
+
 	sprintf(gcQuery,"SELECT DISTINCT UPPER(SUBSTR(tRider.cFirst,1,1)),UPPER(tRider.cLast),tRider.uRider"
 			" FROM tScore,tRider"
 			" WHERE tScore.uRider=tRider.uRider"
-			" AND tScore.uHeat=%u AND tScore.uOwner=%u ORDER BY tRider.cLast",uHeat,guOrg);
+			" AND tScore.uHeat=%u AND tScore.uOwner=%u AND tRider.uRider=%s",uHeat,guOrg,field3[0]);
 	mysql_query(&gMysql,gcQuery);
+	if(*mysql_error(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
 	res=mysql_store_result(&gMysql);
 	j=1;
 	unsigned uIndex=0;
 	float fScore=0.00;
+	if(mysql_num_rows(res)<1)	
+	{
+		fprintf(fp,"</div></form>No score config data avaiable!");
+		return;
+	}
 	while((field=mysql_fetch_row(res)))
 	{
 		//Get scores for single judge
+		for(i=0;i<uNumScores&&i<8;i++)
+			fScoreArray[i]=0.00;
 		sprintf(gcQuery,"SELECT fScore,uIndex FROM tScore WHERE uHeat=%u AND uRider=%s AND (uCreatedBy=%u OR uModBy=%u) LIMIT 8",
 				uHeat,field[2],guLoginClient,guLoginClient);
 		mysql_query(&gMysql,gcQuery);
+		if(*mysql_error(&gMysql))
+		{
+			fprintf(fp,"%s",mysql_error(&gMysql));
+			return;
+		}
 		res2=mysql_store_result(&gMysql);
 		while((field2=mysql_fetch_row(res2)))
 		{
@@ -220,16 +256,36 @@ void funcHeatScoreTable(FILE *fp)
 		fTotalScore=fTotalScore/uNumScores;
 
 		fprintf(fp,"<div class=\"sTableRow\">");
-		fprintf(fp,"<div class=\"sTableCell\">%d</div>",j++);
+		//fprintf(fp,"<div class=\"sTableCell\">%d</div>",j++);
 		fprintf(fp,"<div class=\"sTableCellBlack\">%s. %s</div>",field[0],field[1]);
 		fprintf(fp,"<div class=\"sTableCellBlackBold\">%1.2f</div>",fTotalScore);
+		fprintf(fp,"<div class=\"sTableCellBlackSmall\">");
+		char *cTrickLock="required";
 		for(i=0;i<uNumScores&&i<8;i++)
-			fprintf(fp,"<div class=\"sTableCellBlack\"><a href=?Edit&%d&%s>%1.2f</a></div>",i,field[2],fScoreArray[i]);
+		{
+			if(i<uTrickLock)
+				cTrickLock="disabled";
+			else
+				cTrickLock="required";
+			fprintf(fp,"<input maxlength='5' type='number' step='any' id='inputScore%d-%s'"
+				" class='my-form-control' value='%1.2f' name='fScore%d-%s' %s><br>",
+					i,field[2],
+					fScoreArray[i],
+					i,field[2],cTrickLock);
+		}
 		fprintf(fp,"</div>");
-	}
+		fprintf(fp,"</div>");
+
+	}//res while
+
+	}//res3 while
 
 	fprintf(fp,"</div>");
+        fprintf(fp,"<br><button class='btn btn-lg btn-primary btn-block' type='submit' name=gcFunction value='Score'>Save</button>");
+	fprintf(fp,"</form>");
 
+
+	return;
 
 	fprintf(fp,"<br>All Judges<br><div class=\"sTable\">");
 
