@@ -1129,14 +1129,22 @@ void funcModuleProcVars(FILE *fp)
 				}
 				fprintf(fp,"\t\t\n\t\t{\n");
 				fprintf(fp,"\t\t\tsscanf(entries[i].val,\"%%u\",&%s);\n",cField);
-				fprintf(fp,"\t\t\tif(!%s)\n",cField);
+				fprintf(fp,"\t\t\tif(!%s){\n",cField);
 				if(uRADType==COLTYPE_SELECTTABLE_OWNER)
+				{
+					fprintf(fp,"\t\t\t\tif(guLoginClient!=1)\n");
 					fprintf(fp,"\t\t\t\t%s=ReadPullDownOwner(%s,%s,entries[i].val,guLoginClient);\n",
 						cField,cTableName,cFieldName);
-				else
+					fprintf(fp,"\t\t\t\telse\n");
 					fprintf(fp,"\t\t\t\t%s=ReadPullDown(%s,%s,entries[i].val);\n",
 						cField,cTableName,cFieldName);
-				fprintf(fp,"\t\t}\n");
+				}
+				else
+				{
+					fprintf(fp,"\t\t\t\t%s=ReadPullDown(%s,%s,entries[i].val);\n",
+						cField,cTableName,cFieldName);
+				}
+				fprintf(fp,"\t\t}}\n");
 			break;
 			
 			case COLTYPE_UNIXTIME:
@@ -1164,11 +1172,19 @@ void funcModuleProcVars(FILE *fp)
 				fprintf(fp,"\t\t%sif(!strcmp(entries[i].name,\"c%sPullDown\"))\n\t\t{\n" ,temp ,cField);
 				fprintf(fp,"\t\t\tsprintf(c%sPullDown,\"%%.255s\",entries[i].val);\n",cField);
 				if(uRADType==COLTYPE_SELECTTABLE_OWNER)
+				{
+					fprintf(fp,"\t\t\tif(guLoginClient!=1)\n");
 					fprintf(fp,"\t\t\t%s=ReadPullDownOwner(%s,%s,c%sPullDown,guLoginClient);\n",
 						cField,cTableName,cFieldName,cField);
-				else
+					fprintf(fp,"\t\t\telse\n");
 					fprintf(fp,"\t\t\t%s=ReadPullDown(%s,%s,c%sPullDown);\n",
 						cField,cTableName,cFieldName,cField);
+				}
+				else
+				{
+					fprintf(fp,"\t\t\t%s=ReadPullDown(%s,%s,c%sPullDown);\n",
+						cField,cTableName,cFieldName,cField);
+				}
 				fprintf(fp,"\t\t}\n");
 			break;
 			
@@ -2052,6 +2068,9 @@ void funcModuleCreateQuery(FILE *fp)
 			default:
 			case(COLTYPE_RADPRI):
 				fprintf(fp,"\t\t\"%s INT UNSIGNED %s",field[0],field[1]);
+			break;
+			case(COLTYPE_DECIMAL):
+				fprintf(fp,"\t\t\"%s FLOAT %s",field[0],field[1]);
 			break;
 			case(COLTYPE_VARCHAR):
 			case(COLTYPE_MONEY):

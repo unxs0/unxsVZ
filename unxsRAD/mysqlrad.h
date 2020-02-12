@@ -33,7 +33,7 @@ AUTHOR
 #include "local.h"
 
  //Native MySQL fields
-#define COLTYPE_DECIMAL 0
+#define COLTYPE_DECIMAL 777
 #define COLTYPE_MONEY 1102 //For BCD in future. Now allows $250,000.00 style input and output.
 #define COLTYPE_INTUNSIGNED 3
 #define COLTYPE_TIMESTAMP 7
