@@ -11,8 +11,11 @@ PURPOSE
 
 #include "interface.h"
 
+//File globals
+static unsigned uEvent=0;
 static unsigned uHeat=0;
 static unsigned uTrickLock=0;
+static unsigned uTrickLockProvided=0;
 
 //TOC
 void ProcessJudgeVars(pentry entries[], int x);
@@ -30,7 +33,12 @@ void ProcessJudgeVars(pentry entries[], int x)
 		if(!strcmp(entries[i].name,"uHeat"))
 			sscanf(entries[i].val,"%u",&uHeat);
 		else if(!strcmp(entries[i].name,"uTrickLock"))
+		{
+			uTrickLockProvided=1;
 			sscanf(entries[i].val,"%u",&uTrickLock);
+		}
+		else if(!strcmp(entries[i].name,"uEvent"))
+			sscanf(entries[i].val,"%u",&uEvent);
 	}
 
 }//void ProcessJobOfferVars(pentry entries[], int x)
@@ -50,9 +58,11 @@ void JudgeCommands(pentry entries[], int x)
 		ProcessJudgeVars(entries,x);
 
 		gcMessage="";
+		if(!uEvent)
+			gcMessage="uEvent not specified";
 		if(!uHeat)
 			gcMessage="uHeat not specified";
-		if(!uTrickLock)
+		if(!uTrickLockProvided)
 			gcMessage="uTrickLock not specified";
 		if(gcMessage[0])
 			htmlJudge();
@@ -68,23 +78,61 @@ void JudgeCommands(pentry entries[], int x)
 				{
 				  if(uIndex>=uTrickLock)
 				  {
-					sprintf(gcQuery,"UPDATE tScore"
-					" SET fScore=%s,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
-					" WHERE uHeat=%u AND uIndex=%u AND uRider=%u AND uOwner=%u AND (uModBy=%u OR uCreatedBy=%u)",
-						entries[i].val,guLoginClient,
-						uHeat,uIndex,uRider,guOrg,guLoginClient,guLoginClient);
+        				MYSQL_RES *res;
+	        			MYSQL_ROW field;
+
+					sprintf(gcQuery,"SELECT uScore FROM tScore"
+					" WHERE uHeat=%u AND uIndex=%u AND uRider=%u"
+					" AND uOwner=%u AND (uModBy=%u OR uCreatedBy=%u)",
+						uHeat,uIndex,uRider,
+						guOrg,guLoginClient,guLoginClient);
 					mysql_query(&gMysql,gcQuery);
 					if(*mysql_error(&gMysql))
 					{
-						gcMessage="error1";
+						gcMessage="error0";
 						htmlJudge();
 					}
+					res=mysql_store_result(&gMysql);
+					if((field=mysql_fetch_row(res)))
+					{
+					
+						sprintf(gcQuery,"UPDATE tScore"
+							" SET fScore=%s,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
+							" WHERE uScore=%s",
+								entries[i].val,guLoginClient,
+								field[0]);
+						mysql_query(&gMysql,gcQuery);
+						if(*mysql_error(&gMysql))
+						{
+							gcMessage="error1";
+							htmlJudge();
+						}
+						else
+						{
+							if(mysql_affected_rows(&gMysql)>0)
+								gcMessage="Score Updated";
+						}
+				  	}
 					else
 					{
-						if(mysql_affected_rows(&gMysql)>0)
-							gcMessage="Score(s) Updated";
+						sprintf(gcQuery,"INSERT INTO tScore"
+							" SET cLabel='%.25s %u',fScore=%s,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u"
+							" ,uHeat=%u,uIndex=%u,uRider=%u,uEvent=%u,uOwner=%u",
+								cForeignKey("tRider","cLast",uRider),uIndex+1,entries[i].val,guLoginClient,
+								uHeat,uIndex,uRider,uEvent,guOrg);
+						mysql_query(&gMysql,gcQuery);
+						if(*mysql_error(&gMysql))
+						{
+							gcMessage="error2";
+							htmlJudge();
+						}
+						else
+						{
+							if(mysql_affected_rows(&gMysql)>0)
+								gcMessage="Score Created";
+						}
 					}
-				  }
+				     }
 				}
 			}
 		}
@@ -244,11 +292,12 @@ void funcHeatScoreTable(FILE *fp)
 
 
       	fprintf(fp,"<form class=\"form-signin\" role=\"form\" method=\"post\" action=\"/unxsEVApp/\">");
+	fprintf(fp,"<input type='hidden' name='uEvent' value='%u'>",uEvent);
 	fprintf(fp,"<input type='hidden' name='uHeat' value='%u'>",uHeat);
 	fprintf(fp,"<input type='hidden' name='uTrickLock' value='%u'>",uTrickLock);
 	fprintf(fp,"<br><div class=\"sTable\">");
-	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u GROUP BY uRider ORDER BY SUM(fScore)/%u DESC",
-		uHeat,guOrg,uNumScores);
+	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u AND uCreatedBy=%u GROUP BY uRider ORDER BY SUM(fScore)/%u DESC",
+		uHeat,guOrg,guLoginClient,uNumScores);
 	mysql_query(&gMysql,gcQuery);
 	if(*mysql_error(&gMysql))
 	{
