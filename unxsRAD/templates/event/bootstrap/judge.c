@@ -11,6 +11,9 @@ PURPOSE
 
 #include "interface.h"
 
+static unsigned uHeat=0;
+static unsigned uTrickLock=0;
+
 //TOC
 void ProcessJudgeVars(pentry entries[], int x);
 void JudgeGetHook(entry gentries[],int x);
@@ -22,10 +25,12 @@ void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPer
 void ProcessJudgeVars(pentry entries[], int x)
 {
 	register int i;
-
 	for(i=0;i<x;i++)
 	{
-		
+		if(!strcmp(entries[i].name,"uHeat"))
+			sscanf(entries[i].val,"%u",&uHeat);
+		else if(!strcmp(entries[i].name,"uTrickLock"))
+			sscanf(entries[i].val,"%u",&uTrickLock);
 	}
 
 }//void ProcessJobOfferVars(pentry entries[], int x)
@@ -40,6 +45,50 @@ void JudgeGetHook(entry gentries[],int x)
 
 void JudgeCommands(pentry entries[], int x)
 {
+	if(!strcmp(gcFunction,"Score"))
+	{
+		ProcessJudgeVars(entries,x);
+
+		gcMessage="";
+		if(!uHeat)
+			gcMessage="uHeat not specified";
+		if(!uTrickLock)
+			gcMessage="uTrickLock not specified";
+		if(gcMessage[0])
+			htmlJudge();
+
+		register int i;
+		unsigned uIndex=0;
+		unsigned uRider=0;
+		for(i=0;i<x;i++)
+		{
+			if(!strncmp(entries[i].name,"fScore",6))
+			{
+				if(sscanf(entries[i].name,"fScore%u-%u",&uIndex,&uRider)==2)
+				{
+				  if(uIndex>=uTrickLock)
+				  {
+					sprintf(gcQuery,"UPDATE tScore"
+					" SET fScore=%s,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
+					" WHERE uHeat=%u AND uIndex=%u AND uRider=%u AND uOwner=%u AND (uModBy=%u OR uCreatedBy=%u)",
+						entries[i].val,guLoginClient,
+						uHeat,uIndex,uRider,guOrg,guLoginClient,guLoginClient);
+					mysql_query(&gMysql,gcQuery);
+					if(*mysql_error(&gMysql))
+					{
+						gcMessage="error1";
+						htmlJudge();
+					}
+					else
+					{
+						if(mysql_affected_rows(&gMysql)>0)
+							gcMessage="Score(s) Updated";
+					}
+				  }
+				}
+			}
+		}
+	}
 	htmlJudge();
 
 }//void UserCommands(pentry entries[], int x)
@@ -73,7 +122,7 @@ void htmlJudgePage(char *cTitle, char *cTemplateName)
 			template.cpName[1]="cCGI";
 			template.cpValue[1]="";
 			
-			template.cpName[2]="cMessage";
+			template.cpName[2]="gcMessage";
 			template.cpValue[2]=gcMessage;
 
 			template.cpName[3]="gcBrand";
@@ -195,6 +244,8 @@ void funcHeatScoreTable(FILE *fp)
 
 
       	fprintf(fp,"<form class=\"form-signin\" role=\"form\" method=\"post\" action=\"/unxsEVApp/\">");
+	fprintf(fp,"<input type='hidden' name='uHeat' value='%u'>",uHeat);
+	fprintf(fp,"<input type='hidden' name='uTrickLock' value='%u'>",uTrickLock);
 	fprintf(fp,"<br><div class=\"sTable\">");
 	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u GROUP BY uRider ORDER BY SUM(fScore)/%u DESC",
 		uHeat,guOrg,uNumScores);
@@ -284,30 +335,5 @@ void funcHeatScoreTable(FILE *fp)
         fprintf(fp,"<br><button class='btn btn-lg btn-primary btn-block' type='submit' name=gcFunction value='Score'>Save</button>");
 	fprintf(fp,"</form>");
 
-
-	return;
-
-	fprintf(fp,"<br>All Judges<br><div class=\"sTable\">");
-
-	fprintf(fp,"<div class=\"sTableRow\">");
-	fprintf(fp,"<div class=\"sTableCell\">1</div>");
-	fprintf(fp,"<div class=\"sTableCellBlack\">K. LANGEREE</div>");
-	fprintf(fp,"<div class=\"sTableCellBlackBold\">0.00</div>");
-	fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
-	fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
-	fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
-	fprintf(fp,"</div>");
-
-	fprintf(fp,"<div class=\"sTableRow\">");
-	fprintf(fp,"<div class=\"sTableCell\">2</div>");
-	fprintf(fp,"<div class=\"sTableCellBlack\">A. HADLOW</div>");
-	fprintf(fp,"<div class=\"sTableCellBlackBold\">0.00</div>");
-	fprintf(fp,"<div class=\"sTableCellBlack\">0.00<a></div>");
-	fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
-	fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
-	fprintf(fp,"<div class=\"sTableCellBlue\">Needs 0.00</div>");
-	fprintf(fp,"</div>");
-
-	fprintf(fp,"</div>");
 
 }//void funcHeatScoreTable(FILE *fp)
