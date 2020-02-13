@@ -16,6 +16,7 @@ static unsigned uEvent=0;
 static unsigned uHeat=0;
 static unsigned uTrickLock=0;
 static unsigned uTrickLockProvided=0;
+static char dEnd[32]={"Jan 1, 2021 15:37:25"};
 
 //TOC
 void ProcessJudgeVars(pentry entries[], int x);
@@ -149,6 +150,18 @@ void JudgeCommands(pentry entries[], int x)
 
 void htmlHeat(void)
 {
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT DATE_FORMAT(dEnd,'%%b %%d, %%Y %%H:%%i:%%s')"
+			" FROM tHeat WHERE uStatus=1 AND uOwner=%u AND dEnd>NOW() ORDER BY uHeat DESC LIMIT 1",guOrg);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		if(field[0][0])
+			sprintf(dEnd,"%.31s",field[0]);
+	}
+
 	htmlHeader("Heat","Default.Header");
 	htmlJudgePage("Heat","Heat.Body");
 	htmlFooter("Default.Footer");
@@ -190,7 +203,7 @@ void htmlJudgePage(char *cTitle, char *cTemplateName)
 	if(cTemplateName[0])
 	{
         	MYSQL_RES *res;
-	        MYSQL_ROW field;
+		MYSQL_ROW field;
 
 		TemplateSelectInterface(cTemplateName,uDEFAULT,uBOOTSTRAP);
 		res=mysql_store_result(&gMysql);
@@ -216,7 +229,11 @@ void htmlJudgePage(char *cTitle, char *cTemplateName)
 			template.cpName[5]="gcOrgName";
 			template.cpValue[5]=gcOrgName;
 
-			template.cpName[6]="";
+			//Jan 1, 2021 15:37:25
+			template.cpName[6]="dEnd";
+			template.cpValue[6]=dEnd;
+
+			template.cpName[7]="";
 
 			printf("\n<!-- Start htmlJudgePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -447,16 +464,15 @@ void funcHeat(FILE *fp)
 	MYSQL_ROW field3;
 	unsigned uEvent=0;
 	unsigned uHeat=0;
-	unsigned uTrickLock=0;
 	unsigned uRound=0;
 	unsigned uNumScores=0;
 	char cHeat[32]={""};
 	char cEvent[32]={""};
 	char cRound[32]={""};
-	char dStart[32]={""};
-	char dEnd[32]={""};
+	char dTimeLeft[32]={"---"};
 	register int i,j;
 	float fTotalScore=0.00;
+	float fLeaderTotalScore=0.00;
 	float fScoreArray[8]={0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00};
 
 	fprintf(fp,"<div class=\"sTable\">");
@@ -479,8 +495,8 @@ void funcHeat(FILE *fp)
 	}
 
 	sprintf(gcQuery,"SELECT uHeat,cLabel,uRound,"
-			" DATE_FORMAT(dStart,'%%H:%%i:%%s'),DATE_FORMAT(dEnd,'%%H:%%i:%%s'),uTrickLock"
-			" FROM tHeat WHERE uStatus=1 AND uOwner=%u ORDER BY uHeat DESC LIMIT 1",guOrg);
+			" TIME_FORMAT(TIMEDIFF(dEnd,NOW()),'%%i:%%s')"
+			" FROM tHeat WHERE uStatus=1 AND uOwner=%u AND dEnd>NOW() ORDER BY uHeat DESC LIMIT 1",guOrg);
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -489,10 +505,7 @@ void funcHeat(FILE *fp)
 		sprintf(cHeat,"%.31s",field[1]);
 		sscanf(field[2],"%u",&uRound);
 		if(field[3][0])
-		sprintf(dStart,"%.31s",field[3]);
-		if(field[4][0])
-		sprintf(dEnd,"%.31s",field[4]);
-		sscanf(field[5],"%u",&uTrickLock);
+			sprintf(dTimeLeft,"%.31s",field[3]);
 	}
 	if(!uHeat || !uRound) 
 	{
@@ -519,12 +532,15 @@ void funcHeat(FILE *fp)
 	}
 
 
-	fprintf(fp,"<div class=\"sTableCellGreen\">TO END</div>");
+	fprintf(fp,"<div class=\"sTableCellGreenLarge\">TO END</div>");
 	fprintf(fp,"</div>");//row
 
 	fprintf(fp,"<div class=\"sTableRow\">");
-	fprintf(fp,"<div class=\"sTableCellBlackBold\">%s</div>",dEnd);
-	fprintf(fp,"<div class=\"sTableCellBlack\">%s  %s  Heat %s</div>",cEvent,cRound,cHeat);
+	fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\"><p id=\"demo\">%s</p></div>",dTimeLeft);
+	fprintf(fp,"<div class=\"sTableCellEmpty\"></div>");
+	fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s</div>",cEvent);
+	fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s</div>",cRound);
+	fprintf(fp,"<div class=\"sTableCellBlackLarge\">Heat %s</div>",cHeat);
 	fprintf(fp,"</div>");//row
 
 	fprintf(fp,"</div>");
@@ -589,21 +605,33 @@ void funcHeat(FILE *fp)
 		fTotalScore=0.00;
 		for(i=0;i<uNumScores&&i<8;i++)
 			fTotalScore+=fScoreArray[i];
+		if(j==1)
+			fLeaderTotalScore=fTotalScore;
 		//fTotalScore=fTotalScore/uNumScores;
 
 		fprintf(fp,"<div class=\"sTableRow\">");
-		fprintf(fp,"<div class=\"sTableCell\">%d/%u</div>",j++,uLast);
-		fprintf(fp,"<div class=\"sTableCellBlack\">%s. %s</div>",field[0],field[1]);
-		fprintf(fp,"<div class=\"sTableCellBlackBold\">%1.2f</div>",fTotalScore);
+		fprintf(fp,"<div class=\"sTableCellLarge\">%d</div>",j++);
+		fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s. %s</div>",field[0],field[1]);
+		fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%1.2f</div>",fTotalScore);
 		for(i=0;i<uNumScores&&i<8;i++)
 		{
-			fprintf(fp,"<div class=\"sTableCellBlack\">%1.2f</div>",fScoreArray[i]);
+			fprintf(fp,"<div class=\"sTableCellBlackLarge\">%1.2f</div>",fScoreArray[i]);
 		}
 
 		if(j==uLast)
-			fprintf(fp,"<div class=\"sTableCellBlue\">Needs</div>");
+		{
+			fprintf(fp,"<div class=\"sTableRow\">");
+			fprintf(fp,"<div class=\"sTableCellEmpty\"></div>");
+			fprintf(fp,"<div class=\"sTableCellBlueLarge\">Needs</div>");
+			fprintf(fp,"</div>");
+		}
 		if(j==uLast+1)
-			fprintf(fp,"<div class=\"sTableCellBlack\">0.00</div>");
+		{
+			fprintf(fp,"<div class=\"sTableRow\">");
+			fprintf(fp,"<div class=\"sTableCellEmpty\"></div>");
+			fprintf(fp,"<div class=\"sTableCellBlueLarge\">%1.2f</div>",fScoreArray[--i]+fLeaderTotalScore-fTotalScore);
+			fprintf(fp,"</div>");
+		}
 
 
 		fprintf(fp,"</div>");
