@@ -157,8 +157,7 @@ void JudgeCommands(pentry entries[], int x)
 
 }//void UserCommands(pentry entries[], int x)
 
-
-void htmlHeat(void)
+void GetdEnd(void)
 {
         MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -171,7 +170,12 @@ void htmlHeat(void)
 		if(field[0][0])
 			sprintf(dEnd,"%.31s",field[0]);
 	}
+}
 
+
+void htmlHeat(void)
+{
+	GetdEnd();
 	htmlHeader("Heat","Default.Header");
 	htmlJudgePage("Heat","Heat.Body");
 	htmlFooter("Default.Footer");
@@ -196,12 +200,14 @@ void htmlHeatEnd(void)
 void htmlEvent(void)
 {
 	htmlHeader("Event","Default.Header");
+	htmlJudgePage("Event","Event.Body");
 	htmlFooter("Default.Footer");
 }//void htmlEvent(void)
 
 
 void htmlJudge(void)
 {
+	GetdEnd();
 	htmlHeader("Judge","Default.Header");
 	htmlJudgePage("Judge","Judge.Body");
 	htmlFooter("Default.Footer");
@@ -244,7 +250,10 @@ void htmlJudgePage(char *cTitle, char *cTemplateName)
 			template.cpName[6]="dEnd";
 			template.cpValue[6]=dEnd;
 
-			template.cpName[7]="";
+			template.cpName[7]="gcCopyright";
+			template.cpValue[7]=INTERFACE_COPYRIGHT;
+
+			template.cpName[8]="";
 
 			printf("\n<!-- Start htmlJudgePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -275,11 +284,14 @@ void funcHeatScoreTable(FILE *fp)
 	unsigned uTrickLock=0;
 	unsigned uRound=0;
 	unsigned uNumScores=0;
+	unsigned uStatus=0;
+	char cStatus[32]={""};
 	char cHeat[32]={""};
 	char cEvent[32]={""};
 	char cRound[32]={""};
 	char dStart[32]={""};
 	char dEnd[32]={""};
+	char dTimeLeft[32]={""};
 	register int i,j;
 	float fTotalScore=0.00;
 	float fScoreArray[8]={0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00};
@@ -303,9 +315,14 @@ void funcHeatScoreTable(FILE *fp)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT uHeat,cLabel,uRound,"
-			" DATE_FORMAT(dStart,'%%H:%%i:%%s'),DATE_FORMAT(dEnd,'%%H:%%i:%%s'),uTrickLock"
-			" FROM tHeat WHERE uStatus=1 AND uOwner=%u ORDER BY uHeat DESC LIMIT 1",guOrg);
+	sprintf(gcQuery,"SELECT tHeat.uHeat,UPPER(tHeat.cLabel),tHeat.uRound,"
+			" DATE_FORMAT(tHeat.dStart,'%%H:%%i:%%s'),DATE_FORMAT(tHeat.dEnd,'%%H:%%i:%%s'),"
+			"tHeat.uTrickLock,tStatus.cLabel,tStatus.uStatus,"
+			"TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s')"
+			" FROM tHeat,tStatus"
+			" WHERE tHeat.uStatus<3 AND tHeat.uOwner=%u AND tStatus.uStatus=tHeat.uStatus"
+			" ORDER BY tHeat.uHeat DESC LIMIT 1",
+					guOrg);
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -318,16 +335,20 @@ void funcHeatScoreTable(FILE *fp)
 		if(field[4][0])
 		sprintf(dEnd,"%.31s",field[4]);
 		sscanf(field[5],"%u",&uTrickLock);
+		sprintf(cStatus,"%.31s",field[6]);
+		sscanf(field[7],"%u",&uStatus);
+		if(field[8][0])
+		sprintf(dTimeLeft,"%.31s",field[8]);
 	}
 	if(!uHeat || !uRound) 
 	{
-		fprintf(fp,"<div class=\"sTableCellYellow\">No active heat for event %s</div>",cEvent);
+		fprintf(fp,"<div class=\"sTableCellYellow\">No active or suspended heat for event %s</div>",cEvent);
 		fprintf(fp,"</div>");
 		fprintf(fp,"</div>");
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT uNumScores,cLabel FROM tRound WHERE uRound=%u AND uOwner=%u",uRound,guOrg);
+	sprintf(gcQuery,"SELECT uNumScores,UPPER(cLabel) FROM tRound WHERE uRound=%u AND uOwner=%u",uRound,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -344,10 +365,18 @@ void funcHeatScoreTable(FILE *fp)
 	}
 
 
-	fprintf(fp,"<div class=\"sTableCellGreen\">Start: %s</div>",dStart);
-	fprintf(fp,"<div class=\"sTableCellGreen\">End: %s</div>",dEnd);
+	if(uStatus==1)
+	{
+		fprintf(fp,"<div class=\"sTableCellGreen\">TO END</div>");
+		fprintf(fp,"<div class=\"sTableCellBlackBold\"><p id=\"demo\">%s</p></div>",dTimeLeft);
+	}
+	else
+	{
+		fprintf(fp,"<div class=\"sTableCellGreen\">%s</div>",cStatus);
+		fprintf(fp,"<div class=\"sTableCellBlackBold\">%s</div>",dTimeLeft);
+	}
 	fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cRound);
-	fprintf(fp,"<div class=\"sTableCellBlack\">Heat %s</div>",cHeat);
+	fprintf(fp,"<div class=\"sTableCellBlack\">HEAT %s</div>",cHeat);
 	fprintf(fp,"</div>");
 
 	fprintf(fp,"</div>");
@@ -475,6 +504,8 @@ void funcHeat(FILE *fp)
 	unsigned uHeat=0;
 	unsigned uRound=0;
 	unsigned uNumScores=0;
+	unsigned uStatus=0;
+	char cStatus[32]={""};
 	char cHeat[32]={""};
 	char cEvent[32]={""};
 	char cRound[32]={""};
@@ -503,9 +534,12 @@ void funcHeat(FILE *fp)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT uHeat,cLabel,uRound,"
-			" TIME_FORMAT(TIMEDIFF(dEnd,NOW()),'%%i:%%s')"
-			" FROM tHeat WHERE uStatus=1 AND uOwner=%u AND dEnd>NOW() ORDER BY uHeat DESC LIMIT 1",guOrg);
+	sprintf(gcQuery,"SELECT tHeat.uHeat,tHeat.cLabel,tHeat.uRound,"
+			" TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s'),"
+			"UPPER(tStatus.cLabel),tStatus.uStatus"
+			" FROM tHeat,tStatus WHERE tHeat.uStatus<3 AND"
+			" tHeat.uOwner=%u AND tHeat.dEnd>NOW() AND tStatus.uStatus=tHeat.uStatus"
+			" ORDER BY tHeat.uHeat DESC LIMIT 1",guOrg);
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -515,10 +549,12 @@ void funcHeat(FILE *fp)
 		sscanf(field[2],"%u",&uRound);
 		if(field[3][0])
 			sprintf(dTimeLeft,"%.31s",field[3]);
+		sprintf(cStatus,"%.31s",field[4]);
+		sscanf(field[5],"%u",&uStatus);
 	}
 	if(!uHeat || !uRound) 
 	{
-		fprintf(fp,"<div class=\"sTableCellYellow\">No active heat for event %s</div>",cEvent);
+		fprintf(fp,"<div class=\"sTableCellYellow\">No active or suspended heat for event %s</div>",cEvent);
 		fprintf(fp,"</div>");
 		fprintf(fp,"</div>");
 		return;
@@ -541,11 +577,17 @@ void funcHeat(FILE *fp)
 	}
 
 
-	fprintf(fp,"<div class=\"sTableCellGreenLarge\">TO END</div>");
+	if(uStatus==1)
+		fprintf(fp,"<div class=\"sTableCellGreenLarge\">TO END</div>");
+	else
+		fprintf(fp,"<div class=\"sTableCellGreenLarge\">%s</div>",cStatus);
 	fprintf(fp,"</div>");//row
 
 	fprintf(fp,"<div class=\"sTableRow\">");
-	fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\"><p id=\"demo\">%s</p></div>",dTimeLeft);
+	if(uStatus==1)
+		fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\"><p id=\"demo\">%s</p></div>",dTimeLeft);
+	else
+		fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%s</div>",dTimeLeft);
 	fprintf(fp,"<div class=\"sTableCellEmpty\"></div>");
 	fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s</div>",cEvent);
 	fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s</div>",cRound);
@@ -565,7 +607,6 @@ void funcHeat(FILE *fp)
 		return;
 	}
 	res3=mysql_store_result(&gMysql);
-	unsigned uLast=mysql_num_rows(res3);
 	while((field3=mysql_fetch_row(res3)))
 	{
 		
@@ -628,14 +669,14 @@ void funcHeat(FILE *fp)
 			fprintf(fp,"<div class=\"sTableCellBlackLarge\">%1.2f</div>",fScoreArray[i]);
 		}
 
-		if(j==uLast)
+		if(j==2)
 		{
 			fprintf(fp,"<div class=\"sTableRow\">");
 			fprintf(fp,"<div class=\"sTableCellEmpty\"></div>");
 			fprintf(fp,"<div class=\"sTableCellBlueLarge\">Needs</div>");
 			fprintf(fp,"</div>");
 		}
-		if(j==uLast+1)
+		else
 		{
 			fprintf(fp,"<div class=\"sTableRow\">");
 			fprintf(fp,"<div class=\"sTableCellEmpty\"></div>");
@@ -667,6 +708,7 @@ void funcHeatEnd(FILE *fp)
 	unsigned uEvent=0;
 	unsigned uRound=0;
 	unsigned uNumScores=0;
+	char cStatus[32]={""};
 	char cHeat[32]={""};
 	char cEvent[32]={""};
 	char cRound[32]={""};
@@ -694,19 +736,20 @@ void funcHeatEnd(FILE *fp)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT cLabel,uRound FROM tHeat"
-				" WHERE uHeat=%u AND uOwner=%u"
-				" ORDER BY uHeat DESC LIMIT 1",uHeat,guOrg);
+	sprintf(gcQuery,"SELECT tHeat.cLabel,tHeat.uRound,UPPER(tStatus.cLabel) FROM tHeat,tStatus"
+				" WHERE tHeat.uHeat=%u AND tHeat.uOwner=%u AND tHeat.uStatus>1 AND tHeat.uStatus=tStatus.uStatus"
+				" ORDER BY tHeat.uHeat DESC LIMIT 1",uHeat,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
 		sprintf(cHeat,"%.31s",field[0]);
 		sscanf(field[1],"%u",&uRound);
+		sprintf(cStatus,"%.31s",field[2]);
 	}
 	if(!uRound) 
 	{
-		fprintf(fp,"<div class=\"sTableCellYellow\">No such heat for event %s</div>",cEvent);
+		fprintf(fp,"<div class=\"sTableCellYellow\">This heat does not exist or is still active. Event %s</div>",cEvent);
 		fprintf(fp,"</div>");
 		fprintf(fp,"</div>");
 		return;
@@ -729,7 +772,7 @@ void funcHeatEnd(FILE *fp)
 	}
 
 
-	fprintf(fp,"<div class=\"sTableCellGreenLarge\">HEAT FINALIZED</div>");
+	fprintf(fp,"<div class=\"sTableCellGreenLarge\">%s</div>",cStatus);
 	fprintf(fp,"</div>");//row
 
 	fprintf(fp,"<div class=\"sTableRow\">");
