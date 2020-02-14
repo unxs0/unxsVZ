@@ -1756,13 +1756,13 @@ void funcModuleUpdateQuery(FILE *fp)
 
 			case COLTYPE_DATETIME:
 				//STR_TO_DATE('12/15/2011','%d/%m/%Y')
-				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y %%%%T')",field[0]);
 				//fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y')",field[0]);
 			break;
 
 			case COLTYPE_DATEEUR:
 				//STR_TO_DATE('20/2/2011','%d/%m/%Y')
-				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y %%%%T')",field[0]);
 				//fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y')",field[0]);
 			break;
 		}
@@ -1945,12 +1945,12 @@ void funcModuleInsertQuery(FILE *fp)
 
 			case COLTYPE_DATETIME:
 				//STR_TO_DATE('12/15/2011','%d/%m/%Y')
-				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%m/%%%%d/%%%%Y %%%%T')",field[0]);
 			break;
 
 			case COLTYPE_DATEEUR:
 				//STR_TO_DATE('20/2/2011','%d/%m/%Y')
-				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y %%%%h:%%%%i:%%%%s')",field[0]);
+				fprintf(fp,"\t\t\"%s=STR_TO_DATE('%%s','%%%%d/%%%%m/%%%%Y %%%%T')",field[0]);
 			break;
 		}
 		uFirst=1;

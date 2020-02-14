@@ -120,10 +120,9 @@ int main(int argc, char *argv[])
 				sprintf(gcLogin,"%.99s",WordToLower(gentries[x].val));
 		}
 		SSLCookieLogin();
+		JudgeGetHook(gentries,x);
 		if(gcPage[0])
 		{
-			if(!strcmp(gcPage,"Judge"))
-				JudgeGetHook(gentries,x);
 			//Need to catch all pages here or else have default
 			htmlJudge();
 		}
@@ -209,6 +208,8 @@ int main(int argc, char *argv[])
 			SetLogin();
         	else if(!strcmp(gcFunction,"Heat")) 
 			htmlHeat();
+        	else if(!strcmp(gcFunction,"HeatEnd")) 
+			htmlHeatEnd();
         	else if(!strcmp(gcFunction,"BestTrick")) 
 			htmlBestTrick();
         	else if(!strcmp(gcFunction,"HeatEnd")) 

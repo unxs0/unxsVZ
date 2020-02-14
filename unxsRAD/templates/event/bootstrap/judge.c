@@ -52,7 +52,13 @@ void ProcessJudgeVars(pentry entries[], int x)
 
 void JudgeGetHook(entry gentries[],int x)
 {
-	htmlJudge();
+	register int i;
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"uHeat"))
+			sscanf(gentries[i].val,"%u",&uHeat);
+	}
+
 
 }//void JudgeGetHook(entry gentries[],int x)
 
@@ -178,6 +184,7 @@ void htmlBestTrick(void)
 void htmlHeatEnd(void)
 {
 	htmlHeader("HeatEnd","Default.Header");
+	htmlJudgePage("Heat","HeatEnd.Body");
 	htmlFooter("Default.Footer");
 }//void htmlHeatEnd(void)
 
@@ -404,7 +411,7 @@ void funcHeatScoreTable(FILE *fp)
 		fTotalScore=0.00;
 		for(i=0;i<uNumScores&&i<8;i++)
 			fTotalScore+=fScoreArray[i];
-		fTotalScore=fTotalScore/uNumScores;
+		fTotalScore=fTotalScore;
 
 		fprintf(fp,"<div class=\"sTableRow\">");
 		//fprintf(fp,"<div class=\"sTableCell\">%d</div>",j++);
@@ -439,9 +446,6 @@ void funcHeatScoreTable(FILE *fp)
 }//void funcHeatScoreTable(FILE *fp)
 
 
-void funcHeatEnd(FILE *fp)
-{
-}
 
 
 void funcEvent(FILE *fp)
@@ -644,3 +648,173 @@ void funcHeat(FILE *fp)
 
 
 }//void funcHeat(FILE *fp)
+
+
+void funcHeatEnd(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	MYSQL_RES *res2;
+	MYSQL_ROW field2;
+	MYSQL_RES *res3;
+	MYSQL_ROW field3;
+	unsigned uEvent=0;
+	unsigned uRound=0;
+	unsigned uNumScores=0;
+	char cHeat[32]={""};
+	char cEvent[32]={""};
+	char cRound[32]={""};
+	char dTimeLeft[32]={""};
+	register int i,j;
+	float fTotalScore=0.00;
+	float fLeaderTotalScore=0.00;
+	float fScoreArray[8]={0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00};
+
+	fprintf(fp,"<div class=\"sTable\">");
+	fprintf(fp,"<div class=\"sTableRow\">");
+
+	sprintf(gcQuery,"SELECT uEvent,cLabel FROM tEvent WHERE uStatus=1 AND uOwner=%u ORDER BY uEvent DESC LIMIT 1",guOrg);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uEvent);
+		sprintf(cEvent,"%.31s",field[1]);
+	}
+	if(!uEvent) 
+	{
+		fprintf(fp,"<div class=\"sTableCellYellow\">No active event!</div>");
+		fprintf(fp,"</div>");
+		fprintf(fp,"</div>");
+		return;
+	}
+
+	sprintf(gcQuery,"SELECT cLabel,uRound FROM tHeat"
+				" WHERE uHeat=%u AND uOwner=%u"
+				" ORDER BY uHeat DESC LIMIT 1",uHeat,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(cHeat,"%.31s",field[0]);
+		sscanf(field[1],"%u",&uRound);
+	}
+	if(!uRound) 
+	{
+		fprintf(fp,"<div class=\"sTableCellYellow\">No such heat for event %s</div>",cEvent);
+		fprintf(fp,"</div>");
+		fprintf(fp,"</div>");
+		return;
+	}
+
+	sprintf(gcQuery,"SELECT uNumScores,cLabel FROM tRound WHERE uRound=%u AND uOwner=%u",uRound,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uNumScores);
+		sprintf(cRound,"%.31s",field[1]);
+	}
+	if(!uNumScores || uNumScores>8) 
+	{
+		fprintf(fp,"<div class=\"sTableCellYellow\">Incorrectly configured round %s/%u</div>",cRound,uRound);
+		fprintf(fp,"</div>");
+		fprintf(fp,"</div>");
+		return;
+	}
+
+
+	fprintf(fp,"<div class=\"sTableCellGreenLarge\">HEAT FINALIZED</div>");
+	fprintf(fp,"</div>");//row
+
+	fprintf(fp,"<div class=\"sTableRow\">");
+	fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\"><p id=\"demo\">%s</p></div>",dTimeLeft);
+	fprintf(fp,"<div class=\"sTableCellEmpty\"></div>");
+	fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s</div>",cEvent);
+	fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s</div>",cRound);
+	fprintf(fp,"<div class=\"sTableCellBlackLarge\">Heat %s</div>",cHeat);
+	fprintf(fp,"</div>");//row
+
+	fprintf(fp,"</div>");
+
+
+	j=1;
+	fprintf(fp,"<br><div class=\"sTable\">");
+	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u AND uCreatedBy=%u GROUP BY uRider ORDER BY SUM(fScore) DESC",
+		uHeat,guOrg,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(*mysql_error(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res3=mysql_store_result(&gMysql);
+	while((field3=mysql_fetch_row(res3)))
+	{
+		
+
+	sprintf(gcQuery,"SELECT DISTINCT UPPER(SUBSTR(tRider.cFirst,1,1)),UPPER(tRider.cLast),tRider.uRider"
+			" FROM tScore,tRider"
+			" WHERE tScore.uRider=tRider.uRider"
+			" AND tScore.uHeat=%u AND tScore.uOwner=%u AND tRider.uRider=%s",uHeat,guOrg,field3[0]);
+	mysql_query(&gMysql,gcQuery);
+	if(*mysql_error(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	unsigned uIndex=0;
+	float fScore=0.00;
+	if(mysql_num_rows(res)<1)	
+	{
+		fprintf(fp,"</div>No score config data avaiable!");
+		return;
+	}
+	while((field=mysql_fetch_row(res)))
+	{
+		//Get scores for single judge
+		for(i=0;i<uNumScores&&i<8;i++)
+			fScoreArray[i]=0.00;
+		sprintf(gcQuery,"SELECT fScore,uIndex FROM tScore WHERE uHeat=%u AND uRider=%s AND (uCreatedBy=%u OR uModBy=%u) LIMIT 8",
+				uHeat,field[2],guLoginClient,guLoginClient);
+		mysql_query(&gMysql,gcQuery);
+		if(*mysql_error(&gMysql))
+		{
+			fprintf(fp,"%s",mysql_error(&gMysql));
+			return;
+		}
+		res2=mysql_store_result(&gMysql);
+		while((field2=mysql_fetch_row(res2)))
+		{
+			
+			sscanf(field2[0],"%f",&fScore);
+			sscanf(field2[1],"%u",&uIndex);
+			fScoreArray[uIndex]=fScore;
+		}
+		mysql_free_result(res2);
+		fTotalScore=0.00;
+		for(i=0;i<uNumScores&&i<8;i++)
+			fTotalScore+=fScoreArray[i];
+		if(j==1)
+			fLeaderTotalScore=fTotalScore;
+
+		fprintf(fp,"<div class=\"sTableRow\">");
+		fprintf(fp,"<div class=\"sTableCellLarge\">%d</div>",j++);
+		fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s. %s</div>",field[0],field[1]);
+		fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%1.2f</div>",fTotalScore);
+		for(i=0;i<uNumScores&&i<8;i++)
+		{
+			fprintf(fp,"<div class=\"sTableCellBlackLarge\">%1.2f</div>",fScoreArray[i]);
+		}
+
+		fprintf(fp,"</div>");
+
+	}//res while
+
+	}//res3 while
+
+	fprintf(fp,"</div>");
+
+
+}//void funcHeatEnd(FILE *fp)
