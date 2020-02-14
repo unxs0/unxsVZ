@@ -299,7 +299,7 @@ void funcHeatScoreTable(FILE *fp)
 	fprintf(fp,"<div class=\"sTable\">");
 	fprintf(fp,"<div class=\"sTableRow\">");
 
-	sprintf(gcQuery,"SELECT uEvent,cLabel FROM tEvent WHERE uStatus=1 AND uOwner=%u ORDER BY uEvent DESC LIMIT 1",guOrg);
+	sprintf(gcQuery,"SELECT uEvent,UPPER(cLabel) FROM tEvent WHERE uStatus=1 AND uOwner=%u ORDER BY uEvent DESC LIMIT 1",guOrg);
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -375,6 +375,7 @@ void funcHeatScoreTable(FILE *fp)
 		fprintf(fp,"<div class=\"sTableCellGreen\">%s</div>",cStatus);
 		fprintf(fp,"<div class=\"sTableCellBlackBold\">%s</div>",dTimeLeft);
 	}
+	fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cEvent);
 	fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cRound);
 	fprintf(fp,"<div class=\"sTableCellBlack\">HEAT %s</div>",cHeat);
 	fprintf(fp,"</div>");
@@ -480,11 +481,99 @@ void funcHeatScoreTable(FILE *fp)
 }//void funcHeatScoreTable(FILE *fp)
 
 
-
-
 void funcEvent(FILE *fp)
 {
-}
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uEvent=0;
+	unsigned uHeat=0;
+	unsigned uRound=0;
+	unsigned uNumScores=0;
+	unsigned uStatus=0;
+	char cStatus[32]={""};
+	char cHeat[32]={""};
+	char cEvent[32]={""};
+	char cRound[32]={""};
+	char dTimeLeft[32]={"---"};
+
+	fprintf(fp,"<div class=\"sTable\">");
+	fprintf(fp,"<div class=\"sTableRow\">");
+
+	sprintf(gcQuery,"SELECT uEvent,UPPER(cLabel) FROM tEvent WHERE uStatus=1 AND uOwner=%u ORDER BY uEvent DESC LIMIT 1",guOrg);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uEvent);
+	if(!uEvent) 
+	{
+		fprintf(fp,"<div class=\"sTableCellYellow\">No active event!</div>");
+		fprintf(fp,"</div>");
+		fprintf(fp,"</div>");
+		return;
+	}
+
+	sprintf(gcQuery,"SELECT tHeat.uHeat,UPPER(tHeat.cLabel),tHeat.uRound,"
+			" TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s'),"
+			"UPPER(tStatus.cLabel),tStatus.uStatus,UPPER(tEvent.cLabel),UPPER(tRound.cLabel),tRound.uNumScores,tHeat.uTrickLock"
+			" FROM tEvent,tRound,tHeat,tStatus"
+			" WHERE tHeat.uOwner=%u AND tHeat.dEnd>NOW() AND tStatus.uStatus=tHeat.uStatus"
+			" AND tEvent.uEvent=tHeat.uEvent AND tRound.uRound=tHeat.uRound"
+			" ORDER BY tEvent.uEvent,tRound.uRound,tHeat.uHeat",guOrg);
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)>0)
+	{
+		fprintf(fp,"</div>");//row
+		fprintf(fp,"</div>");//table
+
+		fprintf(fp,"<div class=\"sTable\">");
+		fprintf(fp,"<div class=\"sTableRow\">");
+		fprintf(fp,"<div class=\"sTableCellBlue\">EVENT</div>");
+		fprintf(fp,"<div class=\"sTableCellBlue\">ROUND</div>");
+		fprintf(fp,"<div class=\"sTableCellBlue\">HEAT</div>");
+		fprintf(fp,"<div class=\"sTableCellBlue\">STATUS</div>");
+		fprintf(fp,"<div class=\"sTableCellBlue\">TIME LEFT</div>");
+		fprintf(fp,"<div class=\"sTableCellBlue\">NUM SCORES</div>");
+		fprintf(fp,"<div class=\"sTableCellBlue\">TRICK LOCK</div>");
+		fprintf(fp,"</div>");//row
+		while((field=mysql_fetch_row(res)))
+		{
+			sscanf(field[0],"%u",&uHeat);
+			sprintf(cHeat,"%.31s",field[1]);
+			sscanf(field[2],"%u",&uRound);
+			if(field[3][0])
+				sprintf(dTimeLeft,"%.31s",field[3]);
+			sprintf(cStatus,"%.31s",field[4]);
+			sscanf(field[5],"%u",&uStatus);
+			sprintf(cEvent,"%.31s",field[6]);
+			sprintf(cRound,"%.31s",field[7]);
+			sscanf(field[8],"%u",&uNumScores);
+			sscanf(field[9],"%u",&uTrickLock);
+
+			fprintf(fp,"<div class=\"sTableRow\">");
+			fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cEvent);
+			fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cRound);
+			if(uStatus==1)
+				fprintf(fp,"<div class=\"sTableCellBlack\"><a href=?gcFunction=Heat>%s</a></div>",cHeat);
+			else
+				fprintf(fp,"<div class=\"sTableCellBlack\"><a href=?gcFunction=HeatEnd&uHeat=%u>%s</a></div>",uHeat,cHeat);
+			fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cStatus);
+			fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",dTimeLeft);
+			fprintf(fp,"<div class=\"sTableCellBlack\">%u</div>",uNumScores);
+			fprintf(fp,"<div class=\"sTableCellBlack\">%u</div>",uTrickLock);
+			fprintf(fp,"</div>");//row
+		}
+		fprintf(fp,"</div>");//table
+	}
+	else
+	{
+		fprintf(fp,"<div class=\"sTableCellYellow\">No heats found for event %s</div>",cEvent);
+		fprintf(fp,"</div>");
+		fprintf(fp,"</div>");
+		return;
+	}
+
+}//void funcEvent(FILE *fp)
 
 
 void funcBestTrick(FILE *fp)

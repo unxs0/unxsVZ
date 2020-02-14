@@ -44,7 +44,7 @@
 
   <main role="main" class="container">
 
-  <h4 class='mt-5'>Event {{gcOrgName}}</h4>
+  <h4 class='mt-5'>Event Schedule For {{gcOrgName}}</h4>
 <!-- Select Job Offers Panel -->
 <div class="well">
   <div class="row">
