@@ -557,8 +557,7 @@ void funcHeat(FILE *fp)
 
 	j=1;
 	fprintf(fp,"<br><div class=\"sTable\">");
-	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u GROUP BY uRider ORDER BY SUM(fScore) DESC",
-		uHeat,guOrg);
+	sprintf(gcQuery,"SELECT uRider FROM tScoreComp WHERE uHeat=%u GROUP BY uRider ORDER BY SUM(fScore) DESC",uHeat);
 	mysql_query(&gMysql,gcQuery);
 	if(*mysql_error(&gMysql))
 	{
@@ -572,9 +571,9 @@ void funcHeat(FILE *fp)
 		
 
 	sprintf(gcQuery,"SELECT DISTINCT UPPER(SUBSTR(tRider.cFirst,1,1)),UPPER(tRider.cLast),tRider.uRider"
-			" FROM tScore,tRider"
-			" WHERE tScore.uRider=tRider.uRider"
-			" AND tScore.uHeat=%u AND tScore.uOwner=%u AND tRider.uRider=%s",uHeat,guOrg,field3[0]);
+			" FROM tScoreComp,tRider"
+			" WHERE tScoreComp.uRider=tRider.uRider"
+			" AND tScoreComp.uHeat=%u AND tRider.uRider=%s",uHeat,field3[0]);
 	mysql_query(&gMysql,gcQuery);
 	if(*mysql_error(&gMysql))
 	{
@@ -596,8 +595,8 @@ void funcHeat(FILE *fp)
 			fScoreArray[i]=0.00;
 		//Here we need to average out all scores from all judges for each index.
 		//We need to know how many judges have provided scores.
-		sprintf(gcQuery,"SELECT fScore,uIndex FROM tScore WHERE uHeat=%u AND uRider=%s AND (uCreatedBy=%u OR uModBy=%u) LIMIT 8",
-				uHeat,field[2],guLoginClient,guLoginClient);
+		sprintf(gcQuery,"SELECT fScore,uIndex FROM tScoreComp WHERE uHeat=%u AND uRider=%s LIMIT 8",
+				uHeat,field[2]);
 		mysql_query(&gMysql,gcQuery);
 		if(*mysql_error(&gMysql))
 		{
@@ -746,8 +745,9 @@ void funcHeatEnd(FILE *fp)
 
 	j=1;
 	fprintf(fp,"<br><div class=\"sTable\">");
-	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u AND uCreatedBy=%u GROUP BY uRider ORDER BY SUM(fScore) DESC",
-		uHeat,guOrg,guLoginClient);
+	sprintf(gcQuery,
+		"SELECT uRider FROM tScoreComp WHERE uHeat=%u GROUP BY uRider ORDER BY SUM(fScore) DESC",
+		uHeat);
 	mysql_query(&gMysql,gcQuery);
 	if(*mysql_error(&gMysql))
 	{
@@ -760,9 +760,9 @@ void funcHeatEnd(FILE *fp)
 		
 
 	sprintf(gcQuery,"SELECT DISTINCT UPPER(tRider.cFirst),UPPER(tRider.cLast),tRider.uRider,tRider.cCountry"
-			" FROM tScore,tRider"
-			" WHERE tScore.uRider=tRider.uRider"
-			" AND tScore.uHeat=%u AND tScore.uOwner=%u AND tRider.uRider=%s",uHeat,guOrg,field3[0]);
+			" FROM tScoreComp,tRider"
+			" WHERE tScoreComp.uRider=tRider.uRider"
+			" AND tScoreComp.uHeat=%u AND tRider.uRider=%s",uHeat,field3[0]);
 	mysql_query(&gMysql,gcQuery);
 	if(*mysql_error(&gMysql))
 	{
@@ -782,8 +782,8 @@ void funcHeatEnd(FILE *fp)
 		//Get scores for single judge
 		for(i=0;i<uNumScores&&i<8;i++)
 			fScoreArray[i]=0.00;
-		sprintf(gcQuery,"SELECT fScore,uIndex FROM tScore WHERE uHeat=%u AND uRider=%s AND (uCreatedBy=%u OR uModBy=%u) LIMIT 8",
-				uHeat,field[2],guLoginClient,guLoginClient);
+		sprintf(gcQuery,"SELECT fScore,uIndex FROM tScoreComp WHERE uHeat=%u AND uRider=%s LIMIT 8",
+				uHeat,field[2]);
 		mysql_query(&gMysql,gcQuery);
 		if(*mysql_error(&gMysql))
 		{

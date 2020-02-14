@@ -28,6 +28,12 @@
     <div class='collapse navbar-collapse' id='navbarsCalendar'>
     <ul class='navbar-nav mr-auto'>
       <li class='nav-item'>
+        <a class='nav-link' href='/unxsEVApp/?gcFunction=Heat'>Heat</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/unxsEVApp/?gcFunction=HeatEnd&uHeat=2'>HeatEnd</a>
+      </li>
+      <li class='nav-item'>
         <a class='nav-link' href='/unxsEVApp/?gcFunction=Logout'>Logout</a>
       </li>
     </ul>
