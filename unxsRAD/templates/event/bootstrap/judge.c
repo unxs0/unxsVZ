@@ -354,8 +354,8 @@ void funcHeatScoreTable(FILE *fp)
 	fprintf(fp,"<input type='hidden' name='uHeat' value='%u'>",uHeat);
 	fprintf(fp,"<input type='hidden' name='uTrickLock' value='%u'>",uTrickLock);
 	fprintf(fp,"<br><div class=\"sTable\">");
-	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u AND uCreatedBy=%u GROUP BY uRider ORDER BY SUM(fScore)/%u DESC",
-		uHeat,guOrg,guLoginClient,uNumScores);
+	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u GROUP BY uRider ORDER BY SUM(fScore) DESC",
+		uHeat,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(*mysql_error(&gMysql))
 	{
@@ -552,8 +552,8 @@ void funcHeat(FILE *fp)
 
 	j=1;
 	fprintf(fp,"<br><div class=\"sTable\">");
-	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u AND uCreatedBy=%u GROUP BY uRider ORDER BY SUM(fScore)/%u DESC",
-		uHeat,guOrg,guLoginClient,uNumScores);
+	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u GROUP BY uRider ORDER BY SUM(fScore) DESC",
+		uHeat,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(*mysql_error(&gMysql))
 	{
@@ -586,9 +586,11 @@ void funcHeat(FILE *fp)
 	}
 	while((field=mysql_fetch_row(res)))
 	{
-		//Get scores for single judge
+		//Get scores for single judge REFACTOR!
 		for(i=0;i<uNumScores&&i<8;i++)
 			fScoreArray[i]=0.00;
+		//Here we need to average out all scores from all judges for each index.
+		//We need to know how many judges have provided scores.
 		sprintf(gcQuery,"SELECT fScore,uIndex FROM tScore WHERE uHeat=%u AND uRider=%s AND (uCreatedBy=%u OR uModBy=%u) LIMIT 8",
 				uHeat,field[2],guLoginClient,guLoginClient);
 		mysql_query(&gMysql,gcQuery);
@@ -667,7 +669,6 @@ void funcHeatEnd(FILE *fp)
 	char dTimeLeft[32]={""};
 	register int i,j;
 	float fTotalScore=0.00;
-	float fLeaderTotalScore=0.00;
 	float fScoreArray[8]={0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00};
 
 	fprintf(fp,"<div class=\"sTable\">");
@@ -753,7 +754,7 @@ void funcHeatEnd(FILE *fp)
 	{
 		
 
-	sprintf(gcQuery,"SELECT DISTINCT UPPER(SUBSTR(tRider.cFirst,1,1)),UPPER(tRider.cLast),tRider.uRider"
+	sprintf(gcQuery,"SELECT DISTINCT UPPER(tRider.cFirst),UPPER(tRider.cLast),tRider.uRider,tRider.cCountry"
 			" FROM tScore,tRider"
 			" WHERE tScore.uRider=tRider.uRider"
 			" AND tScore.uHeat=%u AND tScore.uOwner=%u AND tRider.uRider=%s",uHeat,guOrg,field3[0]);
@@ -796,12 +797,14 @@ void funcHeatEnd(FILE *fp)
 		fTotalScore=0.00;
 		for(i=0;i<uNumScores&&i<8;i++)
 			fTotalScore+=fScoreArray[i];
-		if(j==1)
-			fLeaderTotalScore=fTotalScore;
 
 		fprintf(fp,"<div class=\"sTableRow\">");
 		fprintf(fp,"<div class=\"sTableCellLarge\">%d</div>",j++);
-		fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s. %s</div>",field[0],field[1]);
+		if(j==2)
+			fprintf(fp,"<div class=\"sTableCellBlueLarge\">%s %s</div>",field[0],field[1]);
+		else
+			fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s %s</div>",field[0],field[1]);
+		fprintf(fp,"<div class=\"sTableCellBlackLarge\"><img alt=%s src=/bs/images/%s.png></div>",field[3],field[3]);
 		fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%1.2f</div>",fTotalScore);
 		for(i=0;i<uNumScores&&i<8;i++)
 		{
