@@ -13,6 +13,7 @@ PURPOSE
 
 //File globals
 static unsigned uEvent=0;
+static unsigned uRound=0;
 static unsigned uHeat=0;
 static unsigned uTrickLock=0;
 static unsigned uTrickLockProvided=0;
@@ -26,8 +27,8 @@ void htmlHeat(void);
 void htmlBestTrick(void);
 void htmlHeatEnd(void);
 void htmlEvent(void);
-
 void htmlJudge(void);
+void PopulateScoreComp(unsigned uHeat);
 //extern
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
 
@@ -45,6 +46,8 @@ void ProcessJudgeVars(pentry entries[], int x)
 		}
 		else if(!strcmp(entries[i].name,"uEvent"))
 			sscanf(entries[i].val,"%u",&uEvent);
+		else if(!strcmp(entries[i].name,"uRound"))
+			sscanf(entries[i].val,"%u",&uRound);
 	}
 
 }//void ProcessJobOfferVars(pentry entries[], int x)
@@ -129,9 +132,9 @@ void JudgeCommands(pentry entries[], int x)
 					{
 						sprintf(gcQuery,"INSERT INTO tScore"
 							" SET cLabel='%.25s %u',fScore=%s,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u"
-							" ,uHeat=%u,uIndex=%u,uRider=%u,uEvent=%u,uOwner=%u",
+							" ,uHeat=%u,uIndex=%u,uRider=%u,uEvent=%u,uOwner=%u,uRound=%u",
 								cForeignKey("tRider","cLast",uRider),uIndex+1,entries[i].val,guLoginClient,
-								uHeat,uIndex,uRider,uEvent,guOrg);
+								uHeat,uIndex,uRider,uEvent,guOrg,uRound);
 						mysql_query(&gMysql,gcQuery);
 						if(*mysql_error(&gMysql))
 						{
@@ -143,12 +146,13 @@ void JudgeCommands(pentry entries[], int x)
 							if(mysql_affected_rows(&gMysql)>0)
 								gcMessage="Score Created";
 						}
-					}
-				     }
-				}
-			}
-		}
-	}
+					}//If insert or update
+				     }//If trick lock restriction
+				}//if sscanf ok
+			}//for fScore fields only
+		}//for each field
+		PopulateScoreComp(uHeat);
+	}//gcFunction=Score
 	htmlJudge();
 
 }//void UserCommands(pentry entries[], int x)
@@ -353,6 +357,7 @@ void funcHeatScoreTable(FILE *fp)
 	fprintf(fp,"<input type='hidden' name='uEvent' value='%u'>",uEvent);
 	fprintf(fp,"<input type='hidden' name='uHeat' value='%u'>",uHeat);
 	fprintf(fp,"<input type='hidden' name='uTrickLock' value='%u'>",uTrickLock);
+	fprintf(fp,"<input type='hidden' name='uRound' value='%u'>",uRound);
 	fprintf(fp,"<br><div class=\"sTable\">");
 	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u GROUP BY uRider ORDER BY SUM(fScore) DESC",
 		uHeat,guOrg);
@@ -821,3 +826,95 @@ void funcHeatEnd(FILE *fp)
 
 
 }//void funcHeatEnd(FILE *fp)
+
+
+void PopulateScoreComp(unsigned uHeat)
+{
+        MYSQL_RES *res;
+	MYSQL_ROW field;
+        MYSQL_RES *res2;
+	MYSQL_ROW field2;
+	unsigned uRider=0;
+	unsigned uEvent=0;
+	unsigned uRound=0;
+	unsigned uIndex=0;
+	unsigned uNumJudges=0;
+	unsigned uScoreComp=0;
+	float fScore=0.0;
+	//Every time a score is set we need to
+	//update the tScoreComp table.
+	//We need to average the scores among all judges
+	//There can only be one record per uRider/uHeat 
+	//this is also insured with a UNIQUE INDEX
+	//
+	sprintf(gcQuery,"SELECT uCreatedBy FROM tScore WHERE uHeat=%u GROUP BY uCreatedBy",
+				uHeat);
+	mysql_query(&gMysql,gcQuery);
+	if(*mysql_error(&gMysql))
+	{
+		gcMessage="PopulateScoreComp ErrorA";
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	uNumJudges=mysql_num_rows(res);
+	if(!uNumJudges || uNumJudges>8)
+	{
+		gcMessage="PopulateScoreComp ErrorB";
+		return;
+	}
+
+	sprintf(gcQuery,"SELECT uIndex,(SUM(fScore)/%u),uRound,uEvent,uRider FROM tScore WHERE uHeat=%u GROUP BY uRider,uIndex",
+				uNumJudges,uHeat);
+	mysql_query(&gMysql,gcQuery);
+	if(*mysql_error(&gMysql))
+	{
+		gcMessage="PopulateScoreComp Error0";
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uIndex);
+		sscanf(field[1],"%f",&fScore);
+		sscanf(field[2],"%u",&uRound);
+		sscanf(field[3],"%u",&uEvent);
+		sscanf(field[4],"%u",&uRider);
+		sprintf(gcQuery,"SELECT uScoreComp FROM tScoreComp WHERE uHeat=%u AND uRider=%u AND uIndex=%u",
+				uHeat,uRider,uIndex);
+		mysql_query(&gMysql,gcQuery);
+		if(*mysql_error(&gMysql))
+		{
+			gcMessage="PopulateScoreComp Error1";
+			return;
+		}
+		res2=mysql_store_result(&gMysql);
+		if((field2=mysql_fetch_row(res2)))
+		{
+			sscanf(field2[0],"%u",&uScoreComp);
+			sprintf(gcQuery,"UPDATE tScoreComp SET fScore=%1.2f,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
+					" WHERE uScoreComp=%u",
+						fScore,guLoginClient,
+						uScoreComp);
+			mysql_query(&gMysql,gcQuery);
+			if(*mysql_error(&gMysql))
+			{
+				gcMessage="PopulateScoreComp Error2";
+				return;
+			}
+		}
+		else
+		{
+			sprintf(gcQuery,"INSERT INTO tScoreComp SET fScore=%1.2f,uIndex=%u,uHeat=%u,uRider=%u"
+					",uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u,uOwner=%u,uRound=%u,uEvent=%u ",
+				fScore,uIndex,uHeat,uRider,guLoginClient,guOrg,uRound,uEvent);
+			mysql_query(&gMysql,gcQuery);
+			if(*mysql_error(&gMysql))
+			{
+				gcMessage="PopulateScoreComp Error3";
+				return;
+			}
+		}
+		
+	}
+	
+}//void PopulateScoreComp(unsigned uHeat)
