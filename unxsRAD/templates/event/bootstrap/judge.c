@@ -14,6 +14,7 @@ PURPOSE
 #include <math.h>
 
 //File globals
+static unsigned uGenerate=0;
 static unsigned uEvent=0;
 static unsigned uRound=0;
 static unsigned uHeat=0;
@@ -143,6 +144,13 @@ void AdminGetHook(entry gentries[],int x)
 {
 
 	CommonGetHook(gentries,x);
+
+	register int i;
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"Generate"))
+		uGenerate=1;
+	}
 
 	htmlAdmin();
 
@@ -621,7 +629,6 @@ void funcAdmin(FILE *fp)
 	unsigned uRounds=0;
 	unsigned uRound;
 	unsigned uHeatSize=0;
-	unsigned uPassHeat=0;
 
 	if(!uSelectEvent(fp,"Admin")) return;
 	if(!uSelectHeat(fp,"Admin")) return;
@@ -635,7 +642,7 @@ void funcAdmin(FILE *fp)
 		fprintf(fp,"%s",mysql_error(&gMysql));
 		return;
 	}
-	while((field=mysql_fetch_row(res)))
+	if((field=mysql_fetch_row(res)))
 	{
 		sprintf(cEvent,"%.31s",field[0]);
 		fprintf(fp,"<br><u>%s</u>",cEvent);
@@ -643,6 +650,12 @@ void funcAdmin(FILE *fp)
 		sprintf(cLine,"%.255s",cParseTextAreaLines(field[1]));
 		while(cLine[0])
 		{
+			//Generate Tournament PART 0
+			//Insert participants if not already in tRider
+			if(guPermLevel>9 && uGenerate)
+			{
+			}//Generate Part 0
+
 			//fprintf(fp,"<br>%.255s",cLine);
 			sprintf(cLine,"%.255s",cParseTextAreaLines(field[1]));
 			if(!cLine[0]) break;
@@ -656,19 +669,52 @@ void funcAdmin(FILE *fp)
 		fprintf(fp,"<br>%u rounds",uRounds);
 		sscanf(field[3],"%u",&uHeatSize);
 		fprintf(fp,"<br>Heat size starts at %u participants each",uHeatSize);
-		sscanf(field[4],"%u",&uPassHeat);
-		fprintf(fp,"<br>%u participants pass to next round",uPassHeat);
+		fprintf(fp,"<br>One half of participants pass to next round*.");
 		fprintf(fp,"<br>Each heat lasts %s minutes",field[5]);
 		fprintf(fp,"<br>Participants must be in position %s minutes before heat start",field[6]);
 		fprintf(fp,"<br>Participants must clear competition area %s minutes after heat ends",field[7]);
 
 		fprintf(fp,"<br><br>Under Development...");
+		//Generate Tournament PART 1
+		if(guPermLevel>9 && uGenerate)
+		{
+			//Remove any round records for this event
+			sprintf(gcQuery,"DELETE FROM tRound WHERE uEvent=%u",guEvent);
+			mysql_query(&gMysql,gcQuery);
+			res=mysql_store_result(&gMysql);
+			if(mysql_errno(&gMysql))
+			{
+				fprintf(fp,"%s",mysql_error(&gMysql));
+				return;
+			}
+			//Remove any heat records for this event
+			sprintf(gcQuery,"DELETE FROM tHeat WHERE uEvent=%u",guEvent);
+			mysql_query(&gMysql,gcQuery);
+			res=mysql_store_result(&gMysql);
+			if(mysql_errno(&gMysql))
+			{
+				fprintf(fp,"%s",mysql_error(&gMysql));
+				return;
+			}
+			//Remove any score records for this event
+			sprintf(gcQuery,"DELETE FROM tScore WHERE uEvent=%u",guEvent);
+			mysql_query(&gMysql,gcQuery);
+			res=mysql_store_result(&gMysql);
+			if(mysql_errno(&gMysql))
+			{
+				fprintf(fp,"%s",mysql_error(&gMysql));
+				return;
+			}
+		}//Generate PART 1
+		unsigned uNewRound=0;
+		unsigned uNewHeat=0;
 		char *cRound="";
 		float fNumHeats=0.0;
 		float fCalc=0.0;
 		float fParticipants=(float)uParticipants;
 		unsigned uHeatSizes[8];
 		register int i;
+		register int j;
 		for(i=0;i<8;i++)
 			uHeatSizes[i]=uHeatSize;
 		for(uRound=1;uRound<(uRounds+1);uRound++)
@@ -685,25 +731,66 @@ void funcAdmin(FILE *fp)
 				cRound="Final ";
 			if(uRound==1 || (float)uHeatSizes[uRound-1]==(fParticipants/floor(fCalc)))
 			{
-				fprintf(fp,"<br>%sround %u has %1.0f heats of %u participants each.",
+				fprintf(fp,"<br>%sRound %u has %1.0f heats of %u participants each.",
+					cRound,uRound,fNumHeats,uHeatSizes[uRound-1]);
+				if(floor(fCalc)!=ceil(fCalc))
+					fprintf(fp," one heat has less than %u participants.",uHeatSizes[uRound-1]);
+				fprintf(fp," (%2.2f %2.2f)",fParticipants,fCalc);
+
+			}
+			else
+			{
+				uHeatSizes[uRound-1]=uHeatSizes[uRound-1]-1;
+				fCalc=fParticipants/(float)(uHeatSizes[uRound-1]);
+				fNumHeats=ceil(fCalc);
+				fprintf(fp,"<br>Adjusted %sround %u has %1.0f heats of %u participants each.",
 					cRound,uRound,fNumHeats,uHeatSizes[uRound-1]);
 				if(floor(fCalc)!=ceil(fCalc))
 					fprintf(fp," one heat has less than %u participants.",uHeatSizes[uRound-1]);
 				fprintf(fp," (%2.2f %2.2f)",fParticipants,fCalc);
 			}
-			else
-			{
-				fCalc=fParticipants/(float)(uHeatSizes[uRound-1]-1);
-				fNumHeats=ceil(fCalc);
-				fprintf(fp,"<br>Adjusted %sround %u has %1.0f heats of %u participants each.",
-					cRound,uRound,fNumHeats,uHeatSizes[uRound-1]-1);
-				if(floor(fCalc)!=ceil(fCalc))
-					fprintf(fp," one heat has less than %u participants.",uHeatSizes[uRound-1]-1);
-				fprintf(fp," (%2.2f %2.2f)",fParticipants,fCalc);
-			}
 			fParticipants=ceil(fParticipants/2.0);
+
+			//Generate Tournament PART 2 for each round
+			if(guPermLevel>9 && uGenerate)
+			{
+				//TODO uNumScores hardcoded preset. Should come from tEvent.
+				sprintf(gcQuery,"INSERT INTO tRound SET uEvent=%u,cLabel='%s Round %u'"
+						",uNumScores=3,uHeatSize=%u,uOwner=%u,uCreatedBy=%u"
+							,guEvent,cRound,uRound,
+							uHeatSizes[uRound-1],guOrg,guLoginClient);
+				mysql_query(&gMysql,gcQuery);
+				if(mysql_errno(&gMysql))
+				{
+					fprintf(fp,"%s",mysql_error(&gMysql));
+					return;
+				}
+				uNewRound=mysql_insert_id(&gMysql);
+				//Create heats
+				for(j=0;j<(int)fNumHeats;j++)
+				{
+					sprintf(gcQuery,"INSERT INTO tHeat SET uEvent=%u,cLabel='%d'"
+						",uOwner=%u,uCreatedBy=%u,uRound=%u"
+							,guEvent,j+1,
+							guOrg,guLoginClient,uNewRound);
+					mysql_query(&gMysql,gcQuery);
+					if(mysql_errno(&gMysql))
+					{
+						fprintf(fp,"%s",mysql_error(&gMysql));
+						return;
+					}
+					uNewHeat=mysql_insert_id(&gMysql);
+				}
+				//Create scores
+			}//Generate PART 2
+
 		}
-	}//while field
+		if(guPermLevel>9 && !uGenerate)
+			fprintf(fp,"<br><br><a href=?gcPage=Admin&Generate type=button >Generate Tournament</a>");
+		if(uGenerate)
+			fprintf(fp,"<br><br>Tournament Generated v0.1</a>");
+
+	}//if field
 }//void funcAdmin(FILE *fp)
 
 
