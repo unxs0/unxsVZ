@@ -489,9 +489,99 @@ void funcHeatScoreTable(FILE *fp)
 }//void funcHeatScoreTable(FILE *fp)
 
 
+char *cParseTextAreaLines(char *cTextArea)
+{
+	static unsigned uEnd=0;
+	static unsigned uStart=0;
+	static char cRetVal[512];
+	
+	uStart=uEnd;
+	while(cTextArea[uEnd++])
+	{
+		if(cTextArea[uEnd]=='\n' || cTextArea[uEnd]=='\r' || cTextArea[uEnd]==0
+				|| cTextArea[uEnd]==10 || cTextArea[uEnd]==13 )
+		{
+			if(cTextArea[uEnd]==0)
+				break;
+
+			cTextArea[uEnd]=0;
+			sprintf(cRetVal,"%.511s",cTextArea+uStart);
+
+			if(cRetVal[0]=='\n' || cRetVal[0]==13)
+			{
+				uStart=uEnd=0;
+				return("");
+			}
+
+			if(cTextArea[uEnd+1]==10)
+				uEnd+=2;
+			else
+				uEnd++;
+
+			return(cRetVal);
+		}
+	}
+
+	if(uStart!=uEnd)
+	{
+		sprintf(cRetVal,"%.511s",cTextArea+uStart);
+		return(cRetVal);
+	}
+
+	uStart=uEnd=0;
+	return("");
+}//char *cParseTextAreaLines(char *cTextArea)
+
+
 void funcAdmin(FILE *fp)
 {
-}
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	char cEvent[256]={""};
+	char cLine[256]={""};
+	char cFirst[32]={""};
+	char cLast[32]={""};
+	char cCountry[32]={""};
+	unsigned uParticipants=0;
+	unsigned uRounds=0;
+	unsigned uHeatSize=0;
+	unsigned uPassHeat=0;
+
+	sprintf(gcQuery,"SELECT cLabel,cParticipants,uRounds,uHeatSize,uPassHeat,"
+				"uHeatDuration,uHeatPreStart,uHeatPostEnd FROM tEvent");
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(cEvent,"%.31s",field[0]);
+		fprintf(fp,"<br><u>%s</u>",cEvent);
+		sprintf(cLine,"%.255s",cParseTextAreaLines(field[1]));
+		while(cLine[0])
+		{
+			//fprintf(fp,"<br>%.255s",cLine);
+			sprintf(cLine,"%.255s",cParseTextAreaLines(field[1]));
+			sscanf(cLine,"%31[ A-z],%31[ A-z],%31[ A-Z]",cFirst,cLast,cCountry);
+			fprintf(fp,"<br>%.31s %.31s %.31s",cFirst,cLast,cCountry);
+			uParticipants++;
+		}
+		fprintf(fp,"<br><br>%u participants",uParticipants);
+		sscanf(field[2],"%u",&uRounds);
+		fprintf(fp,"<br>%u rounds",uRounds);
+		sscanf(field[3],"%u",&uHeatSize);
+		fprintf(fp,"<br>Heat size is %u participants each",uHeatSize);
+		sscanf(field[4],"%u",&uPassHeat);
+		fprintf(fp,"<br>%u participants pass to next round",uPassHeat);
+		fprintf(fp,"<br>Each heat lasts %s minutes",field[5]);
+		fprintf(fp,"<br>Participants must be in position %s minutes before heat start",field[6]);
+		fprintf(fp,"<br>Participants must clear competition area %s minutes after heat ends",field[7]);
+	}//while field
+}//void funcAdmin(FILE *fp)
+
 
 void funcEvent(FILE *fp)
 {
