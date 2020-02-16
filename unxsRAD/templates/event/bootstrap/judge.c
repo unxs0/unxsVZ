@@ -11,6 +11,8 @@ PURPOSE
 
 #include "interface.h"
 
+#include <math.h>
+
 //File globals
 static unsigned uEvent=0;
 static unsigned uRound=0;
@@ -653,22 +655,53 @@ void funcAdmin(FILE *fp)
 		sscanf(field[2],"%u",&uRounds);
 		fprintf(fp,"<br>%u rounds",uRounds);
 		sscanf(field[3],"%u",&uHeatSize);
-		fprintf(fp,"<br>Heat size is %u participants each",uHeatSize);
+		fprintf(fp,"<br>Heat size starts at %u participants each",uHeatSize);
 		sscanf(field[4],"%u",&uPassHeat);
 		fprintf(fp,"<br>%u participants pass to next round",uPassHeat);
 		fprintf(fp,"<br>Each heat lasts %s minutes",field[5]);
 		fprintf(fp,"<br>Participants must be in position %s minutes before heat start",field[6]);
 		fprintf(fp,"<br>Participants must clear competition area %s minutes after heat ends",field[7]);
 
-		fprintf(fp,"<br>");
+		fprintf(fp,"<br><br>Under Development...");
 		char *cRound="";
+		float fNumHeats=0.0;
+		float fCalc=0.0;
+		float fParticipants=(float)uParticipants;
+		unsigned uHeatSizes[8];
+		register int i;
+		for(i=0;i<8;i++)
+			uHeatSizes[i]=uHeatSize;
 		for(uRound=1;uRound<(uRounds+1);uRound++)
 		{
+			if(fNumHeats==1.0)
+				break;
+			fCalc=fParticipants/(float)uHeatSizes[uRound-1];
+			fNumHeats=ceil(fCalc);
 			if(uRound==uRounds)
 				cRound="Final ";
 			else if(uRound==(uRounds-1))
 				cRound="Semifinal ";
-			fprintf(fp,"<br>%sround %u has %u heats",cRound,uRound,(uParticipants/uRound)/uHeatSize);
+			if(fNumHeats==1.0)
+				cRound="Final ";
+			if(uRound==1 || (float)uHeatSizes[uRound-1]==(fParticipants/floor(fCalc)))
+			{
+				fprintf(fp,"<br>%sround %u has %1.0f heats of %u participants each.",
+					cRound,uRound,fNumHeats,uHeatSizes[uRound-1]);
+				if(floor(fCalc)!=ceil(fCalc))
+					fprintf(fp," one heat has less than %u participants.",uHeatSizes[uRound-1]);
+				fprintf(fp," (%2.2f %2.2f)",fParticipants,fCalc);
+			}
+			else
+			{
+				fCalc=fParticipants/(float)(uHeatSizes[uRound-1]-1);
+				fNumHeats=ceil(fCalc);
+				fprintf(fp,"<br>Adjusted %sround %u has %1.0f heats of %u participants each.",
+					cRound,uRound,fNumHeats,uHeatSizes[uRound-1]-1);
+				if(floor(fCalc)!=ceil(fCalc))
+					fprintf(fp," one heat has less than %u participants.",uHeatSizes[uRound-1]-1);
+				fprintf(fp," (%2.2f %2.2f)",fParticipants,fCalc);
+			}
+			fParticipants=ceil(fParticipants/2.0);
 		}
 	}//while field
 }//void funcAdmin(FILE *fp)
