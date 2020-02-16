@@ -92,6 +92,7 @@ extern unsigned guBrowserFirefox;
 extern unsigned guYear;
 extern unsigned guMonth;
 extern unsigned guHeat;
+extern unsigned guEvent;
 extern unsigned guValidJobLoaded;
 extern char *gcCPShow;
 
@@ -115,6 +116,8 @@ extern char gcOTPInfo[];
 //judge.c
 void ProcessJudgeVars(pentry entries[], int x);
 void JudgeGetHook(entry gentries[],int x);
+void AdminGetHook(entry gentries[],int x);
+void EventGetHook(entry gentries[],int x);
 void JudgeCommands(pentry entries[], int x);
 void htmlHeat(void);
 void htmlBestTrick(void);
@@ -123,9 +126,10 @@ void htmlEvent(void);
 void htmlAdmin(void);
 void htmlJudge(void);
 void htmlJudgePage(char *cTitle, char *cTemplateName);
-void funcHeatScoreTable(FILE *fp);
+void funcJudge(FILE *fp);
+void funcEvent(FILE *fp);
+void funcAdmin(FILE *fp);
+//overlay
 void funcHeat(FILE *fp);
 void funcHeatEnd(FILE *fp);
 void funcBestTrick(FILE *fp);
-void funcEvent(FILE *fp);
-void funcAdmin(FILE *fp);

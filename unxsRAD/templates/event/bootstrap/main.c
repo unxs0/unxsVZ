@@ -29,7 +29,9 @@ unsigned guZone=0;
 unsigned guView=0;
 
 //APP VARS
+//From cookies
 unsigned guHeat=0;
+unsigned guEvent=0;
 
 //SSLLoginCookie()
 char gcCookie[1024]={""};
@@ -123,9 +125,20 @@ int main(int argc, char *argv[])
         	if(!strcmp(gcFunction,"Heat")) 
 			htmlHeat();
 		SSLCookieLogin();
-		JudgeGetHook(gentries,x);
 		if(gcPage[0])
 		{
+			if(!strcmp(gcPage,"Admin"))
+			{
+				AdminGetHook(gentries,x);
+			}
+			else if(!strcmp(gcPage,"Event"))
+			{
+				EventGetHook(gentries,x);
+			}
+			else if(!strcmp(gcPage,"Judge"))
+			{
+				JudgeGetHook(gentries,x);
+			}
 			//Need to catch all pages here or else have default
 			htmlJudge();
 		}
@@ -189,6 +202,8 @@ int main(int argc, char *argv[])
 			printf("Set-Cookie: {{cProject}}SessionId=\"deleted\";"
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: {{cProject}}SessionHash=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: {{cProject}}Event=\"deleted\";"
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: {{cProject}}Heat=\"deleted\";"
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
@@ -471,18 +486,22 @@ void funcSelectOwner(FILE *fp,char *cTable,unsigned uSelector)
 //libtemplate.a required
 void AppFunctions(FILE *fp,char *cFunction)
 {
-	if(!strcmp(cFunction,"funcHeatScoreTable"))
-		funcHeatScoreTable(fp);
+	//Page
+	if(!strcmp(cFunction,"funcJudge"))
+		funcJudge(fp);
+	else if(!strcmp(cFunction,"funcEvent"))
+		funcEvent(fp);
+	else if(!strcmp(cFunction,"funcAdmin"))
+		funcAdmin(fp);
+
+	//Overlays
 	else if(!strcmp(cFunction,"funcHeat"))
 		funcHeat(fp);
 	else if(!strcmp(cFunction,"funcHeatEnd"))
 		funcHeatEnd(fp);
 	else if(!strcmp(cFunction,"funcBestTrick"))
 		funcBestTrick(fp);
-	else if(!strcmp(cFunction,"funcEvent"))
-		funcEvent(fp);
-	else if(!strcmp(cFunction,"funcAdmin") && guPermLevel>9)
-		funcAdmin(fp);
+
 }//void AppFunctions(FILE *fp,char *cFunction)
 
 
@@ -571,6 +590,11 @@ void SSLCookieLogin(void)
 		{
 			cP+=strlen("{{cProject}}Heat=");
 			sscanf(cP,"%u",&guHeat);
+		}
+		if((cP=strstr(gcCookie,"{{cProject}}Event=")))
+		{
+			cP+=strlen("{{cProject}}Event=");
+			sscanf(cP,"%u",&guEvent);
 		}
 	}//if gcCookie[0] time saver
 
