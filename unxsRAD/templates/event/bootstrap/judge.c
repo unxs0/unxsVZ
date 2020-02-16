@@ -162,7 +162,7 @@ void GetdEnd(void)
         MYSQL_RES *res;
 	MYSQL_ROW field;
 	sprintf(gcQuery,"SELECT DATE_FORMAT(dEnd,'%%b %%d, %%Y %%H:%%i:%%s')"
-			" FROM tHeat WHERE uStatus=1 AND uOwner=%u AND dEnd>NOW() ORDER BY uHeat DESC LIMIT 1",guOrg);
+			" FROM tHeat WHERE uStatus=1 AND dEnd>NOW() ORDER BY uHeat DESC LIMIT 1");
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
@@ -203,6 +203,14 @@ void htmlEvent(void)
 	htmlJudgePage("Event","Event.Body");
 	htmlFooter("Default.Footer");
 }//void htmlEvent(void)
+
+
+void htmlAdmin(void)
+{
+	htmlHeader("Admin","Default.Header");
+	htmlJudgePage("Admin","Admin.Body");
+	htmlFooter("Default.Footer");
+}//void htmlAdmin(void)
 
 
 void htmlJudge(void)
@@ -481,6 +489,10 @@ void funcHeatScoreTable(FILE *fp)
 }//void funcHeatScoreTable(FILE *fp)
 
 
+void funcAdmin(FILE *fp)
+{
+}
+
 void funcEvent(FILE *fp)
 {
 	MYSQL_RES *res;
@@ -607,13 +619,15 @@ void funcHeat(FILE *fp)
 	fprintf(fp,"<div class=\"sTable\">");
 	fprintf(fp,"<div class=\"sTableRow\">");
 
-	sprintf(gcQuery,"SELECT uEvent,cLabel FROM tEvent WHERE uStatus=1 AND uOwner=%u ORDER BY uEvent DESC LIMIT 1",guOrg);
+	//sprintf(gcQuery,"SELECT uEvent,cLabel FROM tEvent WHERE uStatus=1 AND uOwner=%u ORDER BY uEvent DESC LIMIT 1",guOrg);
+	sprintf(gcQuery,"SELECT uEvent,cLabel,uOwner FROM tEvent WHERE uStatus=1 ORDER BY uEvent DESC LIMIT 1");
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uEvent);
 		sprintf(cEvent,"%.31s",field[1]);
+		sscanf(field[2],"%u",&guOrg);
 	}
 	if(!uEvent) 
 	{
@@ -627,8 +641,8 @@ void funcHeat(FILE *fp)
 			" TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s'),"
 			"UPPER(tStatus.cLabel),tStatus.uStatus"
 			" FROM tHeat,tStatus WHERE tHeat.uStatus<3 AND"
-			" tHeat.uOwner=%u AND tHeat.dEnd>NOW() AND tStatus.uStatus=tHeat.uStatus"
-			" ORDER BY tHeat.uHeat DESC LIMIT 1",guOrg);
+			" tHeat.uEvent=%u AND tHeat.dEnd>NOW() AND tStatus.uStatus=tHeat.uStatus"
+			" ORDER BY tHeat.uHeat DESC LIMIT 1",uEvent);
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))

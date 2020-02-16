@@ -119,6 +119,9 @@ int main(int argc, char *argv[])
 			else if(!strcmp(gentries[x].name,"gcLogin"))
 				sprintf(gcLogin,"%.99s",WordToLower(gentries[x].val));
 		}
+		//No login required
+        	if(!strcmp(gcFunction,"Heat")) 
+			htmlHeat();
 		SSLCookieLogin();
 		JudgeGetHook(gentries,x);
 		if(gcPage[0])
@@ -216,6 +219,8 @@ int main(int argc, char *argv[])
 			htmlHeatEnd();
         	else if(!strcmp(gcFunction,"Event")) 
 			htmlEvent();
+        	else if(!strcmp(gcFunction,"Admin")) 
+			htmlAdmin();
 	}
 
         if(!guPermLevel || !gcUser[0] || !guLoginClient)
@@ -476,6 +481,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcBestTrick(fp);
 	else if(!strcmp(cFunction,"funcEvent"))
 		funcEvent(fp);
+	else if(!strcmp(cFunction,"funcAdmin") && guPermLevel>9)
+		funcAdmin(fp);
 }//void AppFunctions(FILE *fp,char *cFunction)
 
 

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="KiteEvent Login">
     <meta name="author" content="Unixservice, LLC.">
-    <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
+    <link rel="shortcut icon" type="image/x-icon" href="/images/kitesurf5.ico?v=0">
 
     <title>Portal KiteEvent</title>
 
@@ -37,7 +37,7 @@
 
     <div class="container">
 
-      <form class="form-signin" role="form" method="post" action="/unxsEVApp/">
+      <form class="form-signin" method="post" action="/unxsEVApp/">
         <h3 class="form-signin-heading">Portal KiteEvent</h3>
         <label for="inputEmail" class="sr-only">Login/Email</label>
         <input maxlength="99" title='Ingresar tu login/usuario'
@@ -45,7 +45,7 @@
         <label title='Ingrese su contrase&ntilde;a' for="inputPassword" class="sr-only">Contrase&ntilde;a</label>
         <input title='Ingresar tu contrase&ntilde;a' maxlength="31" type="password" id="inputPassword" class="form-control" placeholder="Contrase&ntilde;a" name="gcPasswd" required>
         <button class="btn btn-lg btn-primary btn-block" type="submit" name=gcFunction value='Login'>Ingresar al Portal</button>
-        <h4 class="form-signin-heading">{{gcMessage}}</h4>
+        <h4 class="form-signin-heading">{{gcMessage}} </h4>
       </form>
 
     </div> <!-- /container -->

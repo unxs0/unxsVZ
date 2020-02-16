@@ -1,13 +1,13 @@
 <!-- unxsRAD.Template2 -->
 <html lang="es">
   <head>
-    <meta http-equiv="refresh" content="30">
+    <meta http-equiv="refresh" content="10">
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="KiteEvent Heat">
     <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
-    <link rel="shortcut icon" type=image/x-icon href=/images/kitesurf5.ico?v=0>
+    <link rel="shortcut icon" type="image/x-icon" href="/images/kitesurf5.ico?v=0">
 
     <title>KiteEvent Heat</title>
 
@@ -17,7 +17,7 @@
 </head>
 
 <body>
-<main role="main" class="container">
+<main class="container">
 <br>
 {{funcHeat}}
 </main>
