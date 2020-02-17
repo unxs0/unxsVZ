@@ -115,6 +115,8 @@ extern char gcOTPInfo[];
 
 //judge.c
 void ProcessJudgeVars(pentry entries[], int x);
+void HeatEndGetHook(entry gentries[],int x);
+void HeatGetHook(entry gentries[],int x);
 void JudgeGetHook(entry gentries[],int x);
 void AdminGetHook(entry gentries[],int x);
 void EventGetHook(entry gentries[],int x);

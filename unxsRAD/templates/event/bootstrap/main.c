@@ -123,7 +123,9 @@ int main(int argc, char *argv[])
 		}
 		//No login required
         	if(!strcmp(gcFunction,"Heat")) 
-			htmlHeat();
+			HeatGetHook(gentries,x);
+        	else if(!strcmp(gcFunction,"HeatEnd")) 
+			HeatEndGetHook(gentries,x);
 		SSLCookieLogin();
 		if(gcPage[0])
 		{
