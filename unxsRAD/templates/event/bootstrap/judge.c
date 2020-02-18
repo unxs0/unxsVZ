@@ -280,10 +280,19 @@ void GetdEnd(void)
 {
         MYSQL_RES *res;
 	MYSQL_ROW field;
-	//AND NOW()>=dStart AND NOW()<=dEnd
-	sprintf(gcQuery,"SELECT DATE_FORMAT(dEnd,'%%b %%d, %%Y %%H:%%i:%%s')"
-			" FROM tHeat WHERE uStatus=1 AND uEvent=%u AND NOW()>=dStart AND NOW()<=dEnd LIMIT 1",guEvent);
+	sprintf(gcQuery,"SELECT DATE_FORMAT(tHeat.dEnd,'%%b %%d, %%Y %%H:%%i:%%s')"
+			" FROM tHeat,tEvent WHERE tHeat.uStatus=1 AND tHeat.uEvent=tEvent.uEvent AND tHeat.uEvent=%u"
+			" AND NOW()>=DATE_SUB(tHeat.dStart,INTERVAL tEvent.uHeatPreStart MINUTE)"
+			" AND NOW()<=DATE_ADD(tHeat.dEnd,INTERVAL tEvent.uHeatPostEnd MINUTE)"
+			" LIMIT 1",
+				guEvent);
 	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		htmlHeader("Error","Default.Header");
+		fprintf(stdout,"%s",mysql_error(&gMysql));
+		htmlFooter("Default.Footer");
+	}
 	res=mysql_store_result(&gMysql);
 	if((field=mysql_fetch_row(res)))
 	{
@@ -437,7 +446,9 @@ void funcJudge(FILE *fp)
 			" FROM tHeat,tStatus,tEvent"
 			" WHERE tHeat.uStatus=1 AND tHeat.uEvent=%u AND tStatus.uStatus=tHeat.uStatus"
 			" AND tHeat.uEvent=tEvent.uEvent"
-			" AND NOW()>=tHeat.dStart AND NOW()<=tHeat.dEnd LIMIT 1",
+			" AND NOW()>=DATE_SUB(tHeat.dStart,INTERVAL tEvent.uHeatPreStart MINUTE)"
+			" AND NOW()<=DATE_ADD(tHeat.dEnd,INTERVAL tEvent.uHeatPostEnd MINUTE)"
+			" LIMIT 1",
 					guEvent);
 	mysql_query(&gMysql,gcQuery);
 	if(*mysql_error(&gMysql))
