@@ -740,7 +740,7 @@ void funcAdmin(FILE *fp)
 				MYSQL_ROW field2;
 
 				sprintf(gcQuery,"DELETE FROM tRider WHERE"
-						" cFIRST='WINNER OF' OR cFirst='SECOND OF' AND uImportEvent=%u",guEvent);
+						" (cFIRST='WINNER OF' OR cFirst='SECOND OF') AND uImportEvent=%u",guEvent);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -749,8 +749,8 @@ void funcAdmin(FILE *fp)
 				}
 
 				sprintf(gcQuery,"SELECT uRider FROM tRider WHERE"
-						" cLabel=UPPER(CONCAT(TRIM('%s'),' ',TRIM('%s'))) AND uOwner=%u",
-							cFirst,cLast,guOrg);
+						" cLabel=UPPER(CONCAT(TRIM('%s'),' ',TRIM('%s'))) AND uOwner=%u AND uImportEvent=%u",
+							cFirst,cLast,guOrg,guEvent);
 				mysql_query(&gMysql,gcQuery);
 				if(mysql_errno(&gMysql))
 				{
@@ -780,8 +780,8 @@ void funcAdmin(FILE *fp)
 					//uRider exists!
 					if((field2=mysql_fetch_row(res2)))
 					{
-						sprintf(gcQuery,"UPDATE tRider SET uModBy=0,uImportEvent=%u"
-								" WHERE uRider=%s",guEvent,field2[0]);
+						sprintf(gcQuery,"UPDATE tRider SET uModBy=0"
+								" WHERE uRider=%s",field2[0]);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
 						{
@@ -1185,6 +1185,34 @@ void funcAdmin(FILE *fp)
 }//void funcAdmin(FILE *fp)
 
 
+char *cRiders(unsigned uHeat)
+{
+	static char cBuffer[512]={""};
+	static char cLast[32]={""};
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT DISTINCT CONCAT(UPPER(SUBSTR(tRider.cFirst,1,1)),'. ',UPPER(tRider.cLast)) FROM tScore,tRider WHERE tScore.uHeat=%u AND tRider.uRider=tScore.uRider",uHeat);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		sprintf(cBuffer,"%.255s",mysql_error(&gMysql));
+		return(cBuffer);
+	}
+	res=mysql_store_result(&gMysql);
+	unsigned uSize=0;
+	cBuffer[0]=0;
+	while((field=mysql_fetch_row(res)))
+	{
+		sprintf(cLast,"%.31s<br>",field[0]);
+		strncat(cBuffer,cLast,35);
+		uSize+=strlen(cLast);
+		if(uSize>(512-36)) break;
+	}
+
+	return(cBuffer);
+}//char *cRiders(unsigned uHeat)
+
+
 void funcEvent(FILE *fp)
 {
 	MYSQL_RES *res;
@@ -1201,8 +1229,6 @@ void funcEvent(FILE *fp)
 
 	if(!uSelectEvent(fp,"Event")) return;
 
-	fprintf(fp,"<div class=\"sTable\">");
-	fprintf(fp,"<div class=\"sTableRow\">");
 
 	sprintf(gcQuery,"SELECT tHeat.uHeat,UPPER(tHeat.cLabel),tHeat.uRound,"
 			" TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%H:%%i:%%S'),"
@@ -1212,22 +1238,16 @@ void funcEvent(FILE *fp)
 			" AND tEvent.uEvent=tHeat.uEvent AND tRound.uRound=tHeat.uRound"
 			" ORDER BY tEvent.uEvent,tRound.uRound,tHeat.uHeat",guEvent);
 	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
 	res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)>0)
 	{
-		fprintf(fp,"</div>");//row
-		fprintf(fp,"</div>");//table
 
-		fprintf(fp,"<div class=\"sTable\">");
-		fprintf(fp,"<div class=\"sTableRow\">");
-		fprintf(fp,"<div class=\"sTableCellBlue\">EVENT</div>");
-		fprintf(fp,"<div class=\"sTableCellBlue\">ROUND</div>");
-		fprintf(fp,"<div class=\"sTableCellBlue\">HEAT</div>");
-		fprintf(fp,"<div class=\"sTableCellBlue\">STATUS</div>");
-		fprintf(fp,"<div class=\"sTableCellBlue\">TIME LEFT</div>");
-		fprintf(fp,"<div class=\"sTableCellBlue\">NUM SCORES</div>");
 		//fprintf(fp,"<div class=\"sTableCellBlue\">TRICK LOCK</div>");
-		fprintf(fp,"</div>");//row
 		while((field=mysql_fetch_row(res)))
 		{
 			sscanf(field[0],"%u",&uHeat);
@@ -1239,23 +1259,29 @@ void funcEvent(FILE *fp)
 			sscanf(field[5],"%u",&uStatus);
 			sprintf(cEvent,"%.31s",field[6]);
 			sprintf(cRound,"%.31s",field[7]);
-			sscanf(field[8],"%u",&uNumScores); sscanf(field[9],"%u",&uTrickLock); fprintf(fp,"<div class=\"sTableRow\">");
+			sscanf(field[8],"%u",&uNumScores); sscanf(field[9],"%u",&uTrickLock);
 			if(!uOnlyOnce++)
-				fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cEvent);
-			else
-				//fprintf(fp,"<div class=\"sTableCellEmpty\"></div>");
-				fprintf(fp,"<div class=\"sTableCellBlack\"> </div>");
-			fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cRound);
-			fprintf(fp,"<div class=\"sTableCellBlack\"><a title='Judge' href=?uHeat=%u>%s</a>"
-				"<br>&nbsp;&nbsp;&nbsp;&nbsp;<a title='Overlay' href=?gcFunction=Heat&uHeat=%u>%s</a></div>",
+			{
+				fprintf(fp,"<div class=\"sTable\">\n");
+				fprintf(fp,"<div class=\"sTableRow\">\n");
+				fprintf(fp,"<div class=\"sTableCellBlue\">%s (<a href=?gcPage=Event&ClearEvent>X</a>)</div>",cEvent);
+				fprintf(fp,"<div class=\"sTableCellBlue\">HEAT</div>\n");
+				fprintf(fp,"<div class=\"sTableCellBlue\">STATUS</div>\n");
+				fprintf(fp,"<div class=\"sTableCellBlue\">TIME LEFT</div>\n");
+				fprintf(fp,"<div class=\"sTableCellBlue\">RIDERS</div>\n");
+				fprintf(fp,"</div>\n");//row
+			}
+			fprintf(fp,"\t<div class=\"sTableRow\">\n");
+			fprintf(fp,"\t<div class=\"sTableCellBlack\">%s</div>\n",cRound);
+			fprintf(fp,"\t<div class=\"sTableCellBlack\"><a title='Judge' href=?uHeat=%u>%s</a>"
+				"<br>&nbsp;&nbsp;&nbsp;&nbsp;<a title='Overlay' href=?gcFunction=Heat&uHeat=%u>%s</a></div>\n",
 					uHeat,cHeat,uHeat,cHeat);
-			fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cStatus);
-			fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",dTimeLeft);
-			fprintf(fp,"<div class=\"sTableCellBlack\">%u</div>",uNumScores);
-			//fprintf(fp,"<div class=\"sTableCellBlack\">%u</div>",uTrickLock);
-			fprintf(fp,"</div>");//row
+			fprintf(fp,"\t<div class=\"sTableCellBlack\">%s</div>\n",cStatus);
+			fprintf(fp,"\t<div class=\"sTableCellBlack\">%s</div>\n",dTimeLeft);
+			fprintf(fp,"\t<div class=\"sTableCellBlack\">%s</div>\n",cRiders(uHeat));
+			fprintf(fp,"\t</div>");//row
 		}
-		fprintf(fp,"</div>");//table
+		fprintf(fp,"\n</div>\n");//table
 	}
 	else
 	{
