@@ -142,11 +142,11 @@ int main(int argc, char *argv[])
 				JudgeGetHook(gentries,x);
 			}
 			//Need to catch all pages here or else have default
-			htmlJudge();
+			JudgeGetHook(gentries,x);
 		}
 		else if(!gcFunction[0])
 		{
-			htmlJudge();
+			JudgeGetHook(gentries,x);
 		}
 	}
 	else
