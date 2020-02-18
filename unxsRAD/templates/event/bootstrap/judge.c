@@ -703,6 +703,7 @@ void funcAdmin(FILE *fp)
 	if(!uSelectEvent(fp,"Admin")) return;
 	if(!uSelectHeat(fp,"Admin")) return;
 
+	//TODO tRound.uHeatSize exists and should be used
 	sprintf(gcQuery,"SELECT cLabel,cParticipants,uRounds,uHeatSize,uPassHeat,"
 				"uHeatDuration,uHeatPreStart,uHeatPostEnd,dStart,"
 				"UNIX_TIMESTAMP(dStart) FROM tEvent WHERE uEvent=%u",guEvent);
@@ -843,6 +844,7 @@ void funcAdmin(FILE *fp)
 			}
 		}//Generate PART 1
 		unsigned uSeqHeatNum=1;
+		unsigned uPrevRoundSeqHeatNumStart=0;
 		unsigned uNewRound=0;
 		unsigned uNewHeat=0;
 		char *cRound="";
@@ -870,7 +872,7 @@ void funcAdmin(FILE *fp)
 				cRound="Final ";
 			if(uRound==1 || (float)uHeatSizes[uRound-1]==(fParticipants/floor(fCalc)))
 			{
-				fprintf(fp,"<br>%sRound %u has %1.0f heats of %u participants each.",
+				fprintf(fp,"<br><br>%sRound %u has %1.0f heats of %u participants each.",
 					cRound,uRound,fNumHeats,uHeatSizes[uRound-1]);
 				if(floor(fCalc)!=ceil(fCalc))
 					fprintf(fp," one heat has less than %u participants.",uHeatSizes[uRound-1]);
@@ -885,7 +887,7 @@ void funcAdmin(FILE *fp)
 					uHeatSizes[uRound-1]=uHeatSizes[uRound-1]-2;
 				fCalc=fParticipants/(float)(uHeatSizes[uRound-1]);
 				fNumHeats=ceil(fCalc);
-				fprintf(fp,"<br>Adjusted %sround %u has %1.0f heats of %u participants each.",
+				fprintf(fp,"<br><br>Adjusted %sround %u has %1.0f heats of %u participants each.",
 					cRound,uRound,fNumHeats,uHeatSizes[uRound-1]);
 				if(floor(fCalc)!=ceil(fCalc))
 					fprintf(fp," one heat has less than %u participants.",uHeatSizes[uRound-1]);
@@ -910,6 +912,7 @@ void funcAdmin(FILE *fp)
 				}
 				uNewRound=mysql_insert_id(&gMysql);
 				//Create heats
+				uPrevRoundSeqHeatNumStart=uSeqHeatNum-(int)fPrevNumHeats;
 				for(j=0;j<(int)fNumHeats;j++)
 				{
 					sprintf(gcQuery,"INSERT INTO tHeat SET uEvent=%u,cLabel='%d',"
@@ -971,11 +974,13 @@ void funcAdmin(FILE *fp)
 					}
 					else
 					{
-						fprintf(fp,"<br>uSeqHeatNum=%u uRound=%u uHeat=j=%d"
-								" fPrevNumHeats=%1.0f fNumHeats=%1.0f uHeatSizes[]=%u",
-							uSeqHeatNum,uRound,j,fPrevNumHeats,fNumHeats,uHeatSizes[uRound-1]);
+						fprintf(fp,"<br>uPrevRoundSeqHeatNumStart=%u uSeqHeatNum=%u uRound=%u"
+								"<br> uHeat=j=%d fPrevNumHeats=%1.0f fNumHeats=%1.0f uHeatSizes[]=%u",
+							uPrevRoundSeqHeatNumStart,uSeqHeatNum,uRound,
+							j,fPrevNumHeats,fNumHeats,uHeatSizes[uRound-1]);
 
 						unsigned uNewRider=0;
+						int i41,i42,i43,i44,i31,i32,i33,i21,i22;
 						int iTwoXJPlus1=(2*(j+1));
 						int iPrevNumHeats=(int)fPrevNumHeats;
 						int iThree=1+((iTwoXJPlus1+2) % iPrevNumHeats);
@@ -983,125 +988,77 @@ void funcAdmin(FILE *fp)
 						if(uHeatSizes[uRound-1]==4)
 						{
 							fprintf(fp,"<br>WH%u|WH%u|SH%u|SH%u",
-							iTwoXJPlus1-1,iTwoXJPlus1,iThree,iFour);
+							i41=(iTwoXJPlus1-2+uPrevRoundSeqHeatNumStart),
+							i42=(iTwoXJPlus1-1+uPrevRoundSeqHeatNumStart),
+							i43=(iThree-1+uPrevRoundSeqHeatNumStart),
+							i44=(iFour-1+uPrevRoundSeqHeatNumStart));
 						}
 						else if(uHeatSizes[uRound-1]==2)
 						{
 							fprintf(fp,"<br>WH%u|SH%u",
-							iThree,iFour);
+							i21=(iThree+uPrevRoundSeqHeatNumStart-1),
+							i22=(iFour+uPrevRoundSeqHeatNumStart-1));
 						}
 						else if(uHeatSizes[uRound-1]==3)
 						{
 							fprintf(fp,"<br>WH%u|WH%u|WH%u",
-							iTwoXJPlus1-1,iTwoXJPlus1,iTwoXJPlus1+1);
-						}
-
-						if(uHeatSizes[uRound-1]==3 || uHeatSizes[uRound-1]==4)
-						{
-						//1
-						sprintf(gcQuery,"INSERT INTO tRider SET"
-							" cLabel='WINNER OF R%u H%u',cFirst='WINNER OF',cLast='R%u H%u',"
-							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
-								uRound-1,iTwoXJPlus1-1,uRound-1,iTwoXJPlus1-1,
-								guOrg,guLoginClient, guEvent);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-						{
-							fprintf(fp,"<br>%s",mysql_error(&gMysql));
-							return;
-						}
-						uNewRider=mysql_insert_id((&gMysql));
-						sprintf(gcQuery,"INSERT INTO tScore(cLabel,uRider,uHeat,uRound,uEvent,uOwner,uCreatedBy)"
-							" SELECT cLabel,uRider,%u,%u,uImportEvent,%u,%u FROM tRider WHERE uRider=%u",
-								uNewHeat,uNewRound, guOrg,guLoginClient, uNewRider);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-						{
-							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
-							return;
-						}
-
-						//2
-						sprintf(gcQuery,"INSERT INTO tRider SET"
-							" cLabel='WINNER OF R%u H%u',cFirst='WINNER OF',cLast='R%u H%u',"
-							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
-								uRound-1,iTwoXJPlus1,uRound-1,iTwoXJPlus1,
-								guOrg,guLoginClient, guEvent);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-						{
-							fprintf(fp,"<br>%s",mysql_error(&gMysql));
-							return;
-						}
-						uNewRider=mysql_insert_id((&gMysql));
-						sprintf(gcQuery,"INSERT INTO tScore(cLabel,uRider,uHeat,uRound,uEvent,uOwner,uCreatedBy)"
-							" SELECT cLabel,uRider,%u,%u,uImportEvent,%u,%u FROM tRider WHERE uRider=%u",
-								uNewHeat,uNewRound, guOrg,guLoginClient, uNewRider);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-						{
-							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
-							return;
-						}
-
-						}
-
-						if(uHeatSizes[uRound-1]==2)
-						{
-						//1
-						sprintf(gcQuery,"INSERT INTO tRider SET"
-							" cLabel='WINNER OF R%u H%u',cFirst='WINNER OF',cLast='R%u H%u',"
-							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
-								uRound-1,iThree,uRound-1,iThree,
-								guOrg,guLoginClient, guEvent);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-						{
-							fprintf(fp,"<br>%s",mysql_error(&gMysql));
-							return;
-						}
-						uNewRider=mysql_insert_id((&gMysql));
-						sprintf(gcQuery,"INSERT INTO tScore(cLabel,uRider,uHeat,uRound,uEvent,uOwner,uCreatedBy)"
-							" SELECT cLabel,uRider,%u,%u,uImportEvent,%u,%u FROM tRider WHERE uRider=%u",
-								uNewHeat,uNewRound, guOrg,guLoginClient, uNewRider);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-						{
-							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
-							return;
-						}
-
-						//2
-						sprintf(gcQuery,"INSERT INTO tRider SET"
-							" cLabel='SECOND OF R%u H%u',cFirst='SECOND OF',cLast='R%u H%u',"
-							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
-								uRound-1,iFour,uRound-1,iFour,
-								guOrg,guLoginClient, guEvent);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-						{
-							fprintf(fp,"<br>%s",mysql_error(&gMysql));
-							return;
-						}
-						uNewRider=mysql_insert_id((&gMysql));
-						sprintf(gcQuery,"INSERT INTO tScore(cLabel,uRider,uHeat,uRound,uEvent,uOwner,uCreatedBy)"
-							" SELECT cLabel,uRider,%u,%u,uImportEvent,%u,%u FROM tRider WHERE uRider=%u",
-								uNewHeat,uNewRound, guOrg,guLoginClient, uNewRider);
-						mysql_query(&gMysql,gcQuery);
-						if(mysql_errno(&gMysql))
-						{
-							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
-							return;
-						}
+							i31=(iTwoXJPlus1-2+uPrevRoundSeqHeatNumStart),
+							i32=(iTwoXJPlus1-1+uPrevRoundSeqHeatNumStart),
+							i33=(iTwoXJPlus1+uPrevRoundSeqHeatNumStart));
 						}
 
 						if(uHeatSizes[uRound-1]==4)
 						{
+						//1
+						sprintf(gcQuery,"INSERT INTO tRider SET"
+							" cLabel='WINNER OF R%u H%u',cFirst='WINNER OF',cLast='R%u H%u',"
+							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
+								uRound-1,i41,uRound-1,i41,
+								guOrg,guLoginClient, guEvent);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>%s",mysql_error(&gMysql));
+							return;
+						}
+						uNewRider=mysql_insert_id((&gMysql));
+						sprintf(gcQuery,"INSERT INTO tScore(cLabel,uRider,uHeat,uRound,uEvent,uOwner,uCreatedBy)"
+							" SELECT cLabel,uRider,%u,%u,uImportEvent,%u,%u FROM tRider WHERE uRider=%u",
+								uNewHeat,uNewRound, guOrg,guLoginClient, uNewRider);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
+							return;
+						}
+
+						//2
+						sprintf(gcQuery,"INSERT INTO tRider SET"
+							" cLabel='WINNER OF R%u H%u',cFirst='WINNER OF',cLast='R%u H%u',"
+							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
+								uRound-1,i42,uRound-1,i42,
+								guOrg,guLoginClient, guEvent);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>%s",mysql_error(&gMysql));
+							return;
+						}
+						uNewRider=mysql_insert_id((&gMysql));
+						sprintf(gcQuery,"INSERT INTO tScore(cLabel,uRider,uHeat,uRound,uEvent,uOwner,uCreatedBy)"
+							" SELECT cLabel,uRider,%u,%u,uImportEvent,%u,%u FROM tRider WHERE uRider=%u",
+								uNewHeat,uNewRound, guOrg,guLoginClient, uNewRider);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
+							return;
+						}
 						//3
 						sprintf(gcQuery,"INSERT INTO tRider SET"
 							" cLabel='SECOND OF R%u H%u',cFirst='SECOND OF',cLast='R%u H%u',"
 							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
-								uRound-1,iThree,uRound-1,iThree,
+								uRound-1,i43,uRound-1,i43,
 								guOrg,guLoginClient, guEvent);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
@@ -1124,7 +1081,7 @@ void funcAdmin(FILE *fp)
 						sprintf(gcQuery,"INSERT INTO tRider SET"
 							" cLabel='SECOND OF R%u H%u',cFirst='SECOND OF',cLast='R%u H%u',"
 							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
-								uRound-1,iFour,uRound-1,iFour,
+								uRound-1,i44,uRound-1,i44,
 								guOrg,guLoginClient, guEvent);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
@@ -1142,15 +1099,105 @@ void funcAdmin(FILE *fp)
 							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
 							return;
 						}
-
+						}//==4
+						else if(uHeatSizes[uRound-1]==2)
+						{
+						//1 
+						sprintf(gcQuery,"INSERT INTO tRider SET"
+							" cLabel='WINNER OF R%u H%u',cFirst='WINNER OF',cLast='R%u H%u',"
+							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
+								uRound-1,i21,uRound-1,i21,
+								guOrg,guLoginClient, guEvent);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>%s",mysql_error(&gMysql));
+							return;
 						}
+						uNewRider=mysql_insert_id((&gMysql));
+						sprintf(gcQuery,"INSERT INTO tScore(cLabel,uRider,uHeat,uRound,uEvent,uOwner,uCreatedBy)"
+							" SELECT cLabel,uRider,%u,%u,uImportEvent,%u,%u FROM tRider WHERE uRider=%u",
+								uNewHeat,uNewRound, guOrg,guLoginClient, uNewRider);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
+							return;
+						}
+						//2
+						sprintf(gcQuery,"INSERT INTO tRider SET"
+							" cLabel='SECOND OF R%u H%u',cFirst='SECOND OF',cLast='R%u H%u',"
+							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
+								uRound-1,i22,uRound-1,i22,
+								guOrg,guLoginClient, guEvent);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>%s",mysql_error(&gMysql));
+							return;
+						}
+						uNewRider=mysql_insert_id((&gMysql));
+						sprintf(gcQuery,"INSERT INTO tScore(cLabel,uRider,uHeat,uRound,uEvent,uOwner,uCreatedBy)"
+							" SELECT cLabel,uRider,%u,%u,uImportEvent,%u,%u FROM tRider WHERE uRider=%u",
+								uNewHeat,uNewRound, guOrg,guLoginClient, uNewRider);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
+							return;
+						}
+						}//==2
 						else if(uHeatSizes[uRound-1]==3)
 						{
+						//1
+						sprintf(gcQuery,"INSERT INTO tRider SET"
+							" cLabel='WINNER OF R%u H%u',cFirst='WINNER OF',cLast='R%u H%u',"
+							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
+								uRound-1,i31,uRound-1,i31,
+								guOrg,guLoginClient, guEvent);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>%s",mysql_error(&gMysql));
+							return;
+						}
+						uNewRider=mysql_insert_id((&gMysql));
+						sprintf(gcQuery,"INSERT INTO tScore(cLabel,uRider,uHeat,uRound,uEvent,uOwner,uCreatedBy)"
+							" SELECT cLabel,uRider,%u,%u,uImportEvent,%u,%u FROM tRider WHERE uRider=%u",
+								uNewHeat,uNewRound, guOrg,guLoginClient, uNewRider);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
+							return;
+						}
+						//2
+						sprintf(gcQuery,"INSERT INTO tRider SET"
+							" cLabel='WINNER OF R%u H%u',cFirst='WINNER OF',cLast='R%u H%u',"
+							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
+								uRound-1,i32,uRound-1,i32,
+								guOrg,guLoginClient, guEvent);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>%s",mysql_error(&gMysql));
+							return;
+						}
+						uNewRider=mysql_insert_id((&gMysql));
+						sprintf(gcQuery,"INSERT INTO tScore(cLabel,uRider,uHeat,uRound,uEvent,uOwner,uCreatedBy)"
+							" SELECT cLabel,uRider,%u,%u,uImportEvent,%u,%u FROM tRider WHERE uRider=%u",
+								uNewHeat,uNewRound, guOrg,guLoginClient, uNewRider);
+						mysql_query(&gMysql,gcQuery);
+						if(mysql_errno(&gMysql))
+						{
+							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
+							return;
+						}
 						//3
 						sprintf(gcQuery,"INSERT INTO tRider SET"
 							" cLabel='WINNER OF R%u H%u',cFirst='WINNER OF',cLast='R%u H%u',"
 							" uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW()),uImportEvent=%u",
-								uRound-1,iTwoXJPlus1+1,uRound-1,iTwoXJPlus1+1,
+								uRound-1,i33,uRound-1,i33,
 								guOrg,guLoginClient, guEvent);
 						mysql_query(&gMysql,gcQuery);
 						if(mysql_errno(&gMysql))
@@ -1168,8 +1215,7 @@ void funcAdmin(FILE *fp)
 							fprintf(fp,"<br>db2 %s",mysql_error(&gMysql));
 							return;
 						}
-
-						}
+						}//==3
 					}
 				}
 						
