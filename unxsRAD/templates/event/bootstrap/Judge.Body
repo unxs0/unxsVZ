@@ -37,7 +37,7 @@
         <a class='nav-link' href='/unxsEVApp/?gcFunction=Admin'>Admin</a>
       </li>
       <li class='nav-item'>
-        <a class='nav-link active' href='/unxsEVApp/?gcFunction=Logout' title='Logout'><img height=20 src=/bs/images/shutdown.png> {{gcName}}</a>
+        <a class='nav-link active' href='/unxsEVApp/?gcFunction=Logout' title='Logout'><img height=20 src=/bs/images/shutdown.png> {{gcName}}/{{gcOrgName}}</a>
       </li>
     </ul>
     </div>
@@ -47,7 +47,8 @@
 
   <main role="main" class="container">
 
-  <h4 class='mt-5'>Judge {{gcName}}/{{gcOrgName}}</h4>
+  <!-- <h4 class='mt-5'>Judge {{gcName}}/{{gcOrgName}}</h4> -->
+  <h4 class='mt-5'> </h4>
 <!-- Select Job Offers Panel -->
 <div class="well">
   <div class="row">
