@@ -17,8 +17,6 @@ mysql -pZorBexin unxsev -e "describe tAuthorize" > /dev/null;
 if [ "$?" != "0" ];then
 	echo "Initial db setup";
 	export cInstallDir=/var/local/unxsRAD/apps;
-	mysql -pZorBexin -e "drop database unxsev" > /dev/null;
-	mysql -pZorBexin -e "create database unxsev" > /dev/null;
 	/var/www/cgi-bin/unxsEV.cgi Initialize ZorBexin;
 fi
 #

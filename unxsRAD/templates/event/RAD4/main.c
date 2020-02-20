@@ -1463,27 +1463,7 @@ void to64(s, v, n)
     }
 }//void to64(s, v, n)
 
-#include <openssl/pem.h>
-//public domain code
-char *base64encode (const void *b64_encode_this, int encode_this_many_bytes)
-{
-    BIO *b64_bio, *mem_bio;
-    BUF_MEM *mem_bio_mem_ptr;
-    b64_bio = BIO_new(BIO_f_base64());
-    mem_bio = BIO_new(BIO_s_mem());
-    BIO_push(b64_bio, mem_bio);
-    BIO_set_flags(b64_bio, BIO_FLAGS_BASE64_NO_NL);
-    BIO_write(b64_bio, b64_encode_this, encode_this_many_bytes);
-    int i=BIO_flush(b64_bio);
-    BIO_get_mem_ptr(mem_bio, &mem_bio_mem_ptr);
-    i=BIO_set_close(mem_bio, BIO_NOCLOSE);
-    BIO_free_all(b64_bio);
-    BUF_MEM_grow(mem_bio_mem_ptr, (*mem_bio_mem_ptr).length + 1);
-    (*mem_bio_mem_ptr).data[(*mem_bio_mem_ptr).length] = '\0';
 
-    return (*mem_bio_mem_ptr).data;
-
-}//char *base64encode (const void *b64_encode_this, int encode_this_many_bytes)
 void EncryptPasswd(char *cPw)
 {
 	FILE *fp;
@@ -1498,13 +1478,13 @@ void EncryptPasswd(char *cPw)
 	if(!strcmp(cMethod,"SHA256") || !strcmp(cMethod,"SHA512"))
 	{
 		char cSalt[] = "$5$0123456789$";
-		sprintf(cSalt+3,"%.10s",base64encode(cRandomData,10));
+		sprintf(cSalt+3,"%.10s","sdkjfhskdfhskdhfksdjfh");
 		cpPwd=crypt(cPw,cSalt);
 	}
 	else //MD5 default not secure but small and fast
 	{
 		char cSalt[] = "$1$01234567$";
-		sprintf(cSalt+3,"%.8s",base64encode(cRandomData,8));
+		sprintf(cSalt+3,"%.8s","ksjdfhskdfhksjdfhksjdfh");
 		cpPwd=crypt(cPw,cSalt);
 	}
 	sprintf(cPw,"%.99s",cpPwd);
