@@ -14,7 +14,7 @@ GIT_VERSION := $(shell git describe --dirty --always --tags)
 CGINAME=mobile.cgi
 
 CFLAGS= -Wall -DdsGitVersion=\"$(GIT_VERSION)\"
-LIBS=-L/usr/lib64/mysql -L/usr/lib/openisp -L/usr/lib/oath -L/usr/lib64 -lmysqlclient -ltemplate -lupload -lz -lcrypt -lm -lssl -loath
+LIBS=-L/usr/lib64/mysql -L/usr/lib/openisp -L/usr/lib64 -lmysqlclient -ltemplate -lupload -lz -lcrypt -lm -lssl
 
 help:
 	@echo "These are the main make options available"
@@ -44,11 +44,11 @@ clean:
 	rm -f *.o *.cgi
 	
 install-test: interface.cgi
-	install -m 510 -g apache -s interface.cgi /var/www/unxs/html/{{cProject}}/test/$(CGINAME)
+	install -m 510 -g www-data -s interface.cgi /var/www/unxs/html/{{cProject}}/test/$(CGINAME)
 	rm -f interface.cgi
 
 install: interface.cgi
-	install -m 510 -g apache -s interface.cgi /var/www/unxs/html/{{cProject}}/$(CGINAME)
+	install -m 510 -g www-data -s interface.cgi /var/www/unxs/html/{{cProject}}/$(CGINAME)
 	rm -f interface.cgi
 
 install-bootstrap: 

@@ -70,7 +70,6 @@ void SetLogin(void);
 void GetPLAndClient(char *cUser);
 void htmlLogin(void);
 void htmlLoginPage(char *cTitle, char *cTemplateName);
-void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient);
 unsigned uGetSessionConfig(const char *cName);
 unsigned uSetSessionConfig(const char *cName, unsigned uValue);
 char *cEndAtSpace(char *cBuffer);
@@ -216,7 +215,7 @@ int main(int argc, char *argv[])
 			mysql_query(&gMysql,gcQuery);
 			if(gcOTPSecret[0])
 			{
-				UpdateOTPExpire(0,guLoginClient);
+				//UpdateOTPExpire(0,guLoginClient);
 				guRequireOTPLogin=1;
 			}
         		guPermLevel=0;
@@ -681,86 +680,6 @@ void EncryptPasswdWithSalt(char *pw, char *salt)
 }//void EncryptPasswdWithSalt(char *pw, char *salt)
 
 
-#include <liboath/oath.h>
-unsigned uValidOTP(char *cOTPSecret,char *cOTP)
-{
-	char *secret;
-	size_t secretlen = 0;
-	int rc;
-	char otp[10];
-	time_t now;
-
-	rc=oath_init();
-	if(rc!=OATH_OK)
-		return(0);
-
-	now=time(NULL);
-
-	rc=oath_base32_decode(cOTPSecret,strlen(cOTPSecret),&secret,&secretlen);
-	if(rc!=OATH_OK)
-		goto gotoFail;
-
-	//2 min time skew window
-	rc=oath_totp_generate(secret,secretlen,now-60,30,0,6,otp);
-	if(rc!=OATH_OK)
-		goto gotoFail;
-	if(!strcmp(cOTP,otp))
-		goto gotoMatch;
-
-	rc=oath_totp_generate(secret,secretlen,now-30,30,0,6,otp);
-	if(rc!=OATH_OK)
-		goto gotoFail;
-	if(!strcmp(cOTP,otp))
-		goto gotoMatch;
-
-	rc=oath_totp_generate(secret,secretlen,now,30,0,6,otp);
-	if(rc!=OATH_OK)
-		goto gotoFail;
-	if(!strcmp(cOTP,otp))
-		goto gotoMatch;
-
-	rc=oath_totp_generate(secret,secretlen,now+30,30,0,6,otp);
-	if(rc!=OATH_OK)
-		goto gotoFail;
-	if(!strcmp(cOTP,otp))
-		goto gotoMatch;
-
-	rc=oath_totp_generate(secret,secretlen,now+60,30,0,6,otp);
-	if(rc!=OATH_OK)
-		goto gotoFail;
-	if(!strcmp(cOTP,otp))
-		goto gotoMatch;
-
-gotoFail:
-	free(secret);
-	oath_done();
-	return(0);
-
-gotoMatch:
-	free(secret);
-	oath_done();
-	return(1);
-
-}//unsigned uValidOTP(char *cOTPSecret,char *cOTP)
-
-
-//with uAuthorize==0 it expires the OTP for a given guLoginClient
-void UpdateOTPExpire(unsigned uAuthorize,unsigned uClient)
-{
-
-	//OTP login OK for 4 more hours. Change to configurable TODO.
-	if(!uAuthorize)
-		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=UNIX_TIMESTAMP(NOW()-1) WHERE uCertClient=%u",
-			uClient);
-	else
-		sprintf(gcQuery,"UPDATE " TAUTHORIZE " SET uOTPExpire=(UNIX_TIMESTAMP(NOW())+28800) WHERE uAuthorize=%u",
-			uAuthorize);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-			htmlPlainTextError(mysql_error(&gMysql));
-}//void UpdateOTPExpire()
-
-
 int iValidLogin(int mode)
 {
 	char cSalt[16]={""};
@@ -789,30 +708,6 @@ int iValidLogin(int mode)
 			EncryptPasswdWithSalt(gcPasswd,cSalt);
 			if(!strcmp(gcPasswd,cPassword))
 			{
-				if(guOTPExpired && gcOTP[0] && gcOTPSecret[0])
-				{
-					if(!uValidOTP(gcOTPSecret,gcOTP))
-					{
-						guRequireOTPLogin=1;
-						sprintf(gcOTPInfo,"{%s}/[%s] %u login invalid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
-						return(0);
-					}
-					else
-					{
-						guRequireOTPLogin=0;
-						guOTPExpired=0;
-						UpdateOTPExpire(uAuthorize,0);
-						sprintf(gcOTPInfo,"{%s}/[%s] %u login valid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
-						return(1);
-					}
-				}
-				else if(guOTPExpired)
-				{
-					guRequireOTPLogin=1;
-					sprintf(gcOTPInfo,"{%s}/[%s] %u login valid but expired",gcOTPSecret,gcOTP,guOTPExpired);
-					return(0);
-				}
-				sprintf(gcOTPInfo,"{%s}/[%s] %u login valid",gcOTPSecret,gcOTP,guOTPExpired);
 				return(1);
 			}
 		}
@@ -820,30 +715,6 @@ int iValidLogin(int mode)
 		{
 			if(!strcmp(gcPasswd,cPassword))
 			{
-				if(guOTPExpired && gcOTP[0] && gcOTPSecret[0])
-				{
-					if(!uValidOTP(gcOTPSecret,gcOTP))
-					{
-						guRequireOTPLogin=1;
-						sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login expired invalid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
-						return(0);
-					}
-					else
-					{
-						guOTPExpired=0;
-						guRequireOTPLogin=0;
-						UpdateOTPExpire(uAuthorize,0);
-						sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login valid gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
-						return(1);
-					}
-				}
-				else if(guOTPExpired)
-				{
-					guRequireOTPLogin=1;
-					sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login expired no gcOTP",gcOTPSecret,gcOTP,guOTPExpired);
-					return(0);
-				}
-				sprintf(gcOTPInfo,"{%s}/[%s] %u cookie login valid",gcOTPSecret,gcOTP,guOTPExpired);
 				return(1);
 			}
 		}
@@ -856,9 +727,6 @@ int iValidLogin(int mode)
 			gcLogin,guPermLevel,guLoginClient,gcLogin,gcHost,gcHostname);
 		mysql_query(&gMysql,gcQuery);
 	}
-	if(guOTPExpired)
-		guRequireOTPLogin=1;
-	sprintf(gcOTPInfo,"{%s}/[%s] %u invalid login",gcOTPSecret,gcOTP,guOTPExpired);
 	return 0;
 
 }//iValidLogin()
