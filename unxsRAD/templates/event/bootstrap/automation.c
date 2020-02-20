@@ -183,7 +183,7 @@ void funcAdmin(FILE *fp)
 		sscanf(field[7],"%u",&uHeatPostEnd);
 		fprintf(fp,"<br>Participants must clear competition area %u minutes after heat ends",uHeatPostEnd);
 
-		fprintf(fp,"<br><br>Under Development...");
+		fprintf(fp,"<br><br>Automation in alpha...");
 		//Generate Tournament PART 1
 		if(guPermLevel>9 && uGenerate)
 		{
