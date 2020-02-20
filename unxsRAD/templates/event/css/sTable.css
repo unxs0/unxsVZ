@@ -66,3 +66,64 @@
 .sTableBody {
    display: table-row-group;
 }
+
+.sTableCellBlackLarge {
+   display: table-cell;
+   padding: 3px 10px;
+   border: 1px solid #999999;
+   background-color: #000;
+   color: #fff;
+   font-size: 200%;
+}
+
+.sTableCellBlueLarge {
+   display: table-cell;
+   padding: 3px 10px;
+   border: 1px solid #999999;
+   background-color: #00d;
+   color: #fff;
+   font-size: 200%;
+}
+
+.sTableCellLarge {
+   display: table-cell;
+   padding: 3px 10px;
+   border: 1px solid #999999;
+   font-size: 200%;
+}
+
+.sTableCellBlackBoldLarge {
+   display: table-cell;
+   padding: 3px 10px;
+   border: 1px solid #999999;
+   background-color: #000;
+   color: #fff;
+   font-weight: bold;
+   font-size: 200%;
+}
+
+.sTableCellGreenLarge {
+   display: table-cell;
+   padding: 3px 10px;
+   border: 1px solid #999999;
+   background-color: #0d0;
+   font-size: 200%;
+}
+
+.sTableCellBlueSp {
+   display: table-cell;
+   width: 50px;
+   height: 30px;
+   //padding: 3px 10px;
+   //border: 1px solid #999999;
+   vertical-align: bottom;
+   border: none;
+   background-color: #00d;
+   color: #fff;
+}
+
+.sTableCellEmpty {
+   display: table-cell;
+   width: 50px;
+   border: none;
+}
