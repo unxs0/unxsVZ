@@ -5,8 +5,8 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="KiteEvent HeatEnd">
-    <meta name="author" content="(C) Unixservice, LLC. 2014-2018">
+    <meta name="description" content="KiteEvent Tournament">
+    <meta name="author" content="(C) Unixservice, LLC. 2014-2020">
     <link rel="shortcut icon" type="image/x-icon" href="/images/kitesurf5.ico?v=0">
 
     <title>KiteEvent HeatEnd</title>
@@ -19,7 +19,7 @@
 <body {{cBgColor}} >
 <main class="container">
 <br>
-{{funcHeatEnd}}
+{{funcTournament}}
 <br>
 {{funcWind}}
 </main>

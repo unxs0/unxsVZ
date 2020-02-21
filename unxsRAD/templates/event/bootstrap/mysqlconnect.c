@@ -168,7 +168,7 @@ void InterfaceConnectDb(void)
 		sprintf(cMessage,"Could not connect unexpected case\n");
 
 	printf("Content-type: text/plain\n\n");
-	printf(cMessage);
+	printf("%.256s",cMessage);
 	exit(0);
 
 }//InterfaceConnectDb()

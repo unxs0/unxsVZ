@@ -631,6 +631,7 @@ void funcAdmin(FILE *fp)
 	}//if field
 }//void funcAdmin(FILE *fp)
 
+
 void PopulateScoreComp(unsigned uHeat)
 {
         MYSQL_RES *res;
@@ -644,12 +645,35 @@ void PopulateScoreComp(unsigned uHeat)
 	unsigned uNumJudges=0;
 	unsigned uScoreComp=0;
 	float fScore=0.0;
+
+	gcMessage="";
+	if(!uHeat)
+	{
+		gcMessage="PopulateScoreComp !uHeat";
+		return;
+	}
 	//Every time a score is set we need to
 	//update the tScoreComp table.
 	//We need to average the scores among all judges
 	//There can only be one record per uRider/uHeat 
 	//this is also insured with a UNIQUE INDEX
 	//
+	sprintf(gcQuery,"SELECT uRound,uEvent,uRider FROM tScore WHERE uHeat=%u",
+				uHeat);
+	mysql_query(&gMysql,gcQuery);
+	if(*mysql_error(&gMysql))
+	{
+		gcMessage="PopulateScoreComp ErrorA0";
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uRound);
+		sscanf(field[1],"%u",&uEvent);
+		sscanf(field[2],"%u",&uRider);
+	}
+
 	sprintf(gcQuery,"SELECT uCreatedBy FROM tScore WHERE uHeat=%u GROUP BY uCreatedBy",
 				uHeat);
 	mysql_query(&gMysql,gcQuery);
@@ -666,7 +690,7 @@ void PopulateScoreComp(unsigned uHeat)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT uIndex,(SUM(fScore)/%u),uRound,uEvent,uRider FROM tScore WHERE uHeat=%u GROUP BY uRider,uIndex",
+	sprintf(gcQuery,"SELECT uIndex,(SUM(fScore)/%u),uRider FROM tScore WHERE uHeat=%u GROUP BY uRider,uIndex",
 				uNumJudges,uHeat);
 	mysql_query(&gMysql,gcQuery);
 	if(*mysql_error(&gMysql))
@@ -679,9 +703,17 @@ void PopulateScoreComp(unsigned uHeat)
 	{
 		sscanf(field[0],"%u",&uIndex);
 		sscanf(field[1],"%f",&fScore);
-		sscanf(field[2],"%u",&uRound);
-		sscanf(field[3],"%u",&uEvent);
-		sscanf(field[4],"%u",&uRider);
+		sscanf(field[2],"%u",&uRider);
+	if(!uRound)
+	{
+		gcMessage="PopulateScoreComp !uRound";
+		return;
+	}
+	if(!uEvent)
+	{
+		gcMessage="PopulateScoreComp !uEvent";
+		return;
+	}
 		sprintf(gcQuery,"SELECT uScoreComp FROM tScoreComp WHERE uHeat=%u AND uRider=%u AND uIndex=%u",
 				uHeat,uRider,uIndex);
 		mysql_query(&gMysql,gcQuery);
@@ -745,7 +777,7 @@ void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent)
 		
 	//Rank riders: WINNER and SECOND get uRiderWinner and uRiderSecond (tRider.uRider)
 	//Get the seq round number 1, 2, 3.... etc
-	sprintf(gcQuery,"SELECT tScoreComp.uRider,tScoreComp.uRound FROM tScoreComp"
+	sprintf(gcQuery,"SELECT tScoreComp.uRider FROM tScoreComp"
 			" WHERE tScoreComp.uHeat=%u"
 			" GROUP BY tScoreComp.uRider ORDER BY SUM(tScoreComp.fScore) DESC LIMIT 2",uHeat);
 	mysql_query(&gMysql,gcQuery);
@@ -761,8 +793,22 @@ void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent)
 	{
 		if(i>1) break;
 		sscanf(field[0],"%u",&uRidersRanked[i++]);
-		if(!uRound)
-			sscanf(field[1],"%u",&uRound);
+	}
+	//Get uRound 
+	sprintf(gcQuery,"SELECT uRound FROM tScoreComp"
+			" WHERE uHeat=%u",uHeat);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		sprintf(cBuffer,"%.255s",mysql_error(&gMysql));
+		htmlHeader("AdvanceRiders","Default.Header");
+		fprintf(stdout,"%s",cBuffer);
+		htmlFooter("Default.Footer");
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uRound);
 	}
 
 	//Get uRoundNum the seq heat number 1,2,3...etc

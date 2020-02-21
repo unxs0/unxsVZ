@@ -402,7 +402,6 @@ void JudgeCommands(pentry entries[], int x)
 					res=mysql_store_result(&gMysql);
 					if((field=mysql_fetch_row(res)))
 					{
-					
 						sprintf(gcQuery,"UPDATE tScore"
 							" SET fScore=%s,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
 							" WHERE uScore=%s",
@@ -444,7 +443,8 @@ void JudgeCommands(pentry entries[], int x)
 			}//for fScore fields only
 		}//for each field
 		PopulateScoreComp(suHeat);
-		AdvanceRidersToNextRound(suHeat,guEvent);
+		if(!gcMessage[0])
+			AdvanceRidersToNextRound(suHeat,guEvent);
 	}//gcFunction=Score
 	htmlJudge();
 
@@ -610,7 +610,7 @@ void funcJudge(FILE *fp)
 	char dStart[32]={""};
 	char dEnd[32]={""};
 	char dTimeLeft[32]={""};
-	register int i,j;
+	register int i;
 	float fTotalScore=0.00;
 	float fScoreArray[8]={0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00};
 
@@ -743,7 +743,6 @@ void funcJudge(FILE *fp)
 		return;
 	}
 	res=mysql_store_result(&gMysql);
-	j=1;
 	unsigned uIndex=0;
 	float fScore=0.00;
 	if(mysql_num_rows(res)<1)	
@@ -832,7 +831,7 @@ char *cRiders(unsigned uHeat)
 	cBuffer[0]=0;
 	while((field=mysql_fetch_row(res)))
 	{
-		sprintf(cLast,"%.31s<br>",field[0]);
+		sprintf(cLast,"%.27s<br>",field[0]);
 		strncat(cBuffer,cLast,35);
 		uSize+=strlen(cLast);
 		if(uSize>(512-36)) break;
@@ -937,6 +936,9 @@ void funcBestTrick(FILE *fp)
 
 void funcHeat(FILE *fp)
 {
+	funcHeatEnd(fp);
+	return;
+
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	MYSQL_RES *res2;
@@ -1388,6 +1390,52 @@ void funcHeatEnd(FILE *fp)
 
 
 }//void funcHeatEnd(FILE *fp)
+
+void funcWind(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	char cAvgWind[5]={"---"};
+	char cMinWind[5]={"---"};
+	char cMaxWind[5]={"---"};
+	char cDirWind[5]={"---"};
+
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uConfiguration=6");
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cAvgWind,"%.4s",field[0]);
+
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uConfiguration=7");
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cMinWind,"%.4s",field[0]);
+
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uConfiguration=8");
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cMaxWind,"%.4s",field[0]);
+
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uConfiguration=9");
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sprintf(cDirWind,"%.4s",field[0]);
+
+
+	fprintf(fp,"<!-- funcWind() -->\n");
+	fprintf(fp,"<div class=\"sTable\">");
+	fprintf(fp,"<div class=\"sTableRow\">");
+	fprintf(fp,"<div class=\"sTableCellBlueLarge\">%.4s Knots</div>",cAvgWind);
+	fprintf(fp,"<div class=\"sTableCellBlackLarge\">Min %.4s Knots</div>",cMinWind);
+	fprintf(fp,"<div class=\"sTableCellBlackLarge\">Max %.4s Knots</div>",cMaxWind);
+	fprintf(fp,"<div class=\"sTableCellBlueLarge\">Wind Angle %.3s</div>",cDirWind);
+	fprintf(fp,"</div>");
+	fprintf(fp,"</div>");
+}//void funcWind((FILE *fp)
 
 #include "automation.c"
 

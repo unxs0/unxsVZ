@@ -498,6 +498,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 	//Overlays
 	else if(!strcmp(cFunction,"funcHeat"))
 		funcHeat(fp);
+	else if(!strcmp(cFunction,"funcWind"))
+		funcWind(fp);
 	else if(!strcmp(cFunction,"funcHeatEnd"))
 		funcHeatEnd(fp);
 	else if(!strcmp(cFunction,"funcBestTrick"))
@@ -644,7 +646,7 @@ void GetPLAndClient(char *cUser)
 	{
 		sscanf(mysqlField[0],"%d",&guPermLevel);
 		sscanf(mysqlField[1],"%u",&guLoginClient);
-		sprintf(gcName,"%.100s",mysqlField[2]);
+		sprintf(gcName,"%.99s",mysqlField[2]);
 		sscanf(mysqlField[3],"%u",&guOrg);
 	}
 	mysql_free_result(mysqlRes);
@@ -659,7 +661,7 @@ void GetPLAndClient(char *cUser)
 			htmlPlainTextError(mysql_error(&gMysql));
 		mysqlRes=mysql_store_result(&gMysql);
 		if((mysqlField=mysql_fetch_row(mysqlRes)))
-			sprintf(gcOrgName,"%.100s",mysqlField[0]);
+			sprintf(gcOrgName,"%.99s",mysqlField[0]);
 		mysql_free_result(mysqlRes);
 	}
 

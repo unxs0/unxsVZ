@@ -132,6 +132,7 @@ void funcJudge(FILE *fp);
 void funcEvent(FILE *fp);
 void funcAdmin(FILE *fp);
 //overlay
+void funcWind(FILE *fp);
 void funcHeat(FILE *fp);
 void funcHeatEnd(FILE *fp);
 void funcBestTrick(FILE *fp);

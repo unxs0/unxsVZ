@@ -44,13 +44,13 @@ clean:
 	rm -f *.o *.cgi
 	
 install-test: interface.cgi
-	#install -m 510 -g www-data -s interface.cgi /var/www/unxs/html/{{cProject}}/test/$(CGINAME)
-	install -m 510 -g apache -s interface.cgi /var/www/unxs/html/{{cProject}}/test/$(CGINAME)
+	install -m 510 -g www-data -s interface.cgi /var/www/unxs/html/{{cProject}}/test/$(CGINAME)
+	#install -m 510 -g apache -s interface.cgi /var/www/unxs/html/{{cProject}}/test/$(CGINAME)
 	rm -f interface.cgi
 
 install: interface.cgi
-	#install -m 510 -g www-data -s interface.cgi /var/www/unxs/html/{{cProject}}/$(CGINAME)
-	install -m 510 -g apache -s interface.cgi /var/www/unxs/html/{{cProject}}/$(CGINAME)
+	install -m 510 -g www-data -s interface.cgi /var/www/unxs/html/{{cProject}}/$(CGINAME)
+	#install -m 510 -g apache -s interface.cgi /var/www/unxs/html/{{cProject}}/$(CGINAME)
 	rm -f interface.cgi
 
 install-bootstrap: 

@@ -16,10 +16,12 @@
     <link rel="stylesheet" href="/bs/css/sTable.css">
 </head>
 
-<body>
+<body {{cBgColor}} >
 <main class="container">
 <br>
 {{funcHeat}}
+<br>
+{{funcWind}}
 </main>
 
 
