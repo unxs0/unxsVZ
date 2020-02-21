@@ -387,7 +387,7 @@ void TemplateToBuffer(char *cTemplate, struct t_template *template, char *cBuffe
 		}
 		else if(cTemplate[i]=='}' && uState==3 )
 		{
-			register int n=0,uMatch=0;
+			register int n=0;
 
 			uState=0;
 			cVarName[j]=0;
@@ -398,7 +398,6 @@ void TemplateToBuffer(char *cTemplate, struct t_template *template, char *cBuffe
 					//fprintf(fp,"%s",template->cpValue[n]);
 					sprintf(cBuffer+l,"%s",template->cpValue[n]);
 					l+=strlen(template->cpValue[n]);
-					uMatch=1;
 				}
 				n++;
 				if(n>99) break;

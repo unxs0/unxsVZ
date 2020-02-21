@@ -127,11 +127,17 @@ void htmlHeatEnd(void);
 void htmlEvent(void);
 void htmlAdmin(void);
 void htmlJudge(void);
+void htmlWind(void);
+void htmlTournament(void);
+void htmlBestTrick(void);
+void htmlOverlay(void);
 void htmlJudgePage(char *cTitle, char *cTemplateName);
 void funcJudge(FILE *fp);
 void funcEvent(FILE *fp);
 void funcAdmin(FILE *fp);
 //overlay
+void funcTournament(FILE *fp);
+void funcOverlay(FILE *fp);
 void funcWind(FILE *fp);
 void funcHeat(FILE *fp);
 void funcHeatEnd(FILE *fp);

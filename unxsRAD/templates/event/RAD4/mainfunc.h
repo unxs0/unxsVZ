@@ -581,7 +581,7 @@ void ImportTemplateFile(char *cTemplate, char *cFile, char *cTemplateSet, char *
 	{
 		printf("Inserting new tTemplate for %s\n",cTemplate);
 		sprintf(cBuffer,"INSERT INTO tTemplate SET uOwner=1,uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())"
-				",cLabel='%s',uTemplateSet=%u,uTemplateType=%u",cTemplate,uTemplateSet,uTemplateType);
+				",cLabel='%s',uTemplateSet=%u,uTemplateType=%u,cComment='',cTemplate=''",cTemplate,uTemplateSet,uTemplateType);
 		mysql_query(&gMysql,cBuffer);
 		if(mysql_errno(&gMysql))
 		{

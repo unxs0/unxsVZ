@@ -125,6 +125,14 @@ int main(int argc, char *argv[])
 			HeatGetHook(gentries,x);
         	else if(!strcmp(gcFunction,"HeatEnd")) 
 			HeatEndGetHook(gentries,x);
+        	else if(!strcmp(gcFunction,"Overlay")) 
+			htmlOverlay();
+        	else if(!strcmp(gcFunction,"Wind")) 
+			htmlWind();
+        	else if(!strcmp(gcFunction,"Tournament")) 
+			htmlTournament();
+        	else if(!strcmp(gcFunction,"BestTrick")) 
+			htmlBestTrick();
 		SSLCookieLogin();
 		if(gcPage[0])
 		{
@@ -231,6 +239,10 @@ int main(int argc, char *argv[])
 			htmlHeatEnd();
         	else if(!strcmp(gcFunction,"BestTrick")) 
 			htmlBestTrick();
+        	else if(!strcmp(gcFunction,"Wind")) 
+			htmlWind();
+        	else if(!strcmp(gcFunction,"Tournament")) 
+			htmlTournament();
         	else if(!strcmp(gcFunction,"HeatEnd")) 
 			htmlHeatEnd();
         	else if(!strcmp(gcFunction,"Event")) 
@@ -504,6 +516,8 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcHeatEnd(fp);
 	else if(!strcmp(cFunction,"funcBestTrick"))
 		funcBestTrick(fp);
+	else if(!strcmp(cFunction,"funcOverlay"))
+		funcOverlay(fp);
 
 }//void AppFunctions(FILE *fp,char *cFunction)
 

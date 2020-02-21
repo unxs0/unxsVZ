@@ -509,12 +509,12 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 			if((cp=strstr(cTableName,".Body")))
 			{
 				*cp=0;
-				sprintf(cFileName,"%.99sReport.Body",cTableName);
+				sprintf(cFileName,"%.64sReport.Body",cTableName);
 				*cp='.';
 			}
 			else
 			{
-				sprintf(cFileName,"%.99s",cTableName);
+				sprintf(cFileName,"%.64s",cTableName);
 			}
 			if(guDebug) logfileLine("CreateFile5",cFileName);
 			sscanf(field[0],"%u",&uTemplate);
@@ -541,7 +541,7 @@ unsigned CreateFile(unsigned uTemplateSet,unsigned uTable,char *cTable,unsigned 
 			if((cp=strstr(cTableName,".Body")))
 			{
 				*cp=0;
-				sprintf(cFileName,"%.99sFilter.Body",cTableName);
+				sprintf(cFileName,"%.64sFilter.Body",cTableName);
 				*cp='.';
 			}
 			else
@@ -633,7 +633,7 @@ unsigned CreateGenericFile(unsigned uTemplate,unsigned uTable,unsigned uSourceLo
 		{
 			if(guDebug)
 				logfileLine("CreateGenericFile","uTEMPLATETYPE_DATA not parsing");
-			fprintf(fp,field[0]);
+			fprintf(fp,"%.255s",field[0]);
 		}
 		else
 		{	

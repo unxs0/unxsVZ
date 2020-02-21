@@ -492,18 +492,42 @@ void htmlHeat(void)
 }//void htmlHeat(void)
 
 
+void htmlOverlay(void)
+{
+	htmlHeader("Overlay","Default.Header");
+	htmlJudgePage("Overlay","Overlay.Body");
+	htmlFooter("Default.Footer");
+}//void htmlOverlay(void)
+
+
 void htmlBestTrick(void)
 {
 	htmlHeader("BestTrick","Default.Header");
+	htmlJudgePage("BestTrick","BestTrick.Body");
 	htmlFooter("Default.Footer");
 }//void htmlBestTrick(void)
 
+
+void htmlTournament(void)
+{
+	htmlHeader("Tournament","Default.Header");
+	htmlJudgePage("Tournament","ATournament.Body");
+	htmlFooter("Default.Footer");
+}//void htmlTournament(void)
+
+
+void htmlWind(void)
+{
+	htmlHeader("Wind","Default.Header");
+	htmlJudgePage("Wind","Wind.Body");
+	htmlFooter("Default.Footer");
+}//void htmlWind(void)
 
 void htmlHeatEnd(void)
 {
 	GetdEnd();
 	htmlHeader("HeatEnd","Default.Header");
-	htmlJudgePage("Heat","HeatEnd.Body");
+	htmlJudgePage("HeatEnd","HeatEnd.Body");
 	htmlFooter("Default.Footer");
 }//void htmlHeatEnd(void)
 
@@ -572,7 +596,10 @@ void htmlJudgePage(char *cTitle, char *cTemplateName)
 			template.cpName[7]="gcCopyright";
 			template.cpValue[7]=INTERFACE_COPYRIGHT;
 
-			template.cpName[8]="";
+			template.cpName[8]="cBgColor";
+			template.cpValue[8]="bgcolor=\"white\"";
+
+			template.cpName[9]="";
 
 			printf("\n<!-- Start htmlJudgePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -857,6 +884,7 @@ void funcEvent(FILE *fp)
 
 	if(!uSelectEvent(fp,"Event")) return;
 
+	fprintf(fp,"<!-- funcEvent() -->\n");
 
 	sprintf(gcQuery,"SELECT tHeat.uHeat,UPPER(tHeat.cLabel),tHeat.uRound,"
 			" TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%H:%%i:%%S'),"
@@ -931,13 +959,14 @@ void funcEvent(FILE *fp)
 
 void funcBestTrick(FILE *fp)
 {
+	fprintf(fp,"<!-- funcBestTrick() -->\n");
 }
 
 
 void funcHeat(FILE *fp)
 {
-	funcHeatEnd(fp);
-	return;
+	//funcHeatEnd(fp);
+	//return;
 
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -960,6 +989,7 @@ void funcHeat(FILE *fp)
 	float fLeaderTotalScore=0.00;
 	float fScoreArray[8]={0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00};
 
+	fprintf(fp,"<!-- funcHeat() -->\n");
 	fprintf(fp,"<div class=\"sTable\">");
 	fprintf(fp,"<div class=\"sTableRow\">");
 
@@ -985,7 +1015,7 @@ void funcHeat(FILE *fp)
 			" FROM tHeat,tStatus,tEvent WHERE tHeat.uStatus=1 AND tEvent.uStatus=1"
 			" AND tHeat.dEnd>NOW() AND tStatus.uStatus=tHeat.uStatus"
 			" AND tHeat.uEvent=tEvent.uEvent"
-			" ORDER BY tHeat.uHeat DESC LIMIT 1");
+			" ORDER BY tHeat.dStart LIMIT 1");
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1006,8 +1036,6 @@ void funcHeat(FILE *fp)
 	}
 	if(!uHeat || !uRound) 
 	{
-		funcHeatEnd(fp);
-		return;
 		fprintf(fp,"<div class=\"sTableCellYellow\">No active or suspended heat for event %s</div>",cEvent);
 		fprintf(fp,"</div>");
 		fprintf(fp,"</div>");
@@ -1090,6 +1118,7 @@ void funcHeat(FILE *fp)
 	while((field3=mysql_fetch_row(res3)))
 	{
 		sprintf(gcQuery,"SELECT DISTINCT UPPER(SUBSTR(tRider.cFirst,1,1)),UPPER(tRider.cLast),tRider.uRider"
+			",tRider.cCountry"
 			" FROM %s,tRider"
 			" WHERE %s.uRider=tRider.uRider"
 			" AND %s.uHeat=%u AND tRider.uRider=%s",cScoreTable,cScoreTable,cScoreTable,uHeat,field3[0]);
@@ -1141,6 +1170,10 @@ void funcHeat(FILE *fp)
 			fprintf(fp,"<div class=\"sTableRow\">");
 			fprintf(fp,"<div class=\"sTableCellLarge\">%d</div>",j++);
 			fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s. %s</div>",field[0],field[1]);
+			if(field[3][0])
+				fprintf(fp,"<div class=\"sTableCellBlackLarge\"><img alt=%s src=\"/bs/images/%s.png\"></div>",field[3],field[3]);
+			else
+				fprintf(fp,"<div class=\"sTableCellBlackLarge\">--</div>");
 			fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%1.2f</div>",fTotalScore);
 			for(i=0;i<uNumScores&&i<8;i++)
 			{
@@ -1198,6 +1231,7 @@ void funcHeatEnd(FILE *fp)
 	float fTotalScore=0.00;
 	float fScoreArray[8]={0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00};
 
+	fprintf(fp,"<!-- funcHeatEnd -->\n");
 	fprintf(fp,"<div class=\"sTable\">");
 	fprintf(fp,"<div class=\"sTableRow\">");
 
@@ -1234,8 +1268,8 @@ void funcHeatEnd(FILE *fp)
 	if(!uRound) 
 	{
 		fprintf(fp,"<div class=\"sTableCellYellow\">This heat does not exist. Event %s</div>",cEvent);
-		fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",gcQuery);
-		fprintf(fp,"</div>");
+		//fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",gcQuery);
+		//fprintf(fp,"</div>");
 		fprintf(fp,"</div>");
 		return;
 	}
@@ -1390,6 +1424,60 @@ void funcHeatEnd(FILE *fp)
 
 
 }//void funcHeatEnd(FILE *fp)
+
+
+void funcOverlay(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	unsigned uValue=0;
+
+	sprintf(gcQuery,"SELECT cValue FROM tConfiguration WHERE uConfiguration=10");
+	mysql_query(&gMysql,gcQuery);
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%u",&uValue);
+
+	fprintf(fp,"<!-- funcOverlay() -->\n");
+	switch(uValue)
+	{
+		default:
+		case(0):
+			funcHeat(fp);
+			fprintf(fp,"<br>");
+			funcWind(fp);
+		break;
+
+		case(1):
+			funcHeatEnd(fp);
+			fprintf(fp,"<br>");
+			funcWind(fp);
+		break;
+
+		case(2):
+			funcBestTrick(fp);
+			fprintf(fp,"<br>");
+			funcWind(fp);
+		break;
+
+		case(3):
+			funcTournament(fp);
+			fprintf(fp,"<br>");
+			funcWind(fp);
+		break;
+
+		case(4):
+			funcWind(fp);
+		break;
+	}//switch uValue
+
+}//void funcOverlay(FILE *fp)
+
+
+void funcTournament(FILE *fp)
+{
+	fprintf(fp,"<!-- funcTournament() -->\n");
+}//void funcTournament(FILE *fp)
 
 void funcWind(FILE *fp)
 {
