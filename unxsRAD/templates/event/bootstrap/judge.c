@@ -959,8 +959,154 @@ void funcEvent(FILE *fp)
 
 void funcBestTrick(FILE *fp)
 {
-	fprintf(fp,"<!-- funcBestTrick() -->\n");
-}
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	MYSQL_RES *res2;
+	MYSQL_ROW field2;
+	MYSQL_RES *res3;
+	MYSQL_ROW field3;
+	unsigned uEvent=0;
+	unsigned uNumJudges=0;
+	unsigned uNumScores=3;
+	char *cScoreTable="tScoreComp";
+	char cEvent[32]={""};
+	register int i,j;
+	float fTotalScore=0.00;
+	float fScoreArray[8]={0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00};
+
+	fprintf(fp,"<!-- funcBestTrick() 0.1-->\n");
+	fprintf(fp,"<div class=\"sTable\">");
+	fprintf(fp,"<div class=\"sTableRow\">");
+
+	if(guEvent)
+		uEvent=guEvent;
+	else if(1)
+		sprintf(gcQuery,"SELECT tEvent.uEvent,tEvent.cLabel"
+			" FROM tEvent WHERE tEvent.uStatus=1"
+			" AND tEvent.dStart<=NOW()"
+			" ORDER BY tEvent.dStart LIMIT 1");
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uEvent);
+		sprintf(cEvent,"%.31s",field[1]);
+	}
+	if(!uEvent) 
+	{
+		fprintf(fp,"<div class=\"sTableCellYellow\">No active event</div>");
+		fprintf(fp,"</div>");
+		fprintf(fp,"</div>");
+		return;
+	}
+
+	sprintf(gcQuery,"SELECT DISTINCT uCreatedBy FROM tScore WHERE uEvent=%u",uEvent);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	uNumJudges=mysql_num_rows(res);
+
+	fprintf(fp,"<div class=\"sTableCellBlueLarge\">Best Trick</div>");
+	fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s</div>",cEvent);
+	fprintf(fp,"<div class=\"sTableCellBlackLarge\">uNumJudges %u</div>",uNumJudges);
+	fprintf(fp,"</div>");//row
+
+	fprintf(fp,"</div>");//table
+
+
+	j=1;
+	fprintf(fp,"<br><div class=\"sTable\">");
+	sprintf(gcQuery,"SELECT uRider FROM tScoreComp WHERE uEvent=%u GROUP BY uRider ORDER BY SUM(fScore) DESC LIMIT 10",uEvent);
+	mysql_query(&gMysql,gcQuery);
+	if(*mysql_error(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res3=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res3)==0)
+	{
+		fprintf(fp,"<div class=\"sTableCellYellow\">No rider data</div>");
+		fprintf(fp,"</div>");
+		fprintf(fp,"</div>");
+		return;
+	}
+
+	while((field3=mysql_fetch_row(res3)))
+	{
+		sprintf(gcQuery,"SELECT DISTINCT UPPER(SUBSTR(tRider.cFirst,1,1)),UPPER(tRider.cLast),tRider.uRider"
+			",tRider.cCountry"
+			" FROM tScoreComp,tRider"
+			" WHERE tScoreComp.uRider=tRider.uRider"
+			" AND tRider.uRider=%s AND tScoreComp.uEvent=%u",field3[0],uEvent);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			fprintf(fp,"%s",mysql_error(&gMysql));
+			return;
+		}
+		res=mysql_store_result(&gMysql);
+		unsigned uIndex=0;
+		float fScore=0.00;
+		if(mysql_num_rows(res)<1)	
+		{
+			fprintf(fp,"</div>No score config data avaiable!");
+			return;
+		}
+		while((field=mysql_fetch_row(res)))
+		{
+			//TODO Get scores for single judge REFACTOR!
+			for(i=0;i<uNumScores&&i<8;i++)
+				fScoreArray[i]=0.00;
+			sprintf(gcQuery,"SELECT fScore,uIndex FROM %s WHERE uEvent=%u AND uRider=%s LIMIT 8",
+					cScoreTable,uEvent,field[2]);
+			mysql_query(&gMysql,gcQuery);
+			if(*mysql_error(&gMysql))
+			{
+				fprintf(fp,"%s",mysql_error(&gMysql));
+				return;
+			}
+			res2=mysql_store_result(&gMysql);
+			while((field2=mysql_fetch_row(res2)))
+			{
+				
+				sscanf(field2[0],"%f",&fScore);
+				sscanf(field2[1],"%u",&uIndex);
+				fScoreArray[uIndex]=fScore;
+			}
+			mysql_free_result(res2);
+			fTotalScore=0.00;
+			for(i=0;i<uNumScores&&i<8;i++)
+				fTotalScore+=fScoreArray[i];
+	
+			fprintf(fp,"<div class=\"sTableRow\">");
+			fprintf(fp,"<div class=\"sTableCellLarge\">%d</div>",j++);
+			fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s. %s</div>",field[0],field[1]);
+			if(field[3][0])
+				fprintf(fp,"<div class=\"sTableCellBlackLarge\"><img alt=%s src=\"/bs/images/%s.png\"></div>",field[3],field[3]);
+			else
+				fprintf(fp,"<div class=\"sTableCellBlackLarge\">--</div>");
+			fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%1.2f</div>",fTotalScore);
+
+			fprintf(fp,"</div>");
+
+		}//res while
+
+	}//res3 while
+
+	fprintf(fp,"</div>");
+
+}//void funcBestTrick(FILE *fp)
+
 
 
 void funcHeat(FILE *fp)
@@ -977,6 +1123,7 @@ void funcHeat(FILE *fp)
 	unsigned uHeat=0;
 	unsigned uRound=0;
 	unsigned uNumScores=0;
+	unsigned uNumJudges=0;
 	unsigned uStatus=0;
 	char *cScoreTable="tScoreComp";
 	char cStatus[32]={""};
@@ -1062,6 +1209,16 @@ void funcHeat(FILE *fp)
 		fprintf(fp,"</div>");
 		return;
 	}
+
+	sprintf(gcQuery,"SELECT DISTINCT uCreatedBy FROM tScore WHERE uEvent=%u",uEvent);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	uNumJudges=mysql_num_rows(res);
 
 
 	if(uStatus==1)
@@ -1165,7 +1322,6 @@ void funcHeat(FILE *fp)
 				fTotalScore+=fScoreArray[i];
 			if(j==1)
 				fLeaderTotalScore=fTotalScore;
-			//fTotalScore=fTotalScore/uNumScores;
 	
 			fprintf(fp,"<div class=\"sTableRow\">");
 			fprintf(fp,"<div class=\"sTableCellLarge\">%d</div>",j++);
@@ -1217,6 +1373,7 @@ void funcHeatEnd(FILE *fp)
 	unsigned uEvent=0;
 	unsigned uRound=0;
 	unsigned uNumScores=0;
+	unsigned uNumJudges=0;
 	char cStatus[32]={""};
 	unsigned uStatus=0;
 	char *cScoreTable="tScoreComp";
@@ -1294,6 +1451,16 @@ void funcHeatEnd(FILE *fp)
 		fprintf(fp,"</div>");
 		return;
 	}
+
+	sprintf(gcQuery,"SELECT DISTINCT uCreatedBy FROM tScore WHERE uEvent=%u",uEvent);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	uNumJudges=mysql_num_rows(res);
 
 
 	fprintf(fp,"<div class=\"sTableCellGreenLarge\">%s</div>",cStatus);
