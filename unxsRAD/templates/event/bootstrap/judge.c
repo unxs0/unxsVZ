@@ -1086,7 +1086,10 @@ void funcBestTrick(FILE *fp)
 				fTotalScore+=fScoreArray[i];
 	
 			fprintf(fp,"<div class=\"sTableRow\">");
-			fprintf(fp,"<div class=\"sTableCellLarge\">%d</div>",j++);
+			if(j<=2)
+				fprintf(fp,"<div class=\"sTableCellBlueLarge\">%d</div>",j++);
+			else
+				fprintf(fp,"<div class=\"sTableCellLarge\">%d</div>",j++);
 			fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s. %s</div>",field[0],field[1]);
 			if(field[3][0])
 				fprintf(fp,"<div class=\"sTableCellBlackLarge\"><img alt=%s src=\"/bs/images/%s.png\"></div>",field[3],field[3]);
@@ -1320,8 +1323,11 @@ void funcHeat(FILE *fp)
 			if(j==1)
 				fLeaderTotalScore=fTotalScore;
 	
-			fprintf(fp,"<div class=\"sTableRow\">");
-			fprintf(fp,"<div class=\"sTableCellLarge\">%d</div>",j++);
+			fprintf(fp,"\n<div class=\"sTableRow\">");
+			if(j<=2)
+				fprintf(fp,"<div class=\"sTableCellBlueLarge\">%d</div>",j++);
+			else
+				fprintf(fp,"<div class=\"sTableCellLarge\">%d</div>",j++);
 			fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s. %s</div>",field[0],field[1]);
 			if(field[3][0])
 				fprintf(fp,"<div class=\"sTableCellBlackLarge\"><img alt=%s src=\"/bs/images/%s.png\"></div>",field[3],field[3]);
