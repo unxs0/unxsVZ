@@ -86,7 +86,7 @@ void ProcessJudgeVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uTrickLock);
 		}
 		else if(!strcmp(entries[i].name,"uEvent"))
-			sscanf(entries[i].val,"%u",&guEvent);
+			sscanf(entries[i].val,"%u",&suEvent);
 		else if(!strcmp(entries[i].name,"uRound"))
 			sscanf(entries[i].val,"%u",&uRound);
 	}

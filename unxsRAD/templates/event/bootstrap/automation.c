@@ -826,7 +826,14 @@ void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent)
 	if((field=mysql_fetch_row(res)))
 	{
 		sprintf(cRoundNum,"%.31s",field[0]);
-		sscanf(field[0],"%*s %u",&uRoundNum);
+		sscanf(field[0],"%*[A-z ] %u",&uRoundNum);
+		if(!uRoundNum)
+		{
+			sprintf(cBuffer,"%.255s",field[0]);
+			htmlHeader("AdvanceRiders","Default.Header");
+			fprintf(stdout,"uRoundNum==0 %s",cBuffer);
+			htmlFooter("Default.Footer");
+		}
 	}
 	//Get uHeatNum the seq heat number 1,2,3...etc
 	sprintf(gcQuery,"SELECT cLabel FROM tHeat"
@@ -865,9 +872,13 @@ void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent)
 	res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)!=1)
 	{
+		//Allow return for final
+		return;
+/*
 		htmlHeader("AdvanceRidersError","Default.Header");
 		fprintf(stdout,"Multiple or no uRound>%u",uRound);
 		htmlFooter("Default.Footer");
+*/
 	}
 	if((field=mysql_fetch_row(res)))
 		sscanf(field[0],"%u",&uNextRound);
@@ -884,10 +895,17 @@ void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent)
 		htmlFooter("Default.Footer");
 	}
 	res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)!=1)
+	if(mysql_num_rows(res)<1)
 	{
 		htmlHeader("AdvanceRidersError","Default.Header");
-		fprintf(stdout,"Mult or no WINNER OF R%u(%u) H%u(%u) of next round=%u uRidersRanked[0]=%u",
+		fprintf(stdout,"No WINNER OF R%u(%u) H%u(%u) of next round=%u uRidersRanked[0]=%u",
+				uRoundNum,uRound,uHeatNum,uHeat,uNextRound,uRidersRanked[0]);
+		htmlFooter("Default.Footer");
+	}
+	if(mysql_num_rows(res)>1)
+	{
+		htmlHeader("AdvanceRidersError","Default.Header");
+		fprintf(stdout,"Multiple WINNERS OF R%u(%u) H%u(%u) of next round=%u uRidersRanked[0]=%u",
 				uRoundNum,uRound,uHeatNum,uHeat,uNextRound,uRidersRanked[0]);
 		htmlFooter("Default.Footer");
 	}
@@ -918,13 +936,23 @@ void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent)
 		htmlFooter("Default.Footer");
 	}
 	res=mysql_store_result(&gMysql);
-	if(mysql_num_rows(res)!=1)
+	//Some finals only take winners from previous heats of only 2 riders.
+/*
+	if(mysql_num_rows(res)<1)
 	{
 		htmlHeader("AdvanceRidersError","Default.Header");
-		fprintf(stdout,"Mult or No SECOND OF R%u(%u) H%u(%u) of next round=%u uRidersRanked[1]=%u",
+		fprintf(stdout,"No SECOND OF R%u(%u) H%u(%u) of next round=%u uRidersRanked[1]=%u",
 				uRoundNum,uRound,uHeatNum,uHeat,uNextRound,uRidersRanked[1]);
 		htmlFooter("Default.Footer");
 	}
+	if(mysql_num_rows(res)>1)
+	{
+		htmlHeader("AdvanceRidersError","Default.Header");
+		fprintf(stdout,"Mult SECOND OF R%u(%u) H%u(%u) of next round=%u uRidersRanked[1]=%u",
+				uRoundNum,uRound,uHeatNum,uHeat,uNextRound,uRidersRanked[1]);
+		htmlFooter("Default.Footer");
+	}
+*/
 	if((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uScore);
