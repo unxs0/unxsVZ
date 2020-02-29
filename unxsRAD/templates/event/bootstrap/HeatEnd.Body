@@ -14,9 +14,12 @@
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="/bs/css/bootstrap.min.css">
     <link rel="stylesheet" href="/bs/css/sTable.css">
+    <style type="text/css">
+        body { background: magenta !important; }
+    </style>
 </head>
 
-<body {{cBgColor}} >
+<body>
 <main class="container">
 <br>
 {{funcHeatEnd}}

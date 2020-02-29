@@ -596,10 +596,7 @@ void htmlJudgePage(char *cTitle, char *cTemplateName)
 			template.cpName[7]="gcCopyright";
 			template.cpValue[7]=INTERFACE_COPYRIGHT;
 
-			template.cpName[8]="cBgColor";
-			template.cpValue[8]="bgcolor=\"white\"";
-
-			template.cpName[9]="";
+			template.cpName[8]="";
 
 			printf("\n<!-- Start htmlJudgePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -1687,7 +1684,7 @@ void funcWind(FILE *fp)
 	fprintf(fp,"<div class=\"sTableCellBlueLarge\">%.4s Knots</div>",cAvgWind);
 	fprintf(fp,"<div class=\"sTableCellBlackLarge\">Min %.4s Knots</div>",cMinWind);
 	fprintf(fp,"<div class=\"sTableCellBlackLarge\">Max %.4s Knots</div>",cMaxWind);
-	fprintf(fp,"<div class=\"sTableCellBlueLarge\">Wind Angle %.3s</div>",cDirWind);
+	fprintf(fp,"<div class=\"sTableCellBlueLarge\">%.3s</div>",cDirWind);
 	fprintf(fp,"</div>");
 	fprintf(fp,"</div>");
 }//void funcWind((FILE *fp)
