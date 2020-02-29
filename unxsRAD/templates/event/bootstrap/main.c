@@ -126,13 +126,13 @@ int main(int argc, char *argv[])
         	else if(!strcmp(gcFunction,"HeatEnd")) 
 			HeatEndGetHook(gentries,x);
         	else if(!strcmp(gcFunction,"Overlay")) 
-			htmlOverlay();
+			OverlayGetHook(gentries,x);
         	else if(!strcmp(gcFunction,"Wind")) 
-			htmlWind();
+			WindGetHook(gentries,x);
         	else if(!strcmp(gcFunction,"Tournament")) 
-			htmlTournament();
+			TournamentGetHook(gentries,x);
         	else if(!strcmp(gcFunction,"BestTrick")) 
-			htmlBestTrick();
+			BestTrickGetHook(gentries,x);
 		SSLCookieLogin();
 		if(gcPage[0])
 		{

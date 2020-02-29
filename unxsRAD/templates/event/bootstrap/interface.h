@@ -115,6 +115,10 @@ extern char gcOTPInfo[];
 
 //judge.c
 void ProcessJudgeVars(pentry entries[], int x);
+void BestTrickGetHook(entry gentries[],int x);
+void OverlayGetHook(entry gentries[],int x);
+void WindGetHook(entry gentries[],int x);
+void TournamentGetHook(entry gentries[],int x);
 void HeatEndGetHook(entry gentries[],int x);
 void HeatGetHook(entry gentries[],int x);
 void JudgeGetHook(entry gentries[],int x);

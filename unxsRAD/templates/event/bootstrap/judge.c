@@ -12,13 +12,14 @@ PURPOSE
 
 //File globals
 static unsigned uGenerate=0;
-static unsigned uEvent=0;
+static unsigned suEvent=0;
 static unsigned uRound=0;
 static unsigned suHeat=0;
 static unsigned uTrickLock=0;
 static unsigned uTrickLockProvided=0;
 static char dEnd[32]={"Jan 1, 2021 15:37:25"};
 static char cEvent[32]={""};
+static char *gcBgColor="white";
 
 //TOC
 void ProcessJudgeVars(pentry entries[], int x);
@@ -85,12 +86,12 @@ void ProcessJudgeVars(pentry entries[], int x)
 			sscanf(entries[i].val,"%u",&uTrickLock);
 		}
 		else if(!strcmp(entries[i].name,"uEvent"))
-			sscanf(entries[i].val,"%u",&uEvent);
+			sscanf(entries[i].val,"%u",&guEvent);
 		else if(!strcmp(entries[i].name,"uRound"))
 			sscanf(entries[i].val,"%u",&uRound);
 	}
 
-}//void ProcessJobOfferVars(pentry entries[], int x)
+}//void ProcessJudgeVars(pentry entries[], int x)
 
 
 void AddHour(void)
@@ -266,8 +267,72 @@ void CommonGetHook(entry gentries[],int x)
 			printf("Set-Cookie: unxsEVEvent=\"deleted\";"
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 		}
+		else if(!strcmp(gentries[i].name,"ChromaKey"))
+			gcBgColor="magenta";
 	}
 }//void CommonGetHook(entry gentries[],int x);
+
+
+void TournamentGetHook(entry gentries[],int x)
+{
+	register int i;
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"uEvent"))
+			sscanf(gentries[i].val,"%u",&suEvent);
+		else if(!strcmp(gentries[i].name,"ChromaKey"))
+			gcBgColor="magenta";
+	}
+	htmlTournament();
+
+}//void TournamentGetHook(entry gentries[],int x)
+
+
+
+void BestTrickGetHook(entry gentries[],int x)
+{
+	register int i;
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"uEvent"))
+			sscanf(gentries[i].val,"%u",&suEvent);
+		else if(!strcmp(gentries[i].name,"ChromaKey"))
+			gcBgColor="magenta";
+	}
+	htmlBestTrick();
+
+}//void BestTrickGetHook(entry gentries[],int x)
+
+
+
+void WindGetHook(entry gentries[],int x)
+{
+	register int i;
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"ChromaKey"))
+			gcBgColor="magenta";
+	}
+	htmlWind();
+
+}//void WindGetHook(entry gentries[],int x)
+
+
+void OverlayGetHook(entry gentries[],int x)
+{
+	register int i;
+	for(i=0;i<x;i++)
+	{
+		if(!strcmp(gentries[i].name,"uHeat"))
+			sscanf(gentries[i].val,"%u",&suHeat);
+		else if(!strcmp(gentries[i].name,"uEvent"))
+			sscanf(gentries[i].val,"%u",&suEvent);
+		else if(!strcmp(gentries[i].name,"ChromaKey"))
+			gcBgColor="magenta";
+	}
+	htmlOverlay();
+
+}//void OverlayGetHook(entry gentries[],int x)
 
 
 void HeatEndGetHook(entry gentries[],int x)
@@ -277,6 +342,8 @@ void HeatEndGetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"uHeat"))
 			sscanf(gentries[i].val,"%u",&suHeat);
+		else if(!strcmp(gentries[i].name,"ChromaKey"))
+			gcBgColor="magenta";
 	}
 	htmlHeatEnd();
 
@@ -290,6 +357,8 @@ void HeatGetHook(entry gentries[],int x)
 	{
 		if(!strcmp(gentries[i].name,"uHeat"))
 			sscanf(gentries[i].val,"%u",&suHeat);
+		else if(!strcmp(gentries[i].name,"ChromaKey"))
+			gcBgColor="magenta";
 	}
 	htmlHeat();
 
@@ -596,7 +665,10 @@ void htmlJudgePage(char *cTitle, char *cTemplateName)
 			template.cpName[7]="gcCopyright";
 			template.cpValue[7]=INTERFACE_COPYRIGHT;
 
-			template.cpName[8]="";
+			template.cpName[8]="cBgColor";
+			template.cpValue[8]=gcBgColor;
+
+			template.cpName[9]="";
 
 			printf("\n<!-- Start htmlJudgePage(%s) -->\n",cTemplateName); 
 			Template(field[0], &template, stdout);
@@ -743,7 +815,7 @@ void funcJudge(FILE *fp)
 	fprintf(fp,"<input type='hidden' name='uTrickLock' value='%u'>",uTrickLock);
 	fprintf(fp,"<input type='hidden' name='uRound' value='%u'>",uRound);
 	fprintf(fp,"<br><div class=\"sTable\">");
-	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u GROUP BY uRider ORDER BY SUM(fScore) DESC",
+	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u GROUP BY uRider",
 		uHeat,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(*mysql_error(&gMysql))
@@ -813,9 +885,9 @@ void funcJudge(FILE *fp)
 				cTrickLock="disabled";
 			else
 				cTrickLock="required";
-			fprintf(fp,"<input maxlength='5' type='number' step='any' id='inputScore%d-%s'"
+			fprintf(fp,"&#%u; <input maxlength='5' type='number' step='any' id='inputScore%d-%s'"
 				" class='my-form-control' max='10.00' value='%1.2f' name='fScore%d-%s' %s><br>",
-					i,field[2],
+					'A'+i,i,field[2],
 					fScoreArray[i],
 					i,field[2],cTrickLock);
 		}
@@ -829,6 +901,74 @@ void funcJudge(FILE *fp)
 	fprintf(fp,"</div>");
         fprintf(fp,"<br><button class='btn btn-lg btn-primary btn-block' type='submit' name=gcFunction value='Score'>Save</button>");
 	fprintf(fp,"</form>");
+
+	//if(guPermLevel<10)
+	//	return;
+	
+
+	sprintf(gcQuery,"SELECT DISTINCT tClient.cLabel,tClient.uClient"
+			" FROM tScore,tClient"
+			" WHERE tScore.uModBy=tClient.uClient"
+			" AND tScore.uHeat=%u AND tScore.uOwner=%u",uHeat,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	fprintf(fp,"\n<br><div class=\"sTable\">\n");
+	unsigned uClient=0;
+	unsigned uPrevRider=0;
+	unsigned uRider=0;
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uClient);
+		fprintf(fp,"<div class=\"sTableRow\">\n");
+		fprintf(fp,"\t<div class=\"sTableCell\">%s</div>\n",field[0]);
+		sprintf(gcQuery,"SELECT tScore.uIndex,tScore.fScore,tRider.cLast,tRider.uRider"
+			" FROM tScore,tRider"
+			" WHERE tScore.uHeat=%u AND tScore.uOwner=%u"
+			" AND tRider.uRider=tScore.uRider"
+			" AND fScore>0.0"
+			" AND tScore.uModBy=%u ORDER BY tScore.uRider,tScore.uIndex",uHeat,guOrg,uClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			fprintf(fp,"%s",mysql_error(&gMysql));
+			return;
+		}
+		res2=mysql_store_result(&gMysql);
+		unsigned uCount=0;
+		unsigned uIndex=0;
+		unsigned uNumRows=mysql_num_rows(res2);
+		while((field2=mysql_fetch_row(res2)))
+		{
+			sscanf(field2[3],"%u",&uRider);
+			sscanf(field2[0],"%u",&uIndex);
+			if(uPrevRider!=uRider)
+				fprintf(fp,"\t\t<div class=\"sTableCell\">%s</div>\n",field2[2]);
+			else
+				fprintf(fp,"\t\t<div class=\"sTableCell\"></div>\n");
+			fprintf(fp,"\t\t<div class=\"sTableCell\">&#%u;</div>\n",uIndex+'A');
+			fprintf(fp,"\t\t<div class=\"sTableCell\">%s</div>\n",field2[1]);
+
+			if(uCount<uNumRows-1)
+			{
+				fprintf(fp,"</div><!--sTableRow-->\n");
+				fprintf(fp,"<div class=\"sTableRow\">\n");
+				fprintf(fp,"\t<div class=\"sTableCell\"></div>\n");
+			}
+			if(uPrevRider!=uRider)
+			{
+				uPrevRider=uRider;
+			}
+			uCount++;
+		}
+		fprintf(fp,"</div><!--sTableRow-->\n");
+	}
+	fprintf(fp,"</div><!--sTable-->\n");
+
 
 
 }//void funcJudge(FILE *fp)
@@ -977,11 +1117,18 @@ void funcBestTrick(FILE *fp)
 
 	if(guEvent)
 		uEvent=guEvent;
-	else if(1)
+	else if(suEvent)
+		uEvent=suEvent;//from GetHook
+
+	if(!uEvent)
 		sprintf(gcQuery,"SELECT tEvent.uEvent,tEvent.cLabel"
 			" FROM tEvent WHERE tEvent.uStatus=1"
 			" AND tEvent.dStart<=NOW()"
 			" ORDER BY tEvent.dStart LIMIT 1");
+	else
+		sprintf(gcQuery,"SELECT tEvent.uEvent,tEvent.cLabel"
+			" FROM tEvent WHERE uEvent=%u",uEvent);
+
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1002,7 +1149,7 @@ void funcBestTrick(FILE *fp)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT DISTINCT uCreatedBy FROM tScore WHERE uEvent=%u",uEvent);
+	sprintf(gcQuery,"SELECT DISTINCT uModBy FROM tScore WHERE uEvent=%u AND uModBy!=0",uEvent);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1095,7 +1242,8 @@ void funcBestTrick(FILE *fp)
 				fprintf(fp,"<div class=\"sTableCellBlackLarge\"><img alt=%s src=\"/bs/images/%s.png\"></div>",field[3],field[3]);
 			else
 				fprintf(fp,"<div class=\"sTableCellBlackLarge\">--</div>");
-			fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%1.2f</div>",fTotalScore);
+			//fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%1.2f</div>",fTotalScore);
+			fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">---</div>");
 
 			fprintf(fp,"</div>");
 
@@ -1210,7 +1358,8 @@ void funcHeat(FILE *fp)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT DISTINCT uCreatedBy FROM tScore WHERE uEvent=%u",uEvent);
+	//TODO
+	sprintf(gcQuery,"SELECT DISTINCT uCreatedBy FROM tScore WHERE uHeat=%u",uHeat);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
@@ -1455,7 +1604,7 @@ void funcHeatEnd(FILE *fp)
 		return;
 	}
 
-	sprintf(gcQuery,"SELECT DISTINCT uCreatedBy FROM tScore WHERE uEvent=%u",uEvent);
+	sprintf(gcQuery,"SELECT DISTINCT uModBy FROM tScore WHERE uHeat=%u",suHeat);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
 	{
