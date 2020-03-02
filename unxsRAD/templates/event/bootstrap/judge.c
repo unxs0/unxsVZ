@@ -46,7 +46,7 @@ void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent);
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
 
 
-unsigned uSelectRider(FILE *fp,char *cPage)
+unsigned uSelectRider(FILE *fp,char *cPage,unsigned uMode)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
@@ -54,7 +54,7 @@ unsigned uSelectRider(FILE *fp,char *cPage)
 	if(!guHeat || !guEvent)
 		return(0);
 
-	if(!guRider)
+	if(!guRider || uMode)
 	{
 		sprintf(gcQuery,"SELECT DISTINCT tRider.cLabel,tRider.uRider FROM tRider,tScore"
 				" WHERE tScore.uOwner=%u AND tScore.uHeat=%u"
@@ -68,10 +68,13 @@ unsigned uSelectRider(FILE *fp,char *cPage)
 			fprintf(fp,"%s",mysql_error(&gMysql));
 			return(0);
 		}
-		fprintf(fp,"<br>Select Rider");
+		if(!uMode) fprintf(fp,"<br>Select Rider");
+		unsigned uRider=0;
 		while((field=mysql_fetch_row(res)))
 		{
-			fprintf(fp,"<br><a href=?gcPage=%s&guRider=%s>%s</a>",cPage,field[1],field[0]);
+			sscanf(field[1],"%u",&uRider);
+			if(guRider!=uRider)
+				fprintf(fp,"<br><a title='Change to this rider' href=?gcPage=%s&guRider=%u>%s</a>",cPage,uRider,field[0]);
 		}
 		return(0);
 	}
@@ -592,6 +595,14 @@ void UpdateInsertScore(float fScore,unsigned uIndex,unsigned uEvent, unsigned uR
 {
 	MYSQL_RES *res;
 	MYSQL_ROW field;
+	unsigned uStatus=0;
+
+	sscanf(cForeignKey("tHeat","uStatus",uHeat),"%u",&uStatus);
+	if(uStatus!=1)
+	{
+		gcMessage="Heat status is not active!";
+		htmlEvent();
+	}
 
 	sprintf(gcQuery,"SELECT uScore FROM tScore"
 			" WHERE uHeat=%u AND uIndex=%u AND uRider=%u"
@@ -661,11 +672,14 @@ void JudgeCommands(pentry entries[], int x)
 			gcMessage="Critical data missing!";
 		if(gcMessage[0])
 			htmlJudge();
-		float fScore=(float)suMainScore+sfFineScore;
+		float fScore;
+		if(suMainScore<10)
+			fScore=(float)suMainScore+sfFineScore;
+		else
+			fScore=(float)suMainScore;
 		UpdateInsertScore(fScore,suScoreFamily,guEvent,guRound,guHeat,guRider);
 		PopulateScoreComp(guHeat);
-		if(!gcMessage[0])
-			AdvanceRidersToNextRound(guHeat,guEvent);
+		AdvanceRidersToNextRound(guHeat,guEvent);
 		htmlJudge();
 	}
 	else if(!strcmp(gcFunction,"Score"))
@@ -717,6 +731,8 @@ void GetdEnd(void)
 {
         MYSQL_RES *res;
 	MYSQL_ROW field;
+	if(!suHeat && guHeat)
+		suHeat=guHeat;
 	if(!suHeat)
 		sprintf(gcQuery,"SELECT DATE_FORMAT(tHeat.dEnd,'%%b %%d, %%Y %%H:%%i:%%s')"
 			" FROM tHeat,tEvent WHERE tHeat.uStatus=1 AND tHeat.uEvent=tEvent.uEvent AND tHeat.uEvent=%u"
@@ -909,7 +925,7 @@ void funcJudge(FILE *fp)
 	if(!uSelectEvent(fp,"Judge")) return;
 	if(!uSelectRound(fp,"Judge")) return;
 	if(!uSelectHeat(fp,"Judge")) return;
-	if(!uSelectRider(fp,"Judge")) return;
+	if(!uSelectRider(fp,"Judge",0)) return;
 
 	fprintf(fp,"<div class=\"sTable\">");
 	fprintf(fp,"<div class=\"sTableRow\">");
@@ -989,7 +1005,7 @@ void funcJudge(FILE *fp)
 
 	if(uStatus==1)
 	{
-		fprintf(fp,"<div class=\"sTableCellGreen\">TO END</div>");
+		fprintf(fp,"<div class=\"sTableCellGreen\">ENDING</div>");
 		fprintf(fp,"<div class=\"sTableCellBlackBold\"><p id=\"demo\">%s</p></div>",dTimeLeft);
 	}
 	else
@@ -1573,7 +1589,7 @@ void funcHeat(FILE *fp)
 
 
 	if(uStatus==1)
-		fprintf(fp,"<div class=\"sTableCellGreenLarge\">TO END</div>");
+		fprintf(fp,"<div class=\"sTableCellGreenLarge\">ENDING</div>");
 	else
 		fprintf(fp,"<div class=\"sTableCellGreenLarge\">%s</div>",cStatus);
 	fprintf(fp,"</div>");//row
@@ -2056,6 +2072,7 @@ void funcNewJudge(FILE *fp)
 	unsigned uHeat=0;
 	unsigned uRound=0;
 	unsigned uStatus=0;
+	unsigned uTimeStatus=0;
 	char cStatus[32]={""};
 	char cHeat[32]={""};
 	char cRound[32]={""};
@@ -2067,7 +2084,7 @@ void funcNewJudge(FILE *fp)
 	if(!uSelectEvent(fp,"Judge")) return;
 	if(!uSelectRound(fp,"Judge")) return;
 	if(!uSelectHeat(fp,"Judge")) return;
-	if(!uSelectRider(fp,"Judge")) return;
+	if(!uSelectRider(fp,"Judge",0)) return;
 
 	fprintf(fp,"<div class=\"sTable\">");
 	fprintf(fp,"<div class=\"sTableRow\">");
@@ -2076,8 +2093,9 @@ void funcNewJudge(FILE *fp)
 		suHeat=guHeat;
 	sprintf(gcQuery,"SELECT tHeat.uHeat,UPPER(tHeat.cLabel),tHeat.uRound,"
 			" DATE_FORMAT(tHeat.dStart,'%%H:%%i:%%s'),DATE_FORMAT(tHeat.dEnd,'%%H:%%i:%%s'),"
-			"tStatus.cLabel,tStatus.uStatus,"
-			"TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s'),UPPER(tEvent.cLabel),UPPER(tRound.cLabel)"
+			"UPPER(tStatus.cLabel),tStatus.uStatus,"
+			"TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s'),UPPER(tEvent.cLabel),UPPER(tRound.cLabel),"
+			"IF((NOW()<tHeat.dEnd AND NOW()>tHeat.dStart),1,0)"
 			" FROM tHeat,tStatus,tEvent,tRound"
 			" WHERE tHeat.uHeat=%u AND tStatus.uStatus=tHeat.uStatus"
 			" AND tHeat.uRound=tRound.uRound"
@@ -2104,6 +2122,7 @@ void funcNewJudge(FILE *fp)
 			sprintf(dTimeLeft,"%.31s",field[7]);
 		sprintf(scEvent,"%.31s",field[8]);
 		sprintf(cRound,"%.31s",field[9]);
+		sscanf(field[10],"%u",&uTimeStatus);
 	}
 	if(!uHeat || !uRound) 
 	{
@@ -2114,21 +2133,31 @@ void funcNewJudge(FILE *fp)
 	}
 
 	fprintf(fp,"<div class=\"sTableCellGreen\">%s (<a title='Change Rider' href=?gcPage=Judge&ClearRider>X</a>)"
-			"(<a title='Toggle Help' href=?gcPage=Judge&ToggleHelp>H</a>)</div>",
+			" (<a title='Toggle Help' href=?gcPage=Judge&ToggleHelp>H</a>)</div>",
 					cForeignKey("tRider","cLabel",guRider));
 	fprintf(fp,"<div class=\"sTableCellBlack\">%s (<a title='Change Event' href=?gcPage=Judge&ClearEvent>X</a>)</div>",scEvent);
 	fprintf(fp,"<div class=\"sTableCellBlack\">%s (<a title='Change Round' href=?gcPage=Judge&ClearRound>X</a>)</div>",cRound);
-	fprintf(fp,"<div class=\"sTableCellBlack\"><a title='Overlay' href=?gcFunction=Heat&uHeat=%u >HEAT %s (<a title='Change Heat' href=?gcPage=Judge&ClearHeat>X</a>)</a></div>",
-					uHeat,cHeat);
-	if(uStatus==1)
+	fprintf(fp,"<div class=\"sTableCellBlack\"><a title='Overlay' href=?gcFunction=Heat&uHeat=%u >HEAT %s</a>",uHeat,cHeat);
+	fprintf(fp," (<a title='Change Heat' href=?gcPage=Judge&ClearHeat>X</a>)");
+	if(guPermLevel>=10)
+		fprintf(fp," (<a title='Close Heat' href=?gcPage=Judge&CloseHeat>C</a>)");
+	fprintf(fp,"</div>");
+	if(uStatus==1 && uTimeStatus)
 	{
-		fprintf(fp,"<div class=\"sTableCellGreen\">TO END</div>");
+		fprintf(fp,"<div class=\"sTableCellGreen\">ENDING</div>");
 		fprintf(fp,"<div class=\"sTableCellBlackBold\"><p id=\"demo\">%s</p></div>",dTimeLeft);
 	}
 	else
 	{
+		if(dTimeLeft[0]=='-')
+			sprintf(cStatus,"%.31s","FINISHED");
+		else
+			sprintf(cStatus,"%.31s","STARTING");
 		fprintf(fp,"<div class=\"sTableCellGreen\">%s</div>",cStatus);
-		fprintf(fp,"<div class=\"sTableCellBlackBold\">%s</div>",dTimeLeft);
+		if(dTimeLeft[0]=='-')
+			fprintf(fp,"<div class=\"sTableCellBlackBold\">%s</div>",dTimeLeft);
+		else
+			fprintf(fp,"<div class=\"sTableCellBlackBold\"><p id=\"demo\">%s</p></div>",dTimeLeft);
 	}
 	fprintf(fp,"</div>");
 
@@ -2184,14 +2213,20 @@ void funcNewJudge(FILE *fp)
 	}
 
 
-        fprintf(fp,"<br><button class='btn btn-lg btn-primary btn-block' type='submit' name=gcFunction value='NewScore'>Save</button>");
+	char *cDisable="disabled";
+	if(uStatus==1)
+		cDisable="";
+        fprintf(fp,"<br><button class='btn btn-lg btn-primary btn-block' type='submit' name=gcFunction value='NewScore'"
+			" %s >Save</button>",cDisable);
 	fprintf(fp,"</form>");
 
-	//if(guPermLevel<10)
-	//	return;
-	
-
-	sprintf(gcQuery,"SELECT DISTINCT tClient.cLabel,tClient.uClient"
+	if(guPermLevel<10)
+		sprintf(gcQuery,"SELECT DISTINCT tClient.cLabel,tClient.uClient"
+			" FROM tScore,tClient"
+			" WHERE tScore.uCreatedBy=tClient.uClient"
+			" AND tScore.uHeat=%u AND tScore.uOwner=%u AND tClient.uClient=%u",uHeat,guOrg,guLoginClient);
+	else
+		sprintf(gcQuery,"SELECT DISTINCT tClient.cLabel,tClient.uClient"
 			" FROM tScore,tClient"
 			" WHERE tScore.uCreatedBy=tClient.uClient"
 			" AND tScore.uHeat=%u AND tScore.uOwner=%u",uHeat,guOrg);
@@ -2202,6 +2237,7 @@ void funcNewJudge(FILE *fp)
 		return;
 	}
 	res=mysql_store_result(&gMysql);
+	uSelectRider(fp,"Judge",1);
 	fprintf(fp,"\n<br><div class=\"sTable\">\n");
 	unsigned uClient=0;
 	unsigned uPrevRider=0;

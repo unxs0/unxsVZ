@@ -301,8 +301,8 @@ void funcAdmin(FILE *fp)
 			{
 
 				//TODO uNumScores hardcoded preset. Should come from tEvent.
-				sprintf(gcQuery,"INSERT INTO tRound SET uEvent=%u,cLabel='%s Round %u'"
-						",uNumScores=3,uHeatSize=%u,uOwner=%u,uCreatedBy=%u"
+				sprintf(gcQuery,"INSERT INTO tRound SET uEvent=%u,cLabel=LTRIM('%s Round %u')"
+						",uNumScores=3,uHeatSize=%u,uOwner=%u,uCreatedBy=%u,uCreatedDate=UNIX_TIMESTAMP(NOW())"
 							,guEvent,cRound,uRound,
 							uHeatSizes[uRound-1],guOrg,guLoginClient);
 				mysql_query(&gMysql,gcQuery);

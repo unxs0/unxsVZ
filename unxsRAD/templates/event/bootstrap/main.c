@@ -215,12 +215,14 @@ int main(int argc, char *argv[])
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: {{cProject}}SessionHash=\"deleted\";"
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-/*
 			printf("Set-Cookie: {{cProject}}Event=\"deleted\";"
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: {{cProject}}Heat=\"deleted\";"
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
-*/
+			printf("Set-Cookie: {{cProject}}Round=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: {{cProject}}Rider=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=8,uPermLevel=%u,"
 					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
