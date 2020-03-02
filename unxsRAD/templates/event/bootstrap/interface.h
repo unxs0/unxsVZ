@@ -91,8 +91,12 @@ extern char *gcBrand;
 extern unsigned guBrowserFirefox;
 extern unsigned guYear;
 extern unsigned guMonth;
+extern unsigned guHelp;
 extern unsigned guHeat;
 extern unsigned guEvent;
+extern unsigned guRound;
+extern unsigned guHeat;
+extern unsigned guRider;
 extern unsigned guValidJobLoaded;
 extern char *gcCPShow;
 

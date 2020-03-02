@@ -13,12 +13,15 @@ PURPOSE
 //File globals
 static unsigned uGenerate=0;
 static unsigned suEvent=0;
-static unsigned uRound=0;
+static unsigned suRound=0;
 static unsigned suHeat=0;
+static unsigned suMainScore=0;
+static unsigned suScoreFamily=0;
+static float sfFineScore=0.0;
 static unsigned uTrickLock=0;
 static unsigned uTrickLockProvided=0;
 static char dEnd[32]={"Jan 1, 2021 15:37:25"};
-static char cEvent[32]={""};
+static char scEvent[32]={""};
 static char *gcBgColor="white";
 
 //TOC
@@ -29,6 +32,7 @@ void AddHour(void);
 void SubHour(void);
 void AddDay(void);
 void SubDay(void);
+void funcNewJudge(FILE *fp);
 
 void htmlHeat(void);
 void htmlBestTrick(void);
@@ -40,10 +44,96 @@ void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent);
 //extern
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
 
+
+unsigned uSelectRider(FILE *fp,char *cPage)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	if(!guHeat || !guEvent)
+		return(0);
+
+	if(!guRider)
+	{
+		sprintf(gcQuery,"SELECT DISTINCT tRider.cLabel,tRider.uRider FROM tRider,tScore"
+				" WHERE tScore.uOwner=%u AND tScore.uHeat=%u"
+				" AND tScore.uEvent=%u AND tScore.uRider=tRider.uRider ORDER BY tRider.cLast",
+						guOrg,guHeat,
+							guEvent);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if(mysql_errno(&gMysql))
+		{
+			fprintf(fp,"%s",mysql_error(&gMysql));
+			return(0);
+		}
+		fprintf(fp,"<br>Select Rider");
+		while((field=mysql_fetch_row(res)))
+		{
+			fprintf(fp,"<br><a href=?gcPage=%s&guRider=%s>%s</a>",cPage,field[1],field[0]);
+		}
+		return(0);
+	}
+	return(1);
+}//unsigned uSelectRider(FILE *fp,char *cPage)
+
+
 unsigned uSelectHeat(FILE *fp,char *cPage)
 {
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	if(!guEvent || !guRound)
+		return(0);
+
+	if(!guHeat)
+	{
+		sprintf(gcQuery,"SELECT cLabel,uHeat FROM tHeat WHERE uOwner=%u AND uEvent=%u AND uRound=%u",guOrg,guEvent,guRound);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if(mysql_errno(&gMysql))
+		{
+			fprintf(fp,"%s",mysql_error(&gMysql));
+			return(0);
+		}
+		fprintf(fp,"<br>Select Heat");
+		while((field=mysql_fetch_row(res)))
+		{
+			fprintf(fp,"<br><a href=?gcPage=%s&guHeat=%s>%s</a>",cPage,field[1],field[0]);
+		}
+		return(0);
+	}
 	return(1);
 }//unsigned uSelectHeat(FILE *fp,char *cPage)
+
+
+unsigned uSelectRound(FILE *fp,char *cPage)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	if(!guEvent)
+		return(0);
+
+	if(!guRound)
+	{
+		sprintf(gcQuery,"SELECT cLabel,uRound FROM tRound WHERE uOwner=%u AND uEvent=%u ORDER BY uRound",guOrg,guEvent);
+		mysql_query(&gMysql,gcQuery);
+		res=mysql_store_result(&gMysql);
+		if(mysql_errno(&gMysql))
+		{
+			fprintf(fp,"%s",mysql_error(&gMysql));
+			return(0);
+		}
+		fprintf(fp,"<br>Select Round");
+		while((field=mysql_fetch_row(res)))
+		{
+			fprintf(fp,"<br><a href=?gcPage=%s&guRound=%s>%s</a>",cPage,field[1],field[0]);
+		}
+		return(0);
+	}
+	return(1);
+}//unsigned uSelectRound(FILE *fp,char *cPage)
 
 
 unsigned uSelectEvent(FILE *fp,char *cPage)
@@ -53,7 +143,7 @@ unsigned uSelectEvent(FILE *fp,char *cPage)
 
       if(!guEvent)
       {
-	sprintf(gcQuery,"SELECT cLabel,uEvent FROM tEvent WHERE uOwner=%u",guOrg);
+	sprintf(gcQuery,"SELECT cLabel,uEvent FROM tEvent WHERE uOwner=%u AND uStatus=1",guOrg);
 	mysql_query(&gMysql,gcQuery);
 	res=mysql_store_result(&gMysql);
 	if(mysql_errno(&gMysql))
@@ -65,7 +155,7 @@ unsigned uSelectEvent(FILE *fp,char *cPage)
 	while((field=mysql_fetch_row(res)))
 	{
 		fprintf(fp,"<br><a href=?gcPage=%s&guEvent=%s>%s</a>",cPage,field[1],field[0]);
-		sprintf(cEvent,"%.31s",field[0]);
+		sprintf(scEvent,"%.31s",field[0]);//TODO change to scEvent
 	}
 	return(0);
       }
@@ -88,7 +178,13 @@ void ProcessJudgeVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"uEvent"))
 			sscanf(entries[i].val,"%u",&suEvent);
 		else if(!strcmp(entries[i].name,"uRound"))
-			sscanf(entries[i].val,"%u",&uRound);
+			sscanf(entries[i].val,"%u",&suRound);
+		else if(!strcmp(entries[i].name,"MainScore"))
+			sscanf(entries[i].val,"%u",&suMainScore);
+		else if(!strcmp(entries[i].name,"FineScore"))
+			sscanf(entries[i].val,"%f",&sfFineScore);
+		else if(!strcmp(entries[i].name,"ScoreFamily"))
+			sscanf(entries[i].val,"%u",&suScoreFamily);
 	}
 
 }//void ProcessJudgeVars(pentry entries[], int x)
@@ -256,19 +352,79 @@ void CommonGetHook(entry gentries[],int x)
 			sscanf(gentries[i].val,"%u",&guEvent);
 			printf("Set-Cookie: unxsEVEvent=%u; secure; httponly; samesite=strict;\n",guEvent);
 		}
+		else if(!strcmp(gentries[i].name,"guRound"))
+		{
+			sscanf(gentries[i].val,"%u",&guRound);
+			printf("Set-Cookie: unxsEVRound=%u; secure; httponly; samesite=strict;\n",guRound);
+		}
 		else if(!strcmp(gentries[i].name,"guHeat"))
 		{
 			sscanf(gentries[i].val,"%u",&guHeat);
 			printf("Set-Cookie: unxsEVHeat=%u; secure; httponly; samesite=strict;\n",guHeat);
 		}
+		else if(!strcmp(gentries[i].name,"guRider"))
+		{
+			sscanf(gentries[i].val,"%u",&guRider);
+			printf("Set-Cookie: unxsEVRider=%u; secure; httponly; samesite=strict;\n",guRider);
+		}
+		else if(!strcmp(gentries[i].name,"ClearRound"))
+		{
+			guRound=0;
+			guHeat=0;
+			guRider=0;
+			printf("Set-Cookie: unxsEVRound=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: unxsEVHeat=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: unxsEVRider=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+		}
+		else if(!strcmp(gentries[i].name,"ClearHeat"))
+		{
+			guHeat=0;
+			guRider=0;
+			printf("Set-Cookie: unxsEVHeat=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: unxsEVRider=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+		}
+		else if(!strcmp(gentries[i].name,"ClearRider"))
+		{
+			guRider=0;
+			printf("Set-Cookie: unxsEVRider=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+		}
 		else if(!strcmp(gentries[i].name,"ClearEvent"))
 		{
 			guEvent=0;
+			guRound=0;
+			guHeat=0;
+			guRider=0;
 			printf("Set-Cookie: unxsEVEvent=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: unxsEVRound=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: unxsEVHeat=\"deleted\";"
+				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+			printf("Set-Cookie: unxsEVRider=\"deleted\";"
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 		}
 		else if(!strcmp(gentries[i].name,"ChromaKey"))
 			gcBgColor="magenta";
+		else if(!strcmp(gentries[i].name,"ToggleHelp"))
+		{
+			if(!guHelp)
+			{
+				printf("Set-Cookie: unxsEVHelp=1; secure; httponly; samesite=strict;\n");
+				guHelp=1;
+			}
+			else
+			{
+				printf("Set-Cookie: unxsEVHelp=\"deleted\";"
+					" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+				guHelp=0;
+			}
+		}
 	}
 }//void CommonGetHook(entry gentries[],int x);
 
@@ -427,9 +583,87 @@ void AdminGetHook(entry gentries[],int x)
 }//void AdminGetHook(entry gentries[],int x)
 
 
+void UpdateInsertScore(float fScore,unsigned uIndex,unsigned uEvent, unsigned uRound,unsigned uHeat,unsigned uRider);
+void UpdateInsertScore(float fScore,unsigned uIndex,unsigned uEvent, unsigned uRound,unsigned uHeat,unsigned uRider)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+
+	sprintf(gcQuery,"SELECT uScore FROM tScore"
+			" WHERE uHeat=%u AND uIndex=%u AND uRider=%u"
+			" AND uOwner=%u AND (uModBy=%u OR uCreatedBy=%u)",
+				uHeat,uIndex,uRider,
+				guOrg,guLoginClient,guLoginClient);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		gcMessage="error0";
+		htmlJudge();
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sprintf(gcQuery,"UPDATE tScore"
+				" SET fScore=%2.2f,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
+				" WHERE uScore=%s",
+						fScore,guLoginClient,
+						field[0]);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			gcMessage="error1";
+			htmlJudge();
+		}
+		else
+		{
+			if(mysql_affected_rows(&gMysql)>0)
+			gcMessage="Score Updated";
+		}
+	}
+	else
+	{
+		sprintf(gcQuery,"INSERT INTO tScore"
+				" SET cLabel='%.25s %u',fScore=%2.2f,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u"
+				" ,uHeat=%u,uIndex=%u,uRider=%u,uEvent=%u,uOwner=%u,uRound=%u",
+					cForeignKey("tRider","cLast",uRider),uIndex+1,fScore,guLoginClient,
+					uHeat,uIndex,uRider,uEvent,guOrg,uRound);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			gcMessage="error2";
+			htmlJudge();
+		}
+		else
+		{
+			if(mysql_affected_rows(&gMysql)>0)
+				gcMessage="Score Created";
+		}
+	}//If insert or update
+
+}//void UpdateInsertScore()
+
+
 void JudgeCommands(pentry entries[], int x)
 {
-	if(!strcmp(gcFunction,"Score"))
+	if(!strcmp(gcFunction,"NewScore"))
+	{
+		ProcessJudgeVars(entries,x);
+		if(!suMainScore)
+			gcMessage="Main score not specified!";
+		if(!suScoreFamily)
+			gcMessage="Score family not specified!";
+		if(!guRider || !guEvent || !guRound || !guHeat)
+			gcMessage="Critical data missing!";
+		if(gcMessage[0])
+			htmlJudge();
+		float fScore=(float)suMainScore+sfFineScore;
+		UpdateInsertScore(fScore,suScoreFamily,guEvent,guRound,guHeat,guRider);
+		PopulateScoreComp(guHeat);
+		if(!gcMessage[0])
+			AdvanceRidersToNextRound(guHeat,guEvent);
+		htmlJudge();
+	}
+	else if(!strcmp(gcFunction,"Score"))
 	{
 		ProcessJudgeVars(entries,x);
 
@@ -438,6 +672,8 @@ void JudgeCommands(pentry entries[], int x)
 			gcMessage="guEvent not specified";
 		if(!suHeat)
 			gcMessage="uHeat not specified";
+		if(!suRound)
+			gcMessage="uRound not specified";
 		if(!uTrickLockProvided)
 			gcMessage="uTrickLock not specified";
 		if(gcMessage[0])
@@ -454,60 +690,11 @@ void JudgeCommands(pentry entries[], int x)
 				{
 				  if(uIndex>=uTrickLock)
 				  {
-        				MYSQL_RES *res;
-	        			MYSQL_ROW field;
+					float fScore=0.0;
+					sscanf(entries[i].val,"%f",&fScore);
+					UpdateInsertScore(fScore,uIndex,guEvent,suRound,suHeat,uRider);
 
-					sprintf(gcQuery,"SELECT uScore FROM tScore"
-					" WHERE uHeat=%u AND uIndex=%u AND uRider=%u"
-					" AND uOwner=%u AND (uModBy=%u OR uCreatedBy=%u)",
-						suHeat,uIndex,uRider,
-						guOrg,guLoginClient,guLoginClient);
-					mysql_query(&gMysql,gcQuery);
-					if(*mysql_error(&gMysql))
-					{
-						gcMessage="error0";
-						htmlJudge();
-					}
-					res=mysql_store_result(&gMysql);
-					if((field=mysql_fetch_row(res)))
-					{
-						sprintf(gcQuery,"UPDATE tScore"
-							" SET fScore=%s,uModDate=UNIX_TIMESTAMP(NOW()),uModBy=%u"
-							" WHERE uScore=%s",
-								entries[i].val,guLoginClient,
-								field[0]);
-						mysql_query(&gMysql,gcQuery);
-						if(*mysql_error(&gMysql))
-						{
-							gcMessage="error1";
-							htmlJudge();
-						}
-						else
-						{
-							if(mysql_affected_rows(&gMysql)>0)
-								gcMessage="Score Updated";
-						}
-				  	}
-					else
-					{
-						sprintf(gcQuery,"INSERT INTO tScore"
-							" SET cLabel='%.25s %u',fScore=%s,uCreatedDate=UNIX_TIMESTAMP(NOW()),uCreatedBy=%u"
-							" ,uHeat=%u,uIndex=%u,uRider=%u,uEvent=%u,uOwner=%u,uRound=%u",
-								cForeignKey("tRider","cLast",uRider),uIndex+1,entries[i].val,guLoginClient,
-								suHeat,uIndex,uRider,guEvent,guOrg,uRound);
-						mysql_query(&gMysql,gcQuery);
-						if(*mysql_error(&gMysql))
-						{
-							gcMessage="error2";
-							htmlJudge();
-						}
-						else
-						{
-							if(mysql_affected_rows(&gMysql)>0)
-								gcMessage="Score Created";
-						}
-					}//If insert or update
-				     }//If trick lock restriction
+				  }//If trick lock restriction
 				}//if sscanf ok
 			}//for fScore fields only
 		}//for each field
@@ -688,6 +875,9 @@ void htmlJudgePage(char *cTitle, char *cTemplateName)
 
 void funcJudge(FILE *fp)
 {
+	funcNewJudge(fp);
+	return;
+
 	MYSQL_RES *res;
 	MYSQL_ROW field;
 	MYSQL_RES *res2;
@@ -712,7 +902,9 @@ void funcJudge(FILE *fp)
 
 
 	if(!uSelectEvent(fp,"Judge")) return;
+	if(!uSelectRound(fp,"Judge")) return;
 	if(!uSelectHeat(fp,"Judge")) return;
+	if(!uSelectRider(fp,"Judge")) return;
 
 	fprintf(fp,"<div class=\"sTable\">");
 	fprintf(fp,"<div class=\"sTableRow\">");
@@ -757,12 +949,12 @@ void funcJudge(FILE *fp)
 		sscanf(field[7],"%u",&uStatus);
 		if(field[8][0])
 		sprintf(dTimeLeft,"%.31s",field[8]);
-		sprintf(cEvent,"%.31s",field[9]);
+		sprintf(scEvent,"%.31s",field[9]);
 	}
 	if(!uHeat || !uRound) 
 	{
 		fprintf(fp,"<div class=\"sTableCellYellow\">Automated selection: No active or suspended heat for event %s"
-				"<br> Solution: Select a heat via Event tab.</div>",cEvent);
+				"<br> Solution: Select a heat via Event tab.</div>",scEvent);
 		fprintf(fp,"</div>");
 		fprintf(fp,"</div>");
 		return;
@@ -800,7 +992,7 @@ void funcJudge(FILE *fp)
 		fprintf(fp,"<div class=\"sTableCellGreen\">%s</div>",cStatus);
 		fprintf(fp,"<div class=\"sTableCellBlackBold\">%s</div>",dTimeLeft);
 	}
-	fprintf(fp,"<div class=\"sTableCellBlack\">%s (<a href=?gcPage=Judge&ClearEvent>X</a>)</div>",cEvent);
+	fprintf(fp,"<div class=\"sTableCellBlack\">%s (<a href=?gcPage=Judge&ClearEvent>X</a>)</div>",scEvent);
 	fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cRound);
 	fprintf(fp,"<div class=\"sTableCellBlack\"><a title='Overlay' href=?gcFunction=Heat&uHeat=%u >HEAT %s</a></div>",
 					uHeat,cHeat);
@@ -1050,20 +1242,25 @@ void funcEvent(FILE *fp)
 				sprintf(dTimeLeft,"%.31s",field[3]);
 			sprintf(cStatus,"%.31s",field[4]);
 			sscanf(field[5],"%u",&uStatus);
-			sprintf(cEvent,"%.31s",field[6]);
+			sprintf(scEvent,"%.31s",field[6]);
 			sprintf(cRound,"%.31s",field[7]);
 			sscanf(field[8],"%u",&uNumScores); sscanf(field[9],"%u",&uTrickLock);
 			if(!uOnlyOnce++)
 			{
 				fprintf(fp,"<div class=\"sTable\">\n");
 				fprintf(fp,"<div class=\"sTableRow\">\n");
-				fprintf(fp,"<div class=\"sTableCellBlue\">%s"
+				if(guPermLevel<10)
+					fprintf(fp,"<div class=\"sTableCellBlue\">%s"
+					" (<a title='Change Event' href=?gcPage=Event&ClearEvent>X</a>)"
+					"</div>",scEvent);
+				else
+					fprintf(fp,"<div class=\"sTableCellBlue\">%s"
 					" (<a title='Change Event' href=?gcPage=Event&ClearEvent>X</a>)"
 					" (<a title='Add 1 hour to all heats' href=?gcPage=Event&AddHour>+H</a>)"
 					" (<a title='Subtract 1 hour from all heats' href=?gcPage=Event&SubHour>-H</a>)"
 					" (<a title='Add 1 day to all heats ' href=?gcPage=Event&AddDay>+D</a>)"
 					" (<a title='SUbtract 1 day from all heats' href=?gcPage=Event&SubDay>-D</a>)"
-					"</div>",cEvent);
+					"</div>",scEvent);
 				fprintf(fp,"<div class=\"sTableCellBlue\">HEAT</div>\n");
 				fprintf(fp,"<div class=\"sTableCellBlue\">STATUS</div>\n");
 				fprintf(fp,"<div class=\"sTableCellBlue\">TIME LEFT</div>\n");
@@ -1843,6 +2040,218 @@ void funcWind(FILE *fp)
 	fprintf(fp,"</div>");
 	fprintf(fp,"</div>");
 }//void funcWind((FILE *fp)
+
+
+void funcNewJudge(FILE *fp)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	MYSQL_RES *res2;
+	MYSQL_ROW field2;
+	unsigned uHeat=0;
+	unsigned uRound=0;
+	unsigned uStatus=0;
+	char cStatus[32]={""};
+	char cHeat[32]={""};
+	char cRound[32]={""};
+	char dStart[32]={""};
+	char dEnd[32]={""};
+	char dTimeLeft[32]={""};
+
+
+	if(!uSelectEvent(fp,"Judge")) return;
+	if(!uSelectRound(fp,"Judge")) return;
+	if(!uSelectHeat(fp,"Judge")) return;
+	if(!uSelectRider(fp,"Judge")) return;
+
+	fprintf(fp,"<div class=\"sTable\">");
+	fprintf(fp,"<div class=\"sTableRow\">");
+
+	if(!suHeat)
+		suHeat=guHeat;
+	sprintf(gcQuery,"SELECT tHeat.uHeat,UPPER(tHeat.cLabel),tHeat.uRound,"
+			" DATE_FORMAT(tHeat.dStart,'%%H:%%i:%%s'),DATE_FORMAT(tHeat.dEnd,'%%H:%%i:%%s'),"
+			"tStatus.cLabel,tStatus.uStatus,"
+			"TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s'),UPPER(tEvent.cLabel),UPPER(tRound.cLabel)"
+			" FROM tHeat,tStatus,tEvent,tRound"
+			" WHERE tHeat.uHeat=%u AND tStatus.uStatus=tHeat.uStatus"
+			" AND tHeat.uRound=tRound.uRound"
+			" AND tHeat.uEvent=tEvent.uEvent",suHeat);
+	mysql_query(&gMysql,gcQuery);
+	if(*mysql_error(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[0],"%u",&uHeat);
+		sprintf(cHeat,"%.31s",field[1]);
+		sscanf(field[2],"%u",&uRound);
+		if(field[3][0])
+			sprintf(dStart,"%.31s",field[3]);
+		if(field[4][0])
+			sprintf(dEnd,"%.31s",field[4]);
+		sprintf(cStatus,"%.31s",field[5]);
+		sscanf(field[6],"%u",&uStatus);
+		if(field[7][0])
+			sprintf(dTimeLeft,"%.31s",field[7]);
+		sprintf(scEvent,"%.31s",field[8]);
+		sprintf(cRound,"%.31s",field[9]);
+	}
+	if(!uHeat || !uRound) 
+	{
+		fprintf(fp,"<div class=\"sTableCellYellow\">Unexpected error for %s",scEvent);
+		fprintf(fp,"</div>");
+		fprintf(fp,"</div>");
+		return;
+	}
+
+	fprintf(fp,"<div class=\"sTableCellGreen\">%s (<a title='Change Rider' href=?gcPage=Judge&ClearRider>X</a>)</div>",cForeignKey("tRider","cLabel",guRider));
+	fprintf(fp,"<div class=\"sTableCellBlack\">%s (<a title='Change Event' href=?gcPage=Judge&ClearEvent>X</a>)"
+			" (<a title='Toggle Help' href=?gcPage=Judge&ToggleHelp>H</a>)</div>",scEvent);
+	fprintf(fp,"<div class=\"sTableCellBlack\">%s (<a title='Change Round' href=?gcPage=Judge&ClearRound>X</a>)</div>",cRound);
+	fprintf(fp,"<div class=\"sTableCellBlack\"><a title='Overlay' href=?gcFunction=Heat&uHeat=%u >HEAT %s (<a title='Change Heat' href=?gcPage=Judge&ClearHeat>X</a>)</a></div>",
+					uHeat,cHeat);
+	if(uStatus==1)
+	{
+		fprintf(fp,"<div class=\"sTableCellGreen\">TO END</div>");
+		fprintf(fp,"<div class=\"sTableCellBlackBold\"><p id=\"demo\">%s</p></div>",dTimeLeft);
+	}
+	else
+	{
+		fprintf(fp,"<div class=\"sTableCellGreen\">%s</div>",cStatus);
+		fprintf(fp,"<div class=\"sTableCellBlackBold\">%s</div>",dTimeLeft);
+	}
+	fprintf(fp,"</div>");
+
+	fprintf(fp,"</div>");
+
+
+      	fprintf(fp,"<form class=\"form-signin\" role=\"form\" method=\"post\" action=\"/unxsEVApp/\">");
+
+	unsigned i;
+	if(guHelp)
+	{
+		fprintf(fp,"You can score this rider during the heat scoring duration time as much as you like but only the last score for each family will be counted.");
+		fprintf(fp,"<br>Score Family ");
+	}
+	char *cChecked="";
+	for(i=0;i<3;i++)
+	{
+		if(suScoreFamily==i) cChecked="checked ";
+		else cChecked="";
+		fprintf(fp,"<div class='form-check form-check-inline'>");
+		fprintf(fp,"\t<input class='form-check-input' name='ScoreFamily' type='radio' id='radio%u' value='%u' %s>",i,i,cChecked);
+		fprintf(fp,"\t<label class='form-check-label' for='radio%u'>&#%u;</label>",i,i+'A');
+		fprintf(fp,"</div>");
+	}
+	fprintf(fp,"<br>");
+	if(guHelp)
+		fprintf(fp,"Main Score ");
+	for(i=1;i<=10;i++)
+	{
+		if(suMainScore==i) cChecked="checked ";
+		else cChecked="";
+		fprintf(fp,"<div class='form-check form-check-inline'>");
+		fprintf(fp,"\t<input class='form-check-input' name='MainScore' type='radio' id='radio%u' value='%u' %s>",i,i,cChecked);
+		fprintf(fp,"\t<label class='form-check-label' for='radio%u'>%u</label>",i,i);
+		fprintf(fp,"</div>");
+	}
+	fprintf(fp,"<br>");
+	if(guHelp)
+		fprintf(fp,"Fine Score ");
+	for(i=0;i<10;i++)
+	{
+		float fFineScore=(float)i/10.0;
+		fprintf(fp,"<div class='form-check form-check-inline'>");
+		if(sfFineScore==fFineScore)
+			cChecked="checked ";
+		else
+			cChecked="";
+
+		fprintf(fp,"\t<input class='form-check-input' name='FineScore' type='radio' id='radio%u' value='%0.2f' %s>",
+						i,fFineScore,cChecked);
+		fprintf(fp,"\t<label class='form-check-label' for='radio%u'>%0.2f</label>",i,fFineScore);
+		fprintf(fp,"</div>");
+	}
+
+
+        fprintf(fp,"<br><button class='btn btn-lg btn-primary btn-block' type='submit' name=gcFunction value='NewScore'>Save</button>");
+	fprintf(fp,"</form>");
+
+	//if(guPermLevel<10)
+	//	return;
+	
+
+	sprintf(gcQuery,"SELECT DISTINCT tClient.cLabel,tClient.uClient"
+			" FROM tScore,tClient"
+			" WHERE tScore.uModBy=tClient.uClient"
+			" AND tScore.uHeat=%u AND tScore.uOwner=%u",uHeat,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		fprintf(fp,"%s",mysql_error(&gMysql));
+		return;
+	}
+	res=mysql_store_result(&gMysql);
+	fprintf(fp,"\n<br><div class=\"sTable\">\n");
+	unsigned uClient=0;
+	unsigned uPrevRider=0;
+	unsigned uRider=0;
+	while((field=mysql_fetch_row(res)))
+	{
+		sscanf(field[1],"%u",&uClient);
+		fprintf(fp,"<div class=\"sTableRow\">\n");
+		fprintf(fp,"\t<div class=\"sTableCell\">%s</div>\n",field[0]);
+		sprintf(gcQuery,"SELECT tScore.uIndex,tScore.fScore,tRider.cLast,tRider.uRider"
+			" FROM tScore,tRider"
+			" WHERE tScore.uHeat=%u AND tScore.uOwner=%u"
+			" AND tRider.uRider=tScore.uRider"
+			" AND fScore>0.0"
+			" AND tScore.uModBy=%u ORDER BY tScore.uRider,tScore.uIndex",uHeat,guOrg,uClient);
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			fprintf(fp,"%s",mysql_error(&gMysql));
+			return;
+		}
+		res2=mysql_store_result(&gMysql);
+		unsigned uCount=0;
+		unsigned uIndex=0;
+		unsigned uNumRows=mysql_num_rows(res2);
+		while((field2=mysql_fetch_row(res2)))
+		{
+			sscanf(field2[3],"%u",&uRider);
+			sscanf(field2[0],"%u",&uIndex);
+			if(uPrevRider!=uRider)
+				fprintf(fp,"\t\t<div class=\"sTableCell\">%s</div>\n",field2[2]);
+			else
+				fprintf(fp,"\t\t<div class=\"sTableCell\"></div>\n");
+			fprintf(fp,"\t\t<div class=\"sTableCell\">&#%u;</div>\n",uIndex+'A');
+			fprintf(fp,"\t\t<div class=\"sTableCell\">%s</div>\n",field2[1]);
+
+			if(uCount<uNumRows-1)
+			{
+				fprintf(fp,"</div><!--sTableRow-->\n");
+				fprintf(fp,"<div class=\"sTableRow\">\n");
+				fprintf(fp,"\t<div class=\"sTableCell\"></div>\n");
+			}
+			if(uPrevRider!=uRider)
+			{
+				uPrevRider=uRider;
+			}
+			uCount++;
+		}
+		fprintf(fp,"</div><!--sTableRow-->\n");
+	}
+	fprintf(fp,"</div><!--sTable-->\n");
+
+
+
+}//void funcNewJudge(FILE *fp)
+
 
 #include "automation.c"
 

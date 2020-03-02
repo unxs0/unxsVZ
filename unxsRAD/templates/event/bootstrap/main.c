@@ -30,8 +30,11 @@ unsigned guView=0;
 
 //APP VARS
 //From cookies
-unsigned guHeat=0;
+unsigned guHelp=0;
 unsigned guEvent=0;
+unsigned guRound=0;
+unsigned guHeat=0;
+unsigned guRider=0;
 
 //SSLLoginCookie()
 char gcCookie[1024]={""};
@@ -212,10 +215,12 @@ int main(int argc, char *argv[])
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: {{cProject}}SessionHash=\"deleted\";"
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+/*
 			printf("Set-Cookie: {{cProject}}Event=\"deleted\";"
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
 			printf("Set-Cookie: {{cProject}}Heat=\"deleted\";"
 				" discard; secure; httponly; expires=\"Mon, 01-Jan-1971 00:10:10 GMT\"\n");
+*/
 			sprintf(gcQuery,"INSERT INTO tLog SET cLabel='logout %.99s',uLogType=8,uPermLevel=%u,"
 					"uLoginClient=%u,cLogin='%.99s',cHost='%.99s',cServer='%.99s',uOwner=%u,"
 					"uCreatedBy=1,uCreatedDate=UNIX_TIMESTAMP(NOW())",
@@ -603,15 +608,30 @@ void SSLCookieLogin(void)
 				sprintf(gcPasswd,"%.99s",cP);
 			}
 		}
+		if((cP=strstr(gcCookie,"{{cProject}}Event=")))
+		{
+			cP+=strlen("{{cProject}}Event=");
+			sscanf(cP,"%u",&guEvent);
+		}
+		if((cP=strstr(gcCookie,"{{cProject}}Round=")))
+		{
+			cP+=strlen("{{cProject}}Round=");
+			sscanf(cP,"%u",&guRound);
+		}
 		if((cP=strstr(gcCookie,"{{cProject}}Heat=")))
 		{
 			cP+=strlen("{{cProject}}Heat=");
 			sscanf(cP,"%u",&guHeat);
 		}
-		if((cP=strstr(gcCookie,"{{cProject}}Event=")))
+		if((cP=strstr(gcCookie,"{{cProject}}Rider=")))
 		{
-			cP+=strlen("{{cProject}}Event=");
-			sscanf(cP,"%u",&guEvent);
+			cP+=strlen("{{cProject}}Rider=");
+			sscanf(cP,"%u",&guRider);
+		}
+		if((cP=strstr(gcCookie,"{{cProject}}Help=")))
+		{
+			cP+=strlen("{{cProject}}Help=");
+			sscanf(cP,"%u",&guHelp);
 		}
 	}//if gcCookie[0] time saver
 
