@@ -646,7 +646,6 @@ void PopulateScoreComp(unsigned uHeat)
 	unsigned uScoreComp=0;
 	float fScore=0.0;
 
-	gcMessage="";
 	if(!uHeat)
 	{
 		gcMessage="PopulateScoreComp !uHeat";
@@ -699,21 +698,26 @@ void PopulateScoreComp(unsigned uHeat)
 		return;
 	}
 	res=mysql_store_result(&gMysql);
+	if(mysql_num_rows(res)<1)
+	{
+		gcMessage="PopulateScoreComp Error0-1";
+		return;
+	}
 	while((field=mysql_fetch_row(res)))
 	{
 		sscanf(field[0],"%u",&uIndex);
 		sscanf(field[1],"%f",&fScore);
 		sscanf(field[2],"%u",&uRider);
-	if(!uRound)
-	{
-		gcMessage="PopulateScoreComp !uRound";
-		return;
-	}
-	if(!uEvent)
-	{
-		gcMessage="PopulateScoreComp !uEvent";
-		return;
-	}
+		if(!uRound)
+		{
+			gcMessage="PopulateScoreComp !uRound";
+			return;
+		}
+		if(!uEvent)
+		{
+			gcMessage="PopulateScoreComp !uEvent";
+			return;
+		}
 		sprintf(gcQuery,"SELECT uScoreComp FROM tScoreComp WHERE uHeat=%u AND uRider=%u AND uIndex=%u",
 				uHeat,uRider,uIndex);
 		mysql_query(&gMysql,gcQuery);
@@ -749,7 +753,14 @@ void PopulateScoreComp(unsigned uHeat)
 				return;
 			}
 		}
-		
+		mysql_free_result(res2);
+	}
+	mysql_free_result(res);
+
+	if(mysql_affected_rows(&gMysql)<1)
+	{
+		gcMessage="PopulateScoreComp Error4";
+		return;
 	}
 	
 }//void PopulateScoreComp(unsigned uHeat)
@@ -967,6 +978,7 @@ void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent)
 			htmlFooter("Default.Footer");
 		}
 	}
+	mysql_free_result(res);
 
 }//void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent)
 

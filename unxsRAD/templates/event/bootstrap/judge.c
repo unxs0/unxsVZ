@@ -17,6 +17,7 @@ static unsigned suRound=0;
 static unsigned suHeat=0;
 static unsigned suMainScore=0;
 static unsigned suScoreFamily=0;
+static unsigned suScoreFamilyProvided=0;
 static float sfFineScore=0.0;
 static unsigned uTrickLock=0;
 static unsigned uTrickLockProvided=0;
@@ -184,7 +185,10 @@ void ProcessJudgeVars(pentry entries[], int x)
 		else if(!strcmp(entries[i].name,"FineScore"))
 			sscanf(entries[i].val,"%f",&sfFineScore);
 		else if(!strcmp(entries[i].name,"ScoreFamily"))
+		{
 			sscanf(entries[i].val,"%u",&suScoreFamily);
+			suScoreFamilyProvided=1;
+		}
 	}
 
 }//void ProcessJudgeVars(pentry entries[], int x)
@@ -639,6 +643,7 @@ void UpdateInsertScore(float fScore,unsigned uIndex,unsigned uEvent, unsigned uR
 				gcMessage="Score Created";
 		}
 	}//If insert or update
+	mysql_free_result(res);
 
 }//void UpdateInsertScore()
 
@@ -650,7 +655,7 @@ void JudgeCommands(pentry entries[], int x)
 		ProcessJudgeVars(entries,x);
 		if(!suMainScore)
 			gcMessage="Main score not specified!";
-		if(!suScoreFamily)
+		if(!suScoreFamilyProvided)
 			gcMessage="Score family not specified!";
 		if(!guRider || !guEvent || !guRound || !guHeat)
 			gcMessage="Critical data missing!";
@@ -2108,9 +2113,10 @@ void funcNewJudge(FILE *fp)
 		return;
 	}
 
-	fprintf(fp,"<div class=\"sTableCellGreen\">%s (<a title='Change Rider' href=?gcPage=Judge&ClearRider>X</a>)</div>",cForeignKey("tRider","cLabel",guRider));
-	fprintf(fp,"<div class=\"sTableCellBlack\">%s (<a title='Change Event' href=?gcPage=Judge&ClearEvent>X</a>)"
-			" (<a title='Toggle Help' href=?gcPage=Judge&ToggleHelp>H</a>)</div>",scEvent);
+	fprintf(fp,"<div class=\"sTableCellGreen\">%s (<a title='Change Rider' href=?gcPage=Judge&ClearRider>X</a>)"
+			"(<a title='Toggle Help' href=?gcPage=Judge&ToggleHelp>H</a>)</div>",
+					cForeignKey("tRider","cLabel",guRider));
+	fprintf(fp,"<div class=\"sTableCellBlack\">%s (<a title='Change Event' href=?gcPage=Judge&ClearEvent>X</a>)</div>",scEvent);
 	fprintf(fp,"<div class=\"sTableCellBlack\">%s (<a title='Change Round' href=?gcPage=Judge&ClearRound>X</a>)</div>",cRound);
 	fprintf(fp,"<div class=\"sTableCellBlack\"><a title='Overlay' href=?gcFunction=Heat&uHeat=%u >HEAT %s (<a title='Change Heat' href=?gcPage=Judge&ClearHeat>X</a>)</a></div>",
 					uHeat,cHeat);
@@ -2187,7 +2193,7 @@ void funcNewJudge(FILE *fp)
 
 	sprintf(gcQuery,"SELECT DISTINCT tClient.cLabel,tClient.uClient"
 			" FROM tScore,tClient"
-			" WHERE tScore.uModBy=tClient.uClient"
+			" WHERE tScore.uCreatedBy=tClient.uClient"
 			" AND tScore.uHeat=%u AND tScore.uOwner=%u",uHeat,guOrg);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql))
@@ -2202,6 +2208,7 @@ void funcNewJudge(FILE *fp)
 	unsigned uRider=0;
 	while((field=mysql_fetch_row(res)))
 	{
+		uPrevRider=0;
 		sscanf(field[1],"%u",&uClient);
 		fprintf(fp,"<div class=\"sTableRow\">\n");
 		fprintf(fp,"\t<div class=\"sTableCell\">%s</div>\n",field[0]);
@@ -2210,7 +2217,7 @@ void funcNewJudge(FILE *fp)
 			" WHERE tScore.uHeat=%u AND tScore.uOwner=%u"
 			" AND tRider.uRider=tScore.uRider"
 			" AND fScore>0.0"
-			" AND tScore.uModBy=%u ORDER BY tScore.uRider,tScore.uIndex",uHeat,guOrg,uClient);
+			" AND tScore.uCreatedBy=%u ORDER BY tScore.uRider,tScore.uIndex",uHeat,guOrg,uClient);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql))
 		{
