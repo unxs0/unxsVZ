@@ -92,7 +92,8 @@ unsigned uSelectHeat(FILE *fp,char *cPage)
 
 	if(!guHeat)
 	{
-		sprintf(gcQuery,"SELECT cLabel,uHeat FROM tHeat WHERE uOwner=%u AND uEvent=%u AND uRound=%u",guOrg,guEvent,guRound);
+		sprintf(gcQuery,"SELECT cLabel,uHeat FROM tHeat"
+				" WHERE uOwner=%u AND uEvent=%u AND uRound=%u ORDER BY uHeat",guOrg,guEvent,guRound);
 		mysql_query(&gMysql,gcQuery);
 		res=mysql_store_result(&gMysql);
 		if(mysql_errno(&gMysql))
