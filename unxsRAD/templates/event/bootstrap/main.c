@@ -132,6 +132,8 @@ int main(int argc, char *argv[])
 			OverlayGetHook(gentries,x);
         	else if(!strcmp(gcFunction,"Wind")) 
 			WindGetHook(gentries,x);
+        	else if(!strcmp(gcFunction,"Rider")) 
+			RiderGetHook(gentries,x);
         	else if(!strcmp(gcFunction,"Tournament")) 
 			TournamentGetHook(gentries,x);
         	else if(!strcmp(gcFunction,"BestTrick")) 
@@ -146,6 +148,10 @@ int main(int argc, char *argv[])
 			else if(!strcmp(gcPage,"Event"))
 			{
 				EventGetHook(gentries,x);
+			}
+			else if(!strcmp(gcPage,"Live"))
+			{
+				LiveGetHook(gentries,x);
 			}
 			else if(!strcmp(gcPage,"Judge"))
 			{
@@ -248,10 +254,14 @@ int main(int argc, char *argv[])
 			htmlBestTrick();
         	else if(!strcmp(gcFunction,"Wind")) 
 			htmlWind();
+        	else if(!strcmp(gcFunction,"Rider")) 
+			htmlRider();
         	else if(!strcmp(gcFunction,"Tournament")) 
 			htmlTournament();
         	else if(!strcmp(gcFunction,"HeatEnd")) 
 			htmlHeatEnd();
+        	else if(!strcmp(gcFunction,"Live")) 
+			htmlLive();
         	else if(!strcmp(gcFunction,"Event")) 
 			htmlEvent();
         	else if(!strcmp(gcFunction,"Admin")) 
@@ -513,12 +523,16 @@ void AppFunctions(FILE *fp,char *cFunction)
 		funcEvent(fp);
 	else if(!strcmp(cFunction,"funcAdmin"))
 		funcAdmin(fp);
+	else if(!strcmp(cFunction,"funcLive"))
+		funcLive(fp);
 
 	//Overlays
 	else if(!strcmp(cFunction,"funcHeat"))
 		funcHeat(fp);
 	else if(!strcmp(cFunction,"funcWind"))
 		funcWind(fp);
+	else if(!strcmp(cFunction,"funcRider"))
+		funcRider(fp);
 	else if(!strcmp(cFunction,"funcHeatEnd"))
 		funcHeatEnd(fp);
 	else if(!strcmp(cFunction,"funcBestTrick"))
