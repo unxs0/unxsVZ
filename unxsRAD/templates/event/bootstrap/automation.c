@@ -79,7 +79,6 @@ void funcAdmin(FILE *fp)
 	unsigned uHeatSize=0;
 
 	if(!uSelectEvent(fp,"Admin")) return;
-	if(!uSelectHeat(fp,"Admin")) return;
 
 	//TODO tRound.uHeatSize exists and should be used
 	sprintf(gcQuery,"SELECT cLabel,cParticipants,uRounds,uHeatSize,uPassHeat,"
@@ -860,9 +859,12 @@ void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent)
 		sscanf(field[0],"%*[A-z ] %u",&uRoundNum);
 		if(!uRoundNum)
 		{
+
 			sprintf(cBuffer,"%.255s",field[0]);
+			//If final no advance to any further round
+			if(!strncmp(cBuffer,"Final",5)) return;
 			htmlHeader("AdvanceRiders","Default.Header");
-			fprintf(stdout,"uRoundNum==0 %s",cBuffer);
+			fprintf(stdout,"uRoundNum==0 |%s|",cBuffer);
 			htmlFooter("Default.Footer");
 		}
 	}
