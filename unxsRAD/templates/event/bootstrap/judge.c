@@ -33,7 +33,6 @@ void AddHour(void);
 void SubHour(void);
 void AddDay(void);
 void SubDay(void);
-void funcNewJudge(FILE *fp);
 
 void htmlHeat(void);
 void htmlBestTrick(void);
@@ -41,11 +40,20 @@ void htmlHeatEnd(void);
 void htmlEvent(void);
 void htmlLive(void);
 void htmlJudge(void);
-void PopulateScoreComp(unsigned uHeat);
-void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent);
+
+//
 //extern
+//
 void unxsvzLog(unsigned uTablePK,char *cTableName,char *cLogEntry,unsigned guPermLevel,unsigned guLoginClient,char *gcLogin,char *gcHost);
 
+//funcjudge.c
+void GetdEnd(void);
+void funcNewJudge(FILE *fp);
+void funcudge(FILE *fp);
+
+//automation.c
+void PopulateScoreComp(unsigned uHeat);
+void AdvanceRidersToNextRound(unsigned uHeat,unsigned uEvent);
 
 unsigned uSelectRider(FILE *fp,char *cPage,unsigned uMode)
 {
@@ -58,7 +66,7 @@ unsigned uSelectRider(FILE *fp,char *cPage,unsigned uMode)
 	if(!guRider || uMode)
 	{
 		if(uMode==2)
-		sprintf(gcQuery,"SELECT DISTINCT tRider.cLabel,tRider.uRider FROM tRider,tScore"
+		sprintf(gcQuery,"SELECT DISTINCT tRider.cLabel,tRider.uRider,tRider.cTeam FROM tRider,tScore"
 				" WHERE tScore.uOwner=%u"
 				" AND tRider.cLabel NOT LIKE 'WINNER%%'"
 				" AND tRider.cLabel NOT LIKE 'SECOND%%'"
@@ -66,7 +74,7 @@ unsigned uSelectRider(FILE *fp,char *cPage,unsigned uMode)
 						guOrg,
 						guEvent);
 		else
-		sprintf(gcQuery,"SELECT DISTINCT tRider.cLabel,tRider.uRider FROM tRider,tScore"
+		sprintf(gcQuery,"SELECT DISTINCT tRider.cLabel,tRider.uRider,tRider.cTeam FROM tRider,tScore"
 				" WHERE tScore.uOwner=%u AND tScore.uHeat=%u"
 				" AND tScore.uEvent=%u AND tScore.uRider=tRider.uRider ORDER BY tRider.cLast",
 						guOrg,guHeat,
@@ -84,7 +92,8 @@ unsigned uSelectRider(FILE *fp,char *cPage,unsigned uMode)
 		{
 			sscanf(field[1],"%u",&uRider);
 			if(guRider!=uRider)
-				fprintf(fp,"<br><a title='Change to this rider' href=?gcPage=%s&guRider=%u>%s</a>",cPage,uRider,field[0]);
+				fprintf(fp,"<br><a title='Change to this rider' href=?gcPage=%s&guRider=%u>%s/%s</a>",
+					cPage,uRider,field[0],field[2]);
 		}
 		return(0);
 	}
@@ -206,6 +215,65 @@ void ProcessJudgeVars(pentry entries[], int x)
 	}
 
 }//void ProcessJudgeVars(pentry entries[], int x)
+
+
+void SetHeatNow(void)
+{
+	if(guPermLevel<10 || !guHeat || !guRound)
+		return;
+
+	char cBuffer[256]={""};
+	long int liOffset=0;
+
+	//Calculate offset of selected heat to event start time.
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT TIMESTAMPDIFF(SECOND,dStart,NOW()) FROM tHeat WHERE uHeat=%u AND uOwner=%u",guHeat,guOrg);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		sprintf(cBuffer,"%.255s",mysql_error(&gMysql));
+		htmlHeader("TIMEDIFF","Default.Header");
+		fprintf(stdout,"%s",cBuffer);
+		htmlFooter("Default.Footer");
+	}
+	res=mysql_store_result(&gMysql);
+	if((field=mysql_fetch_row(res)))
+		sscanf(field[0],"%li",&liOffset);
+
+	//Set all heats and event
+	sprintf(gcQuery,"UPDATE tEvent SET"
+			" dStart=DATE_ADD(dStart,INTERVAL %li SECOND),"
+			" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+			" WHERE uEvent=%u",
+				liOffset,
+				guLoginClient,guEvent);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		sprintf(cBuffer,"%.255s",mysql_error(&gMysql));
+		htmlHeader("AddEventOffset","Default.Header");
+		fprintf(stdout,"%s",cBuffer);
+		htmlFooter("Default.Footer");
+	}
+
+	sprintf(gcQuery,"UPDATE tHeat SET"
+			" dStart=DATE_ADD(dStart,INTERVAL %li SECOND),"
+			" dEnd=DATE_ADD(dEnd,INTERVAL %li SECOND),"
+			" uModBy=%u,uModDate=UNIX_TIMESTAMP(NOW())"
+			" WHERE uEvent=%u",
+				liOffset,
+				liOffset,
+				guLoginClient,guEvent);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql))
+	{
+		sprintf(cBuffer,"%.255s",mysql_error(&gMysql));
+		htmlHeader("AddHeatOffset","Default.Header");
+		fprintf(stdout,"%s",cBuffer);
+		htmlFooter("Default.Footer");
+	}
+}//void SetHeatNow(void)
 
 
 void AddHour(void)
@@ -589,6 +657,10 @@ void EventGetHook(entry gentries[],int x)
 		{
 			SubDay();
 		}
+		else if(!strcmp(gentries[i].name,"SetHeatNow"))
+		{
+			SetHeatNow();
+		}
 	}
 
 	htmlEvent();
@@ -766,39 +838,6 @@ void JudgeCommands(pentry entries[], int x)
 }//void UserCommands(pentry entries[], int x)
 
 
-//Must work with funcJudge e.g.
-void GetdEnd(void)
-{
-        MYSQL_RES *res;
-	MYSQL_ROW field;
-	if(!suHeat && guHeat)
-		suHeat=guHeat;
-	if(!suHeat)
-		sprintf(gcQuery,"SELECT DATE_FORMAT(tHeat.dEnd,'%%b %%d, %%Y %%H:%%i:%%s')"
-			" FROM tHeat,tEvent WHERE tHeat.uStatus=1 AND tHeat.uEvent=tEvent.uEvent AND tHeat.uEvent=%u"
-			" AND NOW()>=DATE_SUB(tHeat.dStart,INTERVAL tEvent.uHeatPreStart MINUTE)"
-			" AND NOW()<=DATE_ADD(tHeat.dEnd,INTERVAL tEvent.uHeatPostEnd MINUTE)"
-			" LIMIT 1",
-				guEvent);
-	else
-		sprintf(gcQuery,"SELECT DATE_FORMAT(tHeat.dEnd,'%%b %%d, %%Y %%H:%%i:%%s')"
-			" FROM tHeat,tEvent WHERE tHeat.uStatus=1 AND tHeat.uEvent=tEvent.uEvent AND tHeat.uHeat=%u",
-				suHeat);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		htmlHeader("GetdEnd","Default.Header");
-		fprintf(stdout,"%.255s",mysql_error(&gMysql));
-		htmlFooter("Default.Footer");
-	}
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		if(field[0][0])
-			sprintf(dEnd,"%.31s",field[0]);
-	}
-}//GetdEnd
-
 
 void htmlHeat(void)
 {
@@ -951,298 +990,6 @@ void htmlJudgePage(char *cTitle, char *cTemplateName)
 }//htmlJudgePage()
 
 
-void funcJudge(FILE *fp)
-{
-	funcNewJudge(fp);
-	return;
-
-	MYSQL_RES *res;
-	MYSQL_ROW field;
-	MYSQL_RES *res2;
-	MYSQL_ROW field2;
-	MYSQL_RES *res3;
-	MYSQL_ROW field3;
-	unsigned uEvent=0;
-	unsigned uHeat=0;
-	unsigned uTrickLock=0;
-	unsigned uRound=0;
-	unsigned uNumScores=0;
-	unsigned uStatus=0;
-	char cStatus[32]={""};
-	char cHeat[32]={""};
-	char cRound[32]={""};
-	char dStart[32]={""};
-	char dEnd[32]={""};
-	char dTimeLeft[32]={""};
-	register int i;
-	float fTotalScore=0.00;
-	float fScoreArray[8]={0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00};
-
-
-	if(!uSelectEvent(fp,"Judge")) return;
-	if(!uSelectRound(fp,"Judge")) return;
-	if(!uSelectHeat(fp,"Judge")) return;
-	if(!uSelectRider(fp,"Judge",0)) return;
-
-	fprintf(fp,"<div class=\"sTable\">");
-	fprintf(fp,"<div class=\"sTableRow\">");
-
-	if(!suHeat)
-		sprintf(gcQuery,"SELECT tHeat.uHeat,UPPER(tHeat.cLabel),tHeat.uRound,"
-			" DATE_FORMAT(tHeat.dStart,'%%H:%%i:%%s'),DATE_FORMAT(tHeat.dEnd,'%%H:%%i:%%s'),"
-			"tHeat.uTrickLock,tStatus.cLabel,tStatus.uStatus,"
-			"TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s'),UPPER(tEvent.cLabel)"
-			" FROM tHeat,tStatus,tEvent"
-			" WHERE tHeat.uStatus=1 AND tHeat.uEvent=%u AND tStatus.uStatus=tHeat.uStatus"
-			" AND tHeat.uEvent=tEvent.uEvent"
-			" AND NOW()>=DATE_SUB(tHeat.dStart,INTERVAL tEvent.uHeatPreStart MINUTE)"
-			" AND NOW()<=DATE_ADD(tHeat.dEnd,INTERVAL tEvent.uHeatPostEnd MINUTE)"
-			" LIMIT 1",guEvent);
-	else
-		sprintf(gcQuery,"SELECT tHeat.uHeat,UPPER(tHeat.cLabel),tHeat.uRound,"
-			" DATE_FORMAT(tHeat.dStart,'%%H:%%i:%%s'),DATE_FORMAT(tHeat.dEnd,'%%H:%%i:%%s'),"
-			"tHeat.uTrickLock,tStatus.cLabel,tStatus.uStatus,"
-			"TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s'),UPPER(tEvent.cLabel)"
-			" FROM tHeat,tStatus,tEvent"
-			" WHERE tHeat.uHeat=%u AND tStatus.uStatus=tHeat.uStatus"
-			" AND tHeat.uEvent=tEvent.uEvent",suHeat);
-	mysql_query(&gMysql,gcQuery);
-	if(*mysql_error(&gMysql))
-	{
-		fprintf(fp,"%s",mysql_error(&gMysql));
-		return;
-	}
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u",&uHeat);
-		sprintf(cHeat,"%.31s",field[1]);
-		sscanf(field[2],"%u",&uRound);
-		if(field[3][0])
-		sprintf(dStart,"%.31s",field[3]);
-		if(field[4][0])
-		sprintf(dEnd,"%.31s",field[4]);
-		sscanf(field[5],"%u",&uTrickLock);
-		sprintf(cStatus,"%.31s",field[6]);
-		sscanf(field[7],"%u",&uStatus);
-		if(field[8][0])
-		sprintf(dTimeLeft,"%.31s",field[8]);
-		sprintf(scEvent,"%.31s",field[9]);
-	}
-	if(!uHeat || !uRound) 
-	{
-		fprintf(fp,"<div class=\"sTableCellYellow\">Automated selection: No active or suspended heat for event %s"
-				"<br> Solution: Select a heat via Event tab.</div>",scEvent);
-		fprintf(fp,"</div>");
-		fprintf(fp,"</div>");
-		return;
-	}
-
-	sprintf(gcQuery,"SELECT uNumScores,UPPER(cLabel) FROM tRound WHERE uRound=%u",uRound);
-	mysql_query(&gMysql,gcQuery);
-	if(*mysql_error(&gMysql))
-	{
-		fprintf(fp,"%s",mysql_error(&gMysql));
-		return;
-	}
-	res=mysql_store_result(&gMysql);
-	if((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[0],"%u",&uNumScores);
-		sprintf(cRound,"%.31s",field[1]);
-	}
-	if(!uNumScores || uNumScores>8) 
-	{
-		fprintf(fp,"<div class=\"sTableCellYellow\">Incorrectly configured round %s/%u</div>",cRound,uRound);
-		fprintf(fp,"</div>");
-		fprintf(fp,"</div>");
-		return;
-	}
-
-
-	if(uStatus==1)
-	{
-		fprintf(fp,"<div class=\"sTableCellGreen\">ENDING</div>");
-		fprintf(fp,"<div class=\"sTableCellBlackBold\"><p id=\"demo\">%s</p></div>",dTimeLeft);
-	}
-	else
-	{
-		fprintf(fp,"<div class=\"sTableCellGreen\">%s</div>",cStatus);
-		fprintf(fp,"<div class=\"sTableCellBlackBold\">%s</div>",dTimeLeft);
-	}
-	fprintf(fp,"<div class=\"sTableCellBlack\">%s (<a href=?gcPage=Judge&ClearEvent>X</a>)</div>",scEvent);
-	fprintf(fp,"<div class=\"sTableCellBlack\">%s</div>",cRound);
-	fprintf(fp,"<div class=\"sTableCellBlack\"><a title='Overlay' href=?gcFunction=Heat&uHeat=%u >HEAT %s</a></div>",
-					uHeat,cHeat);
-	fprintf(fp,"</div>");
-
-	fprintf(fp,"</div>");
-
-
-      	fprintf(fp,"<form class=\"form-signin\" role=\"form\" method=\"post\" action=\"/unxsEVApp/\">");
-	fprintf(fp,"<input type='hidden' name='uEvent' value='%u'>",uEvent);
-	fprintf(fp,"<input type='hidden' name='uHeat' value='%u'>",uHeat);
-	fprintf(fp,"<input type='hidden' name='uTrickLock' value='%u'>",uTrickLock);
-	fprintf(fp,"<input type='hidden' name='uRound' value='%u'>",uRound);
-	fprintf(fp,"<br><div class=\"sTable\">");
-	sprintf(gcQuery,"SELECT uRider FROM tScore WHERE uHeat=%u AND uOwner=%u GROUP BY uRider",
-		uHeat,guOrg);
-	mysql_query(&gMysql,gcQuery);
-	if(*mysql_error(&gMysql))
-	{
-		fprintf(fp,"%s",mysql_error(&gMysql));
-		return;
-	}
-	res3=mysql_store_result(&gMysql);
-	while((field3=mysql_fetch_row(res3)))
-	{
-		
-
-	sprintf(gcQuery,"SELECT DISTINCT UPPER(SUBSTR(tRider.cFirst,1,1)),UPPER(tRider.cLast),tRider.uRider"
-			" FROM tScore,tRider"
-			" WHERE tScore.uRider=tRider.uRider"
-			" AND tScore.uHeat=%u AND tScore.uOwner=%u AND tRider.uRider=%s",uHeat,guOrg,field3[0]);
-	mysql_query(&gMysql,gcQuery);
-	if(*mysql_error(&gMysql))
-	{
-		fprintf(fp,"%s",mysql_error(&gMysql));
-		return;
-	}
-	res=mysql_store_result(&gMysql);
-	unsigned uIndex=0;
-	float fScore=0.00;
-	if(mysql_num_rows(res)<1)	
-	{
-		fprintf(fp,"</div></form>No score config data avaiable!");
-		return;
-	}
-	while((field=mysql_fetch_row(res)))
-	{
-		//Get scores for single judge
-		for(i=0;i<uNumScores&&i<8;i++)
-			fScoreArray[i]=0.00;
-		sprintf(gcQuery,"SELECT fScore,uIndex FROM tScore WHERE uHeat=%u AND uRider=%s AND (uCreatedBy=%u OR uModBy=%u) LIMIT 8",
-				uHeat,field[2],guLoginClient,guLoginClient);
-		mysql_query(&gMysql,gcQuery);
-		if(*mysql_error(&gMysql))
-		{
-			fprintf(fp,"%s",mysql_error(&gMysql));
-			return;
-		}
-		res2=mysql_store_result(&gMysql);
-		while((field2=mysql_fetch_row(res2)))
-		{
-			
-			sscanf(field2[0],"%f",&fScore);
-			sscanf(field2[1],"%u",&uIndex);
-			fScoreArray[uIndex]=fScore;
-		}
-		mysql_free_result(res2);
-		fTotalScore=0.00;
-		for(i=0;i<uNumScores&&i<8;i++)
-			fTotalScore+=fScoreArray[i];
-		fTotalScore=fTotalScore;
-
-		fprintf(fp,"<div class=\"sTableRow\">");
-		//fprintf(fp,"<div class=\"sTableCell\">%d</div>",j++);
-		fprintf(fp,"<div class=\"sTableCellBlack\">%s. %s</div>",field[0],field[1]);
-		fprintf(fp,"<div class=\"sTableCellBlackBold\">%1.2f</div>",fTotalScore);
-		fprintf(fp,"<div class=\"sTableCellBlackSmall\">");
-		char *cTrickLock="required";
-		for(i=0;i<uNumScores&&i<8;i++)
-		{
-			if(i<uTrickLock)
-				cTrickLock="disabled";
-			else
-				cTrickLock="required";
-			fprintf(fp,"&#%u; <input maxlength='5' type='number' step='any' id='inputScore%d-%s'"
-				" class='my-form-control' max='10.00' value='%1.2f' name='fScore%d-%s' %s><br>",
-					'A'+i,i,field[2],
-					fScoreArray[i],
-					i,field[2],cTrickLock);
-		}
-		fprintf(fp,"</div>");
-		fprintf(fp,"</div>");
-
-	}//res while
-
-	}//res3 while
-
-	fprintf(fp,"</div>");
-        fprintf(fp,"<br><button class='btn btn-lg btn-primary btn-block' type='submit' name=gcFunction value='Score'>Save</button>");
-	fprintf(fp,"</form>");
-
-	//if(guPermLevel<10)
-	//	return;
-	
-
-	sprintf(gcQuery,"SELECT DISTINCT tClient.cLabel,tClient.uClient"
-			" FROM tScore,tClient"
-			" WHERE tScore.uModBy=tClient.uClient"
-			" AND tScore.uHeat=%u AND tScore.uOwner=%u",uHeat,guOrg);
-	mysql_query(&gMysql,gcQuery);
-	if(mysql_errno(&gMysql))
-	{
-		fprintf(fp,"%s",mysql_error(&gMysql));
-		return;
-	}
-	res=mysql_store_result(&gMysql);
-	fprintf(fp,"\n<br><div class=\"sTable\">\n");
-	unsigned uClient=0;
-	unsigned uPrevRider=0;
-	unsigned uRider=0;
-	while((field=mysql_fetch_row(res)))
-	{
-		sscanf(field[1],"%u",&uClient);
-		fprintf(fp,"<div class=\"sTableRow\">\n");
-		fprintf(fp,"\t<div class=\"sTableCell\">%s</div>\n",field[0]);
-		sprintf(gcQuery,"SELECT tScore.uIndex,tScore.fScore,tRider.cLast,tRider.uRider"
-			" FROM tScore,tRider"
-			" WHERE tScore.uHeat=%u AND tScore.uOwner=%u"
-			" AND tRider.uRider=tScore.uRider"
-			" AND fScore>0.0"
-			" AND tScore.uModBy=%u ORDER BY tScore.uRider,tScore.uIndex",uHeat,guOrg,uClient);
-		mysql_query(&gMysql,gcQuery);
-		if(mysql_errno(&gMysql))
-		{
-			fprintf(fp,"%s",mysql_error(&gMysql));
-			return;
-		}
-		res2=mysql_store_result(&gMysql);
-		unsigned uCount=0;
-		unsigned uIndex=0;
-		unsigned uNumRows=mysql_num_rows(res2);
-		while((field2=mysql_fetch_row(res2)))
-		{
-			sscanf(field2[3],"%u",&uRider);
-			sscanf(field2[0],"%u",&uIndex);
-			if(uPrevRider!=uRider)
-				fprintf(fp,"\t\t<div class=\"sTableCell\">%s</div>\n",field2[2]);
-			else
-				fprintf(fp,"\t\t<div class=\"sTableCell\"></div>\n");
-			fprintf(fp,"\t\t<div class=\"sTableCell\">&#%u;</div>\n",uIndex+'A');
-			fprintf(fp,"\t\t<div class=\"sTableCell\">%s</div>\n",field2[1]);
-
-			if(uCount<uNumRows-1)
-			{
-				fprintf(fp,"</div><!--sTableRow-->\n");
-				fprintf(fp,"<div class=\"sTableRow\">\n");
-				fprintf(fp,"\t<div class=\"sTableCell\"></div>\n");
-			}
-			if(uPrevRider!=uRider)
-			{
-				uPrevRider=uRider;
-			}
-			uCount++;
-		}
-		fprintf(fp,"</div><!--sTableRow-->\n");
-	}
-	fprintf(fp,"</div><!--sTable-->\n");
-
-
-
-}//void funcJudge(FILE *fp)
-
 
 
 
@@ -1295,7 +1042,7 @@ void funcLive(FILE *fp)
 		}
 	}
 	if(guRider)
-		fprintf(fp,"<b>%s</b> OVERLAY ACTIVE<br>",cForeignKey("tRider","cLabel",guRider));
+		fprintf(fp,"<b>%s/%s</b> OVERLAY ACTIVE<br>",cForeignKey("tRider","cLabel",guRider),cForeignKey("tRider","cTeam",guRider));
 
 	uSelectRider(fp,"Live",2);
 
@@ -1375,8 +1122,11 @@ void funcEvent(FILE *fp)
 			fprintf(fp,"\t<div class=\"sTableRow\">\n");
 			fprintf(fp,"\t<div class=\"sTableCellBlack\">%s</div>\n",cRound);
 			fprintf(fp,"\t<div class=\"sTableCellBlack\"><a title='Judge' href=?uHeat=%u>%s</a>"
+				" (<a title='Set event time to this heat now' href=?gcPage=Event&SetHeatNow&guHeat=%u>S</a>)"
 				"<br>&nbsp;&nbsp;&nbsp;&nbsp;<a title='Overlay' href=?gcFunction=Heat&uHeat=%u>%s</a></div>\n",
-					uHeat,cHeat,uHeat,cHeat);
+					uHeat,cHeat,
+					uHeat,
+					uHeat,cHeat);
 			fprintf(fp,"\t<div class=\"sTableCellBlack\">%s</div>\n",cStatus);
 			fprintf(fp,"\t<div class=\"sTableCellBlack\">%s</div>\n",dTimeLeft);
 			fprintf(fp,"\t<div class=\"sTableCellBlack\">%s</div>\n",cRiders(uHeat));
@@ -1565,12 +1315,14 @@ void funcHeat(FILE *fp)
 	unsigned uNumScores=0;
 	unsigned uNumJudges=0;
 	unsigned uStatus=0;
+	unsigned uTimeStatus=0;
 	char *cScoreTable="tScoreComp";
 	char cStatus[32]={""};
 	char cHeat[32]={""};
 	char cEvent[32]={""};
 	char cRound[32]={""};
 	char dTimeLeft[32]={"---"};
+	char dTimeToStart[32]={"---"};
 	register int i,j;
 	float fTotalScore=0.00;
 	float fLeaderTotalScore=0.00;
@@ -1583,7 +1335,9 @@ void funcHeat(FILE *fp)
 	if(suHeat)
 		sprintf(gcQuery,"SELECT tHeat.uHeat,tHeat.cLabel,tHeat.uRound,"
 			" TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s'),"
-			"UPPER(tStatus.cLabel),tStatus.uStatus,tEvent.cLabel"
+			"UPPER(tStatus.cLabel),tStatus.uStatus,tEvent.cLabel,"
+			"IF((NOW()<tHeat.dEnd AND NOW()>tHeat.dStart),1,0),"
+			"TIME_FORMAT(TIMEDIFF(tHeat.dStart,NOW()),'%%i:%%s')"
 			" FROM tHeat,tStatus,tEvent WHERE"
 			" tHeat.uHeat=%u AND tStatus.uStatus=tHeat.uStatus"
 			" AND tHeat.uEvent=tEvent.uEvent"
@@ -1591,14 +1345,18 @@ void funcHeat(FILE *fp)
 	else if(guEvent)
 		sprintf(gcQuery,"SELECT tHeat.uHeat,tHeat.cLabel,tHeat.uRound,"
 			" TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s'),"
-			"UPPER(tStatus.cLabel),tStatus.uStatus"
+			"UPPER(tStatus.cLabel),tStatus.uStatus,"
+			"IF((NOW()<tHeat.dEnd AND NOW()>tHeat.dStart),1,0),"
+			"TIME_FORMAT(TIMEDIFF(tHeat.dStart,NOW()),'%%i:%%s')"
 			" FROM tHeat,tStatus WHERE tHeat.uStatus<3 AND tHeat.uEvent=tEvent.uEvent"
 			" AND tHeat.uEvent=%u AND tHeat.dEnd>NOW() AND tStatus.uStatus=tHeat.uStatus"
 			" ORDER BY tHeat.uHeat DESC LIMIT 1",guEvent);
 	else if(1)
 		sprintf(gcQuery,"SELECT tHeat.uHeat,tHeat.cLabel,tHeat.uRound,"
 			" TIME_FORMAT(TIMEDIFF(tHeat.dEnd,NOW()),'%%i:%%s'),"
-			"UPPER(tStatus.cLabel),tStatus.uStatus,tEvent.cLabel"
+			"UPPER(tStatus.cLabel),tStatus.uStatus,tEvent.cLabel,"
+			"IF((NOW()<tHeat.dEnd AND NOW()>tHeat.dStart),1,0),"
+			"TIME_FORMAT(TIMEDIFF(tHeat.dStart,NOW()),'%%i:%%s')"
 			" FROM tHeat,tStatus,tEvent WHERE tHeat.uStatus=1 AND tEvent.uStatus=1"
 			" AND tHeat.dEnd>NOW() AND tStatus.uStatus=tHeat.uStatus"
 			" AND tHeat.uEvent=tEvent.uEvent"
@@ -1620,6 +1378,9 @@ void funcHeat(FILE *fp)
 		sprintf(cStatus,"%.31s",field[4]);
 		sscanf(field[5],"%u",&uStatus);
 		sprintf(cEvent,"%.31s",field[6]);
+		sscanf(field[7],"%u",&uTimeStatus);
+		if(field[8][0])
+			sprintf(dTimeToStart,"%.31s",field[8]);
 	}
 	if(!uHeat || !uRound) 
 	{
@@ -1662,17 +1423,29 @@ void funcHeat(FILE *fp)
 	uNumJudges=mysql_num_rows(res);
 
 
-	if(uStatus==1)
-		fprintf(fp,"<div class=\"sTableCellGreenLarge\">ENDING</div>");
-	else
-		fprintf(fp,"<div class=\"sTableCellGreenLarge\">%s</div>",cStatus);
-	fprintf(fp,"</div>");//row
-
-	fprintf(fp,"<div class=\"sTableRow\">");
-	if(uStatus==1)
+	if(uStatus==1 && uTimeStatus)
+	{
+		fprintf(fp,"<div class=\"sTableCellGreenLarge\">END IN</div>");
+		fprintf(fp,"</div>");//row
+		fprintf(fp,"<div class=\"sTableRow\">");
 		fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\"><p id=\"demo\">%s</p></div>",dTimeLeft);
+	}
 	else
-		fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%s</div>",dTimeLeft);
+	{
+		if(dTimeLeft[0]=='-')
+			sprintf(cStatus,"%.31s","FINISHED");
+		else
+			sprintf(cStatus,"%.31s","START IN");
+		fprintf(fp,"<div class=\"sTableCellGreenLarge\">%s</div>",cStatus);
+		fprintf(fp,"</div>");//row
+		fprintf(fp,"<div class=\"sTableRow\">");
+		if(dTimeLeft[0]=='-')
+			fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%s</div>",dTimeLeft);
+		else
+			//fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\"><p id=\"demo\">%s</p></div>",dTimeLeft);
+			fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%s</p></div>",dTimeToStart);
+	}
+
 	fprintf(fp,"<div class=\"sTableCellEmpty\"></div>");
 	fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s</div>",cEvent);
 	fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s</div>",cRound);
@@ -1765,7 +1538,8 @@ void funcHeat(FILE *fp)
 				fLeaderTotalScore=fTotalScore;
 	
 			fprintf(fp,"\n<div class=\"sTableRow\">");
-			if(j<=2)
+			//Get number who advance to next round TODO
+			if(j<=1)
 				fprintf(fp,"<div class=\"sTableCellBlueLarge\">%d</div>",j++);
 			else
 				fprintf(fp,"<div class=\"sTableCellLarge\">%d</div>",j++);
@@ -2054,12 +1828,14 @@ void funcOverlay(FILE *fp)
 	{
 		default:
 		case(0):
+			GetdEnd();
 			funcHeat(fp);
 			fprintf(fp,"<br>");
 			funcWind(fp);
 		break;
 
 		case(1):
+			GetdEnd();
 			funcHeatEnd(fp);
 			fprintf(fp,"<br>");
 			funcWind(fp);
@@ -2116,7 +1892,7 @@ void funcRider(FILE *fp)
 		sscanf(field[0],"%u",&uRider);
 	
 		sprintf(gcQuery,"SELECT DISTINCT UPPER(tRider.cFirst),UPPER(tRider.cLast),tRider.uRider"
-			",tRider.cCountry"
+			",tRider.cCountry,tRider.cTeam"
 			" FROM tRider"
 			" WHERE tRider.uRider=%u",uRider);
 		mysql_query(&gMysql,gcQuery);
@@ -2131,6 +1907,7 @@ void funcRider(FILE *fp)
 			fprintf(fp,"<div class=\"sTable\">");
 			fprintf(fp,"\n<div class=\"sTableRow\">");
 			fprintf(fp,"<div class=\"sTableCellBlackLarge\">%s %s</div>",field[0],field[1]);
+			fprintf(fp,"<div class=\"sTableCellBlueLarge\">%s</div>",field[4]);
 			if(field[3][0])
 				fprintf(fp,"<div class=\"sTableCellBlackLarge\"><img alt=%s src=\"/bs/images/%s.png\"></div>",field[3],field[3]);
 			else
@@ -2190,5 +1967,7 @@ void funcWind(FILE *fp)
 	fprintf(fp,"</div>");
 }//void funcWind((FILE *fp)
 
+
+#include "funcjudge.c"
 
 #include "automation.c"
