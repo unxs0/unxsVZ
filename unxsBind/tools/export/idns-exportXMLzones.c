@@ -1,7 +1,6 @@
 /*
 FILE 
 	tools/export/idns-exportXMLzones.c
-	$Id$
 PURPOSE
 	Standalone XML zone export tool
 EXAMPLE OUTPUT
