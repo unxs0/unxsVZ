@@ -3,6 +3,8 @@ FILE
 	tools/export/idns-exportXMLzones.c
 PURPOSE
 	Standalone XML zone export tool
+STANDARDS
+	https://tools.ietf.org/id/draft-daley-dnsxml-00.html
 EXAMPLE OUTPUT
 
 	<zone name="abc.com">
@@ -10,7 +12,10 @@ EXAMPLE OUTPUT
 	<record type="A" owner="mail.abc.com." class="IN" ttl="86400" address="1.2.3.5"/>
 	<record type="MX" owner="abc.com." class="IN" ttl="86400" preference="10" exchange="mail.abc.com."/>
 	</zone>
-
+ISSUES
+	Customer provides example with non standard zone, and record dnsxml rr types.
+	Do we follow as extension, as per standard above? Or ignore using
+	3.2.1. Base RR element and base attributes. E.g. owner is the zone with subzones?
 LEGAL
 	(C) Gary Wallis 2001-2020. All Rights Reserved.
 	LICENSE file should be included in distribution.
