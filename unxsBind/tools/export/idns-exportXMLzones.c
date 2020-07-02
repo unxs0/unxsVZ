@@ -67,7 +67,7 @@ int main(int iArgc, char *cArg[])
 	{
 		printf("\t<zone=\"%.99s\">\n",field[0]);
 
-		sprintf(gcQuery,"SELECT tRRType.cLabel,tResource.cName,tResource.uTTL,tResource.cParam1"
+		sprintf(gcQuery,"SELECT tRRType.cLabel,tResource.cName,tResource.uTTL,tResource.cParam1,tResource.cParam2"
 			" FROM tResource,tRRType"
 			" WHERE tResource.uRRType=tRRType.uRRType AND tResource.uZone=%s",field[1]);
 		mysql_query(&gMysql,gcQuery);
@@ -79,71 +79,65 @@ int main(int iArgc, char *cArg[])
 		res2=mysql_store_result(&gMysql);
 		while((field2=mysql_fetch_row(res2)))
 		{
-/*
-A
-AAAA
-CNAME
-HINFO
-MX
-NAPTR
-NS
-PTR
-SRV
-TXT
-*/
-
 			if(!strcmp(field2[0],"A"))
 			{
 				//<record type="A" owner="mail.abc.com." class="IN" ttl="86400" address="1.2.3.5"/>
-				printf("\t\t<record type=\"A\" owner=\"%s\" class=\"IN\" ttl=\"%s\" address=\"%s\">\n",
+				printf("\t\t<record type=\"A\" owner=\"%s\" class=\"IN\" ttl=\"%s\" address=\"%s\"/>\n",
 					field2[1],field2[2],field2[3]);
 			}
 			else if(!strcmp(field2[0],"AAAA"))
 			{
 				//<record type="AAAA" owner="mail.abc.com." class="IN" ttl="86400" ip6address="::1::1234::"/>
-				printf("\t\t<record type=\"AAAA\" owner=\"%s\" class=\"IN\" ttl=\"%s\" ip6address=\"%s\">\n",
+				printf("\t\t<record type=\"AAAA\" owner=\"%s\" class=\"IN\" ttl=\"%s\" ip6address=\"%s\"/>\n",
 					field2[1],field2[2],field2[3]);
 			}
 			else if(!strcmp(field2[0],"CNAME"))
 			{
 				//<record type="CNAME" owner="mail.abc.com." class="IN" ttl="86400" host="blabla.com"/>
-				printf("\t\t<record type=\"CNAME\" owner=\"%s\" class=\"IN\" ttl=\"%s\" host=\"%s\">\n",
+				printf("\t\t<record type=\"CNAME\" owner=\"%s\" class=\"IN\" ttl=\"%s\" host=\"%s\"/>\n",
 					field2[1],field2[2],field2[3]);
 			}
 			else if(!strcmp(field2[0],"HINFO"))
 			{
-				printf("\t\t<record type=\"HINFO\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+				printf("\t\t<record type=\"HINFO\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED/>\n",
 					field2[1],field2[2],field2[3]);
 			}
 			else if(!strcmp(field2[0],"MX"))
 			{
-				printf("\t\t<record type=\"MX\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
-					field2[1],field2[2],field2[3]);
+				printf("\t\t<record type=\"MX\" owner=\"%s\" class=\"IN\" ttl=\"%s\" preference=\"%s\""
+						" exchange=\"%s\"/>\n",
+					field2[1],field2[2],field2[3],field2[4]);
 			}
 			else if(!strcmp(field2[0],"NAPTR"))
 			{
-				printf("\t\t<record type=\"NAPTR\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+				printf("\t\t<record type=\"NAPTR\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED/>\n",
 					field2[1],field2[2],field2[3]);
 			}
 			else if(!strcmp(field2[0],"NS"))
 			{
-				printf("\t\t<record type=\"NS\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+				printf("\t\t<record type=\"NS\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED/>\n",
 					field2[1],field2[2],field2[3]);
 			}
 			else if(!strcmp(field2[0],"PTR"))
 			{
-				printf("\t\t<record type=\"PTR\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+				printf("\t\t<record type=\"PTR\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED/>\n",
 					field2[1],field2[2],field2[3]);
 			}
 			else if(!strcmp(field2[0],"SRV"))
 			{
-				printf("\t\t<record type=\"SRV\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+				printf("\t\t<record type=\"SRV\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED/>\n",
 					field2[1],field2[2],field2[3]);
 			}
 			else if(!strcmp(field2[0],"TXT"))
 			{
-				printf("\t\t<record type=\"TXT\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
-					field2[1],field2[2],field2[3]);
+				printf("\t\t<record type=\"TXT\" owner=\"%s\" class=\"IN\" ttl=\"%s\">\n",
+					field2[1],field2[2]);
+				printf("\t\t<TXT>%s</TXT>\n\t\t</record>\n",field2[3]);
+			}
+			else if(1)
+			{
+				printf("\t\t<record type=\"%s\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED/>\n",
+					field2[0],field2[1],field2[2]);
 			}
 		}
 
