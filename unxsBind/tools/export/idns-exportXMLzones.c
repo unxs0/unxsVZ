@@ -47,6 +47,11 @@ int main(int iArgc, char *cArg[])
 
 	ConnectDb();
 
+
+	printf("<dnsxml xmlns=\"urn:ietf:params:xml:ns:dns\"\n"
+			"\txmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+			"\txsi:schemaLocation=\"urn:ietf:params:xml:ns:dns dnsxml-1.0.xsd\">\n");
+
 	sprintf(gcQuery,"SELECT tZone.cZone,tZone.uZone,tView.cLabel"
 			" FROM tZone,tView"
 			" WHERE tZone.uView=tView.uView"
@@ -60,11 +65,11 @@ int main(int iArgc, char *cArg[])
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		printf("<zone=\"%.99s\">\n",field[0]);
+		printf("\t<zone=\"%.99s\">\n",field[0]);
 
 		sprintf(gcQuery,"SELECT tRRType.cLabel,tResource.cName,tResource.uTTL,tResource.cParam1"
 			" FROM tResource,tRRType"
-			" WHERE tResource.uRRType=1 AND tResource.uRRType=tRRType.uRRType AND tResource.uZone=%s",field[1]);
+			" WHERE tResource.uRRType=tRRType.uRRType AND tResource.uZone=%s",field[1]);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 		{
@@ -74,13 +79,78 @@ int main(int iArgc, char *cArg[])
 		res2=mysql_store_result(&gMysql);
 		while((field2=mysql_fetch_row(res2)))
 		{
-			//<record type="A" owner="mail.abc.com." class="IN" ttl="86400" address="1.2.3.5"/>
-			printf("\t<record type=\"%s\" owner=\"%s\" class=\"IN\" ttl=\"%s\" address=\"%s\">\n",
-					field2[0],field2[1],field2[2],field2[3]);
+/*
+A
+AAAA
+CNAME
+HINFO
+MX
+NAPTR
+NS
+PTR
+SRV
+TXT
+*/
+
+			if(!strcmp(field2[0],"A"))
+			{
+				//<record type="A" owner="mail.abc.com." class="IN" ttl="86400" address="1.2.3.5"/>
+				printf("\t\t<record type=\"A\" owner=\"%s\" class=\"IN\" ttl=\"%s\" address=\"%s\">\n",
+					field2[1],field2[2],field2[3]);
+			}
+			else if(!strcmp(field2[0],"AAAA"))
+			{
+				//<record type="AAAA" owner="mail.abc.com." class="IN" ttl="86400" ip6address="::1::1234::"/>
+				printf("\t\t<record type=\"AAAA\" owner=\"%s\" class=\"IN\" ttl=\"%s\" ip6address=\"%s\">\n",
+					field2[1],field2[2],field2[3]);
+			}
+			else if(!strcmp(field2[0],"CNAME"))
+			{
+				//<record type="CNAME" owner="mail.abc.com." class="IN" ttl="86400" host="blabla.com"/>
+				printf("\t\t<record type=\"CNAME\" owner=\"%s\" class=\"IN\" ttl=\"%s\" host=\"%s\">\n",
+					field2[1],field2[2],field2[3]);
+			}
+			else if(!strcmp(field2[0],"HINFO"))
+			{
+				printf("\t\t<record type=\"HINFO\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+					field2[1],field2[2],field2[3]);
+			}
+			else if(!strcmp(field2[0],"MX"))
+			{
+				printf("\t\t<record type=\"MX\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+					field2[1],field2[2],field2[3]);
+			}
+			else if(!strcmp(field2[0],"NAPTR"))
+			{
+				printf("\t\t<record type=\"NAPTR\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+					field2[1],field2[2],field2[3]);
+			}
+			else if(!strcmp(field2[0],"NS"))
+			{
+				printf("\t\t<record type=\"NS\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+					field2[1],field2[2],field2[3]);
+			}
+			else if(!strcmp(field2[0],"PTR"))
+			{
+				printf("\t\t<record type=\"PTR\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+					field2[1],field2[2],field2[3]);
+			}
+			else if(!strcmp(field2[0],"SRV"))
+			{
+				printf("\t\t<record type=\"SRV\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+					field2[1],field2[2],field2[3]);
+			}
+			else if(!strcmp(field2[0],"TXT"))
+			{
+				printf("\t\t<record type=\"TXT\" owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED>\n",
+					field2[1],field2[2],field2[3]);
+			}
 		}
 
-		printf("</zone>\n");
+		printf("\t</zone>\n");
 	}
+	printf("</dnsxmls>\n");
+
 	return(0);
 }//main()
 
