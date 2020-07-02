@@ -13,9 +13,11 @@ EXAMPLE OUTPUT
 	<record type="MX" owner="abc.com." class="IN" ttl="86400" preference="10" exchange="mail.abc.com."/>
 	</zone>
 ISSUES
-	Customer provides example with non standard zone, and record dnsxml rr types.
+	1-. Customer provides example with non standard zone, and record dnsxml rr types.
 	Do we follow as extension, as per standard above? Or ignore using
 	3.2.1. Base RR element and base attributes. E.g. owner is the zone with subzones?
+	2-. The current code, proof of concept based on email from D. Rogal, does not adhere to the
+	dnsxml standard as set forth in ietf draft.
 LEGAL
 	(C) Gary Wallis 2001-2020. All Rights Reserved.
 	LICENSE file should be included in distribution.
