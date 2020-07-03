@@ -1,0 +1,1295 @@
+<?xml version="1.0"?>
+<schema targetNamespace="urn:ietf:params:xml:ns:dns"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  xmlns:dns="urn:ietf:params:xml:ns:dns">
+
+  <annotation>
+    <documentation>dnsxml v1.0</documentation>
+  </annotation>
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- dnsxml element                    -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="dnsxml">
+    <complexType>
+      <choice maxOccurs="unbounded">
+        <element ref="dns:RRset"/>
+        <element ref="dns:RR"/>
+      </choice>
+    </complexType>
+  </element>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- Base attribute set                -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <attributeGroup name="baseAttributes">
+    <attribute name="owner" type="dns:domainType"/>
+    <attribute name="class" type="dns:classType"/>
+    <attribute name="ttl" type="dns:ttlType"/>
+    <attribute name="rdlength" type="dns:rdataLengthType"/>
+  </attributeGroup>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- RRset element                     -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="RRset" type="dns:RRsetType"/>
+
+  <complexType name="RRsetType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="dns:RR"/>
+    </choice>
+    <attribute name="class" type="dns:classType"/>
+    <attribute name="type" type="dns:rrTypeType" use="required"/>
+    <attribute name="owner" type="dns:domainType"/>
+    <attribute name="ttl" type="dns:ttlType"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- RR abstract element               -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="RR" abstract="true"/>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- String encoding types             -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <simpleType name="hexWithWhitespace">
+    <restriction base="string">
+      <pattern value="([0-9a-fA-F\s])*"/>
+    </restriction>
+  </simpleType>
+
+  <simpleType name="base32HexRestricted">
+    <restriction base="string">
+      <pattern value="([0-9a-vA-V])*"/>
+    </restriction>
+  </simpleType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- Basic attribute types             -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <!-- All the known RRs plus the TYPE 
+              representation of [RFC3597] (5) -->
+  <simpleType name="rrMnemonicType">
+    <union>
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="A"/>
+          <enumeration value="A6"/>
+          <enumeration value="AAAA"/>
+          <enumeration value="AFSDB"/>
+          <enumeration value="APL"/>
+          <enumeration value="CERT"/>
+          <enumeration value="CNAME"/>
+          <enumeration value="DHCID"/>
+          <enumeration value="DLV"/>
+          <enumeration value="DNAME"/>
+          <enumeration value="DNSKEY"/>
+          <enumeration value="DS"/>
+          <enumeration value="GPOS"/>
+          <enumeration value="HINFO"/>
+          <enumeration value="IPSECKEY"/>
+          <enumeration value="ISDN"/>
+          <enumeration value="KEY"/>
+          <enumeration value="KX"/>
+          <enumeration value="LOC"/>
+          <enumeration value="MB"/>
+          <enumeration value="MG"/>
+          <enumeration value="MGINFO"/>
+          <enumeration value="MR"/>
+          <enumeration value="MX"/>
+          <enumeration value="NAPTR"/>
+          <enumeration value="NS"/>
+          <enumeration value="NSAP"/>
+          <enumeration value="NSEC"/>
+          <enumeration value="NSEC3"/>
+          <enumeration value="NSEC3PARAM"/>
+          <enumeration value="NULL"/>
+          <enumeration value="OPT"/>
+          <enumeration value="PTR"/>
+          <enumeration value="PX"/>
+          <enumeration value="RP"/>
+          <enumeration value="RRSIG"/>
+          <enumeration value="RT"/>
+          <enumeration value="SSHFP"/>
+          <enumeration value="SIG"/>
+          <enumeration value="SOA"/>
+          <enumeration value="SPF"/>
+          <enumeration value="SRV"/>
+          <enumeration value="TKEY"/>
+          <enumeration value="TSIG"/>
+          <enumeration value="TXT"/>
+          <enumeration value="WKS"/>
+          <enumeration value="X25"/>
+        </restriction>
+      </simpleType>
+      <simpleType>
+        <restriction base="string">
+          <!-- The following regex need to be reassmebled 
+                              on one line, without whitespace, before use -->
+          <pattern
+            value="TYPE(6553[0-5]|655[0-2][0-9]\d|65[0-4](\d){2}|
+6[0-4](\d){3}|[1-5](\d){4}|[1-9](\d){0,3})"
+          />
+        </restriction>
+      </simpleType>
+    </union>
+  </simpleType>
+
+  <simpleType name="rrTypeType">
+    <union memberTypes="dns:rrMnemonicType unsignedShort"> </union>
+  </simpleType>
+
+  <!-- A list of any number of the full RR types -->
+  <simpleType name="rrListType">
+    <list itemType="dns:rrMnemonicType"/>
+  </simpleType>
+
+  <simpleType name="domainType">
+    <restriction base="string">
+      <maxLength value="255"/>
+    </restriction>
+  </simpleType>
+
+  <simpleType name="classType">
+    <union>
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="IN"/>
+          <enumeration value="CH"/>
+          <enumeration value="HS"/>
+          <enumeration value="NONE"/>
+          <enumeration value="*"/>
+          <enumeration value="ANY"/>
+        </restriction>
+      </simpleType>
+      <simpleType>
+        <restriction base="string">
+          <!-- The following regex need to be reassmebled 
+                              on one line, without whitespace, before use -->
+          <pattern
+            value="CLASS(6553[0-5]|655[0-2][0-9]\d|65[0-4](\d){2}|
+6[0-4](\d){3}|[1-5](\d){4}|[1-9](\d){0,3})"
+          />
+        </restriction>
+      </simpleType>
+      <simpleType>
+        <restriction base="unsignedShort"/>
+      </simpleType>
+    </union>
+  </simpleType>
+
+  <simpleType name="rcodeMnemonicsType">
+    <restriction base="string">
+      <enumeration value="NoError"/>
+      <enumeration value="FormErr"/>
+      <enumeration value="ServFail"/>
+      <enumeration value="NXDomain"/>
+      <enumeration value="NotImp"/>
+      <enumeration value="Refused"/>
+      <enumeration value="YXDomain"/>
+      <enumeration value="YXRRSet"/>
+      <enumeration value="NXRRSet"/>
+      <enumeration value="NotAuth"/>
+      <enumeration value="NotZone"/>
+      <enumeration value="BADVERS"/>
+      <enumeration value="BADSIG"/>
+      <enumeration value="BADKEY"/>
+      <enumeration value="BADTIME"/>
+      <enumeration value="BADMODE"/>
+      <enumeration value="BADNAME"/>
+      <enumeration value="BADALG"/>
+      <enumeration value="BADTRUC"/>
+    </restriction>
+  </simpleType>
+
+  <simpleType name="baseRcode16Type">
+    <restriction base="unsignedShort"/>
+  </simpleType>
+
+  <simpleType name="baseRcode12Type">
+    <restriction base="dns:baseRcode16Type">
+      <maxInclusive value="4096"/>
+    </restriction>
+  </simpleType>
+
+  <simpleType name="rcode16Type">
+    <union memberTypes="dns:baseRcode16Type dns:rcodeMnemonicsType"/>
+  </simpleType>
+
+  <simpleType name="rcode12Type">
+    <union memberTypes="dns:baseRcode12Type dns:rcodeMnemonicsType"/>
+  </simpleType>
+
+  <!-- Only used once but sufficiently generic to get its own type -->
+  <simpleType name="serialType">
+    <restriction base="unsignedInt"/>
+  </simpleType>
+
+  <!-- Only used once but sufficiently generic to get its own type -->
+  <simpleType name="idType">
+    <restriction base="unsignedShort"/>
+  </simpleType>
+
+  <simpleType name="preferenceType">
+    <restriction base="unsignedShort"/>
+  </simpleType>
+
+  <simpleType name="rdataLengthType">
+    <restriction base="unsignedShort"/>
+  </simpleType>
+
+  <simpleType name="rdataLength8Type">
+    <restriction base="dns:rdataLengthType">
+      <maxInclusive value="255"/>
+    </restriction>
+  </simpleType>
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- Time related attribute types      -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <!-- A base seconds type that should not be 
+              used except to derive other types -->
+  <simpleType name="baseSecondsType">
+    <restriction base="unsignedLong"/>
+  </simpleType>
+
+  <simpleType name="secondsInterval32Type">
+    <restriction base="dns:baseSecondsType">
+      <maxInclusive value="4294967295"/>
+      <!-- 2^32-1 -->
+    </restriction>
+  </simpleType>
+
+  <simpleType name="secondsSinceEpoch48Type">
+    <restriction base="dns:baseSecondsType">
+      <maxInclusive value="281474976710655"/>
+      <!-- 2^48-1 -->
+    </restriction>
+  </simpleType>
+
+  <simpleType name="secondsSinceEpoch32Type">
+    <restriction base="dns:secondsSinceEpoch48Type">
+      <maxInclusive value="4294967295"/>
+      <!-- 2^32-1 -->
+    </restriction>
+  </simpleType>
+
+  <simpleType name="secondsSinceEpochTextType">
+    <union>
+      <simpleType>
+        <restriction base="string">
+          <maxLength value="14"/>
+          <minLength value="14"/>
+        </restriction>
+      </simpleType>
+      <simpleType>
+        <restriction base="dns:secondsSinceEpoch32Type"/>
+      </simpleType>
+    </union>
+  </simpleType>
+
+  <simpleType name="ttlType">
+    <restriction base="dns:secondsInterval32Type"/>
+  </simpleType>
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- Address related attribute types   -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <simpleType name="ip4AddressType">
+    <restriction base="string">
+      <!-- The following regex need to be reassmebled 
+                      on one line, without whitespace, before use -->
+      <pattern
+        value="((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|
+2[0-4][0-9]|[01]?[0-9][0-9]?)"
+      />
+    </restriction>
+  </simpleType>
+
+  <simpleType name="ip6AddressType">
+    <restriction base="string">
+      <!-- The following regex need to be reassmebled 
+                      on one line, without whitespace, before use -->
+      <pattern
+        value="((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|
+(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|
+[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]
+{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|
+[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]
+{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|
+2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|
+(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4})
+{0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|
+[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|
+((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)
+(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}
+(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|
+2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d))
+{3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:
+((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|
+[1-9]?\d)){3}))|:)))(%.+)?\s*"
+      />
+    </restriction>
+  </simpleType>
+
+  <simpleType name="ipAddressType">
+    <union memberTypes="dns:ip4AddressType dns:ip6AddressType"/>
+  </simpleType>
+
+  <simpleType name="prefixLengthType">
+    <restriction base="unsignedByte">
+      <maxInclusive value="128"/>
+    </restriction>
+  </simpleType>
+
+  <!-- Only used once but sufficiently generic to get its own type -->
+  <simpleType name="portType">
+    <restriction base="unsignedShort"/>
+  </simpleType>
+
+  <!-- Only used once but sufficiently generic to get its own type -->
+  <simpleType name="ipProtocolType">
+    <restriction base="unsignedByte"/>
+  </simpleType>
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- Crypto related attribute types     -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <!-- A base algorithm type that should not 
+              be used except to derive other types -->
+  <simpleType name="baseAlgorithmType">
+    <restriction base="unsignedByte"/>
+  </simpleType>
+
+  <simpleType name="dnssecAlgorithmType">
+    <union>
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="RSAMD5"/>
+          <enumeration value="DH"/>
+          <enumeration value="DSA"/>
+          <enumeration value="RSASHA1"/>
+          <enumeration value="DSA-NSEC3-SHA1"/>
+          <enumeration value="RSASHA1-NSEC3-SHA1"/>
+          <enumeration value="RSASHA256"/>
+          <enumeration value="RSASHA512"/>
+          <enumeration value="ECC-GOST"/>
+          <enumeration value="ECDSAP256SHA256"/>
+          <enumeration value="ECDSAP384SHA384"/>
+          <enumeration value="INDIRECT"/>
+          <enumeration value="PRIVATEDNS"/>
+          <enumeration value="PRIVATEOID"/>
+        </restriction>
+      </simpleType>
+      <simpleType>
+        <restriction base="dns:baseAlgorithmType"/>
+      </simpleType>
+    </union>
+  </simpleType>
+
+  <simpleType name="sshAlgorithmType">
+    <union>
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="RSA"/>
+          <enumeration value="DSS"/>
+        </restriction>
+      </simpleType>
+      <simpleType>
+        <restriction base="dns:baseAlgorithmType"/>
+      </simpleType>
+    </union>
+  </simpleType>
+
+  <simpleType name="sshDigestType">
+    <union>
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="SHA-1"/>
+        </restriction>
+      </simpleType>
+      <simpleType>
+        <restriction base="dns:baseAlgorithmType"/>
+      </simpleType>
+    </union>
+  </simpleType>
+
+  <simpleType name="certificateTypeType">
+    <union>
+      <simpleType>
+        <restriction base="string">
+          <!-- [RFC2538] (2.1) -->
+          <enumeration value="PKIX"/>
+          <enumeration value="SPKI"/>
+          <enumeration value="PGP"/>
+          <enumeration value="URI"/>
+          <enumeration value="OID"/>
+        </restriction>
+      </simpleType>
+      <simpleType>
+        <restriction base="unsignedShort"/>
+      </simpleType>
+    </union>
+  </simpleType>
+
+  <simpleType name="keytagType">
+    <restriction base="unsignedShort"/>
+  </simpleType>
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- Miscellaneous attribute types     -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <simpleType name="longitudeType">
+    <restriction base="string"/>
+  </simpleType>
+
+  <simpleType name="latitudeType">
+    <restriction base="string"/>
+  </simpleType>
+
+  <simpleType name="altitudeType">
+    <restriction base="string"/>
+  </simpleType>
+
+  <simpleType name="gatewayType">
+    <union>
+      <simpleType>
+        <restriction base="dns:domainType"/>
+      </simpleType>
+      <simpleType>
+        <restriction base="dns:ip4AddressType"/>
+      </simpleType>
+      <simpleType>
+        <restriction base="dns:ip6AddressType"/>
+      </simpleType>
+    </union>
+  </simpleType>
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- TYPE element [RFC3597] (5)        -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="TYPE" substitutionGroup="dns:RR" type="dns:TYPEType"/>
+
+  <complexType name="TYPEType">
+    <simpleContent>
+      <extension base="dns:hexWithWhitespace">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="rrtype" type="unsignedShort" use="required"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- A element [RFC1035] (3.4.1)       -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="A" substitutionGroup="dns:RR" type="dns:AType"/>
+
+  <complexType name="AType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="address" type="dns:ip4AddressType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- A6 element [RFC2874] (3.1.3)      -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="A6" substitutionGroup="dns:RR" type="dns:A6Type"/>
+
+  <complexType name="A6Type">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="prefixlength" type="dns:prefixLengthType"
+      use="required"/>
+    <attribute name="addresssuffix" type="dns:ip6AddressType"
+      use="optional"/>
+    <attribute name="prefixname" type="dns:domainType" use="optional"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- AAAA element [RFC3596] (2.2)      -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="AAAA" substitutionGroup="dns:RR" type="dns:AAAAType"/>
+
+  <complexType name="AAAAType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="ip6address" type="dns:ip6AddressType"
+      use="required"/>
+  </complexType>
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- AFSDB element [RFC1183] (1)       -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="AFSDB" substitutionGroup="dns:RR" 
+           type="dns:AFSDBType"/>
+
+  <complexType name="AFSDBType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="subtype" type="unsignedShort" use="required"/>
+    <attribute name="hostname" type="dns:domainType" use="required"/>
+  </complexType>
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- APL element [RFC3123] (4)         -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="APL" substitutionGroup="dns:RR" type="dns:APLType"
+    nillable="true"/>
+
+  <complexType name="APLType">
+    <simpleContent>
+      <extension base="string">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="addressfamily" type="unsignedShort"
+          use="optional"/>
+        <attribute name="prefix" type="dns:prefixLengthType"
+          use="optional"/>
+        <attribute name="n" use="optional">
+          <simpleType>
+            <restriction base="string">
+              <enumeration value="!"/>
+            </restriction>
+          </simpleType>
+        </attribute>
+        <attribute name="afdlength" use="optional">
+          <simpleType>
+            <restriction base="unsignedByte">
+              <maxInclusive value="128"/>
+            </restriction>
+          </simpleType>
+        </attribute>
+        <attribute name="afdpart" type="dns:ipAddressType"
+          use="optional"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- CERT element [RFC2538] (2.2)      -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="CERT" substitutionGroup="dns:RR" type="dns:CERTType"/>
+
+  <complexType name="CERTType">
+    <simpleContent>
+      <extension base="base64Binary">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="type" type="dns:certificateTypeType"
+          use="required"/>
+        <attribute name="keytag" type="dns:keytagType" use="required"/>
+        <attribute name="algorithm" type="dns:dnssecAlgorithmType"
+          use="required"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- CNAME element [RFC1035] (3.3.1)   -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="CNAME" substitutionGroup="dns:RR" 
+    type="dns:CNAMEType"/>
+
+  <complexType name="CNAMEType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="host" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- DHCID element [RFC4701] (3.2)     -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="DHCID" substitutionGroup="dns:RR" 
+    type="dns:DHCIDType"/>
+
+  <complexType name="DHCIDType">
+    <simpleContent>
+      <extension base="base64Binary">
+        <attributeGroup ref="dns:baseAttributes"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- DLV element [RFC4431] (2)         -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="DLV" substitutionGroup="dns:RR" type="dns:DLVType"/>
+
+  <complexType name="DLVType">
+    <simpleContent>
+      <extension base="dns:hexWithWhitespace">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="keytag" type="dns:keytagType" use="required"/>
+        <attribute name="algorithm" type="dns:dnssecAlgorithmType"
+          use="required"/>
+        <attribute name="digesttype" type="dns:dnssecAlgorithmType"
+          use="required"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- DNAME element [RFC2672] (3)       -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="DNAME" substitutionGroup="dns:RR" 
+           type="dns:DNAMEType"/>
+
+  <complexType name="DNAMEType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="target" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- DNSKEY element [RFC4034] (2.2)    -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="DNSKEY" substitutionGroup="dns:RR"
+    type="dns:DNSKEYType"/>
+
+  <complexType name="DNSKEYType">
+    <simpleContent>
+      <extension base="base64Binary">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="flags" type="unsignedShort" use="required"/>
+        <attribute name="protocol" type="unsignedByte" use="required"/>
+        <attribute name="algorithm" type="dns:dnssecAlgorithmType"
+          use="required"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- DS element [RFC4034] (5.3)        -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="DS" substitutionGroup="dns:RR" type="dns:DSType"/>
+
+  <complexType name="DSType">
+    <simpleContent>
+      <extension base="dns:hexWithWhitespace">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="keytag" type="dns:keytagType" use="required"/>
+        <attribute name="algorithm" type="dns:dnssecAlgorithmType"
+          use="required"/>
+        <attribute name="digesttype" type="dns:dnssecAlgorithmType"
+          use="required"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- GPOS element [RFC1712] (3)        -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="GPOS" substitutionGroup="dns:RR" type="dns:GPOSType"/>
+
+  <complexType name="GPOSType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="longitude" type="dns:longitudeType" 
+      use="required"/>
+    <attribute name="latitude" type="dns:latitudeType" use="required"/>
+    <attribute name="altitude" type="dns:altitudeType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- HINFO element [RFC1035] (3.3.2)   -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="HINFO" substitutionGroup="dns:RR" 
+    type="dns:HINFOType"/>
+
+  <complexType name="HINFOType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="cpu" type="string" use="required"/>
+    <attribute name="os" type="string" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- IPSECKEY element [RFC4025] (3.1)  -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="IPSECKEY" substitutionGroup="dns:RR"
+    type="dns:IPSECKEYType"/>
+
+  <complexType name="IPSECKEYType">
+    <simpleContent>
+      <extension base="base64Binary">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="precedence" type="dns:preferenceType"
+          use="required"/>
+        <attribute name="gatewaytype" type="unsignedByte" 
+          use="required"/>
+        <attribute name="gateway" type="dns:gatewayType" use="required"
+        />
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- ISDN element [RFC1183] (3.2)      -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="ISDN" substitutionGroup="dns:RR" type="dns:ISDNType"/>
+
+  <complexType name="ISDNType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="isdn-address" type="string" use="required"/>
+    <!-- should this have a defined type? -->
+    <attribute name="sa" type="string" use="optional"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- KEY element [RFC3445] (3)         -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="KEY" substitutionGroup="dns:RR" type="dns:KEYType"/>
+
+  <complexType name="KEYType">
+    <simpleContent>
+      <extension base="base64Binary">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="flags" type="unsignedShort" use="required"/>
+        <attribute name="protocol" type="unsignedByte" use="required"/>
+        <attribute name="algorithm" type="dns:dnssecAlgorithmType"
+          use="required"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- KX element [RFC2230] (3.1)        -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="KX" substitutionGroup="dns:RR" type="dns:KXType"/>
+
+  <complexType name="KXType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="preference" type="dns:preferenceType"
+      use="required"/>
+    <attribute name="exchanger" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- LOC element [RFC1876] (3)         -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="LOC" substitutionGroup="dns:RR" type="dns:LOCType"/>
+
+  <complexType name="LOCType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="version" type="unsignedByte"/>
+    <attribute name="size" type="string" use="optional"/>
+    <attribute name="horizpre" type="string" use="optional"/>
+    <attribute name="vertpre" type="string" use="optional"/>
+    <attribute name="latitude" type="dns:latitudeType" use="required"/>
+    <attribute name="longitude" type="dns:longitudeType" 
+      use="required"/>
+    <attribute name="altitude" type="dns:altitudeType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- MB element [RFC1035] (3.3.3)      -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="MB" substitutionGroup="dns:RR" type="dns:MBType"/>
+
+  <complexType name="MBType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="madname" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- MG element [RFC1035] (3.3.6)      -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="MG" substitutionGroup="dns:RR" type="dns:MGType"/>
+
+  <complexType name="MGType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="mgmname" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- MINFO element [RFC1035] (3.3.7)   -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="MINFO" substitutionGroup="dns:RR" 
+           type="dns:MINFOType"/>
+
+  <complexType name="MINFOType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="rmailbx" type="dns:domainType" use="required"/>
+    <attribute name="emailbx" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- MR element [RFC1035] (3.3.8)      -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="MR" substitutionGroup="dns:RR" type="dns:MRType"/>
+
+  <complexType name="MRType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="newname" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- MX element [RFC1035] (3.3.9)      -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="MX" substitutionGroup="dns:RR" type="dns:MXType"/>
+
+  <complexType name="MXType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="preference" type="dns:preferenceType"
+      use="required"/>
+    <attribute name="exchange" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- NAPTR element [RFC3403] (4.1)     -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="NAPTR" substitutionGroup="dns:RR" 
+           type="dns:NAPTRType"/>
+
+  <complexType name="NAPTRType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="order" type="unsignedInt" use="required"/>
+    <attribute name="preference" type="dns:preferenceType"
+      use="required"/>
+    <attribute name="flags" type="string" use="required"/>
+    <attribute name="services" type="string" use="required"/>
+    <attribute name="regexp" type="string" use="required"/>
+    <attribute name="replacement" type="dns:domainType" 
+      use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- NS element [RFC1035] (3.3.11)     -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="NS" substitutionGroup="dns:RR" type="dns:NSType"/>
+
+  <complexType name="NSType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="nsdname" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- NSAP element [RFC1706] (5)        -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="NSAP" substitutionGroup="dns:RR" type="dns:NSAPType"/>
+
+  <complexType name="NSAPType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="nsap" type="string" use="required"/>
+    <!-- defined type? -->
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- NSEC element [RFC4034] (4.2)      -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="NSEC" substitutionGroup="dns:RR" type="dns:NSECType"/>
+
+  <complexType name="NSECType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="nextdomainname" type="dns:domainType"
+      use="required"/>
+    <attribute name="typebitmaps" type="dns:rrListType" 
+               use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- NSEC3 element [RFC5155] (3.2)     -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="NSEC3" substitutionGroup="dns:RR" 
+           type="dns:NSEC3Type"/>
+
+  <complexType name="NSEC3Type">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="hashalgorithm" type="dns:dnssecAlgorithmType"
+      use="required"/>
+    <attribute name="flags" type="unsignedByte" use="required"/>
+    <attribute name="iterations" type="unsignedShort" use="required"/>
+    <attribute name="saltlength" type="dns:rdataLength8Type"
+      use="optional"/>
+    <attribute name="salt" type="hexBinary" use="required"/>
+    <attribute name="hashlength" type="dns:rdataLength8Type"
+      use="optional"/>
+    <attribute name="nexthashedownername" 
+      type="dns:base32HexRestricted" use="required"/>
+    <attribute name="typebitmaps" type="dns:rrListType" 
+      use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- NSEC3PARAM element [RFC5155] (4.2)-->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="NSEC3PARAM" substitutionGroup="dns:RR"
+    type="dns:NSEC3PARAMType"/>
+
+  <complexType name="NSEC3PARAMType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="hashalgorithm" type="dns:dnssecAlgorithmType"
+      use="required"/>
+    <attribute name="flags" type="unsignedByte" use="required"/>
+    <attribute name="iterations" type="unsignedShort" use="required"/>
+    <attribute name="saltlength" type="dns:rdataLength8Type"
+      use="optional"/>
+    <attribute name="salt" type="hexBinary" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- NULL element [RFC1035] (3.3.10)   -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="NULL" substitutionGroup="dns:RR" type="dns:NULLType"
+    nillable="true"/>
+
+  <complexType name="NULLType" mixed="true">
+    <simpleContent>
+      <extension base="string">
+        <attributeGroup ref="dns:baseAttributes"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- PTR element [RFC1035] (3.3.12)    -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="PTR" substitutionGroup="dns:RR" type="dns:PTRType"/>
+
+  <complexType name="PTRType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="ptrdname" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- PX element [RFC2163] (4)          -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="PX" substitutionGroup="dns:RR" type="dns:PXType"/>
+
+  <complexType name="PXType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="preference" type="dns:preferenceType"
+      use="required"/>
+    <attribute name="map822" type="dns:domainType" use="required"/>
+    <attribute name="mapx400" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- RP element [RFC1183] (2.2)        -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="RP" substitutionGroup="dns:RR" type="dns:RPType"/>
+
+  <complexType name="RPType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="mbox-dname" type="dns:domainType" use="required"/>
+    <attribute name="txt-dname" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- RRSIG element [RFC4034] (3.2)     -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="RRSIG" substitutionGroup="dns:RR" 
+    type="dns:RRSIGType"/>
+
+  <complexType name="RRSIGType">
+    <simpleContent>
+      <extension base="base64Binary">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="typecovered" type="dns:rrTypeType"
+          use="required"/>
+        <attribute name="algorithm" type="dns:dnssecAlgorithmType"
+          use="required"/>
+        <attribute name="labels" type="unsignedByte" use="required"/>
+        <attribute name="originalttl" type="dns:ttlType" 
+          use="required"/>
+        <attribute name="signatureexpiration"
+          type="dns:secondsSinceEpochTextType" use="required"/>
+        <attribute name="signatureinception"
+          type="dns:secondsSinceEpochTextType" use="required"/>
+        <attribute name="keytag" type="dns:keytagType" use="required"/>
+        <attribute name="signersname" type="dns:domainType"
+          use="required"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- RT element [RFC1183] (3.3)        -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="RT" substitutionGroup="dns:RR" type="dns:RTType"/>
+
+  <complexType name="RTType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="preference" type="dns:preferenceType"
+      use="required"/>
+    <attribute name="intermediate-host" type="dns:domainType"
+      use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- SIG element [RFC2931] & [RFC4034] -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="SIG" substitutionGroup="dns:RR" type="dns:SIGType"/>
+
+  <complexType name="SIGType">
+    <simpleContent>
+      <extension base="base64Binary">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="typecovered" type="unsignedShort"
+          use="required"/>
+        <attribute name="algorithm" type="dns:dnssecAlgorithmType"
+          use="required"/>
+        <attribute name="labels" type="unsignedByte" use="required"/>
+        <attribute name="originalttl" type="dns:ttlType" 
+          use="required"/>
+        <attribute name="signatureexpiration"
+          type="dns:secondsSinceEpochTextType" use="required"/>
+        <attribute name="signatureinception"
+          type="dns:secondsSinceEpochTextType" use="required"/>
+        <attribute name="keytag" type="dns:keytagType" use="required"/>
+        <attribute name="signersname" type="dns:domainType"
+          use="required"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- SSHFP element [RFC4255] (3.2)     -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="SSHFP" substitutionGroup="dns:RR" 
+    type="dns:SSHFPType"/>
+
+  <complexType name="SSHFPType">
+    <simpleContent>
+      <extension base="dns:hexWithWhitespace">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="algorithm" type="dns:sshAlgorithmType"
+          use="required"/>
+        <attribute name="fptype" type="dns:sshDigestType" 
+          use="required"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- SOA element [RFC1035] (3.3.13)    -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="SOA" substitutionGroup="dns:RR" type="dns:SOAType"/>
+
+  <complexType name="SOAType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="mname" type="dns:domainType" use="required"/>
+    <attribute name="rname" type="dns:domainType" use="required"/>
+    <attribute name="serial" type="dns:serialType" use="required"/>
+    <attribute name="refresh" type="dns:secondsInterval32Type"
+      use="required"/>
+    <attribute name="retry" type="dns:secondsInterval32Type"
+      use="required"/>
+    <attribute name="expire" type="dns:secondsInterval32Type"
+      use="required"/>
+    <attribute name="minimum" type="dns:ttlType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- SPF element [RFC4408] (3.1.1)     -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="SPF" substitutionGroup="dns:RR" type="dns:SPFType"/>
+
+  <complexType name="SPFType">
+    <simpleContent>
+      <extension base="string">
+        <attributeGroup ref="dns:baseAttributes"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- SRV element [RFC2782] (0)         -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="SRV" substitutionGroup="dns:RR" type="dns:SRVType"/>
+
+  <complexType name="SRVType">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="priority" type="unsignedShort" use="required"/>
+    <attribute name="weight" type="unsignedShort" use="required"/>
+    <attribute name="port" type="dns:portType" use="required"/>
+    <attribute name="target" type="dns:domainType" use="required"/>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- TKEY element [RFC2930] (2)        -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="TKEY" substitutionGroup="dns:RR" type="dns:TKEYType"
+    nillable="true"/>
+
+  <complexType name="TKEYType">
+    <simpleContent>
+      <extension base="dns:hexWithWhitespace">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="algorithm" type="dns:domainType" 
+          use="required"/>
+        <attribute name="inception" type="dns:secondsSinceEpoch32Type"
+          use="required"/>
+        <attribute name="expiration" type="dns:secondsSinceEpoch32Type"
+          use="required"/>
+        <attribute name="mode" type="unsignedShort" use="required"/>
+        <attribute name="error" type="dns:rcode16Type" use="required"/>
+        <attribute name="keysize" type="unsignedShort" use="required"/>
+        <attribute name="keydata" type="hexBinary" use="required"/>
+        <attribute name="othersize" type="dns:rdataLengthType"
+          use="optional"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- TSIG element [RFC2845] (2.3)      -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="TSIG" substitutionGroup="dns:RR" type="dns:TSIGType"
+    nillable="true"/>
+
+  <complexType name="TSIGType">
+    <simpleContent>
+      <extension base="dns:hexWithWhitespace">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="algorithm" type="dns:domainType" 
+          use="required"/>
+        <attribute name="timesigned" type="dns:secondsSinceEpoch48Type"
+          use="required"/>
+        <attribute name="fudge" type="unsignedShort" use="required"/>
+        <attribute name="macsize" type="unsignedShort" use="required"/>
+        <attribute name="mac" type="hexBinary" use="required"/>
+        <attribute name="originalid" type="dns:idType" use="required"/>
+        <attribute name="error" type="dns:rcode16Type" use="optional"/>
+        <attribute name="otherlen" type="dns:rdataLengthType"
+          use="optional"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- TXT element [RFC1035] (3.3.14)    -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="TXT" substitutionGroup="dns:RR" type="dns:TXTType"/>
+
+  <complexType name="TXTType">
+    <simpleContent>
+      <extension base="string">
+        <attributeGroup ref="dns:baseAttributes"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- WKS element [RFC1035] (3.4.2)     -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="WKS" substitutionGroup="dns:RR" type="dns:WKSType"/>
+
+  <complexType name="WKSType">
+    <simpleContent>
+      <extension base="dns:hexWithWhitespace">
+        <attributeGroup ref="dns:baseAttributes"/>
+        <attribute name="address" type="dns:ip4AddressType"
+          use="required"/>
+        <attribute name="protocol" type="dns:ipProtocolType"
+          use="required"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+
+  <!-- - - - - - - - - - - - - - - - - - -->
+  <!-- X25 element [RFC1183] (3.1)       -->
+  <!-- - - - - - - - - - - - - - - - - - -->
+
+  <element name="X25" substitutionGroup="dns:RR" type="dns:X25Type"/>
+
+  <complexType name="X25Type">
+    <attributeGroup ref="dns:baseAttributes"/>
+    <attribute name="psdn-address" type="string" use="required"/>
+  </complexType>
+
+</schema>
