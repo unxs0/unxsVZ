@@ -7,7 +7,7 @@ STANDARDS
 	https://tools.ietf.org/id/draft-daley-dnsxml-00.html
 ISSUES
 WORK IN PROGRESS
-	SOA record at new tZone is required.
+	SOA record at new tZone is required. Also RRset requires, e.g. type="SOA".
 	NS records must come from tNSSet mess.
 	Also check for main address and special MX sets. These come from tZone.
 LEGAL
