@@ -5,3 +5,6 @@
 
 ### Proposed functionality
 Given a unxsBind NS set we generate a text document as per the above draft standard.
+
+### Notes
+When validating use schema with regex reassmebled. Have supplied validation.xml for this.
