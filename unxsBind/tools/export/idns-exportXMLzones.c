@@ -62,14 +62,16 @@ int main(int iArgc, char *cArg[])
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
-		printf("\t<RRSet owner=\"%.99s\" class=\"IN\" ttl=\"0\">\n",field[0]);
+		//RRSet allows for app handling for non standard usage
+		//like here. Use default A type
+		printf("\t<RRSet owner=\"%.99s\" class=\"IN\" ttl=\"0\" type=\"A\">\n",field[0]);
 
 
 		//tZone specified records
 		printf("\t\t<SOA mname=\"%s\" rname=\"%s\" serial=\"%s\" refresh=\"%s\" retry=\"%s\" expire=\"%s\" minimum=\"%s\"/>\n",
 				field[3],field[4],field[5],field[6],field[7],field[8],field[9]);
 		//TODO one or more like so...
-		printf("\t\t<NS owner=\"\" class=\"IN\" ttl=\"0\" address=\"1.2.3.4\/>");
+		printf("\t\t<NS owner=\"%s\" class=\"IN\" ttl=\"0\" nsdname=\"dns1.lon2.telecity.net\"/>\n",field[0]);
 		//if cMainAddress add A record
 		//if uMailServer add associated MX records
 
@@ -150,7 +152,7 @@ int main(int iArgc, char *cArg[])
 
 		printf("\t</RRSet>\n");
 	}
-	printf("</dnsxmls>\n");
+	printf("</dnsxml>\n");
 
 	return(0);
 }//main()
