@@ -7,9 +7,7 @@ STANDARDS
 	https://tools.ietf.org/id/draft-daley-dnsxml-00.html
 ISSUES
 WORK IN PROGRESS
-	SOA record at new tZone is required. Also RRset requires, e.g. type="SOA".
-	NS records must come from tNSSet mess.
-	Also check for main address and special MX sets. These come from tZone.
+	See NOT-IMPLEMENTED and ERROR
 LEGAL
 	(C) Gary Wallis 2001-2020. All Rights Reserved.
 	LICENSE file should be included in distribution.
@@ -23,10 +21,12 @@ COMPILE
 #include <ctype.h>
 
 MYSQL gMysql;
+char gcQuery[1028];
 
 //TOC
 int main(int iArgc, char *cArg[]);
 void ConnectDb(void);
+void printNS(unsigned uZone,char *cOwner);
 
 int main(int iArgc, char *cArg[])
 {
@@ -35,7 +35,6 @@ int main(int iArgc, char *cArg[])
 	MYSQL_ROW field;
 	MYSQL_RES *res2;
 	MYSQL_ROW field2;
-	char gcQuery[1028];
 
 	ConnectDb();
 
@@ -62,6 +61,12 @@ int main(int iArgc, char *cArg[])
 	res=mysql_store_result(&gMysql);
 	while((field=mysql_fetch_row(res)))
 	{
+		unsigned uZone=0;
+		sscanf(field[1],"%u",&uZone);
+		if(!uZone)
+		{
+			printf("\tERROR %s!\n",field[0]);
+		}
 		//RRset allows for app handling for non standard usage
 		//like here. Use default A type
 		printf("\t<RRset owner=\"%.99s.\" class=\"IN\" ttl=\"0\" type=\"A\">\n",field[0]);
@@ -70,14 +75,24 @@ int main(int iArgc, char *cArg[])
 		//tZone specified records
 		printf("\t\t<SOA mname=\"%s\" rname=\"%s\" serial=\"%s\" refresh=\"%s\" retry=\"%s\" expire=\"%s\" minimum=\"%s\"/>\n",
 				field[3],field[4],field[5],field[6],field[7],field[8],field[9]);
-		//TODO one or more like so...
-		printf("\t\t<NS owner=\"%s.\" class=\"IN\" ttl=\"0\" nsdname=\"dns1.lon2.telecity.net\"/>\n",field[0]);
-		//if cMainAddress add A record
-		//if uMailServer add associated MX records
 
-		sprintf(gcQuery,"SELECT tRRType.cLabel,tResource.cName,tResource.uTTL,tResource.cParam1,tResource.cParam2"
+		printNS(uZone,field[0]);
+		//if cMainAddress add A record
+		if(field[10][0] && strcmp(field[10],"0.0.0.0"))
+		{
+			printf("\t\t<A owner=\"%s\" class=\"IN\" ttl=\"%s\" address=\"%s\" remark=\"cMainAddress\"/>\n",
+					field[0],field[9],field[10]);
+		}
+		//if uMailServers add associated MX records
+		if(strcmp(field[11],"0"))
+		{
+			printf("\tUnexpected uMailServers ERROR %s!\n",field[0]);
+		}
+
+		sprintf(gcQuery,"SELECT tRRType.cLabel,tResource.cName,tResource.uTTL,"
+			"tResource.cParam1,tResource.cParam2,tResource.cParam3,tResource.cParam4"
 			" FROM tResource,tRRType"
-			" WHERE tResource.uRRType=tRRType.uRRType AND tResource.uZone=%s",field[1]);
+			" WHERE tResource.uRRType=tRRType.uRRType AND tResource.uZone=%u",uZone);
 		mysql_query(&gMysql,gcQuery);
 		if(mysql_errno(&gMysql)) 
 		{
@@ -109,8 +124,8 @@ int main(int iArgc, char *cArg[])
 			}
 			else if(!strcmp(field2[0],"HINFO"))
 			{
-				printf("\t\t<HINFO owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED/>\n",
-					field2[1],field2[2],field2[3]);
+				printf("\t\t<HINFO owner=\"%s\" class=\"IN\" ttl=\"%s\" os=\"%s\" cpu=\"%s\"/>\n",
+					field2[1],field2[2],field2[3],field2[4]);
 			}
 			else if(!strcmp(field2[0],"MX"))
 			{
@@ -120,23 +135,27 @@ int main(int iArgc, char *cArg[])
 			}
 			else if(!strcmp(field2[0],"NAPTR"))
 			{
-				printf("\t\t<NAPTR owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED/>\n",
-					field2[1],field2[2],field2[3]);
+				printf("\t\t<NAPTR owner=\"%s\" class=\"IN\" ttl=\"%s\""
+					" flags=\"%s\" services=\"%s\" regexp=\"%s\" replacement=\"%s\"/>\n",
+					field2[1],field2[2],
+					field2[5],field2[3],field2[6],field2[4]);
 			}
 			else if(!strcmp(field2[0],"NS"))
 			{
-				printf("\t\t<NS owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED/>\n",
+				printf("\t\t<NS owner=\"%s\" class=\"IN\" ttl=\"%s\" nsdname=\"%s\"/>\n",
 					field2[1],field2[2],field2[3]);
 			}
 			else if(!strcmp(field2[0],"PTR"))
 			{
-				printf("\t\t<PTR owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED/>\n",
+				printf("\t\t<PTR owner=\"%s\" class=\"IN\" ttl=\"%s\" ptrdname=\"%s\"/>\n",
 					field2[1],field2[2],field2[3]);
 			}
 			else if(!strcmp(field2[0],"SRV"))
 			{
-				printf("\t\t<SRV owner=\"%s\" class=\"IN\" ttl=\"%s\" NOT-IMPLEMENTED/>\n",
-					field2[1],field2[2],field2[3]);
+				printf("\t\t<SRV owner=\"%s\" class=\"IN\" ttl=\"%s\""
+					" priority=\"%s\" weight=\"%s\" port=\"%s\" target=\"%s\"/>\n",
+					field2[1],field2[2],
+					field2[3],field2[4],field2[5],field2[6]);
 			}
 			else if(!strcmp(field2[0],"TXT"))
 			{
@@ -168,3 +187,26 @@ void ConnectDb(void)
 	}
 
 }//end of ConnectDb()
+
+
+void printNS(unsigned uZone,char *cOwner)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW field;
+	sprintf(gcQuery,"SELECT tNS.cFQDN FROM tNS,tZone"
+			" WHERE tZone.uNSSet=tNS.uNSSet"
+			" AND tZone.uZone=%u AND (tNS.uNSType=1 OR tNS.uNSType=4)",uZone);
+	mysql_query(&gMysql,gcQuery);
+	if(mysql_errno(&gMysql)) 
+	{
+		printf("%s\n",mysql_error(&gMysql));
+		exit(20);
+	}
+	res=mysql_store_result(&gMysql);
+	while((field=mysql_fetch_row(res)))
+	{
+		printf("\t\t<NS owner=\"%s.\" class=\"IN\" ttl=\"0\" nsdname=\"%s\"/>\n",cOwner,field[0]);
+	}
+	mysql_free_result(res);
+}//void printNS()
+
