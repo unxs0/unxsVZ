@@ -47,11 +47,12 @@ int main(int iArgc, char *cArg[])
 			"tNS.cFQDN,tZone.cHostmaster,tZone.uSerial,"
 			"tZone.uRefresh,tZone.uRetry,tZone.uExpire,tZone.uTTL,"
 			"tZone.cMainAddress,tZone.uMailServers"
-			" FROM tZone,tView,tNS"
+			" FROM tZone,tView,tNS,tExportItem"
 			" WHERE tZone.uView=tView.uView"
 			" AND tZone.uNSSet=tNS.uNSSet"
+			" AND tZone.cZone=tExportItem.cLabel"
 			" AND tNS.uNSType=1"
-			" AND tZone.uView=2 AND tZone.cZone LIKE '%s' ORDER BY tNS.uNS",cArg[1]);
+			" AND tZone.uView=2 AND tZone.cZone LIKE '%s' ORDER BY tExportItem.uExportItem",cArg[1]);
 	mysql_query(&gMysql,gcQuery);
 	if(mysql_errno(&gMysql)) 
 	{
