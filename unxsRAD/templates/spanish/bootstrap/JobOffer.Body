@@ -83,7 +83,7 @@
   <div class="card-header" id="headingSummary">
   <h5 class="mb-0">
   <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseSummary">
-      <h4>{{cuStatus}}</h4> {{cJobOwner}} 
+      <h4>{{cuStatus}}/{{cuJobOffer}}</h4> {{cJobOwner}} 
   </button>
   </h5>
   </div><!--card header-->
@@ -310,7 +310,7 @@ de tu telefono es muy grande se puede mandar a Whatsapp y luego subir la imagen 
   <div class="card-header" id="headingInvoice">
   <h5 class="mb-0">
   <button style="text-decoration: none;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseInvoice">
-      <h4>Factura</h4> {{cuJobOffer}} 
+      <h4>Factura</h4>
   </button>
   </h5>
   </div><!--card header-->

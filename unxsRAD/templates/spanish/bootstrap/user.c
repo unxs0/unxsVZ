@@ -311,7 +311,10 @@ void AdminGetHook(entry gentries[],int x)
 		exit(0);
 	}
 
-	htmlAdmin();
+	if(guPermLevel>=11)
+		htmlAdmin();
+	else
+		htmlCalendar();
 
 }//void UserGetHook(entry gentries[],int x)
 
@@ -642,7 +645,7 @@ void UserCommands(pentry entries[], int x)
 			htmlCalendar();
 		}
 	}
-	else if(!strcmp(gcPage,"Admin"))
+	else if(!strcmp(gcPage,"Admin") && guPermLevel>=11)
 	{
 		if(!strcmp(gcFunction,"Remind"))
 		{
@@ -1741,7 +1744,12 @@ char cImage3Src[512]={""};
 			template.cpName[29]="gcSummaryShow";
 			template.cpValue[29]=gcSummaryShow;
 
-			template.cpName[30]="";
+			template.cpName[30]="cuJobOffer";
+			char cuJobOffer[16]={""};
+			sprintf(cuJobOffer,"%u",guJobOffer);
+			template.cpValue[30]=cuJobOffer;
+
+			template.cpName[31]="";
 
 //debug only
 //printf("Content-type: text/html\n\n");

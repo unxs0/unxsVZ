@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
 			htmlUser();
 		else if(!strcmp(gcPage,"Calendar"))
 			htmlCalendar();
-		else if(!strcmp(gcPage,"Admin"))
+		else if(!strcmp(gcPage,"Admin") && guPermLevel>=11)
 			htmlAdmin();
 		else if(!strcmp(gcPage,"JobOffer"))
 			htmlJobOffer();

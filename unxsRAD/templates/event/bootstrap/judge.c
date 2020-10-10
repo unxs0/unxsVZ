@@ -73,6 +73,18 @@ unsigned uSelectRider(FILE *fp,char *cPage,unsigned uMode)
 				" AND tScore.uEvent=%u AND tScore.uRider=tRider.uRider ORDER BY tRider.cLast",
 						guOrg,
 						guEvent);
+		else if(uMode==3)
+		sprintf(gcQuery,"SELECT DISTINCT tRider.cLabel,tRider.uRider,tRider.cTeam FROM tRider,tScore,tHeat"
+				" WHERE tScore.uOwner=%u"
+				" AND NOW()<tHeat.dEnd AND NOW()>tHeat.dStart"
+				" AND tRider.cLabel NOT LIKE 'WINNER%%'"
+				" AND tRider.cLabel NOT LIKE 'SECOND%%'"
+				" AND tScore.uEvent=%u"
+				" AND tScore.uRider=tRider.uRider"
+				" AND tScore.uHeat=tHeat.uHeat"
+				" ORDER BY tRider.cLast",
+						guOrg,
+						guEvent);
 		else
 		sprintf(gcQuery,"SELECT DISTINCT tRider.cLabel,tRider.uRider,tRider.cTeam FROM tRider,tScore"
 				" WHERE tScore.uOwner=%u AND tScore.uHeat=%u"
@@ -1044,7 +1056,7 @@ void funcLive(FILE *fp)
 	if(guRider)
 		fprintf(fp,"<b>%s/%s</b> OVERLAY ACTIVE<br>",cForeignKey("tRider","cLabel",guRider),cForeignKey("tRider","cTeam",guRider));
 
-	uSelectRider(fp,"Live",2);
+	uSelectRider(fp,"Live",3);
 
 }//void funcLive(FILE *fp)
 
@@ -1440,7 +1452,7 @@ void funcHeat(FILE *fp)
 		fprintf(fp,"</div>");//row
 		fprintf(fp,"<div class=\"sTableRow\">");
 		if(dTimeLeft[0]=='-')
-			fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%s</div>",dTimeLeft);
+			fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">HEAT OVER</div>",dTimeLeft);
 		else
 			//fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\"><p id=\"demo\">%s</p></div>",dTimeLeft);
 			fprintf(fp,"<div class=\"sTableCellBlackBoldLarge\">%s</p></div>",dTimeToStart);

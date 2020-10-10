@@ -188,7 +188,7 @@ void funcCalendar(FILE *fp)
 
 	printf("    <div class='collapse navbar-collapse' id='navbarsCalendar'>\n");
 	printf("      <ul class='navbar-nav mr-auto'>\n");
-	if(guPermLevel>=10)
+	if(guPermLevel>=11)
 	{
 		printf("        <li class='nav-item'>\n");
 		printf("          <a class='nav-link' href='/unxsAKApp?gcPage=Admin'>Admin</a>\n");
@@ -225,7 +225,7 @@ void funcCalendar(FILE *fp)
 
 	printf("</nav>\n");
 
-	if(strcmp(gcPage,"Calendar") && guPermLevel>=10)
+	if(strcmp(gcPage,"Calendar") && guPermLevel>=11)
 	{
 		printf("<!-- end of funcCalendar(Admin) -->\n");
 		return;

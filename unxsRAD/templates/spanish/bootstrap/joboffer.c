@@ -595,6 +595,28 @@ void funcUserInvoices(FILE *fp)
 		if(guJobOffer)
 			htmlUserInvoice(fp);
 	}
+
+
+	//Also display active job offer
+	if(guPermLevel>=10)
+	{
+		fprintf(fp,"\nOpen Jobs:\n");
+		sprintf(gcQuery,"SELECT tJobOffer.uJobOffer,tJobOffer.cLabel,tClient.cLabel FROM tJobOffer,tClient"
+			" WHERE tJobOffer.uStatus!=11 AND tJobOffer.uStatus!=14 AND tJobOffer.uStatus!=15"
+			" AND tClient.uClient=tJobOffer.uOwner");
+		mysql_query(&gMysql,gcQuery);
+		if(mysql_errno(&gMysql))
+		{
+			gcMessage="Unexpected error (s9f1) try again later!";
+			htmlJobOffer();
+		}
+		res=mysql_store_result(&gMysql);
+		while((field=mysql_fetch_row(res)))
+		{
+			fprintf(fp,"<a href=unxsAKApp?gcPage=JobOffer&uJobOffer=%s >%s/%s</a>\n",field[0],field[1],field[2]);
+		}
+	}
+
 	fprintf(fp,"</pre>\n");
 	fprintf(fp,"<!-- End of funcUserInvoices()-->\n");
 

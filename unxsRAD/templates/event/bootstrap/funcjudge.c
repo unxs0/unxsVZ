@@ -47,6 +47,8 @@ void GetdEnd(void)
 	res=mysql_store_result(&gMysql);
 	if(mysql_num_rows(res)==0)
 	{
+		dEnd[0]=0;
+		return;
 		htmlHeader("GetdEnd","Default.Header");
 		fprintf(stdout,"No rows GetdEnd():%u %u",guEvent,suHeat);
 		htmlFooter("Default.Footer");
